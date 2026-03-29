@@ -9,6 +9,8 @@ import cors from 'cors'
 import helmet from 'helmet'
 import morgan from 'morgan'
 import prisma from './config/database.js'
+import { logActiveProviders } from './config/services.js'
+import { errorHandler } from './middleware/error.js'
 import healthRouter from './routes/health.routes.js'
 
 const app  = express()
@@ -42,6 +44,9 @@ app.use((req, res) => {
   res.status(404).json({ error: 'Route not found', code: 'NOT_FOUND' })
 })
 
+// Global error handler — must be last
+app.use(errorHandler)
+
 // ─────────────────────────────────────────────
 // START
 // ─────────────────────────────────────────────
@@ -62,6 +67,7 @@ async function start() {
   app.listen(PORT, () => {
     console.log(`🚀 EthicFlow API running on http://localhost:${PORT}`)
     console.log(`   Environment: ${process.env.NODE_ENV ?? 'development'}`)
+    logActiveProviders()
   })
 }
 
