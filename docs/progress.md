@@ -10,7 +10,7 @@
 🔍 **Preview:** pgAdmin at localhost:5050 → see tables + data
 
 ### S1.2 — Backend Foundation (Days 3-5)
-- [ ] S1.2.1 Express Setup + health endpoint
+- [x] S1.2.1 Express Setup + health endpoint
 - [ ] S1.2.2 Config files (DB, Auth, Services)
 - [ ] S1.2.3 Middleware (validate, error, audit)
 - [ ] S1.2.4 Rate Limiting
