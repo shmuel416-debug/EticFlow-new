@@ -5,3 +5,5 @@
 | Date | Task | Status | Notes |
 |------|------|--------|-------|
 | — | Sprint started | — | — |
+| 2026-03-29 | S1.1.1 Docker Compose | ✅ Done | PostgreSQL 16 + pgAdmin up on :5432/:5050 |
+| 2026-03-29 | S1.1.2 Prisma Schema | ✅ Done | 16 tables created, migration init applied |

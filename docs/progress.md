@@ -4,8 +4,8 @@
 **Status:** Not Started | **Duration:** 4 weeks | **Tag:** v0.1.0
 
 ### S1.1 — Docker + Database (Days 1-2)
-- [ ] S1.1.1 Docker Compose (PostgreSQL + pgAdmin)
-- [ ] S1.1.2 Prisma Schema (15 tables)
+- [x] S1.1.1 Docker Compose (PostgreSQL + pgAdmin)
+- [x] S1.1.2 Prisma Schema (15 tables)
 - [ ] S1.1.3 Seed Data (users, forms, submissions)
 🔍 **Preview:** pgAdmin at localhost:5050 → see tables + data
 
