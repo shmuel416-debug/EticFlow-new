@@ -1,0 +1,32 @@
+# ═══════════════════════════════════════════════════
+# EthicFlow — DEV Environment Override
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+# ═══════════════════════════════════════════════════
+
+version: '3.9'
+
+services:
+  # ─── pgAdmin (DEV only) ───
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: ethicflow-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@ethicflow.dev}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin123}
+      PGADMIN_LISTEN_PORT: 5050
+    ports:
+      - "5050:5050"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+
+  # ─── Note: Backend and Frontend run locally (npm run dev) ───
+  # Backend: cd backend && npm run dev      → localhost:5000
+  # Frontend: cd frontend && npm run dev    → localhost:5173
+
+volumes:
+  pgadmin-data:
+    name: ethicflow-pgadmin

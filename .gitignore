@@ -1,9 +1,45 @@
-node_modules/ 
-.env 
-.env.* 
-!.env.example 
-dist/ 
-uploads/ 
-generated/ 
-.DS_Store 
-*.log 
+# ═══════════════════════════════════════════════════
+# EthicFlow — .gitignore
+# ═══════════════════════════════════════════════════
+
+# Dependencies
+node_modules/
+
+# Environment (secrets!)
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Build outputs
+dist/
+build/
+
+# Uploaded & generated files
+uploads/
+generated/
+
+# Database
+pgdata/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Testing
+coverage/
+.nyc_output/
+
+# Prisma
+backend/prisma/migrations/**/migration_lock.toml

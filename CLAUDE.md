@@ -28,14 +28,26 @@ backend/
 
 ## Commands
 ```bash
-docker compose up -d                    # Start PostgreSQL + pgAdmin
-cd backend && npm run dev               # Backend (:5000)
-cd frontend && npm run dev              # Frontend (:5173)
-npx prisma migrate dev --name <name>    # New migration
-npx prisma db seed                      # Seed test data
-npx prisma studio                       # Visual DB browser
-npm test                                # Run tests
-npm run lint && npm run format          # Lint + format
+# DEV environment
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d   # DB + pgAdmin
+cd backend && npm run dev                                               # API (:5000)
+cd frontend && npm run dev                                              # App (:5173)
+
+# PROD environment
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d  # Everything
+
+# Database
+npx prisma migrate dev --name <name>    # New migration (dev)
+npx prisma migrate deploy               # Apply migrations (prod)
+npx prisma db seed                       # Seed test data
+npx prisma studio                        # Visual DB browser
+
+# Quality
+npm test                                 # Run tests
+npm run lint && npm run format           # Lint + format
+
+# New institution
+chmod +x setup.sh && ./setup.sh          # Interactive setup wizard
 ```
 
 ## Coding Rules — YOU MUST FOLLOW THESE

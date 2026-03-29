@@ -1,0 +1,31 @@
+# ═══════════════════════════════════════════════════
+# EthicFlow — Docker Compose Base
+# Shared services between DEV and PROD
+# Usage: docker compose -f docker-compose.yml -f docker-compose.[dev|prod].yml up
+# ═══════════════════════════════════════════════════
+
+version: '3.9'
+
+services:
+  # ─── PostgreSQL Database ───
+  db:
+    image: postgres:16-alpine
+    container_name: ethicflow-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-ethicflow}
+      POSTGRES_USER: ${DB_USER:-ethicflow}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-ethicflow}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
+    name: ethicflow-pgdata
