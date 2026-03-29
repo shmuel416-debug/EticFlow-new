@@ -6,7 +6,7 @@
 ### S1.1 — Docker + Database (Days 1-2)
 - [x] S1.1.1 Docker Compose (PostgreSQL + pgAdmin)
 - [x] S1.1.2 Prisma Schema (15 tables)
-- [ ] S1.1.3 Seed Data (users, forms, submissions)
+- [x] S1.1.3 Seed Data (users, forms, submissions)
 🔍 **Preview:** pgAdmin at localhost:5050 → see tables + data
 
 ### S1.2 — Backend Foundation (Days 3-5)

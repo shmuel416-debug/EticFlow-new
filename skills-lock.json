@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "skills": {
+    "devops-engineer": {
+      "source": "jeffallan/claude-skills",
+      "sourceType": "github",
+      "computedHash": "6d40f1befd55d5b300acbc86685b97983f145bc246b28609872a08ffd39237e9"
+    },
+    "frontend-design": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "computedHash": "516bd2154eb843a8240e43d5b285229129853114ad7075a5e141e1c08e408c84"
+    },
+    "hebrew-document-generator": {
+      "source": "skills-il/localization",
+      "sourceType": "github",
+      "computedHash": "4842bdb677bf5dca5713f435921e07bb167df5e3642174d721c7e219a5d5fa8a"
+    },
+    "israeli-accessibility-compliance": {
+      "source": "skills-il/localization",
+      "sourceType": "github",
+      "computedHash": "157d4f233947cbb333621620c86e924d012f2795881db56046cd39935c4e7c07"
+    },
+    "israeli-appsec-scanner": {
+      "source": "skills-il/security-compliance",
+      "sourceType": "github",
+      "computedHash": "b561f86412110bb5808ce43577bee0666130fe1f474cacb5a9507121f8f449cf"
+    },
+    "nodejs-backend-patterns": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "computedHash": "3d6cbc12f720d8f02e1936c3e7fab78245eaa69500edbceea93d493d4ece6094"
+    },
+    "vercel-react-best-practices": {
+      "source": "vercel-labs/agent-skills",
+      "sourceType": "github",
+      "computedHash": "9fb08ab39585f6f770d0c1c735f83e619aba2089d7ad50ba2a305eff715e08b9"
+    }
+  }
+}
