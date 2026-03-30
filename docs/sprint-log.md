@@ -11,3 +11,4 @@
 | 2026-03-29 | S1.2.1 Express Setup | ✅ Done | GET /api/health returns 200 + DB status |
 | 2026-03-29 | S1.2.2 Config files | ✅ Done | auth.js (JWT/bcrypt), services.js (4 pluggable providers) |
 | 2026-03-29 | S1.2.3 Middleware | ✅ Done | validate.js, error.js (Prisma+AppError), audit.js |
+| 2026-03-29 | S1.2.4 Rate Limiting | ✅ Done | apiLimiter (100/min), loginLimiter (5/15min) |

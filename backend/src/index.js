@@ -11,6 +11,7 @@ import morgan from 'morgan'
 import prisma from './config/database.js'
 import { logActiveProviders } from './config/services.js'
 import { errorHandler } from './middleware/error.js'
+import { apiLimiter } from './middleware/rateLimit.js'
 import healthRouter from './routes/health.routes.js'
 
 const app  = express()
@@ -37,6 +38,7 @@ app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'))
 // ROUTES
 // ─────────────────────────────────────────────
 
+app.use('/api', apiLimiter)
 app.use('/api/health', healthRouter)
 
 // 404 handler

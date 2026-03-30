@@ -13,7 +13,7 @@
 - [x] S1.2.1 Express Setup + health endpoint
 - [x] S1.2.2 Config files (DB, Auth, Services)
 - [x] S1.2.3 Middleware (validate, error, audit)
-- [ ] S1.2.4 Rate Limiting
+- [x] S1.2.4 Rate Limiting
 🔍 **Preview:** localhost:5000/api/health → JSON response
 
 ### S1.3 — Auth System (Days 6-9)
