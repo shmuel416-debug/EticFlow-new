@@ -12,3 +12,5 @@
 | 2026-03-29 | S1.2.2 Config files | ✅ Done | auth.js (JWT/bcrypt), services.js (4 pluggable providers) |
 | 2026-03-29 | S1.2.3 Middleware | ✅ Done | validate.js, error.js (Prisma+AppError), audit.js |
 | 2026-03-29 | S1.2.4 Rate Limiting | ✅ Done | apiLimiter (100/min), loginLimiter (5/15min) |
+| 2026-03-29 | S1.3.1 Register + Login | ✅ Done | POST /register, /login, GET /me + JWT + bcrypt |
+| 2026-03-29 | S1.3.2 JWT + RBAC | ✅ Done | authenticate.js, authorize(), authorizeOwnerOrRoles() |

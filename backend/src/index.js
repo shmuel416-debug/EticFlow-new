@@ -13,6 +13,7 @@ import { logActiveProviders } from './config/services.js'
 import { errorHandler } from './middleware/error.js'
 import { apiLimiter } from './middleware/rateLimit.js'
 import healthRouter from './routes/health.routes.js'
+import authRouter from './routes/auth.routes.js'
 
 const app  = express()
 const PORT = process.env.API_PORT ?? 5000
@@ -40,6 +41,7 @@ app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'))
 
 app.use('/api', apiLimiter)
 app.use('/api/health', healthRouter)
+app.use('/api/auth', authRouter)
 
 // 404 handler
 app.use((req, res) => {
