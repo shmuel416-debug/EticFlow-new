@@ -19,7 +19,7 @@
 ### S1.3 — Auth System (Days 6-9)
 - [x] S1.3.1 Register + Login endpoints
 - [x] S1.3.2 JWT + RBAC Middleware
-- [ ] S1.3.3 Forgot/Reset Password + Email console
+- [x] S1.3.3 Forgot/Reset Password + Email console
 🔍 **Preview:** Postman → login → get JWT → /me works
 
 ### S1.4 — Frontend Shell (Days 10-17)

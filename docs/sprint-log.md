@@ -14,3 +14,4 @@
 | 2026-03-29 | S1.2.4 Rate Limiting | ✅ Done | apiLimiter (100/min), loginLimiter (5/15min) |
 | 2026-03-29 | S1.3.1 Register + Login | ✅ Done | POST /register, /login, GET /me + JWT + bcrypt |
 | 2026-03-29 | S1.3.2 JWT + RBAC | ✅ Done | authenticate.js, authorize(), authorizeOwnerOrRoles() |
+| 2026-03-29 | S1.3.3 Forgot/Reset Password | ✅ Done | crypto tokens, SHA-256 hashing, console email provider |

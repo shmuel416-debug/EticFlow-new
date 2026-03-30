@@ -1,8 +1,10 @@
 /**
  * EthicFlow — Auth Routes
- * POST /api/auth/register — create account
- * POST /api/auth/login    — authenticate + get JWT
- * GET  /api/auth/me       — get current user (protected)
+ * POST /api/auth/register        — create account
+ * POST /api/auth/login           — authenticate + get JWT
+ * GET  /api/auth/me              — get current user (protected)
+ * POST /api/auth/forgot-password — send reset email
+ * POST /api/auth/reset-password  — apply new password via token
  */
 
 import { Router } from 'express'
@@ -28,6 +30,15 @@ const loginSchema = z.object({
   password: z.string().min(1),
 })
 
+const forgotSchema = z.object({
+  email: z.string().email(),
+})
+
+const resetSchema = z.object({
+  token:    z.string().min(1),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+})
+
 router.post(
   '/register',
   validate(registerSchema),
@@ -44,5 +55,18 @@ router.post(
 )
 
 router.get('/me', authenticate, controller.me)
+
+router.post(
+  '/forgot-password',
+  validate(forgotSchema),
+  controller.forgotPassword
+)
+
+router.post(
+  '/reset-password',
+  validate(resetSchema),
+  controller.resetPassword,
+  auditLog('auth.reset-password', 'User')
+)
 
 export default router
