@@ -36,6 +36,11 @@ function handlePrismaError(err) {
 export function errorHandler(err, req, res, _next) {
   if (IS_DEV) console.error('[Error]', err)
 
+  // JSON parse error from Express body-parser
+  if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+    return res.status(400).json({ error: 'Invalid JSON body', code: 'INVALID_JSON' })
+  }
+
   // Prisma errors
   if (err.code?.startsWith?.('P')) {
     const appErr = handlePrismaError(err)

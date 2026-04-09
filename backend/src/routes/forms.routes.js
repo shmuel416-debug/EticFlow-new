@@ -1,0 +1,107 @@
+/**
+ * EthicFlow — Forms Routes
+ * GET    /api/forms            — list all forms          (SECRETARY, ADMIN)
+ * GET    /api/forms/active     — get active form         (all authenticated)
+ * GET    /api/forms/:id        — get single form         (SECRETARY, ADMIN)
+ * POST   /api/forms            — create draft form       (SECRETARY, ADMIN)
+ * PUT    /api/forms/:id        — update draft schema     (SECRETARY, ADMIN)
+ * POST   /api/forms/:id/publish — publish form           (SECRETARY, ADMIN)
+ * POST   /api/forms/:id/archive  — archive form           (SECRETARY, ADMIN)
+ * POST   /api/forms/:id/restore  — restore archived form  (SECRETARY, ADMIN)
+ */
+
+import { Router } from 'express'
+import { z } from 'zod'
+import { validate } from '../middleware/validate.js'
+import { authenticate } from '../middleware/auth.js'
+import { authorize } from '../middleware/role.js'
+import { auditLog } from '../middleware/audit.js'
+import * as controller from '../controllers/forms.controller.js'
+
+const router = Router()
+
+// ─────────────────────────────────────────────
+// ZOD SCHEMAS
+// ─────────────────────────────────────────────
+
+const createSchema = z.object({
+  name:       z.string().min(2, 'Form name must be at least 2 characters'),
+  nameEn:     z.string().min(2, 'English name must be at least 2 characters'),
+  schemaJson: z.record(z.unknown()).default({}),
+})
+
+const updateSchema = z.object({
+  name:       z.string().min(2).optional(),
+  nameEn:     z.string().min(2).optional(),
+  schemaJson: z.record(z.unknown()).optional(),
+})
+
+// ─────────────────────────────────────────────
+// ROUTES
+// ─────────────────────────────────────────────
+
+// NOTE: /active must be declared before /:id to avoid route conflict
+
+router.get(
+  '/',
+  authenticate,
+  authorize('SECRETARY', 'ADMIN'),
+  controller.list
+)
+
+router.get(
+  '/active',
+  authenticate,
+  controller.getActive
+)
+
+router.get(
+  '/:id',
+  authenticate,
+  authorize('SECRETARY', 'ADMIN'),
+  controller.getById
+)
+
+router.post(
+  '/',
+  authenticate,
+  authorize('SECRETARY', 'ADMIN'),
+  validate(createSchema),
+  controller.create,
+  auditLog('form.create', 'FormConfig')
+)
+
+router.put(
+  '/:id',
+  authenticate,
+  authorize('SECRETARY', 'ADMIN'),
+  validate(updateSchema),
+  controller.update,
+  auditLog('form.update', 'FormConfig')
+)
+
+router.post(
+  '/:id/publish',
+  authenticate,
+  authorize('SECRETARY', 'ADMIN'),
+  controller.publish,
+  auditLog('form.publish', 'FormConfig')
+)
+
+router.post(
+  '/:id/archive',
+  authenticate,
+  authorize('SECRETARY', 'ADMIN'),
+  controller.archive,
+  auditLog('form.archive', 'FormConfig')
+)
+
+router.post(
+  '/:id/restore',
+  authenticate,
+  authorize('SECRETARY', 'ADMIN'),
+  controller.restore,
+  auditLog('form.restore', 'FormConfig')
+)
+
+export default router

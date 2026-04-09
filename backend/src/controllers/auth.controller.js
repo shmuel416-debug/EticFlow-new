@@ -13,6 +13,17 @@ import { AppError } from '../utils/errors.js'
 import { sendEmail } from '../services/email/email.service.js'
 
 // ─────────────────────────────────────────────
+// CONSTANTS
+// ─────────────────────────────────────────────
+
+/**
+ * Pre-computed bcrypt hash (12 rounds) used for constant-time comparison
+ * when the user does not exist. Prevents timing-based email enumeration.
+ * Value: bcrypt('EthicFlowDummy2026!', 12)
+ */
+const DUMMY_BCRYPT_HASH = '$2b$12$Z8nII1EDprDhFMZYH2.BVOhjlIjGBtStf/OgyisITv/gZJaXF6Y8y'
+
+// ─────────────────────────────────────────────
 // HELPERS
 // ─────────────────────────────────────────────
 
@@ -92,9 +103,9 @@ export async function login(req, res, next) {
     const { email, password } = req.body
 
     const user = await prisma.user.findUnique({ where: { email } })
-    const validPassword = user
-      ? await bcrypt.compare(password, user.passwordHash ?? '')
-      : false
+
+    // Always run bcrypt — prevents timing-based email enumeration (constant-time)
+    const validPassword = await bcrypt.compare(password, user?.passwordHash ?? DUMMY_BCRYPT_HASH)
 
     if (!user || !validPassword || !user.isActive) {
       return next(new AppError('Invalid email or password', 'INVALID_CREDENTIALS', 401))

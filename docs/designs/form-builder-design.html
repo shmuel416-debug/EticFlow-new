@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EthicFlow — Form Builder Design Options</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Heebo', sans-serif; }
+    .tab-btn.active { border-bottom: 3px solid #1e40af; color: #1e40af; font-weight: 700; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .preview-frame { border: 2px solid #e5e7eb; border-radius: 12px; overflow: hidden; background: white; }
+
+    /* Drag ghost effect */
+    .drag-ghost { opacity: 0.5; border: 2px dashed #1e40af !important; background: #eff6ff !important; }
+    .drop-zone-active { background: #eff6ff; border: 2px dashed #1e40af; }
+
+    /* Canvas field selected state */
+    .canvas-field.selected { border-color: #1e40af; box-shadow: 0 0 0 3px rgba(30,64,175,0.15); }
+    .canvas-field:hover { border-color: #93c5fd; cursor: pointer; }
+
+    /* Palette item hover */
+    .palette-item:hover { background: #eff6ff; border-color: #1e40af; cursor: grab; }
+    .palette-item:active { cursor: grabbing; }
+
+    /* Scrollbar styling */
+    .custom-scroll::-webkit-scrollbar { width: 4px; }
+    .custom-scroll::-webkit-scrollbar-track { background: #f1f5f9; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+
+    /* Mobile tabs for option A */
+    .mobile-tab.active { background: #1e40af; color: white; }
+
+    /* Publish button pulse */
+    @keyframes pulse-blue { 0%,100% { box-shadow: 0 0 0 0 rgba(30,64,175,0.4); } 50% { box-shadow: 0 0 0 8px rgba(30,64,175,0); } }
+    .btn-publish { animation: pulse-blue 2s infinite; }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+  <!-- Tab Navigation -->
+  <div class="sticky top-0 bg-white border-b z-50 shadow-sm">
+    <div class="max-w-screen-2xl mx-auto px-6 flex items-center justify-between">
+      <div class="flex gap-1">
+        <button class="tab-btn active py-4 px-4 text-sm transition-colors" onclick="showTab('a', event)">
+          A — Clean &amp; Minimal
+        </button>
+        <button class="tab-btn py-4 px-4 text-sm text-gray-500 transition-colors" onclick="showTab('b', event)">
+          B — Bold &amp; Structured
+        </button>
+        <button class="tab-btn py-4 px-4 text-sm text-gray-500 transition-colors" onclick="showTab('c', event)">
+          C — Compact &amp; Efficient
+        </button>
+      </div>
+      <span class="text-xs text-gray-400">EthicFlow — Form Builder Design</span>
+    </div>
+  </div>
+
+  <div class="max-w-screen-2xl mx-auto p-4">
+
+    <!-- ═══════════════════════════════════════════════════════
+         OPTION A — Clean & Minimal
+         3-column white layout, spacious, clear hierarchy
+    ═══════════════════════════════════════════════════════ -->
+    <div id="tab-a" class="tab-content active">
+      <div class="mb-3 p-3 bg-blue-50 rounded-lg border border-blue-200 text-sm text-blue-800">
+        <strong>A — Clean &amp; Minimal:</strong> שלושה עמודות בהירים עם הרבה מרווח. לוח שדות בצד ימין, קנבס באמצע, הגדרות בצד שמאל. עיצוב רגוע ומקצועי.
+      </div>
+
+      <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+        <!-- Desktop A -->
+        <div class="xl:col-span-2">
+          <p class="text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wide">💻 Desktop</p>
+          <div class="preview-frame" style="height: 720px; display: flex; flex-direction: column;">
+
+            <!-- Top Bar A -->
+            <div class="bg-white border-b px-5 py-3 flex items-center justify-between shrink-0">
+              <div class="flex items-center gap-3">
+                <button class="text-gray-400 hover:text-gray-600 text-lg">←</button>
+                <div>
+                  <div class="flex items-center gap-2">
+                    <input class="text-base font-semibold text-gray-800 border-0 border-b border-transparent hover:border-gray-300 focus:border-blue-400 focus:outline-none bg-transparent" value="טופס בקשה לאישור מחקר" style="width: 280px;">
+                    <span class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">טיוטה</span>
+                  </div>
+                  <p class="text-xs text-gray-400 mt-0.5">גרסה 1 · עודכן לפני דקה</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <button class="px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 rounded-lg border border-gray-200 flex items-center gap-1.5">
+                  <span>👁</span> תצוגה מקדימה
+                </button>
+                <button class="px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 rounded-lg border border-gray-200 flex items-center gap-1.5">
+                  <span>💾</span> שמור
+                </button>
+                <button class="btn-publish px-4 py-1.5 text-sm bg-blue-700 text-white rounded-lg hover:bg-blue-800 font-medium flex items-center gap-1.5">
+                  <span>🚀</span> פרסם
+                </button>
+              </div>
+            </div>
+
+            <!-- 3-Column Layout A -->
+            <div class="flex flex-1 overflow-hidden">
+
+              <!-- Palette Panel (Right in RTL) -->
+              <div class="w-52 border-l bg-gray-50 flex flex-col shrink-0">
+                <div class="px-3 py-2.5 border-b bg-white">
+                  <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">סוגי שדות</p>
+                </div>
+                <div class="flex-1 overflow-y-auto custom-scroll p-2 space-y-1">
+
+                  <!-- Category: Basic -->
+                  <p class="text-xs text-gray-400 font-medium px-1 mt-2 mb-1">בסיסי</p>
+                  <div class="palette-item flex items-center gap-2 px-2 py-2 rounded-lg border border-transparent text-sm text-gray-700" onclick="selectPalette(this)">
+                    <span class="text-base">✏️</span> שדה טקסט
+                  </div>
+                  <div class="palette-item flex items-center gap-2 px-2 py-2 rounded-lg border border-transparent text-sm text-gray-700" onclick="selectPalette(this)">
+                    <span class="text-base">📝</span> אזור טקסט
+                  </div>
+                  <div class="palette-item flex items-center gap-2 px-2 py-2 rounded-lg border border-transparent text-sm text-gray-700" onclick="selectPalette(this)">
+                    <span class="text-base">📅</span> בחירת תאריך
+                  </div>
+                  <div class="palette-item flex items-center gap-2 px-2 py-2 rounded-lg border border-transparent text-sm text-gray-700" onclick="selectPalette(this)">
+                    <span class="text-base">🔢</span> שדה מספר
+                  </div>
+
+                  <!-- Category: Selection -->
+                  <p class="text-xs text-gray-400 font-medium px-1 mt-3 mb-1">בחירה</p>
+                  <div class="palette-item flex items-center gap-2 px-2 py-2 rounded-lg border border-transparent text-sm text-gray-700" onclick="selectPalette(this)">
+                    <span class="text-base">⬇️</span> רשימה נפתחת
+                  </div>
+                  <div class="palette-item flex items-center gap-2 px-2 py-2 rounded-lg border border-transparent text-sm text-gray-700" onclick="selectPalette(this)">
+                    <span class="text-base">🔘</span> בחירה יחידה
+                  </div>
+                  <div class="palette-item flex items-center gap-2 px-2 py-2 rounded-lg border border-transparent text-sm text-gray-700" onclick="selectPalette(this)">
+                    <span class="text-base">☑️</span> בחירה מרובה
+                  </div>
+
+                  <!-- Category: Special -->
+                  <p class="text-xs text-gray-400 font-medium px-1 mt-3 mb-1">מיוחד</p>
+                  <div class="palette-item flex items-center gap-2 px-2 py-2 rounded-lg border border-transparent text-sm text-gray-700" onclick="selectPalette(this)">
+                    <span class="text-base">📎</span> העלאת קובץ
+                  </div>
+                  <div class="palette-item flex items-center gap-2 px-2 py-2 rounded-lg border border-transparent text-sm text-gray-700" onclick="selectPalette(this)">
+                    <span class="text-base">📋</span> הצהרה
+                  </div>
+                  <div class="palette-item flex items-center gap-2 px-2 py-2 rounded-lg border border-transparent text-sm text-gray-700" onclick="selectPalette(this)">
+                    <span class="text-base">✍️</span> חתימה
+                  </div>
+                </div>
+              </div>
+
+              <!-- Canvas (Center) -->
+              <div class="flex-1 bg-gray-50 overflow-y-auto custom-scroll p-4" id="canvas-a">
+                <div class="max-w-xl mx-auto space-y-2">
+                  <p class="text-xs text-gray-400 text-center mb-4">גרור שדות מהלוח הימני לכאן, או לחץ עליהם</p>
+
+                  <!-- Field 1 - selected -->
+                  <div class="canvas-field selected bg-white rounded-xl border-2 border-blue-400 p-3 relative group" onclick="selectField(this, 'research-title')">
+                    <div class="flex items-start justify-between">
+                      <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-1">
+                          <span class="text-gray-300 cursor-grab text-sm">⠿⠿</span>
+                          <span class="text-xs bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded font-medium">שדה טקסט</span>
+                          <span class="text-red-400 text-xs">*חובה</span>
+                        </div>
+                        <p class="text-sm font-medium text-gray-800">כותרת המחקר</p>
+                        <p class="text-xs text-gray-400">Research Title</p>
+                        <div class="mt-2 h-7 bg-gray-100 rounded border border-gray-200 flex items-center px-2">
+                          <span class="text-xs text-gray-400">הקלד את כותרת המחקר...</span>
+                        </div>
+                      </div>
+                      <div class="flex gap-1 mr-2">
+                        <button class="text-gray-300 hover:text-blue-500 text-xs p-1" title="העתק">⧉</button>
+                        <button class="text-gray-300 hover:text-red-400 text-xs p-1" title="מחק">✕</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Field 2 -->
+                  <div class="canvas-field bg-white rounded-xl border border-gray-200 p-3 relative group" onclick="selectField(this, 'research-type')">
+                    <div class="flex items-start justify-between">
+                      <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-1">
+                          <span class="text-gray-300 cursor-grab text-sm">⠿⠿</span>
+                          <span class="text-xs bg-purple-50 text-purple-600 px-1.5 py-0.5 rounded font-medium">רשימה נפתחת</span>
+                          <span class="text-red-400 text-xs">*חובה</span>
+                        </div>
+                        <p class="text-sm font-medium text-gray-800">סוג המחקר</p>
+                        <p class="text-xs text-gray-400">Research Type</p>
+                        <div class="mt-2 h-7 bg-gray-100 rounded border border-gray-200 flex items-center justify-between px-2">
+                          <span class="text-xs text-gray-400">בחר...</span>
+                          <span class="text-gray-400 text-xs">▾</span>
+                        </div>
+                      </div>
+                      <div class="flex gap-1 mr-2">
+                        <button class="text-gray-300 hover:text-blue-500 text-xs p-1">⧉</button>
+                        <button class="text-gray-300 hover:text-red-400 text-xs p-1">✕</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Field 3 -->
+                  <div class="canvas-field bg-white rounded-xl border border-gray-200 p-3 relative group" onclick="selectField(this, 'start-date')">
+                    <div class="flex items-start justify-between">
+                      <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-1">
+                          <span class="text-gray-300 cursor-grab text-sm">⠿⠿</span>
+                          <span class="text-xs bg-green-50 text-green-600 px-1.5 py-0.5 rounded font-medium">תאריך</span>
+                          <span class="text-red-400 text-xs">*חובה</span>
+                        </div>
+                        <p class="text-sm font-medium text-gray-800">תאריך תחילת המחקר</p>
+                        <p class="text-xs text-gray-400">Research Start Date</p>
+                      </div>
+                      <div class="flex gap-1 mr-2">
+                        <button class="text-gray-300 hover:text-blue-500 text-xs p-1">⧉</button>
+                        <button class="text-gray-300 hover:text-red-400 text-xs p-1">✕</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Field 4 -->
+                  <div class="canvas-field bg-white rounded-xl border border-gray-200 p-3 relative group" onclick="selectField(this, 'description')">
+                    <div class="flex items-start justify-between">
+                      <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-1">
+                          <span class="text-gray-300 cursor-grab text-sm">⠿⠿</span>
+                          <span class="text-xs bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded font-medium">אזור טקסט</span>
+                          <span class="text-red-400 text-xs">*חובה</span>
+                        </div>
+                        <p class="text-sm font-medium text-gray-800">תיאור המחקר</p>
+                        <p class="text-xs text-gray-400">Research Description</p>
+                        <div class="mt-2 h-14 bg-gray-100 rounded border border-gray-200"></div>
+                      </div>
+                      <div class="flex gap-1 mr-2">
+                        <button class="text-gray-300 hover:text-blue-500 text-xs p-1">⧉</button>
+                        <button class="text-gray-300 hover:text-red-400 text-xs p-1">✕</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Drop zone hint -->
+                  <div class="border-2 border-dashed border-gray-200 rounded-xl p-4 text-center text-gray-300 text-sm hover:border-blue-300 hover:text-blue-300 transition-colors">
+                    + גרור שדה לכאן
+                  </div>
+                </div>
+              </div>
+
+              <!-- Settings Panel (Left in RTL) -->
+              <div class="w-64 border-r bg-white flex flex-col shrink-0" id="settings-a">
+                <div class="px-3 py-2.5 border-b bg-gray-50">
+                  <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">הגדרות שדה</p>
+                </div>
+                <div class="flex-1 overflow-y-auto custom-scroll p-3 space-y-3">
+                  <div>
+                    <label class="text-xs font-medium text-gray-500 block mb-1">תווית עברית *</label>
+                    <input class="w-full text-sm border border-gray-200 rounded-lg px-2.5 py-1.5 focus:border-blue-400 focus:outline-none" value="כותרת המחקר">
+                  </div>
+                  <div>
+                    <label class="text-xs font-medium text-gray-500 block mb-1">English Label *</label>
+                    <input class="w-full text-sm border border-gray-200 rounded-lg px-2.5 py-1.5 focus:border-blue-400 focus:outline-none text-left" dir="ltr" value="Research Title">
+                  </div>
+                  <div>
+                    <label class="text-xs font-medium text-gray-500 block mb-1">Placeholder (עב)</label>
+                    <input class="w-full text-sm border border-gray-200 rounded-lg px-2.5 py-1.5 focus:border-blue-400 focus:outline-none" value="הקלד את כותרת המחקר...">
+                  </div>
+                  <div class="flex items-center justify-between py-1">
+                    <span class="text-sm text-gray-700">שדה חובה</span>
+                    <button class="w-10 h-5 bg-blue-600 rounded-full relative transition-colors" onclick="toggleRequired(this)">
+                      <span class="absolute right-0.5 top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform"></span>
+                    </button>
+                  </div>
+                  <div class="border-t pt-3">
+                    <p class="text-xs font-medium text-gray-500 mb-2">ולידציה</p>
+                    <div class="flex gap-2">
+                      <div class="flex-1">
+                        <label class="text-xs text-gray-400">מינ׳ תווים</label>
+                        <input class="w-full text-sm border border-gray-200 rounded-lg px-2 py-1.5 focus:border-blue-400 focus:outline-none text-center" value="2">
+                      </div>
+                      <div class="flex-1">
+                        <label class="text-xs text-gray-400">מקס׳ תווים</label>
+                        <input class="w-full text-sm border border-gray-200 rounded-lg px-2 py-1.5 focus:border-blue-400 focus:outline-none text-center" value="200">
+                      </div>
+                    </div>
+                  </div>
+                  <div class="border-t pt-3">
+                    <p class="text-xs font-medium text-gray-500 mb-2">לוגיקה מותנית</p>
+                    <button class="text-xs text-blue-600 hover:underline">+ הוסף תנאי</button>
+                  </div>
+                </div>
+                <div class="p-3 border-t">
+                  <button class="w-full py-2 text-sm text-white bg-blue-700 rounded-lg hover:bg-blue-800">שמור שדה</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mobile A -->
+        <div>
+          <p class="text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wide">📱 Mobile (375px)</p>
+          <div class="preview-frame max-w-[375px]" style="height: 720px; display: flex; flex-direction: column;">
+            <!-- Mobile Header -->
+            <div class="bg-white border-b px-3 py-2.5 flex items-center justify-between shrink-0">
+              <button class="text-gray-400 text-sm">←</button>
+              <div class="text-center">
+                <p class="text-sm font-semibold text-gray-800">בונה טפסים</p>
+                <span class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">טיוטה</span>
+              </div>
+              <button class="text-blue-700 text-sm font-medium">פרסם</button>
+            </div>
+
+            <!-- Mobile Tabs -->
+            <div class="flex bg-gray-100 border-b shrink-0">
+              <button class="mobile-tab active flex-1 py-2 text-xs font-medium rounded-none" onclick="mobileTab('fields', this)">📦 שדות</button>
+              <button class="mobile-tab flex-1 py-2 text-xs font-medium text-gray-500 rounded-none" onclick="mobileTab('canvas', this)">📋 טופס</button>
+              <button class="mobile-tab flex-1 py-2 text-xs font-medium text-gray-500 rounded-none" onclick="mobileTab('settings', this)">⚙️ הגדרות</button>
+            </div>
+
+            <!-- Mobile Content: Fields -->
+            <div id="mobile-fields" class="flex-1 overflow-y-auto p-3 space-y-1">
+              <div class="palette-item flex items-center gap-2 px-3 py-2.5 rounded-lg border border-gray-200 bg-white text-sm">
+                <span>✏️</span> שדה טקסט
+              </div>
+              <div class="palette-item flex items-center gap-2 px-3 py-2.5 rounded-lg border border-gray-200 bg-white text-sm">
+                <span>📝</span> אזור טקסט
+              </div>
+              <div class="palette-item flex items-center gap-2 px-3 py-2.5 rounded-lg border border-gray-200 bg-white text-sm">
+                <span>📅</span> תאריך
+              </div>
+              <div class="palette-item flex items-center gap-2 px-3 py-2.5 rounded-lg border border-gray-200 bg-white text-sm">
+                <span>⬇️</span> רשימה נפתחת
+              </div>
+              <div class="palette-item flex items-center gap-2 px-3 py-2.5 rounded-lg border border-gray-200 bg-white text-sm">
+                <span>🔘</span> בחירה יחידה
+              </div>
+              <div class="palette-item flex items-center gap-2 px-3 py-2.5 rounded-lg border border-gray-200 bg-white text-sm">
+                <span>📎</span> העלאת קובץ
+              </div>
+            </div>
+
+            <!-- Mobile Canvas (hidden) -->
+            <div id="mobile-canvas" class="flex-1 overflow-y-auto p-3 hidden space-y-2">
+              <div class="bg-white rounded-xl border-2 border-blue-400 p-3">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="text-sm font-medium">כותרת המחקר</p>
+                    <p class="text-xs text-gray-400">Research Title</p>
+                  </div>
+                  <div class="flex gap-1">
+                    <button class="text-xs text-gray-400 p-1">⧉</button>
+                    <button class="text-xs text-red-300 p-1">✕</button>
+                  </div>
+                </div>
+              </div>
+              <div class="bg-white rounded-xl border border-gray-200 p-3">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <p class="text-sm font-medium">סוג המחקר</p>
+                    <p class="text-xs text-gray-400">Research Type</p>
+                  </div>
+                  <div class="flex gap-1">
+                    <button class="text-xs text-gray-400 p-1">⧉</button>
+                    <button class="text-xs text-red-300 p-1">✕</button>
+                  </div>
+                </div>
+              </div>
+              <div class="border-2 border-dashed border-gray-200 rounded-xl p-4 text-center text-xs text-gray-300">
+                + הקש שדה מהלוח
+              </div>
+            </div>
+
+            <!-- Mobile Settings (hidden) -->
+            <div id="mobile-settings" class="flex-1 overflow-y-auto p-3 hidden space-y-3">
+              <p class="text-sm font-medium text-gray-500 text-center">בחר שדה מהטופס לעריכה</p>
+            </div>
+
+            <!-- Mobile Bottom Bar -->
+            <div class="border-t bg-white px-3 py-2 flex gap-2 shrink-0">
+              <button class="flex-1 py-2 text-sm border border-gray-200 rounded-lg text-gray-600">💾 שמור</button>
+              <button class="flex-1 py-2 text-sm border border-gray-200 rounded-lg text-gray-600">👁 תצוגה</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /tab-a -->
+
+
+    <!-- ═══════════════════════════════════════════════════════
+         OPTION B — Bold & Structured
+         Strong color blocks, clear visual hierarchy
+    ═══════════════════════════════════════════════════════ -->
+    <div id="tab-b" class="tab-content">
+      <div class="mb-3 p-3 bg-purple-50 rounded-lg border border-purple-200 text-sm text-purple-800">
+        <strong>B — Bold &amp; Structured:</strong> כותרת כחולה כהה עם שם הטופס, לוח שדות בצבע מובחן, כרטיסיות בקנבס עם סינון, פאנל הגדרות עם accordion. תחושה מקצועית ו-enterprise.
+      </div>
+
+      <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+        <!-- Desktop B -->
+        <div class="xl:col-span-2">
+          <p class="text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wide">💻 Desktop</p>
+          <div class="preview-frame" style="height: 720px; display: flex; flex-direction: column;">
+
+            <!-- Top Bar B - Bold -->
+            <div class="bg-blue-900 text-white px-5 py-3 flex items-center justify-between shrink-0">
+              <div class="flex items-center gap-3">
+                <button class="text-blue-300 hover:text-white text-sm">← חזרה לספרייה</button>
+                <div class="h-5 w-px bg-blue-700"></div>
+                <div>
+                  <h1 class="font-bold text-base">טופס בקשה לאישור מחקר</h1>
+                  <div class="flex items-center gap-2 mt-0.5">
+                    <span class="text-xs bg-amber-400 text-amber-900 px-2 py-0.5 rounded font-bold">טיוטה</span>
+                    <span class="text-blue-300 text-xs">גרסה 1</span>
+                    <span class="text-blue-400 text-xs">·</span>
+                    <span class="text-blue-300 text-xs">4 שדות</span>
+                  </div>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <button class="px-3 py-1.5 text-sm text-blue-200 hover:text-white hover:bg-blue-800 rounded-lg flex items-center gap-1.5">
+                  👁 תצוגה מקדימה
+                </button>
+                <button class="px-3 py-1.5 text-sm text-blue-200 hover:text-white hover:bg-blue-800 rounded-lg flex items-center gap-1.5">
+                  💾 שמור טיוטה
+                </button>
+                <button class="px-4 py-1.5 text-sm bg-amber-400 text-amber-900 rounded-lg hover:bg-amber-300 font-bold flex items-center gap-1.5">
+                  🚀 פרסם טופס
+                </button>
+              </div>
+            </div>
+
+            <!-- Sub-toolbar B -->
+            <div class="bg-blue-800 text-white px-5 py-1.5 flex items-center gap-4 shrink-0 text-xs">
+              <button class="text-blue-200 hover:text-white flex items-center gap-1">↩ בטל</button>
+              <button class="text-blue-200 hover:text-white flex items-center gap-1">↪ חזור</button>
+              <div class="flex-1"></div>
+              <span class="text-blue-400">סה"כ: 4 שדות</span>
+              <span class="text-blue-400">|</span>
+              <span class="text-blue-400">חובה: 4</span>
+              <span class="text-blue-400">|</span>
+              <span class="text-blue-400">אופציונלי: 0</span>
+            </div>
+
+            <!-- 3-Column Layout B -->
+            <div class="flex flex-1 overflow-hidden bg-slate-100">
+
+              <!-- Palette B - Colored -->
+              <div class="w-56 bg-slate-800 flex flex-col shrink-0">
+                <div class="px-3 py-2.5 bg-slate-700">
+                  <input class="w-full text-xs bg-slate-600 text-white rounded px-2 py-1.5 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-400" placeholder="🔍 חפש שדה...">
+                </div>
+                <div class="flex-1 overflow-y-auto custom-scroll p-2">
+
+                  <div class="mb-2">
+                    <div class="px-2 py-1 text-xs text-slate-400 font-semibold uppercase tracking-wider">📄 בסיסי</div>
+                    <div class="palette-item flex items-center gap-2 px-2 py-2 rounded text-slate-200 text-sm hover:bg-slate-600" style="border:none">
+                      <span class="w-6 h-6 bg-blue-500 rounded flex items-center justify-center text-white text-xs">T</span> שדה טקסט
+                    </div>
+                    <div class="palette-item flex items-center gap-2 px-2 py-2 rounded text-slate-200 text-sm hover:bg-slate-600" style="border:none">
+                      <span class="w-6 h-6 bg-blue-500 rounded flex items-center justify-center text-white text-xs">¶</span> אזור טקסט
+                    </div>
+                    <div class="palette-item flex items-center gap-2 px-2 py-2 rounded text-slate-200 text-sm hover:bg-slate-600" style="border:none">
+                      <span class="w-6 h-6 bg-green-500 rounded flex items-center justify-center text-white text-xs">📅</span> תאריך
+                    </div>
+                  </div>
+
+                  <div class="mb-2">
+                    <div class="px-2 py-1 text-xs text-slate-400 font-semibold uppercase tracking-wider">🔘 בחירה</div>
+                    <div class="palette-item flex items-center gap-2 px-2 py-2 rounded text-slate-200 text-sm hover:bg-slate-600" style="border:none">
+                      <span class="w-6 h-6 bg-purple-500 rounded flex items-center justify-center text-white text-xs">▾</span> רשימה
+                    </div>
+                    <div class="palette-item flex items-center gap-2 px-2 py-2 rounded text-slate-200 text-sm hover:bg-slate-600" style="border:none">
+                      <span class="w-6 h-6 bg-purple-500 rounded flex items-center justify-center text-white text-xs">◉</span> בחירה יחידה
+                    </div>
+                    <div class="palette-item flex items-center gap-2 px-2 py-2 rounded text-slate-200 text-sm hover:bg-slate-600" style="border:none">
+                      <span class="w-6 h-6 bg-purple-500 rounded flex items-center justify-center text-white text-xs">☑</span> מרובה
+                    </div>
+                  </div>
+
+                  <div class="mb-2">
+                    <div class="px-2 py-1 text-xs text-slate-400 font-semibold uppercase tracking-wider">⭐ מיוחד</div>
+                    <div class="palette-item flex items-center gap-2 px-2 py-2 rounded text-slate-200 text-sm hover:bg-slate-600" style="border:none">
+                      <span class="w-6 h-6 bg-amber-500 rounded flex items-center justify-center text-white text-xs">📎</span> קובץ
+                    </div>
+                    <div class="palette-item flex items-center gap-2 px-2 py-2 rounded text-slate-200 text-sm hover:bg-slate-600" style="border:none">
+                      <span class="w-6 h-6 bg-amber-500 rounded flex items-center justify-center text-white text-xs">📋</span> הצהרה
+                    </div>
+                    <div class="palette-item flex items-center gap-2 px-2 py-2 rounded text-slate-200 text-sm hover:bg-slate-600" style="border:none">
+                      <span class="w-6 h-6 bg-red-500 rounded flex items-center justify-center text-white text-xs">✍</span> חתימה
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Canvas B -->
+              <div class="flex-1 overflow-y-auto custom-scroll p-5" id="canvas-b">
+                <div class="max-w-2xl mx-auto">
+                  <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+                    <div class="bg-blue-50 border-b border-blue-100 px-4 py-2.5 flex items-center justify-between">
+                      <span class="text-xs font-semibold text-blue-700">תצוגת עריכה — {טופס בקשה לאישור מחקר}</span>
+                      <div class="flex gap-2 text-xs">
+                        <button class="text-blue-600 hover:underline">סדר מחדש</button>
+                        <button class="text-blue-600 hover:underline">נקה הכל</button>
+                      </div>
+                    </div>
+
+                    <div class="p-4 space-y-3">
+                      <!-- Field 1 B - selected -->
+                      <div class="canvas-field selected border-2 border-blue-400 rounded-xl p-3 bg-blue-50/30" onclick="selectField(this, 'f1-b')">
+                        <div class="flex items-center justify-between mb-2">
+                          <div class="flex items-center gap-2">
+                            <span class="text-gray-300 text-sm cursor-grab">⠿⠿</span>
+                            <span class="text-xs font-bold text-white bg-blue-500 px-2 py-0.5 rounded">שדה טקסט</span>
+                            <span class="text-xs text-red-500 font-medium">• חובה</span>
+                          </div>
+                          <div class="flex gap-2">
+                            <button class="text-xs text-blue-500 hover:text-blue-700 bg-blue-50 px-2 py-1 rounded border border-blue-200">ערוך</button>
+                            <button class="text-xs text-red-400 hover:text-red-600 bg-red-50 px-2 py-1 rounded border border-red-200">מחק</button>
+                          </div>
+                        </div>
+                        <p class="font-semibold text-gray-800 text-sm">כותרת המחקר <span class="text-gray-400 font-normal text-xs">/ Research Title</span></p>
+                        <div class="mt-2 h-8 bg-white rounded-lg border border-gray-200"></div>
+                      </div>
+
+                      <!-- Field 2 B -->
+                      <div class="canvas-field border border-gray-200 rounded-xl p-3 bg-white hover:border-blue-300" onclick="selectField(this, 'f2-b')">
+                        <div class="flex items-center justify-between mb-2">
+                          <div class="flex items-center gap-2">
+                            <span class="text-gray-300 text-sm cursor-grab">⠿⠿</span>
+                            <span class="text-xs font-bold text-white bg-purple-500 px-2 py-0.5 rounded">רשימה נפתחת</span>
+                            <span class="text-xs text-red-500 font-medium">• חובה</span>
+                          </div>
+                          <div class="flex gap-2">
+                            <button class="text-xs text-blue-500 bg-blue-50 px-2 py-1 rounded border border-blue-200 opacity-0 group-hover:opacity-100">ערוך</button>
+                            <button class="text-xs text-red-400 bg-red-50 px-2 py-1 rounded border border-red-200 opacity-0 group-hover:opacity-100">מחק</button>
+                          </div>
+                        </div>
+                        <p class="font-semibold text-gray-800 text-sm">סוג המחקר <span class="text-gray-400 font-normal text-xs">/ Research Type</span></p>
+                        <div class="mt-2 flex items-center justify-between h-8 bg-gray-50 rounded-lg border border-gray-200 px-3">
+                          <span class="text-xs text-gray-400">3 אפשרויות</span>
+                          <span class="text-gray-400 text-xs">▾</span>
+                        </div>
+                      </div>
+
+                      <!-- Field 3 B -->
+                      <div class="canvas-field border border-gray-200 rounded-xl p-3 bg-white" onclick="selectField(this, 'f3-b')">
+                        <div class="flex items-center gap-2 mb-2">
+                          <span class="text-gray-300 text-sm cursor-grab">⠿⠿</span>
+                          <span class="text-xs font-bold text-white bg-green-500 px-2 py-0.5 rounded">תאריך</span>
+                          <span class="text-xs text-red-500 font-medium">• חובה</span>
+                        </div>
+                        <p class="font-semibold text-gray-800 text-sm">תאריך תחילת המחקר <span class="text-gray-400 font-normal text-xs">/ Research Start Date</span></p>
+                      </div>
+
+                      <!-- Drop zone B -->
+                      <div class="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center">
+                        <p class="text-slate-300 text-sm">גרור שדה מהלוח או</p>
+                        <button class="mt-1 text-blue-600 text-xs hover:underline font-medium">+ הוסף שדה</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Settings B - Accordion -->
+              <div class="w-64 bg-white border-r flex flex-col shrink-0">
+                <div class="bg-blue-700 text-white px-3 py-2.5">
+                  <p class="text-xs font-bold uppercase tracking-wide">⚙️ הגדרות שדה</p>
+                  <p class="text-xs text-blue-200 mt-0.5">כותרת המחקר (שדה טקסט)</p>
+                </div>
+                <div class="flex-1 overflow-y-auto custom-scroll">
+                  <!-- Section 1: Texts -->
+                  <div class="border-b">
+                    <button class="w-full flex items-center justify-between px-3 py-2.5 text-xs font-semibold text-gray-700 hover:bg-gray-50" onclick="toggleAccordion('acc-b1')">
+                      <span>📝 תוויות</span> <span id="acc-b1-arrow">▾</span>
+                    </button>
+                    <div id="acc-b1" class="px-3 pb-3 space-y-2">
+                      <div>
+                        <label class="text-xs text-gray-500">עברית *</label>
+                        <input class="w-full text-sm border border-gray-200 rounded px-2.5 py-1.5 mt-0.5 focus:outline-none focus:border-blue-400" value="כותרת המחקר">
+                      </div>
+                      <div>
+                        <label class="text-xs text-gray-500">English *</label>
+                        <input class="w-full text-sm border border-gray-200 rounded px-2.5 py-1.5 mt-0.5 focus:outline-none focus:border-blue-400 text-left" dir="ltr" value="Research Title">
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Section 2: Validation -->
+                  <div class="border-b">
+                    <button class="w-full flex items-center justify-between px-3 py-2.5 text-xs font-semibold text-gray-700 hover:bg-gray-50" onclick="toggleAccordion('acc-b2')">
+                      <span>✅ ולידציה</span> <span id="acc-b2-arrow">▴</span>
+                    </button>
+                    <div id="acc-b2" class="hidden px-3 pb-3 space-y-2">
+                      <div class="flex items-center justify-between">
+                        <span class="text-xs text-gray-600">שדה חובה</span>
+                        <input type="checkbox" checked class="w-4 h-4 accent-blue-600">
+                      </div>
+                      <div class="grid grid-cols-2 gap-2">
+                        <div>
+                          <label class="text-xs text-gray-500">מינ׳</label>
+                          <input class="w-full text-sm border border-gray-200 rounded px-2 py-1.5 mt-0.5 text-center" value="2">
+                        </div>
+                        <div>
+                          <label class="text-xs text-gray-500">מקס׳</label>
+                          <input class="w-full text-sm border border-gray-200 rounded px-2 py-1.5 mt-0.5 text-center" value="200">
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Section 3: Conditions -->
+                  <div class="border-b">
+                    <button class="w-full flex items-center justify-between px-3 py-2.5 text-xs font-semibold text-gray-700 hover:bg-gray-50" onclick="toggleAccordion('acc-b3')">
+                      <span>🔀 לוגיקה מותנית</span> <span id="acc-b3-arrow">▴</span>
+                    </button>
+                    <div id="acc-b3" class="hidden px-3 pb-3">
+                      <button class="text-xs text-blue-600 hover:underline">+ הוסף תנאי הצגה</button>
+                    </div>
+                  </div>
+                </div>
+                <div class="p-3 bg-gray-50 border-t flex gap-2">
+                  <button class="flex-1 py-1.5 text-xs border border-gray-200 rounded-lg text-gray-600">ביטול</button>
+                  <button class="flex-1 py-1.5 text-xs bg-blue-700 text-white rounded-lg hover:bg-blue-800">שמור</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mobile B -->
+        <div>
+          <p class="text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wide">📱 Mobile (375px)</p>
+          <div class="preview-frame max-w-[375px]" style="height: 720px; display: flex; flex-direction: column;">
+            <!-- Header B Mobile - Bold -->
+            <div class="bg-blue-900 text-white px-3 py-3 shrink-0">
+              <div class="flex items-center justify-between mb-1">
+                <button class="text-blue-300 text-sm">← ספרייה</button>
+                <button class="bg-amber-400 text-amber-900 px-3 py-1 rounded text-xs font-bold">🚀 פרסם</button>
+              </div>
+              <p class="font-bold text-sm">טופס בקשה לאישור מחקר</p>
+              <div class="flex items-center gap-2 mt-1">
+                <span class="text-xs bg-amber-400 text-amber-900 px-1.5 rounded font-bold">טיוטה</span>
+                <span class="text-blue-300 text-xs">4 שדות</span>
+              </div>
+            </div>
+
+            <!-- Tabs B Mobile -->
+            <div class="grid grid-cols-3 bg-blue-800 shrink-0">
+              <button class="py-2 text-xs text-white font-bold border-b-2 border-amber-400" onclick="mobileBTab('palette', this)">לוח שדות</button>
+              <button class="py-2 text-xs text-blue-300" onclick="mobileBTab('form', this)">טופס</button>
+              <button class="py-2 text-xs text-blue-300" onclick="mobileBTab('props', this)">הגדרות</button>
+            </div>
+
+            <!-- Palette B mobile -->
+            <div id="mb-palette" class="flex-1 overflow-y-auto bg-slate-800 p-2 space-y-1">
+              <div class="palette-item flex items-center gap-2 px-2 py-2.5 rounded text-slate-200 text-sm" style="border:none; background:#334155">
+                <span class="w-6 h-6 bg-blue-500 rounded flex items-center justify-center text-white text-xs">T</span> שדה טקסט
+              </div>
+              <div class="palette-item flex items-center gap-2 px-2 py-2.5 rounded text-slate-200 text-sm" style="border:none; background:#334155">
+                <span class="w-6 h-6 bg-blue-500 rounded flex items-center justify-center text-white text-xs">¶</span> אזור טקסט
+              </div>
+              <div class="palette-item flex items-center gap-2 px-2 py-2.5 rounded text-slate-200 text-sm" style="border:none; background:#334155">
+                <span class="w-6 h-6 bg-purple-500 rounded flex items-center justify-center text-white text-xs">▾</span> רשימה נפתחת
+              </div>
+              <div class="palette-item flex items-center gap-2 px-2 py-2.5 rounded text-slate-200 text-sm" style="border:none; background:#334155">
+                <span class="w-6 h-6 bg-amber-500 rounded flex items-center justify-center text-white text-xs">📎</span> קובץ
+              </div>
+            </div>
+            <div id="mb-form" class="hidden flex-1 overflow-y-auto p-3 bg-slate-100 space-y-2">
+              <div class="bg-white rounded-xl border-2 border-blue-400 p-3">
+                <span class="text-xs font-bold text-white bg-blue-500 px-2 rounded">שדה טקסט</span>
+                <p class="font-semibold text-sm mt-1">כותרת המחקר</p>
+              </div>
+              <div class="bg-white rounded-xl border border-gray-200 p-3">
+                <span class="text-xs font-bold text-white bg-purple-500 px-2 rounded">רשימה</span>
+                <p class="font-semibold text-sm mt-1">סוג המחקר</p>
+              </div>
+            </div>
+            <div id="mb-props" class="hidden flex-1 overflow-y-auto p-3 space-y-3">
+              <p class="text-sm text-gray-500 text-center pt-4">בחר שדה מהטופס</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /tab-b -->
+
+
+    <!-- ═══════════════════════════════════════════════════════
+         OPTION C — Compact & Efficient
+         Split-screen, dense, inline editing, floating toolbar
+    ═══════════════════════════════════════════════════════ -->
+    <div id="tab-c" class="tab-content">
+      <div class="mb-3 p-3 bg-green-50 rounded-lg border border-green-200 text-sm text-green-800">
+        <strong>C — Compact &amp; Efficient:</strong> מסך מפוצל: חצי שמאל = לוח שדות + הגדרות (tabs), חצי ימין = תצוגה מקדימה בזמן אמת. עריכה inline בתוך הקנבס. מיועד למזכירה מנוסה.
+      </div>
+
+      <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+        <!-- Desktop C -->
+        <div class="xl:col-span-2">
+          <p class="text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wide">💻 Desktop</p>
+          <div class="preview-frame" style="height: 720px; display: flex; flex-direction: column;">
+
+            <!-- Compact Top Bar C -->
+            <div class="bg-white border-b px-4 py-2 flex items-center gap-3 shrink-0">
+              <button class="text-gray-400 hover:text-gray-600 text-xs">← חזרה</button>
+              <div class="h-4 w-px bg-gray-200"></div>
+              <input class="text-sm font-semibold border-0 focus:outline-none text-gray-800" value="טופס בקשה לאישור מחקר" style="width: 260px;">
+              <span class="text-xs bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded">טיוטה · v1</span>
+              <div class="flex-1"></div>
+              <!-- Compact action buttons -->
+              <div class="flex items-center gap-1">
+                <kbd class="text-xs bg-gray-100 border border-gray-300 rounded px-1.5 py-0.5 text-gray-500 font-mono">⌘Z</kbd>
+                <kbd class="text-xs bg-gray-100 border border-gray-300 rounded px-1.5 py-0.5 text-gray-500 font-mono">⌘Y</kbd>
+                <div class="w-px h-4 bg-gray-200 mx-1"></div>
+                <button class="text-xs px-2.5 py-1.5 text-gray-600 hover:bg-gray-100 rounded border border-gray-200">👁 Preview</button>
+                <button class="text-xs px-2.5 py-1.5 text-gray-600 hover:bg-gray-100 rounded border border-gray-200">💾 שמור</button>
+                <button class="text-xs px-3 py-1.5 bg-blue-700 text-white rounded hover:bg-blue-800 font-medium">🚀 פרסם</button>
+              </div>
+            </div>
+
+            <!-- Split Body C -->
+            <div class="flex flex-1 overflow-hidden">
+
+              <!-- Left Panel: Palette + Settings (tabbed) -->
+              <div class="w-72 border-l flex flex-col shrink-0 bg-white">
+                <!-- Left tabs -->
+                <div class="flex border-b shrink-0">
+                  <button class="flex-1 py-2 text-xs font-medium border-b-2 border-blue-600 text-blue-600" onclick="cLeftTab('cleft-palette', this)">📦 שדות</button>
+                  <button class="flex-1 py-2 text-xs text-gray-500 hover:text-gray-700" onclick="cLeftTab('cleft-settings', this)">⚙️ הגדרות</button>
+                </div>
+
+                <!-- Palette tab C -->
+                <div id="cleft-palette" class="flex-1 overflow-y-auto custom-scroll p-2">
+                  <div class="grid grid-cols-2 gap-1">
+                    <div class="palette-item flex flex-col items-center justify-center gap-1 p-2 rounded-lg border border-gray-200 text-center text-xs text-gray-600 hover:border-blue-400">
+                      <span class="text-xl">✏️</span> שדה טקסט
+                    </div>
+                    <div class="palette-item flex flex-col items-center justify-center gap-1 p-2 rounded-lg border border-gray-200 text-center text-xs text-gray-600 hover:border-blue-400">
+                      <span class="text-xl">📝</span> אזור טקסט
+                    </div>
+                    <div class="palette-item flex flex-col items-center justify-center gap-1 p-2 rounded-lg border border-gray-200 text-center text-xs text-gray-600 hover:border-blue-400">
+                      <span class="text-xl">📅</span> תאריך
+                    </div>
+                    <div class="palette-item flex flex-col items-center justify-center gap-1 p-2 rounded-lg border border-gray-200 text-center text-xs text-gray-600 hover:border-blue-400">
+                      <span class="text-xl">🔢</span> מספר
+                    </div>
+                    <div class="palette-item flex flex-col items-center justify-center gap-1 p-2 rounded-lg border border-gray-200 text-center text-xs text-gray-600 hover:border-blue-400">
+                      <span class="text-xl">⬇️</span> רשימה
+                    </div>
+                    <div class="palette-item flex flex-col items-center justify-center gap-1 p-2 rounded-lg border border-gray-200 text-center text-xs text-gray-600 hover:border-blue-400">
+                      <span class="text-xl">🔘</span> בחירה יחידה
+                    </div>
+                    <div class="palette-item flex flex-col items-center justify-center gap-1 p-2 rounded-lg border border-gray-200 text-center text-xs text-gray-600 hover:border-blue-400">
+                      <span class="text-xl">☑️</span> מרובה
+                    </div>
+                    <div class="palette-item flex flex-col items-center justify-center gap-1 p-2 rounded-lg border border-gray-200 text-center text-xs text-gray-600 hover:border-blue-400">
+                      <span class="text-xl">📎</span> קובץ
+                    </div>
+                    <div class="palette-item flex flex-col items-center justify-center gap-1 p-2 rounded-lg border border-gray-200 text-center text-xs text-gray-600 hover:border-blue-400">
+                      <span class="text-xl">📋</span> הצהרה
+                    </div>
+                    <div class="palette-item flex flex-col items-center justify-center gap-1 p-2 rounded-lg border border-gray-200 text-center text-xs text-gray-600 hover:border-blue-400">
+                      <span class="text-xl">✍️</span> חתימה
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Settings tab C (hidden) -->
+                <div id="cleft-settings" class="hidden flex-1 overflow-y-auto custom-scroll p-3 space-y-3">
+                  <div class="bg-blue-50 rounded-lg p-2 text-xs text-blue-700 font-medium">
+                    ✏️ כותרת המחקר — שדה טקסט
+                  </div>
+                  <div>
+                    <label class="text-xs font-medium text-gray-500">עברית</label>
+                    <input class="w-full text-sm border border-gray-200 rounded px-2.5 py-1.5 mt-0.5 focus:outline-none focus:border-blue-400" value="כותרת המחקר">
+                  </div>
+                  <div>
+                    <label class="text-xs font-medium text-gray-500">English</label>
+                    <input class="w-full text-sm border border-gray-200 rounded px-2.5 py-1.5 mt-0.5 focus:outline-none focus:border-blue-400 text-left" dir="ltr" value="Research Title">
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <input type="checkbox" checked id="req-c" class="accent-blue-600">
+                    <label for="req-c" class="text-xs text-gray-600">שדה חובה</label>
+                  </div>
+                  <div class="grid grid-cols-2 gap-2">
+                    <div>
+                      <label class="text-xs text-gray-500">מינ׳</label>
+                      <input class="w-full text-xs border border-gray-200 rounded px-2 py-1.5 text-center" value="2">
+                    </div>
+                    <div>
+                      <label class="text-xs text-gray-500">מקס׳</label>
+                      <input class="w-full text-xs border border-gray-200 rounded px-2 py-1.5 text-center" value="200">
+                    </div>
+                  </div>
+                  <button class="w-full py-1.5 text-xs bg-blue-700 text-white rounded hover:bg-blue-800">✓ עדכן שדה</button>
+                </div>
+              </div>
+
+              <!-- Right Panel: Live Preview -->
+              <div class="flex-1 overflow-y-auto custom-scroll bg-gray-50">
+                <div class="bg-white border-b px-4 py-2 flex items-center justify-between">
+                  <span class="text-xs font-semibold text-gray-500">📄 תצוגה מקדימה — כפי שהחוקר יראה</span>
+                  <div class="flex gap-2 text-xs">
+                    <button class="text-blue-600 border-b-2 border-blue-600 pb-0.5 font-medium">עברית</button>
+                    <button class="text-gray-400">English</button>
+                  </div>
+                </div>
+
+                <div class="p-5 max-w-xl">
+                  <!-- Live preview renders actual form -->
+                  <div class="space-y-4">
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">כותרת המחקר <span class="text-red-500">*</span></label>
+                      <input class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-400" placeholder="הקלד את כותרת המחקר...">
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">סוג המחקר <span class="text-red-500">*</span></label>
+                      <select class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none">
+                        <option>בחר...</option>
+                        <option>קליני</option>
+                        <option>התנהגותי</option>
+                        <option>סקר</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">תאריך תחילת המחקר <span class="text-red-500">*</span></label>
+                      <input type="date" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none" dir="ltr">
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">תיאור המחקר <span class="text-red-500">*</span></label>
+                      <textarea class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none h-20 resize-none" placeholder="תאר את מטרות המחקר..."></textarea>
+                    </div>
+                  </div>
+                  <div class="mt-2 text-xs text-gray-400 text-center border-t pt-3">
+                    ← גרור שדות נוספים לכאן
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mobile C -->
+        <div>
+          <p class="text-xs font-semibold text-gray-400 mb-2 uppercase tracking-wide">📱 Mobile (375px)</p>
+          <div class="preview-frame max-w-[375px]" style="height: 720px; display: flex; flex-direction: column;">
+            <!-- Header C Mobile - Compact -->
+            <div class="bg-white border-b px-3 py-2 flex items-center justify-between shrink-0">
+              <button class="text-gray-400 text-xs">← חזרה</button>
+              <div class="text-center">
+                <p class="text-xs font-semibold text-gray-800">בונה טפסים</p>
+              </div>
+              <button class="text-xs bg-blue-700 text-white px-2.5 py-1 rounded font-medium">פרסם</button>
+            </div>
+
+            <!-- Tabs C Mobile -->
+            <div class="flex border-b bg-white shrink-0">
+              <button class="flex-1 py-2 text-xs border-b-2 border-blue-600 text-blue-600 font-medium" onclick="cMobileTab('cm-palette', this)">שדות</button>
+              <button class="flex-1 py-2 text-xs text-gray-500" onclick="cMobileTab('cm-settings', this)">הגדרות</button>
+              <button class="flex-1 py-2 text-xs text-gray-500" onclick="cMobileTab('cm-preview', this)">תצוגה</button>
+            </div>
+
+            <!-- Grid palette C mobile -->
+            <div id="cm-palette" class="flex-1 overflow-y-auto p-2">
+              <div class="grid grid-cols-3 gap-1">
+                <div class="palette-item flex flex-col items-center gap-1 p-2 rounded-lg border border-gray-200 text-center text-xs hover:border-blue-400">
+                  <span class="text-lg">✏️</span> טקסט
+                </div>
+                <div class="palette-item flex flex-col items-center gap-1 p-2 rounded-lg border border-gray-200 text-center text-xs hover:border-blue-400">
+                  <span class="text-lg">📝</span> אזור
+                </div>
+                <div class="palette-item flex flex-col items-center gap-1 p-2 rounded-lg border border-gray-200 text-center text-xs hover:border-blue-400">
+                  <span class="text-lg">📅</span> תאריך
+                </div>
+                <div class="palette-item flex flex-col items-center gap-1 p-2 rounded-lg border border-gray-200 text-center text-xs hover:border-blue-400">
+                  <span class="text-lg">⬇️</span> רשימה
+                </div>
+                <div class="palette-item flex flex-col items-center gap-1 p-2 rounded-lg border border-gray-200 text-center text-xs hover:border-blue-400">
+                  <span class="text-lg">🔘</span> בחירה
+                </div>
+                <div class="palette-item flex flex-col items-center gap-1 p-2 rounded-lg border border-gray-200 text-center text-xs hover:border-blue-400">
+                  <span class="text-lg">📎</span> קובץ
+                </div>
+                <div class="palette-item flex flex-col items-center gap-1 p-2 rounded-lg border border-gray-200 text-center text-xs hover:border-blue-400">
+                  <span class="text-lg">☑️</span> מרובה
+                </div>
+                <div class="palette-item flex flex-col items-center gap-1 p-2 rounded-lg border border-gray-200 text-center text-xs hover:border-blue-400">
+                  <span class="text-lg">📋</span> הצהרה
+                </div>
+                <div class="palette-item flex flex-col items-center gap-1 p-2 rounded-lg border border-gray-200 text-center text-xs hover:border-blue-400">
+                  <span class="text-lg">✍️</span> חתימה
+                </div>
+              </div>
+            </div>
+            <div id="cm-settings" class="hidden flex-1 overflow-y-auto p-3 space-y-3">
+              <p class="text-sm text-gray-400 text-center pt-6">בחר שדה לעריכה</p>
+            </div>
+            <div id="cm-preview" class="hidden flex-1 overflow-y-auto p-3 space-y-3">
+              <div>
+                <label class="text-xs font-medium text-gray-700">כותרת המחקר <span class="text-red-500">*</span></label>
+                <input class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1" placeholder="הקלד...">
+              </div>
+              <div>
+                <label class="text-xs font-medium text-gray-700">סוג המחקר <span class="text-red-500">*</span></label>
+                <select class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mt-1 bg-white">
+                  <option>בחר...</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Bottom save bar C -->
+            <div class="border-t bg-white px-3 py-2 flex items-center justify-between shrink-0">
+              <span class="text-xs text-gray-400">4 שדות · טיוטה</span>
+              <button class="text-xs bg-gray-100 border border-gray-200 px-3 py-1.5 rounded text-gray-600">💾 שמור</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /tab-c -->
+
+  </div><!-- /max-w -->
+
+
+  <script>
+    function showTab(id, event) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('active'); b.classList.add('text-gray-500'); });
+      document.getElementById('tab-' + id).classList.add('active');
+      event.target.classList.add('active');
+      event.target.classList.remove('text-gray-500');
+    }
+
+    // Option A: canvas field selection
+    function selectField(el, fieldId) {
+      document.querySelectorAll('#canvas-a .canvas-field').forEach(f => f.classList.remove('selected'));
+      document.querySelectorAll('#canvas-b .canvas-field').forEach(f => f.classList.remove('selected'));
+      el.classList.add('selected');
+    }
+    function selectPalette(el) {
+      el.style.background = '#eff6ff';
+      el.style.border = '1px solid #1e40af';
+      setTimeout(() => { el.style.background = ''; el.style.border = ''; }, 300);
+    }
+
+    // Option A: mobile tabs
+    function mobileTab(id, btn) {
+      ['mobile-fields','mobile-canvas','mobile-settings'].forEach(t => {
+        document.getElementById(t).classList.add('hidden');
+        document.getElementById(t).classList.remove('block');
+      });
+      document.getElementById('mobile-' + id).classList.remove('hidden');
+      document.querySelectorAll('.mobile-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+
+    // Option B: accordion
+    function toggleAccordion(id) {
+      const el = document.getElementById(id);
+      const arrow = document.getElementById(id + '-arrow');
+      el.classList.toggle('hidden');
+      arrow.textContent = el.classList.contains('hidden') ? '▴' : '▾';
+    }
+
+    // Option B: mobile tabs
+    function mobileBTab(id, btn) {
+      ['mb-palette','mb-form','mb-props'].forEach(t => {
+        const el = document.getElementById(t);
+        if (el) { el.classList.add('hidden'); el.style.display = 'none'; }
+      });
+      const target = document.getElementById(id);
+      if (target) { target.classList.remove('hidden'); target.style.display = 'block'; }
+      document.querySelectorAll('#tab-b .grid .py-2').forEach(b => {
+        b.classList.remove('text-white', 'font-bold', 'border-b-2', 'border-amber-400');
+        b.classList.add('text-blue-300');
+      });
+      btn.classList.add('text-white', 'font-bold', 'border-b-2', 'border-amber-400');
+      btn.classList.remove('text-blue-300');
+    }
+
+    // Option C: left tabs
+    function cLeftTab(id, btn) {
+      ['cleft-palette','cleft-settings'].forEach(t => {
+        const el = document.getElementById(t);
+        if (el) el.classList.add('hidden');
+      });
+      const target = document.getElementById(id);
+      if (target) target.classList.remove('hidden');
+      btn.parentElement.querySelectorAll('button').forEach(b => {
+        b.classList.remove('border-b-2','border-blue-600','text-blue-600','font-medium');
+        b.classList.add('text-gray-500');
+      });
+      btn.classList.add('border-b-2','border-blue-600','text-blue-600','font-medium');
+      btn.classList.remove('text-gray-500');
+    }
+
+    // Option C: mobile tabs
+    function cMobileTab(id, btn) {
+      ['cm-palette','cm-settings','cm-preview'].forEach(t => {
+        const el = document.getElementById(t);
+        if (el) el.classList.add('hidden');
+      });
+      const target = document.getElementById(id);
+      if (target) target.classList.remove('hidden');
+      btn.parentElement.querySelectorAll('button').forEach(b => {
+        b.classList.remove('border-b-2','border-blue-600','text-blue-600','font-medium');
+        b.classList.add('text-gray-500');
+      });
+      btn.classList.add('border-b-2','border-blue-600','text-blue-600','font-medium');
+      btn.classList.remove('text-gray-500');
+    }
+
+    function toggleRequired(btn) {
+      btn.classList.toggle('bg-blue-600');
+      btn.classList.toggle('bg-gray-300');
+    }
+  </script>
+</body>
+</html>

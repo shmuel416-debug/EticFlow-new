@@ -1,0 +1,166 @@
+/**
+ * EthicFlow — Sidebar Navigation
+ * Desktop: fixed side panel. Mobile: slide-in drawer via isOpen prop.
+ * Nav items filtered by user role.
+ * IS 5568: nav landmark, aria-current, min 44px targets, aria-hidden on icons.
+ */
+
+import { NavLink, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import { useAuth } from '../../context/AuthContext'
+import levLogo from '../../assets/LOGO.jpg'
+
+/** Navigation items — visible roles control who sees each link */
+const NAV_ITEMS = [
+  { key: 'dashboard',      icon: '🏠', path: '/dashboard',    roles: ['RESEARCHER','SECRETARY','REVIEWER','CHAIRMAN','ADMIN'] },
+  { key: 'mySubmissions',  icon: '📄', path: '/submissions',  roles: ['RESEARCHER'] },
+  { key: 'newSubmission',  icon: '📬', path: '/submissions/new', roles: ['RESEARCHER'] },
+  { key: 'allSubmissions', icon: '📋', path: '/submissions',       roles: ['SECRETARY','REVIEWER','CHAIRMAN','ADMIN'] },
+  { key: 'formLibrary',   icon: '📂', path: '/secretary/forms',  roles: ['SECRETARY','ADMIN'] },
+  { key: 'meetings',      icon: '📅', path: '/meetings',          roles: ['SECRETARY','CHAIRMAN','ADMIN'] },
+  { key: 'users',          icon: '👥', path: '/users',        roles: ['ADMIN'] },
+  { key: 'reports',        icon: '📊', path: '/reports',      roles: ['CHAIRMAN','ADMIN'] },
+  { key: 'settings',       icon: '⚙️', path: '/settings',    roles: ['RESEARCHER','SECRETARY','REVIEWER','CHAIRMAN','ADMIN'] },
+]
+
+/**
+ * @param {{ isOpen: boolean, onClose: () => void }} props
+ */
+export default function Sidebar({ isOpen, onClose }) {
+  const { t }    = useTranslation()
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
+
+  const visibleItems = NAV_ITEMS.filter(
+    (item) => user && item.roles.includes(user.role)
+  )
+
+  /** Split into main items and settings (last item) */
+  const mainItems     = visibleItems.filter((i) => i.key !== 'settings')
+  const settingsItem  = visibleItems.find((i)  => i.key === 'settings')
+
+  function handleLogout() {
+    logout()
+    navigate('/login')
+  }
+
+  const initials = user?.fullName?.charAt(0) ?? '?'
+
+  return (
+    <>
+      {/* Mobile overlay */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 z-30 md:hidden"
+          onClick={onClose}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Sidebar panel */}
+      <aside
+        className={`
+          fixed top-0 bottom-0 z-40 flex flex-col bg-white border-gray-100
+          transition-transform duration-200
+          md:static md:translate-x-0 md:border-s
+          ${isOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}
+        `}
+        style={{ width: '220px', insetInlineEnd: 0 }}
+        aria-label={t('nav.mainNavigation')}
+      >
+        {/* Logo */}
+        <div className="p-4 border-b border-gray-100 flex items-center gap-2">
+          <img src={levLogo} alt={t('common.institution')} className="h-7 w-auto" />
+          <div>
+            <p className="text-xs font-bold" style={{ color: 'var(--lev-navy)' }}>EthicFlow</p>
+            <p className="text-xs text-gray-600">{t('common.institution')}</p>
+          </div>
+          {/* Mobile close button */}
+          <button
+            onClick={onClose}
+            className="md:hidden ms-auto text-gray-500 hover:text-gray-800"
+            aria-label={t('pages.closeMenu')}
+            style={{ minWidth: '44px', minHeight: '44px' }}
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Nav items */}
+        <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto" aria-label={t('nav.mainNavigation')}>
+          {mainItems.map((item) => (
+            <NavLink
+              key={item.key}
+              to={item.path}
+              onClick={onClose}
+              style={({ isActive }) => ({
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                padding: '10px 14px',
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontWeight: isActive ? '600' : '500',
+                color: isActive ? 'var(--lev-navy)' : '#374151',
+                background: isActive ? '#cceef5' : 'transparent',
+                textDecoration: 'none',
+                minHeight: '44px',
+                transition: 'background 0.15s',
+              })}
+              aria-current={({ isActive }) => (isActive ? 'page' : undefined)}
+            >
+              <span aria-hidden="true">{item.icon}</span>
+              <span>{t(`nav.${item.key}`)}</span>
+            </NavLink>
+          ))}
+
+          {settingsItem && (
+            <div className="pt-3 mt-2 border-t border-gray-100">
+              <p className="text-xs text-gray-600 px-3 mb-1">{t('nav.system')}</p>
+              <NavLink
+                to={settingsItem.path}
+                onClick={onClose}
+                style={({ isActive }) => ({
+                  display: 'flex', alignItems: 'center', gap: '10px',
+                  padding: '10px 14px', borderRadius: '8px',
+                  fontSize: '14px', fontWeight: isActive ? '600' : '500',
+                  color: isActive ? 'var(--lev-navy)' : '#374151',
+                  background: isActive ? '#cceef5' : 'transparent',
+                  textDecoration: 'none', minHeight: '44px', transition: 'background 0.15s',
+                })}
+              >
+                <span aria-hidden="true">⚙️</span>
+                <span>{t('nav.settings')}</span>
+              </NavLink>
+            </div>
+          )}
+        </nav>
+
+        {/* User footer */}
+        <div className="p-3 border-t border-gray-100">
+          <div className="flex items-center gap-2 p-2 rounded-lg">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
+              style={{ background: 'var(--lev-navy)' }}
+              aria-hidden="true">
+              {initials}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold truncate" style={{ color: 'var(--lev-navy)' }}>
+                {user?.fullName}
+              </p>
+              <p className="text-xs text-gray-600">{t(`roles.${user?.role}`)}</p>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="text-xs text-gray-600 hover:text-red-600 transition-colors flex-shrink-0"
+              style={{ minHeight: '44px', minWidth: '44px' }}
+              aria-label={t('common.logout')}
+            >
+              {t('common.logout')}
+            </button>
+          </div>
+        </div>
+      </aside>
+    </>
+  )
+}

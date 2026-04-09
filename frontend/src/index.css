@@ -1,0 +1,44 @@
+@import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+/* Lev Academic Center brand tokens — IS 5568 compliant */
+:root {
+  --lev-teal:      #00AEC7;   /* decorative / large backgrounds only — 2.54:1, NOT for text */
+  --lev-navy:      #1E2A72;   /* buttons, headings, primary text — 12.8:1 ✅ */
+  --lev-purple:    #7B2D6E;   /* badges, accents — 8.6:1 ✅ */
+  --lev-teal-text: #006680;   /* teal-tone links & text — 6.52:1 ✅ */
+}
+
+* {
+  font-family: 'Heebo', sans-serif;
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #f9fafb;
+}
+
+/* WCAG 2.1 AA focus indicators */
+:focus-visible {
+  outline: 3px solid var(--lev-navy);
+  outline-offset: 2px;
+}
+
+/* Skip link — IS 5568 mandatory */
+.skip-link {
+  position: absolute;
+  inset-inline-start: -9999px;
+  top: 0;
+  background: var(--lev-navy);
+  color: white;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  z-index: 9999;
+  border-radius: 0 0 8px 0;
+  text-decoration: none;
+}
+.skip-link:focus {
+  inset-inline-start: 0;
+}

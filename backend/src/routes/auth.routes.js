@@ -12,7 +12,7 @@ import { z } from 'zod'
 import { validate } from '../middleware/validate.js'
 import { authenticate } from '../middleware/auth.js'
 import { auditLog } from '../middleware/audit.js'
-import { loginLimiter } from '../middleware/rateLimit.js'
+import { loginLimiter, forgotPasswordLimiter, registerLimiter } from '../middleware/rateLimit.js'
 import * as controller from '../controllers/auth.controller.js'
 
 const router = Router()
@@ -41,6 +41,7 @@ const resetSchema = z.object({
 
 router.post(
   '/register',
+  registerLimiter,
   validate(registerSchema),
   controller.register,
   auditLog('auth.register', 'User')
@@ -58,6 +59,7 @@ router.get('/me', authenticate, controller.me)
 
 router.post(
   '/forgot-password',
+  forgotPasswordLimiter,
   validate(forgotSchema),
   controller.forgotPassword
 )

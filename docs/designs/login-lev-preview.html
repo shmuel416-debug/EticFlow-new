@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EthicFlow — Lev Academic Center Preview</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Heebo', sans-serif; }
+
+    /* ── Lev Brand Colors ─────────────────────────────
+       Teal   #00AEC7  — decorative only (2.54:1 on white — NOT for text/buttons)
+       Navy   #1E2A72  — buttons, headings, sidebar      (12.8:1 on white ✅)
+       Purple #7B2D6E  — badges, accents                 (8.6:1 on white  ✅)
+       TealText #006680 — links & text in teal tone      (6.52:1 on white ✅)
+       [FIX-A11Y] teal cannot be used as text or button bg — contrast 2.54:1 (fails 4.5:1)
+    ────────────────────────────────────────────────── */
+    :root {
+      --lev-teal:      #00AEC7;   /* decorative / large areas only */
+      --lev-navy:      #1E2A72;   /* buttons, headings — 12.8:1 ✅ */
+      --lev-purple:    #7B2D6E;   /* badges — 8.6:1 ✅ */
+      --lev-teal-text: #006680;   /* teal-tone text & links — 6.52:1 ✅ */
+      --lev-navy-dark: #151E56;
+    }
+
+    .preview-frame {
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.09);
+    }
+
+    /* Skip link — IS 5568 */
+    .skip-link {
+      position: absolute;
+      inset-inline-start: -9999px;
+      top: 0;
+      background: var(--lev-navy);
+      color: white;
+      padding: 8px 16px;
+      font-size: 14px;
+      font-weight: 600;
+      z-index: 9999;
+    }
+    .skip-link:focus { inset-inline-start: 0; }
+
+    /* [FIX-A11Y] Focus indicators — navy (12.8:1) not teal (2.54:1 — fails) */
+    button:focus-visible, a:focus-visible, input:focus-visible {
+      outline: 3px solid var(--lev-navy);
+      outline-offset: 2px;
+    }
+
+    /* Nav links */
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #374151;
+      text-decoration: none;
+      transition: all 0.15s;
+      min-height: 44px;
+    }
+    /* [FIX-A11Y] navy text (12.8:1) not teal-dark (3.79:1 — fails 4.5:1) */
+    .nav-link:hover { background: #e8f7fb; color: var(--lev-navy); }
+    .nav-link.active { background: #cceef5; color: var(--lev-navy); font-weight: 600; }
+
+    /* Status badges */
+    .badge { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 99px; font-size: 12px; font-weight: 600; }
+
+    /* Tab toggle — [FIX-A11Y] border teal (decorative), text navy for contrast */
+    .tab-btn { border-bottom: 3px solid transparent; transition: all 0.2s; }
+    .tab-btn.active { border-bottom-color: var(--lev-teal); color: var(--lev-navy); font-weight: 700; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* Gradient using Lev colors */
+    .lev-gradient {
+      background: linear-gradient(135deg, var(--lev-navy) 0%, #2B3A8F 50%, var(--lev-purple) 100%);
+    }
+
+    /* Input focus */
+    .lev-input:focus {
+      outline: none;
+      border-color: var(--lev-teal);
+      box-shadow: 0 0 0 3px rgba(0,174,199,0.15);
+    }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+  <a href="#main-content" class="skip-link">דלג לתוכן הראשי</a>
+
+  <!-- Header -->
+  <div class="sticky top-0 bg-white border-b z-50 shadow-sm">
+    <div class="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <img src="LOGO.jpg" alt="לוגו המרכז האקדמי לב" class="h-8 w-auto"/>
+        <div>
+          <span class="font-bold text-sm" style="color:var(--lev-navy)">EthicFlow</span>
+          <span class="text-gray-400 text-xs mx-2">|</span>
+          <span class="text-gray-500 text-xs">תצוגה מקדימה — Option A + צבעי המרכז האקדמי לב</span>
+        </div>
+      </div>
+      <div class="flex gap-2" role="tablist" aria-label="בחירת מסך">
+        <button role="tab" aria-selected="true" aria-controls="view-login" class="tab-btn active py-2 px-3 text-sm" onclick="showTab('login', this)">מסך כניסה</button>
+        <button role="tab" aria-selected="false" aria-controls="view-layout" class="tab-btn py-2 px-3 text-sm text-gray-500" onclick="showTab('layout', this)">Layout + Sidebar</button>
+        <button role="tab" aria-selected="false" aria-controls="view-mobile" class="tab-btn py-2 px-3 text-sm text-gray-500" onclick="showTab('mobile', this)">מובייל</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- [FIX-A11Y] tabindex="-1" allows skip link to move focus here -->
+  <main id="main-content" tabindex="-1" class="max-w-6xl mx-auto p-6 space-y-8">
+
+    <!-- ═══════════════════════════════════ -->
+    <!-- VIEW 1 — Login Page (Desktop)       -->
+    <!-- ═══════════════════════════════════ -->
+    <div id="view-login" class="tab-content active">
+      <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">💻 מסך כניסה — Desktop (1280px)</p>
+      <div class="preview-frame" style="height:580px; overflow:hidden;">
+        <div class="flex h-full">
+
+          <!-- Left branding panel -->
+          <div class="w-5/12 lev-gradient flex flex-col items-center justify-center p-12 text-white">
+            <div class="mb-8 text-center">
+              <!-- Logo mark from triangles -->
+              <div class="flex justify-center mb-5">
+                <img src="LOGO.jpg" alt="לוגו המרכז האקדמי לב" class="h-16 w-auto" style="filter:brightness(0) invert(1) opacity(0.95)"/>
+              </div>
+              <h1 class="text-2xl font-bold leading-tight">מערכת ועדת האתיקה</h1>
+              <p class="text-sm mt-1 opacity-80">המרכז האקדמי לב</p>
+            </div>
+            <div class="space-y-3 w-full max-w-xs">
+              <div class="flex items-center gap-3 rounded-xl p-3" style="background:rgba(255,255,255,0.1)">
+                <span aria-hidden="true" class="text-lg">📄</span>
+                <span class="text-sm">הגשת בקשות מחקר דיגיטלית</span>
+              </div>
+              <div class="flex items-center gap-3 rounded-xl p-3" style="background:rgba(255,255,255,0.1)">
+                <span aria-hidden="true" class="text-lg">⏱</span>
+                <span class="text-sm">מעקב SLA אוטומטי</span>
+              </div>
+              <div class="flex items-center gap-3 rounded-xl p-3" style="background:rgba(255,255,255,0.1)">
+                <span aria-hidden="true" class="text-lg">✍️</span>
+                <span class="text-sm">חתימות דיגיטליות מאובטחות</span>
+              </div>
+            </div>
+            <p class="text-xs opacity-50 mt-10">© 2026 המרכז האקדמי לב · כל הזכויות שמורות</p>
+          </div>
+
+          <!-- Right form panel -->
+          <div class="w-7/12 bg-white flex flex-col items-center justify-center p-12">
+            <div class="w-full max-w-sm">
+              <!-- [FIX-A11Y] gray-600 (5.74:1) replaces gray-400 (2.54:1 — fails) -->
+              <p class="text-xs text-gray-600 mb-1">המרכז האקדמי לב — ועדת האתיקה</p>
+              <h2 class="text-2xl font-bold mb-1" style="color:var(--lev-navy)">ברוכים הבאים</h2>
+              <p class="text-gray-600 text-sm mb-8">התחברות למערכת ניהול אישורי מחקר</p>
+
+              <!-- Error area -->
+              <div id="err-login" role="alert" aria-live="assertive"
+                class="hidden mb-4 bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-red-700 text-sm">
+                כתובת האימייל או הסיסמה שגויים. נסה שוב.
+              </div>
+
+              <form novalidate aria-label="טופס כניסה למערכת">
+                <div class="space-y-5">
+                  <div>
+                    <label for="email" class="block text-sm font-600 mb-1.5" style="color:var(--lev-navy)">כתובת אימייל</label>
+                    <input id="email" type="email" autocomplete="email" aria-required="true"
+                      class="lev-input w-full border border-gray-200 rounded-xl px-4 py-3 text-sm bg-gray-50"
+                      placeholder="name@lev.ac.il" value="cohen@lev.ac.il"/>
+                  </div>
+                  <div>
+                    <label for="pass" class="block text-sm font-600 mb-1.5" style="color:var(--lev-navy)">סיסמה</label>
+                    <input id="pass" type="password" autocomplete="current-password" aria-required="true"
+                      class="lev-input w-full border border-gray-200 rounded-xl px-4 py-3 text-sm bg-gray-50"
+                      placeholder="••••••••" value="123456"/>
+                  </div>
+                  <button type="submit"
+                    style="background:var(--lev-navy); min-height:44px;"
+                    class="w-full text-white rounded-xl py-3 font-600 text-sm hover:opacity-90 transition-opacity">
+                    כניסה למערכת
+                  </button>
+                </div>
+                <div class="mt-5 flex items-center justify-between">
+                  <a href="/forgot-password" class="text-sm hover:underline" style="color:var(--lev-teal-text)">שכחתי סיסמה</a>
+                  <div class="flex gap-2" role="group" aria-label="בחירת שפה">
+                    <button aria-label="עברית" aria-pressed="true" type="button"
+                      style="min-width:44px;min-height:44px;background:var(--lev-navy);color:white"
+                      class="px-3 rounded-lg text-xs font-600">עב</button>
+                    <button aria-label="English" aria-pressed="false" type="button"
+                      style="min-width:44px;min-height:44px"
+                      class="px-3 rounded-lg text-xs border border-gray-200 text-gray-500 hover:bg-gray-50">EN</button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════ -->
+    <!-- VIEW 2 — App Layout + Sidebar       -->
+    <!-- ═══════════════════════════════════ -->
+    <div id="view-layout" class="tab-content">
+      <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">💻 Layout + Sidebar — Desktop (1280px)</p>
+      <div class="preview-frame" style="height:540px; overflow:hidden;">
+        <div class="flex h-full bg-gray-50">
+
+          <!-- Sidebar -->
+          <div class="bg-white border-l border-gray-100 flex flex-col" style="min-width:220px; width:220px">
+            <!-- Logo area -->
+            <div class="p-4 border-b border-gray-100">
+              <div class="flex items-center gap-2">
+                <img src="LOGO.jpg" alt="לוגו המרכז האקדמי לב" class="h-7 w-auto"/>
+                <div>
+                  <p class="text-xs font-bold" style="color:var(--lev-navy)">EthicFlow</p>
+                  <!-- [FIX-A11Y] gray-600 (5.74:1) not gray-400 (2.54:1) -->
+                  <p class="text-xs text-gray-600">המרכז האקדמי לב</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Nav -->
+            <nav class="flex-1 p-3 space-y-0.5 overflow-y-auto" aria-label="ניווט ראשי">
+              <a href="#" class="nav-link active" aria-current="page">
+                <span aria-hidden="true">🏠</span><span>דשבורד</span>
+              </a>
+              <a href="#" class="nav-link">
+                <span aria-hidden="true">📄</span><span>הגשות שלי</span>
+              </a>
+              <a href="#" class="nav-link">
+                <span aria-hidden="true">📬</span><span>הגשה חדשה</span>
+              </a>
+              <a href="#" class="nav-link">
+                <span aria-hidden="true">🔔</span><span>התראות</span>
+                <span class="mr-auto text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold"
+                  style="background:var(--lev-purple)" aria-label="3 התראות">3</span>
+              </a>
+              <div class="pt-3 mt-2 border-t border-gray-100">
+                <p class="text-xs text-gray-600 px-3 mb-1">מערכת</p>
+                <a href="#" class="nav-link"><span aria-hidden="true">⚙️</span><span>הגדרות</span></a>
+              </div>
+            </nav>
+
+            <!-- User profile -->
+            <div class="p-3 border-t border-gray-100">
+              <div class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 cursor-pointer">
+                <div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold"
+                  style="background:var(--lev-navy)">ד</div>
+                <div>
+                  <p class="text-xs font-600" style="color:var(--lev-navy)">ד"ר דנה כהן</p>
+                  <p class="text-xs text-gray-600">חוקרת</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Main content -->
+          <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- Top header -->
+            <header class="bg-white border-b border-gray-100 px-6 py-3 flex items-center justify-between">
+              <h1 class="text-base font-bold" style="color:var(--lev-navy)">דשבורד חוקר</h1>
+              <div class="flex items-center gap-3">
+                <div class="flex gap-1" role="group" aria-label="בחירת שפה">
+                  <button aria-label="עברית" aria-pressed="true"
+                    style="background:var(--lev-navy);color:white;min-height:32px"
+                    class="px-3 rounded text-xs font-600">עב</button>
+                  <button aria-label="English" aria-pressed="false"
+                    style="min-height:32px"
+                    class="px-3 rounded text-xs border border-gray-200 text-gray-500">EN</button>
+                </div>
+                <!-- [FIX-A11Y] gray-600 (5.74:1) not gray-400 (2.54:1) -->
+                <button class="text-xs text-gray-600 hover:text-red-600 transition-colors" style="min-height:32px">יציאה</button>
+              </div>
+            </header>
+
+            <!-- Dashboard content -->
+            <main class="flex-1 p-6 overflow-auto">
+              <!-- Stats row -->
+              <div class="grid grid-cols-3 gap-4 mb-6">
+                <!-- [FIX-A11Y] gray-600 (5.74:1) · amber-600 (4.52:1) · green-700 (5.5:1) replace failing gray-400/amber-400/green-500 -->
+                <div class="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+                  <p class="text-xs text-gray-600">בקשות פעילות</p>
+                  <p class="text-3xl font-bold mt-1" style="color:var(--lev-navy)">3</p>
+                  <p class="text-xs mt-1" style="color:var(--lev-teal-text)">↑ 1 החודש</p>
+                </div>
+                <div class="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+                  <p class="text-xs text-gray-600">ממתינות לתיקון</p>
+                  <p class="text-3xl font-bold mt-1 text-amber-600">1</p>
+                  <p class="text-xs text-amber-600 mt-1">דחוף — SLA ב-3 ימים</p>
+                </div>
+                <div class="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+                  <p class="text-xs text-gray-600">אושרו השנה</p>
+                  <p class="text-3xl font-bold mt-1 text-green-700">5</p>
+                  <p class="text-xs text-green-700 mt-1">ממוצע 18 יום לאישור</p>
+                </div>
+              </div>
+
+              <!-- Submissions table -->
+              <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                <div class="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between">
+                  <h2 class="text-sm font-bold" style="color:var(--lev-navy)">הגשות אחרונות</h2>
+                  <a href="#" class="text-xs hover:underline" style="color:var(--lev-teal-text)">הצג הכל</a>
+                </div>
+                <div class="divide-y divide-gray-50">
+                  <div class="px-5 py-3.5 flex items-center justify-between">
+                    <div>
+                      <p class="text-sm font-500">מחקר על תגובות חיסון — שלב ב׳</p>
+                      <!-- [FIX-A11Y] dir="ltr" on ETH code (LTR content), gray-600 for contrast -->
+                      <p class="text-xs text-gray-600 mt-0.5"><span dir="ltr">ETH-2026-001</span> · הוגש 01/03/2026</p>
+                    </div>
+                    <!-- [FIX-A11Y] navy bg (12.8:1 with white) not teal (2.54:1) -->
+                    <span class="badge text-white text-xs" style="background:var(--lev-navy)">בבדיקה</span>
+                  </div>
+                  <div class="px-5 py-3.5 flex items-center justify-between">
+                    <div>
+                      <p class="text-sm font-500">בדיקת תרופה ניסיונית — פאזה 1</p>
+                      <p class="text-xs text-gray-600 mt-0.5"><span dir="ltr">ETH-2026-002</span> · הוגש 15/02/2026</p>
+                    </div>
+                    <span class="badge bg-amber-100 text-amber-700">תיקון נדרש</span>
+                  </div>
+                  <div class="px-5 py-3.5 flex items-center justify-between">
+                    <div>
+                      <p class="text-sm font-500">סקר עמדות סטודנטים — מדיה חברתית</p>
+                      <p class="text-xs text-gray-600 mt-0.5"><span dir="ltr">ETH-2026-003</span> · הוגש 10/01/2026</p>
+                    </div>
+                    <span class="badge bg-green-100 text-green-700">אושר</span>
+                  </div>
+                </div>
+              </div>
+
+            </main>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════ -->
+    <!-- VIEW 3 — Mobile                     -->
+    <!-- ═══════════════════════════════════ -->
+    <div id="view-mobile" class="tab-content">
+      <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">📱 מסך כניסה + Layout — Mobile (375px)</p>
+      <div class="flex gap-6 flex-wrap">
+
+        <!-- Mobile login -->
+        <div>
+          <p class="text-xs text-gray-500 mb-2">כניסה</p>
+          <div class="preview-frame" style="width:375px; height:600px; overflow:hidden;">
+            <div class="h-full bg-white flex flex-col">
+              <!-- Header strip -->
+              <div class="lev-gradient px-6 pt-8 pb-7 text-white text-center">
+                <img src="LOGO.jpg" alt="לוגו המרכז האקדמי לב" class="h-12 w-auto mx-auto mb-3"
+                  style="filter:brightness(0) invert(1) opacity(0.95)"/>
+                <h1 class="text-lg font-bold">מערכת ועדת האתיקה</h1>
+                <p class="text-xs opacity-70 mt-0.5">המרכז האקדמי לב</p>
+              </div>
+              <!-- Form -->
+              <div class="flex-1 px-6 pt-7 space-y-4">
+                <div>
+                  <label for="m-email" class="block text-sm font-600 mb-1.5" style="color:var(--lev-navy)">אימייל</label>
+                  <input id="m-email" type="email" autocomplete="email" aria-required="true"
+                    class="lev-input w-full border border-gray-200 rounded-xl px-4 py-3 text-sm bg-gray-50"
+                    value="cohen@lev.ac.il"/>
+                </div>
+                <div>
+                  <label for="m-pass" class="block text-sm font-600 mb-1.5" style="color:var(--lev-navy)">סיסמה</label>
+                  <input id="m-pass" type="password" autocomplete="current-password" aria-required="true"
+                    class="lev-input w-full border border-gray-200 rounded-xl px-4 py-3 text-sm bg-gray-50"
+                    value="123456"/>
+                </div>
+                <button type="submit" style="background:var(--lev-navy);min-height:44px"
+                  class="w-full text-white rounded-xl py-3 font-600 text-sm">
+                  כניסה למערכת
+                </button>
+                <a href="#" class="block text-center text-sm hover:underline" style="color:var(--lev-teal-text)">
+                  שכחתי סיסמה
+                </a>
+                <div class="flex gap-2 justify-center pt-2">
+                  <button aria-label="עברית" aria-pressed="true" type="button"
+                    style="min-width:44px;min-height:44px;background:var(--lev-navy);color:white"
+                    class="px-4 rounded-lg text-xs font-600">עב</button>
+                  <button aria-label="English" aria-pressed="false" type="button"
+                    style="min-width:44px;min-height:44px"
+                    class="px-4 rounded-lg text-xs border border-gray-200 text-gray-500">EN</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mobile dashboard -->
+        <div>
+          <p class="text-xs text-gray-500 mb-2">דשבורד (אחרי כניסה)</p>
+          <div class="preview-frame" style="width:375px; height:600px; overflow:hidden;">
+            <div class="h-full bg-gray-50 flex flex-col">
+              <!-- Mobile top bar -->
+              <header class="bg-white border-b border-gray-100 px-4 py-3 flex items-center justify-between">
+                <button aria-label="פתח תפריט ניווט" style="min-width:44px;min-height:44px;color:var(--lev-navy)"
+                  class="flex items-center justify-center text-xl">☰</button>
+                <img src="LOGO.jpg" alt="לוגו המרכז האקדמי לב" class="h-7 w-auto"/>
+                <button aria-label="3 התראות" style="min-width:44px;min-height:44px;position:relative"
+                  class="flex items-center justify-center text-gray-500">
+                  🔔
+                  <span class="absolute top-1.5 right-1.5 w-4 h-4 rounded-full text-white text-xs flex items-center justify-center font-bold"
+                    style="background:var(--lev-purple);font-size:10px">3</span>
+                </button>
+              </header>
+
+              <main class="flex-1 p-4 overflow-auto space-y-4">
+                <!-- [FIX-A11Y] aria-hidden on decorative emoji -->
+                <h1 class="text-base font-bold" style="color:var(--lev-navy)">שלום, ד"ר דנה <span aria-hidden="true">👋</span></h1>
+                <!-- Stat cards — [FIX-A11Y] gray-600 (5.74:1) · amber-600 (4.52:1) · green-700 (5.5:1) -->
+                <div class="grid grid-cols-3 gap-2">
+                  <div class="bg-white rounded-xl p-3 border border-gray-100 text-center">
+                    <p class="text-xl font-bold" style="color:var(--lev-navy)">3</p>
+                    <p class="text-xs text-gray-600 mt-0.5">פעילות</p>
+                  </div>
+                  <div class="bg-white rounded-xl p-3 border border-gray-100 text-center">
+                    <p class="text-xl font-bold text-amber-600">1</p>
+                    <p class="text-xs text-gray-600 mt-0.5">לתיקון</p>
+                  </div>
+                  <div class="bg-white rounded-xl p-3 border border-gray-100 text-center">
+                    <p class="text-xl font-bold text-green-700">5</p>
+                    <p class="text-xs text-gray-600 mt-0.5">אושרו</p>
+                  </div>
+                </div>
+                <!-- Submissions cards — [FIX-A11Y] navy badge · gray-600 · dir="ltr" on ETH codes -->
+                <div class="space-y-2">
+                  <div class="bg-white rounded-xl p-4 border border-gray-100">
+                    <div class="flex items-start justify-between gap-2">
+                      <p class="text-sm font-500 leading-snug">מחקר על תגובות חיסון</p>
+                      <span class="badge text-white text-xs flex-shrink-0" style="background:var(--lev-navy)">בבדיקה</span>
+                    </div>
+                    <p class="text-xs text-gray-600 mt-1"><span dir="ltr">ETH-2026-001</span> · 01/03/2026</p>
+                  </div>
+                  <div class="bg-white rounded-xl p-4 border border-gray-100">
+                    <div class="flex items-start justify-between gap-2">
+                      <p class="text-sm font-500 leading-snug">בדיקת תרופה ניסיונית</p>
+                      <span class="badge bg-amber-100 text-amber-700 flex-shrink-0">תיקון נדרש</span>
+                    </div>
+                    <p class="text-xs text-gray-600 mt-1"><span dir="ltr">ETH-2026-002</span> · 15/02/2026</p>
+                  </div>
+                </div>
+              </main>
+
+              <!-- Mobile bottom nav — [FIX-A11Y] min-height:44px · navy for active (not teal) · gray-600 for inactive text -->
+              <nav class="bg-white border-t border-gray-100 flex" aria-label="ניווט תחתון">
+                <a href="#" class="flex-1 flex flex-col items-center py-3 gap-0.5" aria-current="page"
+                  style="color:var(--lev-navy); min-height:44px">
+                  <span aria-hidden="true" class="text-xl">🏠</span>
+                  <span class="text-xs font-600">בית</span>
+                </a>
+                <a href="#" class="flex-1 flex flex-col items-center py-3 gap-0.5 text-gray-600" style="min-height:44px">
+                  <span aria-hidden="true" class="text-xl">📄</span>
+                  <span class="text-xs">הגשות</span>
+                </a>
+                <a href="#" class="flex-1 flex flex-col items-center py-3 gap-0.5" style="min-height:44px" aria-label="הגשה חדשה">
+                  <!-- [FIX-A11Y] navy bg (12.8:1) not teal (2.54:1) for FAB -->
+                  <span class="w-10 h-10 rounded-full flex items-center justify-center text-white text-xl -mt-4 shadow-lg"
+                    style="background:var(--lev-navy)" aria-hidden="true">＋</span>
+                  <span class="text-xs text-gray-600 mt-0.5">חדש</span>
+                </a>
+                <a href="#" class="flex-1 flex flex-col items-center py-3 gap-0.5 text-gray-600" style="min-height:44px">
+                  <span aria-hidden="true" class="text-xl">🔔</span>
+                  <span class="text-xs">התראות</span>
+                </a>
+                <a href="#" class="flex-1 flex flex-col items-center py-3 gap-0.5 text-gray-600" style="min-height:44px">
+                  <span aria-hidden="true" class="text-xl">⚙️</span>
+                  <span class="text-xs">הגדרות</span>
+                </a>
+              </nav>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Color swatches — IS 5568 compliant palette -->
+  <div class="max-w-6xl mx-auto px-6 pb-8">
+    <p class="text-xs font-bold text-gray-700 uppercase tracking-wider mb-3">🎨 פלטת הצבעים — IS 5568 Compliant</p>
+    <div class="flex gap-3 flex-wrap">
+      <div class="flex items-center gap-2 bg-white rounded-lg px-4 py-2 shadow-sm border border-gray-100">
+        <div class="w-6 h-6 rounded-full" style="background:#00AEC7"></div>
+        <div>
+          <p class="text-xs font-600 text-gray-800">טורקיז #00AEC7</p>
+          <p class="text-xs text-gray-600">גרדיאנט, גבולות, עיטורים בלבד (2.54:1 — לא לטקסט)</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 bg-white rounded-lg px-4 py-2 shadow-sm border border-gray-100">
+        <div class="w-6 h-6 rounded-full" style="background:#1E2A72"></div>
+        <div>
+          <p class="text-xs font-600 text-gray-800">נייבי #1E2A72 ✅ 12.8:1</p>
+          <p class="text-xs text-gray-600">כפתורים, כותרות, sidebar header, טקסט ראשי</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 bg-white rounded-lg px-4 py-2 shadow-sm border border-gray-100">
+        <div class="w-6 h-6 rounded-full" style="background:#7B2D6E"></div>
+        <div>
+          <p class="text-xs font-600 text-gray-800">סגול #7B2D6E ✅ 8.6:1</p>
+          <p class="text-xs text-gray-600">badges, גרדיאנט, אקסנט</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 bg-white rounded-lg px-4 py-2 shadow-sm border border-gray-100">
+        <div class="w-6 h-6 rounded-full" style="background:#006680"></div>
+        <div>
+          <p class="text-xs font-600 text-gray-800">טורקיז כהה #006680 ✅ 6.52:1</p>
+          <p class="text-xs text-gray-600">לינקים וטקסט בגוון טורקיז (שכחתי סיסמה, הצג הכל)</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 bg-white rounded-lg px-4 py-2 shadow-sm border border-gray-100">
+        <div class="w-6 h-6 rounded-full border border-gray-200" style="background:#F9FAFB"></div>
+        <div>
+          <p class="text-xs font-600 text-gray-800">רקע #F9FAFB</p>
+          <p class="text-xs text-gray-600">רקע ראשי, כרטיסים, sidebar, טפסים</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function showTab(id, btn) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => {
+        b.classList.remove('active');
+        b.classList.add('text-gray-500');
+        b.setAttribute('aria-selected', 'false');
+      });
+      document.getElementById('view-' + id).classList.add('active');
+      btn.classList.add('active');
+      btn.classList.remove('text-gray-500');
+      btn.setAttribute('aria-selected', 'true');
+    }
+  </script>
+</body>
+</html>

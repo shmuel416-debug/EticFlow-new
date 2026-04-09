@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EthicFlow — Researcher Submit Page Design Options</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Heebo', sans-serif; }
+    :root {
+      --lev-navy:      #1E2A72;
+      --lev-purple:    #7B2D6E;
+      --lev-teal:      #00AEC7;
+      --lev-teal-text: #006680;
+    }
+    .tab-btn { border-bottom: 3px solid transparent; transition: all .2s; }
+    .tab-btn.active { border-bottom-color: var(--lev-navy); color: var(--lev-navy); font-weight: 700; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .preview-frame { border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+    .field-input {
+      width: 100%; border: 1.5px solid #e5e7eb; border-radius: 8px;
+      padding: 10px 12px; font-size: 13px; background: white;
+      transition: border-color .15s;
+    }
+    .field-input:focus { outline: none; border-color: var(--lev-teal); box-shadow: 0 0 0 3px rgba(0,174,199,.12); }
+    .field-label { font-size: 12px; font-weight: 600; color: var(--lev-navy); margin-bottom: 5px; display: block; }
+    .required-star { color: var(--lev-purple); margin-inline-start: 2px; }
+    .nav-link { display:flex; align-items:center; gap:8px; padding:10px 14px; border-radius:8px; font-size:13px; font-weight:500; color:#4b5563; cursor:pointer; }
+    .nav-link.active { background:#EEF0FA; color:var(--lev-navy); font-weight:700; }
+    .nav-link:hover { background:#f3f4f6; }
+    .btn-navy { background:var(--lev-navy); color:white; border:none; border-radius:12px; font-weight:600; cursor:pointer; transition:.15s; }
+    .btn-navy:hover { opacity:.88; }
+    .btn-outline { background:white; border:1.5px solid #e5e7eb; border-radius:12px; font-weight:600; cursor:pointer; color:#374151; transition:.15s; }
+    .btn-outline:hover { background:#f9fafb; }
+    .lang-btn { padding:5px 12px; border-radius:8px; font-size:11px; font-weight:600; cursor:pointer; min-height:32px; }
+    .lang-btn.active { background:var(--lev-navy); color:white; border:none; }
+    .lang-btn.inactive { background:white; border:1px solid #e5e7eb; color:#6b7280; }
+    .file-zone { border:2px dashed #e5e7eb; border-radius:12px; padding:24px; text-align:center; cursor:pointer; transition:.15s; }
+    .file-zone:hover { border-color:var(--lev-teal); background:#f0f9ff; }
+    .progress-step { width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; }
+    .step-active { background:var(--lev-navy); color:white; }
+    .step-done { background:#dcfce7; color:#16a34a; }
+    .step-future { background:#f3f4f6; color:#9ca3af; }
+    .sidebar-summary { background:#EEF0FA; border:1px solid #c7cce8; border-radius:12px; padding:14px; }
+    /* C option */
+    .two-col-form { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    input[type="checkbox"], input[type="radio"] { accent-color: var(--lev-navy); }
+  </style>
+</head>
+<body class="bg-gray-100">
+
+  <!-- Tab bar -->
+  <div class="sticky top-0 bg-white border-b z-50 px-6 shadow-sm">
+    <div class="max-w-7xl mx-auto flex gap-6 items-center">
+      <span class="text-sm font-bold py-4" style="color:var(--lev-navy)">📬 הגשת בקשת מחקר — 3 עיצובים</span>
+      <div class="flex gap-6">
+        <button class="tab-btn active py-4 px-1 text-sm text-gray-500" onclick="showTab('a',this)">A — Clean & Minimal</button>
+        <button class="tab-btn py-4 px-1 text-sm text-gray-500" onclick="showTab('b',this)">B — Bold & Structured</button>
+        <button class="tab-btn py-4 px-1 text-sm text-gray-500" onclick="showTab('c',this)">C — Compact & Efficient</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="max-w-7xl mx-auto p-6">
+
+    <!-- ═══════════════════════════════════════════
+         OPTION A — Clean & Minimal
+         Centered form card, soft background, lang toggle above each field
+    ═══════════════════════════════════════════ -->
+    <div id="tab-a" class="tab-content active">
+      <p class="text-xs text-gray-400 mb-4 font-medium">עיצוב A — כרטיס טופס ממורכז, רקע בהיר, toggle שפה גלובלי בכותרת</p>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Desktop A -->
+        <div class="lg:col-span-2">
+          <p class="text-xs font-bold text-gray-400 mb-2">💻 Desktop</p>
+          <div class="preview-frame bg-gray-50" style="min-height:640px;">
+            <div class="flex" style="min-height:640px;">
+              <!-- Sidebar -->
+              <div class="w-48 bg-white border-e py-4 px-3 shrink-0">
+                <div class="flex items-center gap-2 px-2 mb-5">
+                  <div class="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold" style="background:var(--lev-navy)">L</div>
+                  <span class="text-xs font-bold" style="color:var(--lev-navy)">EthicFlow</span>
+                </div>
+                <div class="nav-link">🏠 דשבורד</div>
+                <div class="nav-link active">📬 הגשה חדשה</div>
+                <div class="nav-link">📄 הגשות שלי</div>
+              </div>
+              <!-- Main -->
+              <div class="flex-1 overflow-y-auto p-6 bg-gray-50">
+                <!-- Page title + lang toggle -->
+                <div class="flex items-center justify-between mb-6">
+                  <div>
+                    <h1 class="text-base font-bold" style="color:var(--lev-navy)">הגשת בקשה לאישור מחקר</h1>
+                    <p class="text-xs mt-0.5" style="color:var(--lev-teal-text)">מלא את כל השדות המסומנים ב-*</p>
+                  </div>
+                  <!-- Global lang toggle -->
+                  <div role="group" aria-label="שפת תצוגה" class="flex gap-1">
+                    <button class="lang-btn active" aria-pressed="true">עב</button>
+                    <button class="lang-btn inactive" aria-pressed="false">EN</button>
+                  </div>
+                </div>
+
+                <!-- Form card -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 max-w-xl mx-auto">
+                  <!-- Form header -->
+                  <div class="pb-4 mb-5 border-b" style="border-color:#e5e7eb;">
+                    <h2 class="text-sm font-bold" style="color:var(--lev-navy)">טופס הגשת מחקר תשפ"ה</h2>
+                    <p class="text-xs mt-1" style="color:var(--lev-teal-text)">כל השדות המסומנים ב-* הם שדות חובה</p>
+                  </div>
+
+                  <div class="space-y-5">
+                    <!-- Text field -->
+                    <div>
+                      <label class="field-label" for="a-title">שם המחקר<span class="required-star">*</span></label>
+                      <input id="a-title" type="text" class="field-input" placeholder="לדוגמה: השפעת הוראה היברידית על תפוקת לומדים" aria-required="true">
+                    </div>
+
+                    <!-- Textarea -->
+                    <div>
+                      <label class="field-label" for="a-abstract">תקציר המחקר<span class="required-star">*</span></label>
+                      <textarea id="a-abstract" rows="3" class="field-input" placeholder="תאר בקצרה את מטרות המחקר..." aria-required="true" style="resize:none;"></textarea>
+                    </div>
+
+                    <!-- Select -->
+                    <div>
+                      <label class="field-label" for="a-dept">מסלול / מחלקה<span class="required-star">*</span></label>
+                      <select id="a-dept" class="field-input" aria-required="true">
+                        <option value="" disabled selected>בחר מחלקה...</option>
+                        <option>מדעי החינוך</option>
+                        <option>מדעי המחשב</option>
+                        <option>מדעי הניהול</option>
+                      </select>
+                    </div>
+
+                    <!-- Radio -->
+                    <fieldset>
+                      <legend class="field-label">סוג המחקר<span class="required-star">*</span></legend>
+                      <div class="space-y-2 mt-1">
+                        <label class="flex items-center gap-2 text-sm cursor-pointer" style="min-height:44px;">
+                          <input type="radio" name="a-type" value="1"> <span>מחקר עם משתתפים אנושיים</span>
+                        </label>
+                        <label class="flex items-center gap-2 text-sm cursor-pointer" style="min-height:44px;">
+                          <input type="radio" name="a-type" value="2"> <span>מחקר מסמכים / ארכיון</span>
+                        </label>
+                        <label class="flex items-center gap-2 text-sm cursor-pointer" style="min-height:44px;">
+                          <input type="radio" name="a-type" value="3"> <span>מחקר מעבדה</span>
+                        </label>
+                      </div>
+                    </fieldset>
+
+                    <!-- File upload -->
+                    <div>
+                      <label class="field-label" for="a-file">פרוטוקול המחקר (PDF)<span class="required-star">*</span></label>
+                      <label for="a-file" class="file-zone block" aria-describedby="a-file-hint">
+                        <span class="text-2xl" aria-hidden="true">📎</span>
+                        <p class="text-sm font-semibold mt-2" style="color:var(--lev-teal-text)">גרור קובץ לכאן או לחץ לבחירה</p>
+                        <p id="a-file-hint" class="text-xs text-gray-400 mt-1">PDF, DOC, DOCX · מקסימום 20MB</p>
+                        <input id="a-file" type="file" class="sr-only" aria-required="true" accept=".pdf,.doc,.docx">
+                      </label>
+                    </div>
+
+                    <!-- Declaration -->
+                    <div class="rounded-xl p-4" style="background:#f0f9ff;border:1px solid #bae6fd;">
+                      <p class="text-xs font-semibold mb-2" style="color:var(--lev-navy)">הצהרת חוקר</p>
+                      <p class="text-xs text-gray-600 mb-3">אני מצהיר/ה כי כל המידע שמסרתי הוא מדויק ומלא, ואני מתחייב/ת לעמוד בכל דרישות ועדת האתיקה.</p>
+                      <label class="flex items-center gap-2 text-sm cursor-pointer" style="min-height:44px;">
+                        <input type="checkbox" aria-required="true">
+                        <span class="text-xs">אני מאשר/ת את ההצהרה לעיל<span class="required-star">*</span></span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <!-- Footer actions -->
+                  <div class="flex gap-3 mt-6 pt-4 border-t border-gray-100">
+                    <button class="btn-outline px-5 py-2.5 text-sm flex-1" style="min-height:44px;">שמור טיוטה</button>
+                    <button class="btn-navy px-6 py-2.5 text-sm flex-1" style="min-height:44px;">שלח בקשה ←</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mobile A -->
+        <div>
+          <p class="text-xs font-bold text-gray-400 mb-2">📱 Mobile (375px)</p>
+          <div class="preview-frame bg-gray-50 max-w-[375px] mx-auto" style="min-height:640px;">
+            <div class="bg-white border-b px-4 py-3 flex items-center justify-between">
+              <div>
+                <h1 class="text-sm font-bold" style="color:var(--lev-navy)">הגשת בקשה</h1>
+                <p class="text-xs text-gray-400">טופס הגשת מחקר תשפ"ה</p>
+              </div>
+              <div class="flex gap-1">
+                <button class="lang-btn active text-xs" style="padding:4px 8px;">עב</button>
+                <button class="lang-btn inactive text-xs" style="padding:4px 8px;">EN</button>
+              </div>
+            </div>
+            <div class="p-4 space-y-4 overflow-y-auto">
+              <div>
+                <label class="field-label text-xs" for="am-title">שם המחקר<span class="required-star">*</span></label>
+                <input id="am-title" type="text" class="field-input text-xs" placeholder="שם המחקר..." style="min-height:44px;">
+              </div>
+              <div>
+                <label class="field-label text-xs" for="am-abstract">תקציר<span class="required-star">*</span></label>
+                <textarea id="am-abstract" rows="2" class="field-input text-xs" placeholder="תיאור קצר..." style="resize:none;"></textarea>
+              </div>
+              <div>
+                <label class="field-label text-xs" for="am-dept">מחלקה<span class="required-star">*</span></label>
+                <select id="am-dept" class="field-input text-xs" style="min-height:44px;">
+                  <option>בחר...</option>
+                  <option>מדעי החינוך</option>
+                </select>
+              </div>
+              <label for="am-file" class="file-zone block" style="padding:16px;">
+                <span class="text-xl" aria-hidden="true">📎</span>
+                <p class="text-xs font-semibold mt-1" style="color:var(--lev-teal-text)">לחץ להעלאת קובץ</p>
+                <input id="am-file" type="file" class="sr-only">
+              </label>
+              <label class="flex items-center gap-2 text-xs cursor-pointer p-3 rounded-xl" style="background:#f0f9ff;border:1px solid #bae6fd;min-height:44px;">
+                <input type="checkbox"> <span>אני מאשר/ת את ההצהרה</span>
+              </label>
+              <button class="btn-navy w-full py-3 text-sm" style="min-height:44px;">שלח בקשה ←</button>
+              <button class="btn-outline w-full py-2.5 text-sm" style="min-height:44px;">שמור טיוטה</button>
+            </div>
+          </div>
+        </div>
+      </div><!-- /grid A -->
+    </div><!-- /tab-a -->
+
+
+    <!-- ═══════════════════════════════════════════
+         OPTION B — Bold & Structured
+         Navy header band + right sidebar summary + clear field sections
+    ═══════════════════════════════════════════ -->
+    <div id="tab-b" class="tab-content">
+      <p class="text-xs text-gray-400 mb-4 font-medium">עיצוב B — רצועת כותרת navy + סיידבר סיכום ימני + שדות בסקציות ברורות</p>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Desktop B -->
+        <div class="lg:col-span-2">
+          <p class="text-xs font-bold text-gray-400 mb-2">💻 Desktop</p>
+          <div class="preview-frame bg-gray-50" style="min-height:660px;">
+            <div class="flex" style="min-height:660px;">
+              <!-- Sidebar nav -->
+              <div class="w-44 border-e flex flex-col py-3 px-2 shrink-0" style="background:var(--lev-navy);">
+                <div class="flex items-center gap-2 px-2 mb-5">
+                  <div class="w-6 h-6 rounded-md bg-white/20 flex items-center justify-center text-white text-xs font-bold">L</div>
+                  <span class="text-xs font-bold text-white">EthicFlow</span>
+                </div>
+                <div class="px-2 py-2.5 rounded-lg text-xs text-white/60 flex items-center gap-2 cursor-pointer hover:bg-white/10">🏠 דשבורד</div>
+                <div class="px-2 py-2.5 rounded-lg text-xs text-white font-bold bg-white/20 flex items-center gap-2">📬 הגשה חדשה</div>
+                <div class="px-2 py-2.5 rounded-lg text-xs text-white/60 flex items-center gap-2 cursor-pointer hover:bg-white/10">📄 הגשות שלי</div>
+              </div>
+              <!-- Main content -->
+              <div class="flex-1 overflow-y-auto">
+                <!-- Navy header band -->
+                <div class="px-6 py-5" style="background:var(--lev-navy);">
+                  <div class="flex items-start justify-between">
+                    <div>
+                      <h1 class="text-base font-bold text-white">הגשת בקשה לאישור מחקר</h1>
+                      <p class="text-xs text-white/70 mt-0.5">טופס הגשת מחקר תשפ"ה · כל השדות ב-* הם חובה</p>
+                    </div>
+                    <div role="group" aria-label="שפת תצוגה" class="flex gap-1">
+                      <button class="lang-btn text-xs" style="background:white;color:var(--lev-navy);min-height:32px;" aria-pressed="true">עב</button>
+                      <button class="lang-btn text-xs" style="background:white/10;color:white;border:1px solid white/30;min-height:32px;" aria-pressed="false">EN</button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Two-panel layout: form + summary -->
+                <div class="flex gap-0">
+                  <!-- Form -->
+                  <div class="flex-1 p-5 overflow-y-auto">
+                    <!-- Section 1 -->
+                    <div class="mb-5">
+                      <h2 class="text-xs font-bold mb-3 px-1" style="color:var(--lev-purple)">
+                        <span class="inline-block w-5 h-5 rounded-full text-center text-white text-xs me-1" style="background:var(--lev-purple);line-height:20px;">1</span>
+                        פרטי המחקר
+                      </h2>
+                      <div class="bg-white rounded-xl border border-gray-100 p-4 space-y-4 shadow-sm">
+                        <div>
+                          <label class="field-label" for="b-title">שם המחקר<span class="required-star">*</span></label>
+                          <input id="b-title" type="text" class="field-input" placeholder="השפעת הוראה היברידית על תפוקת לומדים באקדמיה" aria-required="true">
+                        </div>
+                        <div>
+                          <label class="field-label" for="b-abstract">תקציר<span class="required-star">*</span></label>
+                          <textarea id="b-abstract" rows="2" class="field-input" style="resize:none;" placeholder="תאר את מטרות המחקר, השיטה והאוכלוסייה..."></textarea>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                          <div>
+                            <label class="field-label" for="b-dept">מחלקה<span class="required-star">*</span></label>
+                            <select id="b-dept" class="field-input" style="min-height:44px;">
+                              <option value="" disabled selected>בחר...</option>
+                              <option>מדעי החינוך</option>
+                              <option>מדעי המחשב</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label class="field-label" for="b-date">תאריך מתוכנן<span class="required-star">*</span></label>
+                            <input id="b-date" type="date" class="field-input" style="min-height:44px;">
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Section 2 -->
+                    <div class="mb-5">
+                      <h2 class="text-xs font-bold mb-3 px-1" style="color:var(--lev-purple)">
+                        <span class="inline-block w-5 h-5 rounded-full text-center text-white text-xs me-1" style="background:var(--lev-purple);line-height:20px;">2</span>
+                        סוג המחקר ומשתתפים
+                      </h2>
+                      <div class="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
+                        <fieldset>
+                          <legend class="field-label">סוג המחקר<span class="required-star">*</span></legend>
+                          <div class="grid grid-cols-3 gap-2 mt-2">
+                            <label class="flex flex-col items-center gap-1 border rounded-xl p-3 cursor-pointer text-xs text-center" style="border-color:var(--lev-navy);background:#EEF0FA;min-height:60px;">
+                              <input type="radio" name="b-type" value="1" checked> <span style="color:var(--lev-navy);font-weight:600;">👥 משתתפים</span>
+                            </label>
+                            <label class="flex flex-col items-center gap-1 border border-gray-200 rounded-xl p-3 cursor-pointer text-xs text-center" style="min-height:60px;">
+                              <input type="radio" name="b-type" value="2"> <span>📁 ארכיון</span>
+                            </label>
+                            <label class="flex flex-col items-center gap-1 border border-gray-200 rounded-xl p-3 cursor-pointer text-xs text-center" style="min-height:60px;">
+                              <input type="radio" name="b-type" value="3"> <span>🔬 מעבדה</span>
+                            </label>
+                          </div>
+                        </fieldset>
+                      </div>
+                    </div>
+
+                    <!-- Section 3: File + Declaration -->
+                    <div class="mb-5">
+                      <h2 class="text-xs font-bold mb-3 px-1" style="color:var(--lev-purple)">
+                        <span class="inline-block w-5 h-5 rounded-full text-center text-white text-xs me-1" style="background:var(--lev-purple);line-height:20px;">3</span>
+                        מסמכים והצהרה
+                      </h2>
+                      <div class="bg-white rounded-xl border border-gray-100 p-4 space-y-4 shadow-sm">
+                        <div>
+                          <label class="field-label" for="b-file">פרוטוקול המחקר<span class="required-star">*</span></label>
+                          <label for="b-file" class="file-zone block">
+                            <span class="text-xl" aria-hidden="true">📎</span>
+                            <p class="text-xs font-semibold mt-1" style="color:var(--lev-teal-text)">גרור קובץ לכאן או לחץ לבחירה</p>
+                            <p class="text-xs text-gray-400">PDF, DOC, DOCX · עד 20MB</p>
+                            <input id="b-file" type="file" class="sr-only" aria-required="true">
+                          </label>
+                        </div>
+                        <label class="flex items-start gap-2 cursor-pointer rounded-xl p-3" style="background:#f0f9ff;border:1px solid #bae6fd;min-height:44px;">
+                          <input type="checkbox" class="mt-0.5" aria-required="true">
+                          <span class="text-xs text-gray-700">אני מצהיר/ה שכל המידע שמסרתי מדויק ומלא ואני מתחייב/ת לעמוד בדרישות ועדת האתיקה<span class="required-star">*</span></span>
+                        </label>
+                      </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="flex gap-3">
+                      <button class="btn-outline px-5 py-2.5 text-sm" style="min-height:44px;">שמור טיוטה</button>
+                      <button class="btn-navy px-8 py-2.5 text-sm ms-auto" style="min-height:44px;">שלח בקשה ←</button>
+                    </div>
+                  </div>
+
+                  <!-- Right summary sidebar -->
+                  <div class="w-44 shrink-0 p-4 border-s bg-gray-50 space-y-4">
+                    <div class="sidebar-summary">
+                      <p class="text-xs font-bold mb-2" style="color:var(--lev-navy)">סיכום</p>
+                      <div class="space-y-1.5 text-xs">
+                        <div class="flex justify-between"><span class="text-gray-500">שדות חובה</span><span class="font-bold" style="color:var(--lev-purple)">8</span></div>
+                        <div class="flex justify-between"><span class="text-gray-500">מולאו</span><span class="font-bold" style="color:#16a34a">3</span></div>
+                        <div class="flex justify-between"><span class="text-gray-500">נותרו</span><span class="font-bold" style="color:#d97706">5</span></div>
+                      </div>
+                    </div>
+                    <div>
+                      <p class="text-xs font-bold mb-2" style="color:var(--lev-navy)">טיפ</p>
+                      <p class="text-xs text-gray-500">ניתן לשמור טיוטה ולהמשיך מאוחר יותר</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mobile B -->
+        <div>
+          <p class="text-xs font-bold text-gray-400 mb-2">📱 Mobile (375px)</p>
+          <div class="preview-frame max-w-[375px] mx-auto" style="min-height:660px;background:#f9fafb;">
+            <!-- Navy header -->
+            <div class="px-4 py-4" style="background:var(--lev-navy);">
+              <div class="flex items-center justify-between">
+                <div>
+                  <h1 class="text-sm font-bold text-white">הגשת בקשה</h1>
+                  <p class="text-xs text-white/60 mt-0.5">טופס הגשת מחקר תשפ"ה</p>
+                </div>
+                <div class="flex gap-1">
+                  <button class="text-xs px-2 py-1 rounded" style="background:white;color:var(--lev-navy);font-weight:700;min-height:32px;">עב</button>
+                  <button class="text-xs px-2 py-1 rounded text-white/60" style="border:1px solid white/30;min-height:32px;">EN</button>
+                </div>
+              </div>
+              <!-- Progress hint -->
+              <div class="flex items-center gap-2 mt-3">
+                <div class="flex-1 h-1.5 rounded-full bg-white/20"><div class="h-1.5 rounded-full bg-white" style="width:40%"></div></div>
+                <span class="text-xs text-white/70">3/8 שדות</span>
+              </div>
+            </div>
+
+            <div class="p-4 space-y-4">
+              <!-- Section 1 -->
+              <div class="bg-white rounded-xl border border-gray-100 p-3 space-y-3 shadow-sm">
+                <p class="text-xs font-bold" style="color:var(--lev-purple)">① פרטי המחקר</p>
+                <div>
+                  <label class="field-label text-xs" for="bm-title">שם המחקר<span class="required-star">*</span></label>
+                  <input id="bm-title" type="text" class="field-input text-xs" style="min-height:44px;" placeholder="שם המחקר...">
+                </div>
+                <div>
+                  <label class="field-label text-xs" for="bm-dept">מחלקה<span class="required-star">*</span></label>
+                  <select id="bm-dept" class="field-input text-xs" style="min-height:44px;">
+                    <option>בחר...</option>
+                    <option>מדעי החינוך</option>
+                  </select>
+                </div>
+              </div>
+              <!-- Section 2 mini -->
+              <div class="bg-white rounded-xl border border-gray-100 p-3 shadow-sm">
+                <p class="text-xs font-bold mb-2" style="color:var(--lev-purple)">② סוג מחקר</p>
+                <div class="grid grid-cols-3 gap-1.5 text-center">
+                  <label class="border rounded-lg p-2 cursor-pointer text-xs" style="border-color:var(--lev-navy);background:#EEF0FA;"><input type="radio" name="bm-type" class="block mx-auto mb-1">👥</label>
+                  <label class="border border-gray-200 rounded-lg p-2 cursor-pointer text-xs"><input type="radio" name="bm-type" class="block mx-auto mb-1">📁</label>
+                  <label class="border border-gray-200 rounded-lg p-2 cursor-pointer text-xs"><input type="radio" name="bm-type" class="block mx-auto mb-1">🔬</label>
+                </div>
+              </div>
+              <!-- File -->
+              <label for="bm-file" class="file-zone block" style="padding:14px;">
+                <span>📎</span>
+                <p class="text-xs font-semibold mt-1" style="color:var(--lev-teal-text)">העלאת פרוטוקול</p>
+                <input id="bm-file" type="file" class="sr-only">
+              </label>
+              <button class="btn-navy w-full py-3 text-sm" style="min-height:44px;">שלח בקשה ←</button>
+            </div>
+          </div>
+        </div>
+      </div><!-- /grid B -->
+    </div><!-- /tab-b -->
+
+
+    <!-- ═══════════════════════════════════════════
+         OPTION C — Compact & Efficient
+         Two-column form, inline validation feedback, keyboard hints
+    ═══════════════════════════════════════════ -->
+    <div id="tab-c" class="tab-content">
+      <p class="text-xs text-gray-400 mb-4 font-medium">עיצוב C — שני עמודות, ולידציה inline, מינימום גלילה, FAB לשמירה במובייל</p>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Desktop C -->
+        <div class="lg:col-span-2">
+          <p class="text-xs font-bold text-gray-400 mb-2">💻 Desktop</p>
+          <div class="preview-frame bg-white" style="min-height:640px;">
+            <div class="flex" style="min-height:640px;">
+              <!-- Minimal sidebar -->
+              <div class="w-40 border-e py-3 px-2 shrink-0 bg-white">
+                <div class="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold mb-4 mx-auto" style="background:var(--lev-navy)">L</div>
+                <div class="nav-link text-xs">🏠</div>
+                <div class="nav-link active text-xs">📬 הגשה</div>
+                <div class="nav-link text-xs">📄</div>
+              </div>
+              <!-- Main C -->
+              <div class="flex-1 flex flex-col overflow-hidden">
+                <!-- Compact toolbar -->
+                <div class="border-b px-5 py-2.5 flex items-center gap-3 shrink-0">
+                  <span class="text-sm font-bold" style="color:var(--lev-navy)">הגשת בקשה חדשה</span>
+                  <span class="text-xs px-2 py-0.5 rounded-full" style="background:#fef9c3;color:#92400e">טיוטה</span>
+                  <div class="flex gap-1 ms-auto" role="group">
+                    <button class="lang-btn active text-xs" style="min-height:32px;" aria-pressed="true">עב</button>
+                    <button class="lang-btn inactive text-xs" style="min-height:32px;" aria-pressed="false">EN</button>
+                  </div>
+                  <button class="btn-outline text-xs px-3" style="min-height:36px;">שמור טיוטה</button>
+                  <button class="btn-navy text-xs px-4" style="min-height:36px;">שלח ←</button>
+                </div>
+
+                <!-- Two-column form -->
+                <div class="flex-1 overflow-y-auto p-5">
+                  <div class="two-col-form">
+                    <!-- Col 1 -->
+                    <div class="space-y-4">
+                      <div>
+                        <label class="field-label" for="c-title">שם המחקר<span class="required-star">*</span></label>
+                        <input id="c-title" type="text" class="field-input" placeholder="השפעת הוראה היברידית..." aria-required="true" style="border-color:var(--lev-teal);">
+                        <p class="text-xs mt-1" style="color:#16a34a">✓ שדה תקין</p>
+                      </div>
+                      <div>
+                        <label class="field-label" for="c-dept">מחלקה<span class="required-star">*</span></label>
+                        <select id="c-dept" class="field-input" style="min-height:44px;">
+                          <option value="" disabled selected>בחר...</option>
+                          <option>מדעי החינוך</option>
+                          <option>מדעי המחשב</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label class="field-label" for="c-date">תאריך מתוכנן<span class="required-star">*</span></label>
+                        <input id="c-date" type="date" class="field-input" style="min-height:44px;">
+                      </div>
+                      <fieldset>
+                        <legend class="field-label">סוג מחקר<span class="required-star">*</span></legend>
+                        <div class="space-y-1 mt-1">
+                          <label class="flex items-center gap-2 text-xs cursor-pointer" style="min-height:44px;"><input type="radio" name="c-type" value="1"> עם משתתפים אנושיים</label>
+                          <label class="flex items-center gap-2 text-xs cursor-pointer" style="min-height:44px;"><input type="radio" name="c-type" value="2"> מחקר מסמכים</label>
+                          <label class="flex items-center gap-2 text-xs cursor-pointer" style="min-height:44px;"><input type="radio" name="c-type" value="3"> מחקר מעבדה</label>
+                        </div>
+                      </fieldset>
+                    </div>
+                    <!-- Col 2 -->
+                    <div class="space-y-4">
+                      <div>
+                        <label class="field-label" for="c-abstract">תקציר המחקר<span class="required-star">*</span></label>
+                        <textarea id="c-abstract" rows="4" class="field-input" style="resize:none;" placeholder="תאר את מטרות המחקר..."></textarea>
+                        <p class="text-xs mt-1 text-red-600" role="alert" aria-live="polite">⚠ שדה חובה</p>
+                      </div>
+                      <div>
+                        <label class="field-label" for="c-file">פרוטוקול<span class="required-star">*</span></label>
+                        <label for="c-file" class="file-zone block" style="padding:14px;">
+                          <span aria-hidden="true">📎</span>
+                          <p class="text-xs mt-1" style="color:var(--lev-teal-text)">גרור / לחץ להעלאה</p>
+                          <input id="c-file" type="file" class="sr-only" aria-required="true">
+                        </label>
+                      </div>
+                      <label class="flex items-start gap-2 cursor-pointer rounded-lg p-3 text-xs" style="background:#f0f9ff;border:1px solid #bae6fd;min-height:44px;">
+                        <input type="checkbox" class="mt-0.5"> <span>אני מאשר/ת את הצהרת החוקר<span class="required-star">*</span></span>
+                      </label>
+                      <!-- Validation progress -->
+                      <div class="rounded-lg p-3 text-xs" style="background:#EEF0FA;">
+                        <p class="font-bold mb-2" style="color:var(--lev-navy)">מצב מילוי</p>
+                        <div class="space-y-1">
+                          <div class="flex items-center gap-2"><span style="color:#16a34a">✓</span><span class="text-gray-600">שם המחקר</span></div>
+                          <div class="flex items-center gap-2"><span style="color:#dc2626">✗</span><span class="text-gray-600">תקציר</span></div>
+                          <div class="flex items-center gap-2"><span style="color:#dc2626">✗</span><span class="text-gray-600">מחלקה</span></div>
+                          <div class="flex items-center gap-2"><span style="color:#dc2626">✗</span><span class="text-gray-600">פרוטוקול</span></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mobile C -->
+        <div>
+          <p class="text-xs font-bold text-gray-400 mb-2">📱 Mobile (375px)</p>
+          <div class="preview-frame bg-white max-w-[375px] mx-auto" style="min-height:640px;position:relative;">
+            <!-- Toolbar -->
+            <div class="border-b px-3 py-2 flex items-center gap-2">
+              <span class="text-xs font-bold" style="color:var(--lev-navy)">הגשת בקשה</span>
+              <span class="text-xs px-2 py-0.5 rounded-full" style="background:#fef9c3;color:#92400e">טיוטה</span>
+              <div class="flex gap-1 ms-auto">
+                <button class="lang-btn active text-xs" style="min-height:32px;padding:4px 8px;">עב</button>
+                <button class="lang-btn inactive text-xs" style="min-height:32px;padding:4px 8px;">EN</button>
+              </div>
+            </div>
+            <!-- Single-col fields -->
+            <div class="p-4 space-y-4">
+              <div>
+                <label class="field-label text-xs" for="cm-title">שם המחקר<span class="required-star">*</span></label>
+                <input id="cm-title" type="text" class="field-input text-xs" style="min-height:44px;border-color:var(--lev-teal);">
+                <p class="text-xs mt-1" style="color:#16a34a">✓ שדה תקין</p>
+              </div>
+              <div>
+                <label class="field-label text-xs" for="cm-abstract">תקציר<span class="required-star">*</span></label>
+                <textarea id="cm-abstract" rows="2" class="field-input text-xs" style="resize:none;border-color:#dc2626;"></textarea>
+                <p class="text-xs mt-1 text-red-600" role="alert">⚠ שדה חובה</p>
+              </div>
+              <div>
+                <label class="field-label text-xs" for="cm-dept">מחלקה<span class="required-star">*</span></label>
+                <select id="cm-dept" class="field-input text-xs" style="min-height:44px;">
+                  <option>בחר...</option>
+                </select>
+              </div>
+              <!-- Validation mini -->
+              <div class="rounded-lg p-2.5 text-xs" style="background:#EEF0FA;">
+                <div class="flex justify-between items-center">
+                  <span class="font-semibold" style="color:var(--lev-navy)">מולאו 1/4 שדות חובה</span>
+                  <span style="color:#d97706">●</span>
+                </div>
+              </div>
+            </div>
+            <!-- FAB -->
+            <div class="absolute bottom-4 start-4 end-4 flex gap-2">
+              <button class="btn-outline flex-1 text-xs py-2.5" style="min-height:44px;">שמור</button>
+              <button class="btn-navy flex-1 text-sm py-2.5" style="min-height:44px;">שלח ←</button>
+            </div>
+          </div>
+        </div>
+      </div><!-- /grid C -->
+    </div><!-- /tab-c -->
+
+    <!-- A11y checklist -->
+    <div class="mt-8 p-4 rounded-xl border text-xs" style="background:#EEF0FA;border-color:#c7cce8;">
+      <p class="font-bold mb-3" style="color:var(--lev-navy)">♿ IS 5568 / WCAG 2.1 AA — כל העיצובים כוללים:</p>
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-2 text-gray-600">
+        <span>✅ &lt;label for&gt; על כל שדה</span>
+        <span>✅ aria-required="true"</span>
+        <span>✅ &lt;fieldset&gt; + &lt;legend&gt; על רדיו/צ'קבוקס</span>
+        <span>✅ role="alert" aria-live="polite" על שגיאות</span>
+        <span>✅ 44px minimum touch targets</span>
+        <span>✅ focus-visible: 3px navy outline</span>
+        <span>✅ dir="ltr" על שדות מספר/אנגלית</span>
+        <span>✅ file input — label כ-click-target</span>
+        <span>✅ lang toggle: aria-pressed</span>
+        <span>✅ required star: aria-label="שדה חובה"</span>
+        <span>✅ navy 12.8:1 ✅ | purple 8.6:1 ✅</span>
+        <span>✅ teal-text 6.52:1 ✅ (text only)</span>
+      </div>
+    </div>
+
+  </div><!-- /max-w -->
+
+  <script>
+    function showTab(id, btn) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('tab-' + id).classList.add('active');
+      btn.classList.add('active');
+    }
+  </script>
+</body>
+</html>

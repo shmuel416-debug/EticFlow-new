@@ -15,3 +15,68 @@
 | 2026-03-29 | S1.3.1 Register + Login | ✅ Done | POST /register, /login, GET /me + JWT + bcrypt |
 | 2026-03-29 | S1.3.2 JWT + RBAC | ✅ Done | authenticate.js, authorize(), authorizeOwnerOrRoles() |
 | 2026-03-29 | S1.3.3 Forgot/Reset Password | ✅ Done | crypto tokens, SHA-256 hashing, console email provider |
+| 2026-03-30 | S1.4 UI/UX Design — Login + Layout | ✅ Done | 3 design options (A/B/C) in docs/designs/login-layout-design.html |
+| 2026-03-30 | S1.4 A11y Review — IS 5568 / WCAG 2.1 AA | ✅ Done | All 3 designs reviewed + fixed (see details below) |
+| 2026-03-30 | S1.4.1 React + Vite + Tailwind | ✅ Done | Vite 8, React 18, @tailwindcss/vite, brand tokens in CSS vars |
+| 2026-03-30 | S1.4.2 i18n Setup | ✅ Done | react-i18next, he.json + en.json, RTL/LTR auto-switch |
+| 2026-03-30 | S1.4.3 Auth Context + API Service | ✅ Done | JWT in memory (not localStorage), Axios interceptors, setToken() |
+| 2026-03-30 | S1.4.4 Login Page | ✅ Done | Option A + Lev colors, IS 5568 compliant, responsive split-panel |
+| 2026-03-30 | S1.4.5 Forgot Password Page | ✅ Done | No user enumeration, role="alert", IS 5568 compliant |
+| 2026-03-30 | S1.4.6 Layout + Sidebar | ✅ Done | Mobile drawer + desktop fixed, role-filtered nav, 44px targets |
+| 2026-03-30 | S1.4.7 Protected Routes | ✅ Done | ProtectedRoute with optional roles[], redirects on unauthorized |
+| 2026-03-30 | S1.4.8 Placeholder Dashboards | ✅ Done | 5 role dashboards, ResearcherDashboard with mock data + table |
+| 2026-03-30 | S1.4.9 Code Review | ✅ Done | 0 critical, 3 warnings fixed (unused var, hardcoded strings, hardcoded aria-labels) |
+| 2026-03-30 | S1.4.9 QA Testing | ✅ Done | 20+ API tests, 1 bug fixed: invalid JSON body → 500 (now 400 INVALID_JSON) |
+| 2026-03-30 | S1.4.9 Accessibility Audit | ✅ Done | 6 issues fixed: skip link, aria-labels, table scope, hardcoded Hebrew in dashboards, RTL arrow |
+| 2026-03-30 | S1.4.9 Security Audit | ✅ Done | 3 high fixes: timing attack (email enum), forgot-password rate limit, register rate limit |
+| 2026-03-30 | S1.4.9 Sprint Wrap-up | ✅ Done | All reports saved in docs/. Tagged v0.1.0 |
+
+## Sprint 2 — Dynamic Forms
+
+| Date | Task | Status | Notes |
+|------|------|--------|-------|
+| 2026-03-31 | S2.1.1 Forms CRUD Backend | ✅ Done | 7 endpoints: GET list/active/:id, POST, PUT, POST publish/archive + audit logging |
+| 2026-03-31 | S2.1.2 Submissions CRUD Backend | ✅ Done | 5 endpoints: GET list (role-filter+pagination), GET :id (+versions+comments), POST (ETH-YEAR-SEQ + SLA), PUT (versioning), POST continue |
+| 2026-03-31 | S2.2.1 UI/UX Design — Form Builder | ✅ Done | עיצוב C נבחר: split-screen + פלטת לב + IS 5568 | docs/designs/form-builder-lev-design.html |
+| 2026-03-31 | S2.2.1 React — Form Builder | ✅ Done | 7 קומפוננטות: FormBuilderPage, FieldPalette, CanvasField, FormCanvas, FieldSettingsPanel, PublishDialog, useFormBuilder hook. @dnd-kit drag-to-reorder, IS 5568, bilingual. Route: /secretary/forms/new |
+| 2026-03-31 | S2.2.2 Save + Publish API | ✅ Done | POST/PUT /api/forms wired, auto-save before publish, load existing form on edit route, error banner, status badge, bilingual form name (he+en) |
+| 2026-03-31 | S2.2.3 Form Preview | ✅ Done | FormFieldPreview (12 types), FormPreview, FormPreviewPage. Route: /secretary/forms/:id/preview. Lev palette only, IS 5568. Preview button in toolbar. |
+| 2026-03-31 | S2.3.1 UI/UX Design — Form Library | ✅ Done | עיצוב B נבחר: stats bar + card grid עם פס צבע עליון | docs/designs/form-library-design.html |
+| 2026-03-31 | S2.3.1 React — Form Library | ✅ Done | FormLibraryPage + FormCard. Stats bar, filter tabs, search, card grid 1→2→3 cols. Archive/restore API. Sidebar link. Bilingual (he+en). IS 5568. |
+| 2026-03-31 | S2.4 UI/UX Design — Researcher Submit | ✅ Done | עיצוב B נבחר: navy header band + סקציות ממוספרות + סיידבר סיכום | docs/designs/researcher-submit-design.html |
+| 2026-04-09 | S2.4.1 FormRenderer Component | ✅ Done | 12 field types, validation inline, IS 5568, Lev palette, bilingual labels |
+| 2026-04-09 | S2.4.2 Researcher Submit Page | ✅ Done | Navy header + sections + summary sidebar + POST /api/submissions + success screen |
+| 2026-04-09 | S2 Code Review | ✅ Done | 5 critical fixed (API shape bug, payload bug, hardcoded strings), 8 warnings → Sprint 3 |
+| 2026-04-09 | S2 QA Testing | ✅ Done | 3 critical (2 fixed, 1 tracked for Sprint 3: FormPreviewPage data unwrap), 6 warnings |
+| 2026-04-09 | S2 Accessibility Audit | ✅ Done | 3 critical fixed (hardcoded Hebrew aria-labels), 5 warnings → Sprint 3 |
+| 2026-04-09 | S2 Security Audit | ✅ Done | 0 critical, 5 warnings (race-safe IDs, rate limits, file upload) → Sprint 3 |
+| 2026-04-09 | S2 Sprint Wrap-up | ✅ Done | All reports saved in docs/. APPROVED FOR MERGE with 1 known issue tracked. |
+| 2026-04-09 | S2 Post-audit fixes | ✅ Done | API shape bugs fixed (FormPreviewPage, FormBuilderPage, FormLibraryPage), POST /api/forms/:id/restore added, FormCanvas lang toggle wired, SubmitPage Save Draft wired. Tagged v0.2.0 |
+
+## S1.4 — Accessibility Fixes Applied to Login Design (IS 5568 / WCAG 2.1 AA)
+
+### Fixes applied to all 3 options (A, B, C):
+| Fix | Detail |
+|-----|--------|
+| Skip navigation link | `<a href="#main-content" class="skip-link">דלג לתוכן הראשי</a>` — IS 5568 mandatory first element |
+| Form `<label>` + `for`/`id` | All inputs now have associated labels: `for="email-a"`, `for="pass-a"`, etc. |
+| `autocomplete` attributes | `autocomplete="email"` and `autocomplete="current-password"` on login fields |
+| `aria-required="true"` | On email + password inputs |
+| `novalidate` + `aria-label` on `<form>` | `<form novalidate aria-label="טופס כניסה למערכת">` |
+| Error message area | `<div role="alert" aria-live="assertive">` — screen reader announces errors immediately |
+| Nav links: `<div>` → `<a>` | All sidebar navigation items converted from non-interactive `<div>` to `<a href="#">` |
+| `aria-current="page"` | Active nav link marked for screen readers |
+| `aria-label="ניווט ראשי"` on `<nav>` | Landmark label in Hebrew |
+| Touch targets ≥ 44px | `min-height:44px; min-width:44px` on all buttons (submit + language switcher) |
+| Language buttons | `aria-label="עברית"` / `aria-label="English"` + `aria-pressed="true/false"` + `role="group"` |
+| Decorative SVGs | `aria-hidden="true"` on all logo/icon SVGs |
+| Tab ARIA | `role="tablist"`, `role="tab"`, `aria-selected`, `aria-controls` on design-picker tabs |
+| Tab JS | `showTab()` now updates `aria-selected` attribute dynamically |
+| Notification badge | `aria-label="3 התראות"` on red badge |
+| Emoji icons in nav | `<span aria-hidden="true">🏠</span>` — decorative, hidden from screen readers |
+| Focus indicators | CSS: `button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid #1e40af }` |
+
+### Option C specific fix:
+| Fix | Detail |
+|-----|--------|
+| Contrast failure | `text-gray-500` on `bg-gray-900` = **3.9:1** (fails WCAG AA 4.5:1) → changed to `text-gray-400` = **5.7:1** ✅ |

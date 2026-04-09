@@ -52,3 +52,27 @@ export const loginLimiter = rateLimit({
   skipSuccessfulRequests: true,
   handler:                rateLimitHandler,
 })
+
+/**
+ * Forgot-password rate limiter — prevents email bombing.
+ * Default: 5 requests per 15 minutes per IP.
+ */
+export const forgotPasswordLimiter = rateLimit({
+  windowMs: parseInt(process.env.LOGIN_RATE_LIMIT_WINDOW_MS ?? '900000', 10),
+  max:      5,
+  standardHeaders: true,
+  legacyHeaders:   false,
+  handler:         rateLimitHandler,
+})
+
+/**
+ * Register rate limiter — prevents account creation spam.
+ * Default: 10 registrations per hour per IP.
+ */
+export const registerLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max:      10,
+  standardHeaders: true,
+  legacyHeaders:   false,
+  handler:         rateLimitHandler,
+})

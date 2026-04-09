@@ -1,0 +1,324 @@
+/**
+ * EthicFlow — Submissions Controller
+ * Manages research submission lifecycle:
+ *   list, getById, create, update, continue (clone).
+ *
+ * Role-based visibility:
+ *   RESEARCHER  → own submissions only
+ *   REVIEWER    → submissions assigned to them
+ *   SECRETARY / CHAIRMAN / ADMIN → all submissions
+ */
+
+import prisma from '../config/database.js'
+import { AppError } from '../utils/errors.js'
+
+// ─────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────
+
+/**
+ * Builds a Prisma `where` clause based on the requester's role.
+ * @param {{ id: string, role: string }} user
+ * @param {object} [extra={}] - Additional where conditions to merge
+ * @returns {object} Prisma where clause
+ */
+function roleFilter(user, extra = {}) {
+  if (user.role === 'RESEARCHER') return { authorId: user.id,   isActive: true, ...extra }
+  if (user.role === 'REVIEWER')   return { reviewerId: user.id, isActive: true, ...extra }
+  return { isActive: true, ...extra }
+}
+
+/**
+ * Generates the next applicationId in the format ETH-{YEAR}-{SEQ}.
+ * Sequence is zero-padded to 3 digits and increments from the highest existing ID this year.
+ * Note: not race-safe for high-concurrency — a DB sequence should be used in production.
+ * @returns {Promise<string>} e.g. "ETH-2026-004"
+ */
+async function generateApplicationId() {
+  const year   = new Date().getFullYear()
+  const prefix = `ETH-${year}-`
+
+  const last = await prisma.submission.findFirst({
+    where:   { applicationId: { startsWith: prefix } },
+    orderBy: { applicationId: 'desc' },
+    select:  { applicationId: true },
+  })
+
+  if (!last) return `${prefix}001`
+  const seq = parseInt(last.applicationId.split('-')[2], 10) + 1
+  return `${prefix}${String(seq).padStart(3, '0')}`
+}
+
+/**
+ * Builds a paginated response object.
+ * @param {Array}  data
+ * @param {number} total
+ * @param {number} page
+ * @param {number} limit
+ * @returns {{ data: Array, pagination: object }}
+ */
+function paginate(data, total, page, limit) {
+  return {
+    data,
+    pagination: {
+      page,
+      limit,
+      total,
+      pages: Math.ceil(total / limit),
+    },
+  }
+}
+
+// ─────────────────────────────────────────────
+// CONTROLLERS
+// ─────────────────────────────────────────────
+
+/**
+ * GET /api/submissions
+ * Lists submissions filtered by role, with optional status filter and pagination.
+ * @param {import('express').Request} req - query: { status?, page?, limit? }
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
+export async function list(req, res, next) {
+  try {
+    const page  = Math.max(1, parseInt(req.query.page  ?? '1',  10))
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit ?? '20', 10)))
+    const skip  = (page - 1) * limit
+
+    const extra = req.query.status ? { status: req.query.status } : {}
+    const where = roleFilter(req.user, extra)
+
+    const [submissions, total] = await Promise.all([
+      prisma.submission.findMany({
+        where,
+        skip,
+        take:    limit,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          author:     { select: { id: true, fullName: true, email: true } },
+          formConfig: { select: { id: true, name: true, nameEn: true, version: true } },
+        },
+      }),
+      prisma.submission.count({ where }),
+    ])
+
+    res.json(paginate(submissions, total, page, limit))
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
+ * GET /api/submissions/:id
+ * Returns a single submission with its version history and active comments.
+ * Internal comments are hidden from RESEARCHER role.
+ * @param {import('express').Request} req - params: { id }
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
+export async function getById(req, res, next) {
+  try {
+    const where = roleFilter(req.user, { id: req.params.id })
+
+    const submission = await prisma.submission.findFirst({
+      where,
+      include: {
+        author:     { select: { id: true, fullName: true, email: true } },
+        reviewer:   { select: { id: true, fullName: true, email: true } },
+        formConfig: { select: { id: true, name: true, nameEn: true, version: true } },
+        versions:   { orderBy: { versionNum: 'asc' } },
+        comments: {
+          where: {
+            isActive:   true,
+            ...(req.user.role === 'RESEARCHER' ? { isInternal: false } : {}),
+          },
+          orderBy: { createdAt: 'asc' },
+          include: { author: { select: { id: true, fullName: true, role: true } } },
+        },
+        slaTracking: true,
+      },
+    })
+
+    if (!submission) return next(AppError.notFound('Submission'))
+    res.json({ submission })
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
+ * POST /api/submissions
+ * Creates a new submission for the authenticated researcher.
+ * Generates applicationId (ETH-{YEAR}-{SEQ}), saves version 1, creates SLA record.
+ * @param {import('express').Request} req - body: { title, formConfigId, dataJson, track? }
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
+export async function create(req, res, next) {
+  try {
+    const { title, formConfigId, dataJson, track } = req.body
+
+    // Verify the form exists and is published
+    const form = await prisma.formConfig.findUnique({ where: { id: formConfigId } })
+    if (!form)            return next(AppError.notFound('Form'))
+    if (!form.isPublished) return next(new AppError('Form is not published', 'FORM_NOT_PUBLISHED', 400))
+    if (!form.isActive)    return next(new AppError('Form is archived', 'FORM_ARCHIVED', 400))
+
+    const applicationId = await generateApplicationId()
+
+    const submission = await prisma.$transaction(async (tx) => {
+      const sub = await tx.submission.create({
+        data: {
+          applicationId,
+          title,
+          formConfigId,
+          authorId: req.user.id,
+          track:    track ?? 'FULL',
+          status:   'DRAFT',
+        },
+      })
+
+      await tx.submissionVersion.create({
+        data: {
+          submissionId: sub.id,
+          versionNum:   1,
+          dataJson,
+          changedBy:    req.user.id,
+          changeNote:   'Initial draft',
+        },
+      })
+
+      await tx.sLATracking.create({
+        data: { submissionId: sub.id },
+      })
+
+      return sub
+    })
+
+    res.locals.entityId = submission.id
+    res.status(201).json({ submission })
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
+ * PUT /api/submissions/:id
+ * Updates a draft submission's data. Only the owner (RESEARCHER) or SECRETARY/ADMIN may update.
+ * Creates a new SubmissionVersion snapshot on each update.
+ * Blocked if submission is submitted or beyond.
+ * @param {import('express').Request} req - params: { id }, body: { title?, dataJson?, changeNote? }
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
+export async function update(req, res, next) {
+  try {
+    const existing = await prisma.submission.findFirst({
+      where:   { id: req.params.id, isActive: true },
+      include: { versions: { orderBy: { versionNum: 'desc' }, take: 1 } },
+    })
+    if (!existing) return next(AppError.notFound('Submission'))
+
+    // Only owner or privileged roles can edit
+    const isOwner = existing.authorId === req.user.id
+    const canEdit = ['SECRETARY', 'ADMIN'].includes(req.user.role)
+    if (!isOwner && !canEdit) return next(AppError.forbidden())
+
+    // Only DRAFT submissions can be edited by researcher
+    if (req.user.role === 'RESEARCHER' && existing.status !== 'DRAFT') {
+      return next(new AppError('Only draft submissions can be edited', 'SUBMISSION_NOT_DRAFT', 400))
+    }
+
+    const { title, dataJson, changeNote } = req.body
+    const nextVersion = (existing.versions[0]?.versionNum ?? 0) + 1
+
+    const submission = await prisma.$transaction(async (tx) => {
+      const data = {}
+      if (title    !== undefined) data.title = title
+
+      const sub = Object.keys(data).length
+        ? await tx.submission.update({ where: { id: req.params.id }, data })
+        : existing
+
+      if (dataJson !== undefined) {
+        await tx.submissionVersion.create({
+          data: {
+            submissionId: sub.id,
+            versionNum:   nextVersion,
+            dataJson,
+            changedBy:    req.user.id,
+            changeNote:   changeNote ?? null,
+          },
+        })
+      }
+
+      return sub
+    })
+
+    res.locals.entityId = submission.id
+    res.json({ submission })
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
+ * POST /api/submissions/:id/continue
+ * Creates a continuation submission cloned from an approved original.
+ * Sets parentId to original, status = DRAFT, copies latest form data as version 1.
+ * @param {import('express').Request} req - params: { id }
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
+export async function continueSubmission(req, res, next) {
+  try {
+    const original = await prisma.submission.findFirst({
+      where:   { id: req.params.id, authorId: req.user.id, isActive: true },
+      include: { versions: { orderBy: { versionNum: 'desc' }, take: 1 } },
+    })
+    if (!original) return next(AppError.notFound('Submission'))
+
+    if (original.status !== 'APPROVED') {
+      return next(new AppError('Only approved submissions can be continued', 'SUBMISSION_NOT_APPROVED', 400))
+    }
+
+    const applicationId = await generateApplicationId()
+    const sourceData    = original.versions[0]?.dataJson ?? {}
+
+    const submission = await prisma.$transaction(async (tx) => {
+      const sub = await tx.submission.create({
+        data: {
+          applicationId,
+          title:        `Continuation — ${original.title}`,
+          formConfigId: original.formConfigId,
+          authorId:     req.user.id,
+          parentId:     original.id,
+          track:        original.track,
+          status:       'DRAFT',
+        },
+      })
+
+      await tx.submissionVersion.create({
+        data: {
+          submissionId: sub.id,
+          versionNum:   1,
+          dataJson:     sourceData,
+          changedBy:    req.user.id,
+          changeNote:   `Continued from ${original.applicationId}`,
+        },
+      })
+
+      await tx.sLATracking.create({
+        data: { submissionId: sub.id },
+      })
+
+      return sub
+    })
+
+    res.locals.entityId = submission.id
+    res.status(201).json({ submission })
+  } catch (err) {
+    next(err)
+  }
+}
