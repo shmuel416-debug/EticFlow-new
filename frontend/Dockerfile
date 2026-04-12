@@ -29,11 +29,12 @@ FROM nginx:alpine
 COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Copy nginx config template (${BACKEND_URL} is substituted at startup)
-COPY nginx.conf /etc/nginx/templates/default.conf.template
+COPY nginx.conf /tmp/nginx.conf.template
 
 EXPOSE 80
 
-# Substitute BACKEND_URL into the nginx config then start nginx
-CMD ["sh", "-c", \
-  "envsubst '$BACKEND_URL' < /etc/nginx/templates/default.conf.template \
-   > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
+# Substitute BACKEND_URL into the nginx config then start nginx.
+# Template is kept in /tmp (not /etc/nginx/templates) to prevent
+# nginx's built-in entrypoint from running envsubst on ALL vars,
+# which would corrupt nginx's own $http_host, $uri, etc.
+CMD ["sh", "-c", "envsubst '$BACKEND_URL' < /tmp/nginx.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
