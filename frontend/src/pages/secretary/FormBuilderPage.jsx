@@ -57,6 +57,7 @@ function StatusBadge({ status }) {
  * @param {{ message: string, onDismiss: () => void }} props
  */
 function ErrorBanner({ message, onDismiss }) {
+  const { t } = useTranslation()
   if (!message) return null
   return (
     <div role="alert" aria-live="assertive"
@@ -64,7 +65,7 @@ function ErrorBanner({ message, onDismiss }) {
       <span className="text-sm text-red-700">{message}</span>
       <button type="button" onClick={onDismiss}
         className="text-red-500 hover:text-red-700 text-lg font-bold ms-3"
-        aria-label="סגור שגיאה" style={{ minWidth: '32px', minHeight: '32px' }}>✕</button>
+        aria-label={t('secretary.formBuilder.closeError')} style={{ minWidth: '32px', minHeight: '32px' }}>✕</button>
     </div>
   )
 }

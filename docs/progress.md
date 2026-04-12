@@ -65,11 +65,28 @@
 ## Current Sprint: Sprint 3 — Review Workflow
 **Status:** 🔄 In Progress | **Tag:** —
 
-### S3.0 — Sprint 2 fixes (applied before Sprint 3 begins)
+### S3.0 — Sprint 2 fixes + Pre-Sprint 3 QA/Security/Accessibility (applied before Sprint 3 begins)
 - [x] Fix `FormPreviewPage.jsx`: `setForm(data)` → `setForm(data.form)`
 - [x] Add `POST /api/forms/:id/restore` endpoint
 - [x] Wire "Save Draft" button in `SubmitPage.jsx`
 - [x] Fix dead language toggle in `FormCanvas.jsx` — wired `onPreviewLangChange` prop
+- [x] **BUG-001** Fix `formConfigId` Zod validation: `uuid()` → `min(1)` — was blocking all form submissions
+- [x] **BUG-002/003** Update `pages.comingSoon` translation: "Sprint 2" → "בקרוב" / "coming soon"
+- [x] **BUG-004** Create `ResetPasswordPage.jsx` + add `/reset-password` route to App.jsx
+- [x] **BUG-005** Remove unused `user` import in `AppLayout.jsx`
+- [x] **BUG-006** Fix `setState` sync in `AuthContext.jsx` useEffect → `setTimeout`
+- [x] **BUG-007** Replace hardcoded `aria-label="סגור שגיאה"` with `t('closeError')` in `FormBuilderPage.jsx`
+- [x] **BUG-008** Add `stripHtml` transform to form name Zod schema — prevent stored XSS
+- [x] **BUG-009** Run `npm audit fix` — fixed 3 Vite CVEs (0 vulnerabilities remaining)
+- [x] **SEC-M02** Add `stripHtml` + `.max(500)` to submission title Zod schema
+- [x] **SEC-M03** Add `.max(500)` to submission title, `.max(1000)` to changeNote
+- [x] **A11Y-H01** Fix broken `aria-describedby`: add `id` prop to `FieldFeedback` component
+- [x] **A11Y-L01** Add `aria-required` on radio/checkbox `<fieldset>` in FormRenderer
+- [x] **A11Y-L03** Disable "Add Condition" button (no handler) + add `title` tooltip
+- [x] **A11Y-L04** Replace hardcoded Hebrew `aria-label="שדה חובה"` with `t('common.requiredField')`
+- [x] Full QA audit — report: `docs/qa-report-sprint-3-pre.md`
+- [x] Full Security audit — report: `docs/security-report-sprint-3-pre.md`
+- [x] Full Accessibility audit — report: `docs/accessibility-report-sprint-3-pre.md`
 
 ### S3.1 — Submission Review (Secretary)
 - [ ] S3.1.1 Submission list page (secretary view — status filter, search, sort)

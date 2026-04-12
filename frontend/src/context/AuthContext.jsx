@@ -45,7 +45,8 @@ export function AuthProvider({ children }) {
    * On page refresh the token is gone — user must log in again.
    */
   useEffect(() => {
-    setLoading(false)
+    const id = setTimeout(() => setLoading(false), 0)
+    return () => clearTimeout(id)
   }, [])
 
   /**

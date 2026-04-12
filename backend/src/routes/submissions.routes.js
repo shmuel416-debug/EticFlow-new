@@ -21,17 +21,20 @@ const router = Router()
 // ZOD SCHEMAS
 // ─────────────────────────────────────────────
 
+/** Strip HTML tags from a string to prevent stored XSS. */
+const stripHtml = (s) => s.replace(/<[^>]*>/g, '').trim()
+
 const createSchema = z.object({
-  title:       z.string().min(2, 'Title must be at least 2 characters'),
-  formConfigId: z.string().uuid('Invalid form ID'),
-  dataJson:    z.record(z.unknown()).default({}),
-  track:       z.enum(['FULL', 'EXPEDITED', 'EXEMPT']).optional(),
+  title:        z.string().min(2, 'Title must be at least 2 characters').max(500, 'Title too long').transform(stripHtml),
+  formConfigId: z.string().min(1, 'Invalid form ID'),
+  dataJson:     z.record(z.unknown()).default({}),
+  track:        z.enum(['FULL', 'EXPEDITED', 'EXEMPT']).optional(),
 })
 
 const updateSchema = z.object({
-  title:      z.string().min(2).optional(),
+  title:      z.string().min(2).max(500).transform(stripHtml).optional(),
   dataJson:   z.record(z.unknown()).optional(),
-  changeNote: z.string().optional(),
+  changeNote: z.string().max(1000).optional(),
 })
 
 const listQuerySchema = z.object({

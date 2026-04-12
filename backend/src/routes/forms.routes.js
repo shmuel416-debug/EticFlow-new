@@ -24,15 +24,18 @@ const router = Router()
 // ZOD SCHEMAS
 // ─────────────────────────────────────────────
 
+/** Strip HTML tags from a string to prevent stored XSS. */
+const stripHtml = (s) => s.replace(/<[^>]*>/g, '').trim()
+
 const createSchema = z.object({
-  name:       z.string().min(2, 'Form name must be at least 2 characters'),
-  nameEn:     z.string().min(2, 'English name must be at least 2 characters'),
+  name:       z.string().min(2, 'Form name must be at least 2 characters').transform(stripHtml),
+  nameEn:     z.string().min(2, 'English name must be at least 2 characters').transform(stripHtml),
   schemaJson: z.record(z.unknown()).default({}),
 })
 
 const updateSchema = z.object({
-  name:       z.string().min(2).optional(),
-  nameEn:     z.string().min(2).optional(),
+  name:       z.string().min(2).transform(stripHtml).optional(),
+  nameEn:     z.string().min(2).transform(stripHtml).optional(),
   schemaJson: z.record(z.unknown()).optional(),
 })
 

@@ -154,7 +154,10 @@ export default function FieldSettingsPanel({ field, onSave, onCancel }) {
             {t('secretary.formBuilder.settingsConditional')}
           </p>
           <p className="text-xs text-gray-400 mb-2">{t('secretary.formBuilder.settingsConditionalHint')}</p>
-          <button type="button" className="text-xs hover:underline" style={{ color: 'var(--lev-teal-text)', minHeight: '44px' }}>
+          <button type="button" disabled
+            title={t('secretary.formBuilder.conditionalComingSoon')}
+            className="text-xs opacity-40 cursor-not-allowed"
+            style={{ color: 'var(--lev-teal-text)', minHeight: '44px' }}>
             {t('secretary.formBuilder.settingsAddCondition')}
           </button>
         </div>

@@ -40,11 +40,12 @@ function FieldLabel({ id, label, required }) {
 
 /**
  * Inline error / success message under a field.
- * @param {{ error: string, valid: boolean }} props
+ * id prop wires up aria-describedby from the parent input.
+ * @param {{ id?: string, error: string, valid: boolean }} props
  */
-function FieldFeedback({ error, valid }) {
+function FieldFeedback({ id, error, valid }) {
   const { t } = useTranslation()
-  if (error) return <p role="alert" aria-live="polite" className="text-xs mt-1 text-red-600">{error}</p>
+  if (error) return <p id={id} role="alert" aria-live="polite" className="text-xs mt-1 text-red-600">{error}</p>
   if (valid) return <p className="text-xs mt-1" style={{ color: '#16a34a' }}>✓ {t('submission.submit.validField')}</p>
   return null
 }
@@ -74,7 +75,7 @@ export function FormField({ field, value, error, lang, onChange }) {
           onChange={e => onChange(field.id, e.target.value)}
           onFocus={onFocus} onBlur={onBlur}
         />
-        <FieldFeedback error={error} valid={isValid} />
+        <FieldFeedback id={`${id}-err`} error={error} valid={isValid} />
       </div>
     )
   }
@@ -90,7 +91,7 @@ export function FormField({ field, value, error, lang, onChange }) {
           onChange={e => onChange(field.id, e.target.value)}
           onFocus={onFocus} onBlur={onBlur}
         />
-        <FieldFeedback error={error} valid={isValid} />
+        <FieldFeedback id={`${id}-err`} error={error} valid={isValid} />
       </div>
     )
   }
@@ -105,7 +106,7 @@ export function FormField({ field, value, error, lang, onChange }) {
           onChange={e => onChange(field.id, e.target.value)}
           onFocus={onFocus} onBlur={onBlur}
         />
-        <FieldFeedback error={error} valid={isValid} />
+        <FieldFeedback id={`${id}-err`} error={error} valid={isValid} />
       </div>
     )
   }
@@ -123,7 +124,7 @@ export function FormField({ field, value, error, lang, onChange }) {
             <option key={i} value={opt}>{opt}</option>
           ))}
         </select>
-        <FieldFeedback error={error} valid={isValid} />
+        <FieldFeedback id={`${id}-err`} error={error} valid={isValid} />
       </div>
     )
   }
@@ -131,9 +132,9 @@ export function FormField({ field, value, error, lang, onChange }) {
   if (field.type === 'radio') {
     const opts = field.options || [t('submission.submit.sampleOption', { n: 1 }), t('submission.submit.sampleOption', { n: 2 })]
     return (
-      <fieldset>
+      <fieldset aria-required={field.required}>
         <legend className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--lev-navy)' }}>
-          {label}{field.required && <span aria-label="שדה חובה" className="ms-0.5" style={{ color: 'var(--lev-purple)' }}>*</span>}
+          {label}{field.required && <span aria-label={t('common.requiredField')} className="ms-0.5" style={{ color: 'var(--lev-purple)' }}>*</span>}
         </legend>
         {opts.map((opt, i) => (
           <label key={i} className="flex items-center gap-2 text-sm cursor-pointer mb-1" style={{ minHeight: '44px' }}>
@@ -142,7 +143,7 @@ export function FormField({ field, value, error, lang, onChange }) {
             {opt}
           </label>
         ))}
-        <FieldFeedback error={error} valid={false} />
+        <FieldFeedback id={`${id}-err`} error={error} valid={false} />
       </fieldset>
     )
   }
@@ -151,9 +152,9 @@ export function FormField({ field, value, error, lang, onChange }) {
     const opts = field.options || [t('submission.submit.sampleOption', { n: 1 }), t('submission.submit.sampleOption', { n: 2 })]
     const checked = Array.isArray(value) ? value : []
     return (
-      <fieldset>
+      <fieldset aria-required={field.required}>
         <legend className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--lev-navy)' }}>
-          {label}{field.required && <span aria-label="שדה חובה" className="ms-0.5" style={{ color: 'var(--lev-purple)' }}>*</span>}
+          {label}{field.required && <span aria-label={t('common.requiredField')} className="ms-0.5" style={{ color: 'var(--lev-purple)' }}>*</span>}
         </legend>
         {opts.map((opt, i) => (
           <label key={i} className="flex items-center gap-2 text-sm cursor-pointer mb-1" style={{ minHeight: '44px' }}>
@@ -163,7 +164,7 @@ export function FormField({ field, value, error, lang, onChange }) {
             {opt}
           </label>
         ))}
-        <FieldFeedback error={error} valid={false} />
+        <FieldFeedback id={`${id}-err`} error={error} valid={false} />
       </fieldset>
     )
   }
@@ -183,7 +184,7 @@ export function FormField({ field, value, error, lang, onChange }) {
           <input id={id} type="file" className="sr-only" aria-required={field.required}
             onChange={e => onChange(field.id, e.target.files?.[0]?.name || '')} />
         </label>
-        <FieldFeedback error={error} valid={false} />
+        <FieldFeedback id={`${id}-err`} error={error} valid={false} />
       </div>
     )
   }
@@ -198,10 +199,10 @@ export function FormField({ field, value, error, lang, onChange }) {
             onChange={e => onChange(field.id, e.target.checked)} className="accent-[#1E2A72] mt-0.5" />
           <span className="text-xs">
             {t('submission.submit.declarationAccept')}
-            {field.required && <span aria-label="שדה חובה" className="ms-0.5" style={{ color: 'var(--lev-purple)' }}>*</span>}
+            {field.required && <span aria-label={t('common.requiredField')} className="ms-0.5" style={{ color: 'var(--lev-purple)' }}>*</span>}
           </span>
         </label>
-        <FieldFeedback error={error} valid={false} />
+        <FieldFeedback id={`${id}-err`} error={error} valid={false} />
       </div>
     )
   }

@@ -14,6 +14,7 @@ import ProtectedRoute    from './components/layout/ProtectedRoute'
 
 import LoginPage           from './pages/LoginPage'
 import ForgotPasswordPage  from './pages/ForgotPasswordPage'
+import ResetPasswordPage   from './pages/ResetPasswordPage'
 import DashboardPage       from './pages/DashboardPage'
 import FormBuilderPage     from './pages/secretary/FormBuilderPage'
 import FormPreviewPage     from './pages/secretary/FormPreviewPage'
@@ -28,6 +29,7 @@ export default function App() {
           {/* ── Public ── */}
           <Route path="/login"            element={<LoginPage />} />
           <Route path="/forgot-password"  element={<ForgotPasswordPage />} />
+          <Route path="/reset-password"   element={<ResetPasswordPage />} />
 
           {/* ── Protected (all authenticated roles) ── */}
           <Route element={<ProtectedRoute />}>

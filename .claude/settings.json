@@ -1,0 +1,41 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); f=d.get\\('form',{}\\); print\\('stored name:', f.get\\('name','ERR'\\)\\)\")",
+      "Bash(curl -s -X POST http://localhost:5000/api/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"'\\\\''; DROP TABLE users; --\",\"password\":\"123456\"}')",
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(d.get\\('code','OK'\\), d.get\\('error',''\\)\\)\")",
+      "Bash(python -c ':*)",
+      "Bash(node -e ':*)",
+      "Bash(node src/index.js)",
+      "Bash(curl -s --retry 5 --retry-delay 2 --retry-connrefused http://localhost:5000/api/health)",
+      "Bash(curl -s -X POST http://localhost:5000/api/auth/login -H \"Content-Type: application/json\" -d \"{\\\\\"email\\\\\":\\\\\"researcher@test.com\\\\\",\\\\\"password\\\\\":\\\\\"123456\\\\\"}\")",
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('code:', d.get\\('code','?'\\)\\)\")",
+      "Bash(curl -s -X POST http://localhost:5000/api/auth/login -H 'Content-Type: application/json' -d '{\"email\":{\"gt\":\"\"},\"password\":\"x\"}')",
+      "Bash(curl -s -I http://localhost:5000/api/health)",
+      "Bash(curl -s -I http://localhost:5000/api/health -H \"Origin: https://evil-site.com\")",
+      "Bash(curl -s http://localhost:5000/api/nonexistent)",
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(d\\)\")",
+      "Bash(curl -s -X POST http://localhost:5000/api/auth/login -H 'Content-Type: application/json' -d 'invalid json')",
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('stack' in str\\(d\\), d.get\\('code','?'\\)\\)\")",
+      "Bash(curl -s -X POST http://localhost:5000/api/auth/register -H 'Content-Type: application/json' -d '{\"email\":\"weak@test.com\",\"fullName\":\"Test User\",\"password\":\"123\",\"role\":\"RESEARCHER\"}')",
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(d.get\\('code','?'\\), str\\(d.get\\('details',''\\)\\)[:80]\\)\")",
+      "Bash(curl -s -X POST http://localhost:5000/api/auth/register -H 'Content-Type: application/json' -d '{\"email\":\"weak2@test.com\",\"fullName\":\"Test User\",\"password\":\"password\",\"role\":\"RESEARCHER\"}')",
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(d.get\\('code','ALLOWED'\\)\\)\")",
+      "Bash(curl -s -o /dev/null -w '%{http_code}' -X POST http://localhost:5000/api/auth/forgot-password -H 'Content-Type: application/json' -d '{\"email\":\"victim@test.com\"}')",
+      "Bash(grep -v \"^$\")",
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('stored title:', d.get\\('submission',{}\\).get\\('title','error: '+d.get\\('error','?'\\)\\)\\)\")",
+      "Bash(curl -s -X POST http://localhost:5000/api/auth/register -H 'Content-Type: application/json' -d '{\"email\":\"nocomplex@test.com\",\"fullName\":\"Test\",\"password\":\"password1\",\"role\":\"RESEARCHER\"}')",
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('ACCEPTED' if 'user' in d else d.get\\('code','?'\\)\\)\")",
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('title stored:', d.get\\('submission',{}\\).get\\('title','ERR'\\) or d.get\\('error','ERR'\\)\\)\")",
+      "Bash(curl -s -X POST http://localhost:5000/api/auth/register -H 'Content-Type: application/json' -d '{\"email\":\"complexity2@test.com\",\"fullName\":\"Test\",\"password\":\"password1\",\"role\":\"RESEARCHER\"}')",
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('Result:', 'ACCEPTED - no complexity policy' if 'user' in d else d.get\\('code','?'\\)\\)\")",
+      "Bash(curl -s -X POST http://localhost:5000/api/auth/register -H 'Content-Type: application/json' -d '{\"email\":\"hacker@test.com\",\"fullName\":\"Hacker\",\"password\":\"Hacker123!\",\"role\":\"ADMIN\"}')",
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); u=d.get\\('user',{}\\); print\\('role assigned:', u.get\\('role','ERR'\\) or d.get\\('error','ERR'\\)\\)\")",
+      "Bash(curl -s -H 'Authorization: Bearer __TRACKED_VAR__' http://localhost:5000/api/auth/me)",
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('10k title:', d.get\\('code','ACCEPTED'\\)\\)\")",
+      "Bash(curl -s -X POST http://localhost:5000/api/auth/login -H 'Content-Type: application/json' --data-raw '{\"email\":\"admin@test.com\",\"password\":\"123456\"}')",
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(d.get\\('code','OK'\\), d.get\\('token','NO TOKEN'\\)[:30] if d.get\\('token'\\) else 'no token'\\)\")",
+      "Bash(grep -v '//')"
+    ]
+  }
+}

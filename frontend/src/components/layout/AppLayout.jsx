@@ -7,7 +7,6 @@
 import { useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { useAuth } from '../../context/AuthContext'
 import Sidebar from './Sidebar'
 import LanguageSwitcher from '../ui/LanguageSwitcher'
 
@@ -15,8 +14,7 @@ import LanguageSwitcher from '../ui/LanguageSwitcher'
  * Shell layout used by all protected routes.
  */
 export default function AppLayout() {
-  const { t }    = useTranslation()
-  const { user } = useAuth()
+  const { t } = useTranslation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (

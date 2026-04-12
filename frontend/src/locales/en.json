@@ -12,7 +12,8 @@
     "settings": "Settings",
     "skipToMain": "Skip to main content",
     "error": "Error",
-    "success": "Success"
+    "success": "Success",
+    "requiredField": "Required field"
   },
   "auth": {
     "login": {
@@ -43,9 +44,15 @@
       "title": "New Password",
       "subtitle": "Enter a new password for your account",
       "passwordLabel": "New password",
+      "confirmLabel": "Confirm password",
+      "passwordHint": "At least 8 characters",
       "submitButton": "Save Password",
-      "successMessage": "Password reset successful. You can now sign in with your new password.",
-      "invalidToken": "This link is invalid or has expired."
+      "successMessage": "Password reset successful. Redirecting to login...",
+      "invalidToken": "This link is invalid or has expired.",
+      "errorTooShort": "Password must be at least 8 characters",
+      "errorMismatch": "Passwords do not match",
+      "errorNoToken": "Reset link is missing — please request a new one",
+      "backToLogin": "Back to login"
     }
   },
   "nav": {
@@ -154,7 +161,7 @@
     "settings":       "Settings",
     "users":          "User Management",
     "reports":        "Reports",
-    "comingSoon":     "This page will be built in Sprint 2",
+    "comingSoon":     "This page is coming soon",
     "openMenu":       "Open navigation menu",
     "closeMenu":      "Close menu"
   },
@@ -215,7 +222,9 @@
       "fieldActionsAriaLabel": "Actions for field {{label}}",
       "settingsValidationTitle": "Validation",
       "switchOn": "On",
-      "switchOff": "Off"
+      "switchOff": "Off",
+      "closeError": "Close error",
+      "conditionalComingSoon": "Conditional logic will be added in a future version"
     },
     "formLibrary": {
       "title": "Form Library",

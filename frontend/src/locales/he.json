@@ -12,7 +12,8 @@
     "settings": "הגדרות",
     "skipToMain": "דלג לתוכן הראשי",
     "error": "שגיאה",
-    "success": "הצלחה"
+    "success": "הצלחה",
+    "requiredField": "שדה חובה"
   },
   "auth": {
     "login": {
@@ -43,9 +44,15 @@
       "title": "סיסמה חדשה",
       "subtitle": "הזן סיסמה חדשה לחשבונך",
       "passwordLabel": "סיסמה חדשה",
+      "confirmLabel": "אימות סיסמה",
+      "passwordHint": "לפחות 8 תווים",
       "submitButton": "שמור סיסמה",
-      "successMessage": "הסיסמה אופסה בהצלחה. ניתן להתחבר עם הסיסמה החדשה.",
-      "invalidToken": "הקישור אינו תקין או שפג תוקפו."
+      "successMessage": "הסיסמה אופסה בהצלחה. מועבר לדף הכניסה...",
+      "invalidToken": "הקישור אינו תקין או שפג תוקפו.",
+      "errorTooShort": "הסיסמה חייבת להכיל לפחות 8 תווים",
+      "errorMismatch": "הסיסמאות אינן תואמות",
+      "errorNoToken": "קישור האיפוס חסר — בקש קישור חדש",
+      "backToLogin": "חזרה לדף הכניסה"
     }
   },
   "nav": {
@@ -154,7 +161,7 @@
     "settings":       "הגדרות",
     "users":          "ניהול משתמשים",
     "reports":        "דוחות",
-    "comingSoon":     "עמוד זה יפותח ב-Sprint 2",
+    "comingSoon":     "עמוד זה יפותח בקרוב",
     "openMenu":       "פתח תפריט ניווט",
     "closeMenu":      "סגור תפריט"
   },
@@ -215,7 +222,9 @@
       "fieldActionsAriaLabel": "פעולות עבור שדה {{label}}",
       "settingsValidationTitle": "ולידציה",
       "switchOn": "מופעל",
-      "switchOff": "כבוי"
+      "switchOff": "כבוי",
+      "closeError": "סגור שגיאה",
+      "conditionalComingSoon": "לוגיקה מותנית תתווסף בגרסה הבאה"
     },
     "formLibrary": {
       "title": "ספריית טפסים",

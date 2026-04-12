@@ -53,6 +53,29 @@
 | 2026-04-09 | S2 Sprint Wrap-up | ✅ Done | All reports saved in docs/. APPROVED FOR MERGE with 1 known issue tracked. |
 | 2026-04-09 | S2 Post-audit fixes | ✅ Done | API shape bugs fixed (FormPreviewPage, FormBuilderPage, FormLibraryPage), POST /api/forms/:id/restore added, FormCanvas lang toggle wired, SubmitPage Save Draft wired. Tagged v0.2.0 |
 
+## Sprint 3 — Pre-Sprint QA / Security / Accessibility Audit
+
+| Date | Task | Status | Notes |
+|------|------|--------|-------|
+| 2026-04-09 | Pre-Sprint QA Audit | ✅ Done | 2 critical, 2 high, 4 medium found. Report: docs/qa-report-sprint-3-pre.md |
+| 2026-04-09 | BUG-001 formConfigId UUID | ✅ Fixed | `z.string().uuid()` → `z.string().min(1)` — was blocking all researcher submissions |
+| 2026-04-09 | BUG-002/003 Sprint 2 text | ✅ Fixed | `pages.comingSoon` → "יפותח בקרוב" / "coming soon" in he.json + en.json |
+| 2026-04-09 | BUG-004 ResetPasswordPage | ✅ Fixed | Created ResetPasswordPage.jsx + route — /reset-password was a dead link |
+| 2026-04-09 | BUG-005 unused var | ✅ Fixed | Removed unused `user` import from AppLayout.jsx |
+| 2026-04-09 | BUG-006 setState in effect | ✅ Fixed | AuthContext useEffect: setLoading wrapped in setTimeout |
+| 2026-04-09 | BUG-007 hardcoded aria-label | ✅ Fixed | FormBuilderPage: `"סגור שגיאה"` → `t('closeError')` |
+| 2026-04-09 | BUG-008 stored XSS form name | ✅ Fixed | `stripHtml` transform added to form name + nameEn Zod schema |
+| 2026-04-09 | BUG-009 Vite CVEs | ✅ Fixed | `npm audit fix` — 0 frontend vulnerabilities |
+| 2026-04-09 | Pre-Sprint Security Audit | ✅ Done | 0 critical, 1 high (nodemailer), 3 medium. Report: docs/security-report-sprint-3-pre.md |
+| 2026-04-09 | SEC-M02 XSS in submission title | ✅ Fixed | `stripHtml` + `.max(500)` on submission title Zod schema |
+| 2026-04-09 | SEC-M03 no max title length | ✅ Fixed | `.max(500)` title, `.max(1000)` changeNote |
+| 2026-04-09 | Pre-Sprint Accessibility Audit | ✅ Done | 0 critical, 1 high, 3 medium, 4 low. Report: docs/accessibility-report-sprint-3-pre.md |
+| 2026-04-09 | A11Y-H01 broken aria-describedby | ✅ Fixed | FieldFeedback: added `id` prop → `<p id={id}>` — screen readers now hear error messages |
+| 2026-04-09 | A11Y-L01 fieldset aria-required | ✅ Fixed | Added `aria-required` on radio/checkbox fieldset elements |
+| 2026-04-09 | A11Y-L03 dead button | ✅ Fixed | "Add Condition" button: added `disabled` + tooltip |
+| 2026-04-09 | A11Y-L04 hardcoded Hebrew aria | ✅ Fixed | `"שדה חובה"` → `t('common.requiredField')` in FormRenderer |
+| 2026-04-09 | i18n keys | ✅ Done | Added: `closeError`, `conditionalComingSoon`, `common.requiredField` (he + en) |
+
 ## S1.4 — Accessibility Fixes Applied to Login Design (IS 5568 / WCAG 2.1 AA)
 
 ### Fixes applied to all 3 options (A, B, C):
