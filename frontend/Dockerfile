@@ -35,5 +35,5 @@ EXPOSE 80
 
 # Substitute BACKEND_URL into the nginx config then start nginx
 CMD ["sh", "-c", \
-  "envsubst '${BACKEND_URL}' < /etc/nginx/templates/default.conf.template \
+  "envsubst '$BACKEND_URL' < /etc/nginx/templates/default.conf.template \
    > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
