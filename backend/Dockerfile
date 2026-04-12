@@ -29,4 +29,4 @@ USER app
 EXPOSE 5000
 
 # Run migrations (idempotent) then start the server
-CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy && node src/index.js"]
+CMD ["sh", "-c", "node_modules/.bin/prisma migrate deploy && node_modules/.bin/prisma db seed && node src/index.js"]
