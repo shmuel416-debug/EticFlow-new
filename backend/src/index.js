@@ -18,7 +18,7 @@ import formsRouter from './routes/forms.routes.js'
 import submissionsRouter from './routes/submissions.routes.js'
 
 const app  = express()
-const PORT = process.env.API_PORT ?? 5000
+const PORT = process.env.PORT ?? process.env.API_PORT ?? 5000
 
 // ─────────────────────────────────────────────
 // MIDDLEWARE
