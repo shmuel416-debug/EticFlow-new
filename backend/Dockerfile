@@ -20,6 +20,7 @@ RUN npx prisma generate
 
 # Copy application source
 COPY src/ ./src/
+RUN apt-get update -y && apt-get install -y openssl
 
 # Hand ownership to non-root user
 RUN chown -R app:app /app
