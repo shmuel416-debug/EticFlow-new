@@ -56,7 +56,7 @@ async function seedUsers() {
     usersData.map((u) =>
       prisma.user.upsert({
         where:  { email: u.email },
-        update: {},
+        update: { passwordHash },
         create: {
           email:        u.email,
           passwordHash: passwordHash,
