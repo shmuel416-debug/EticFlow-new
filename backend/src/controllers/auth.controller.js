@@ -107,6 +107,9 @@ export async function login(req, res, next) {
     // Always run bcrypt — prevents timing-based email enumeration (constant-time)
     const validPassword = await bcrypt.compare(password, user?.passwordHash ?? DUMMY_BCRYPT_HASH)
 
+    // DEBUG — remove after fix
+    console.log('[LOGIN DEBUG]', { email, found: !!user, isActive: user?.isActive, validPassword, hashPrefix: user?.passwordHash?.slice(0, 10) })
+
     if (!user || !validPassword || !user.isActive) {
       return next(new AppError('Invalid email or password', 'INVALID_CREDENTIALS', 401))
     }
