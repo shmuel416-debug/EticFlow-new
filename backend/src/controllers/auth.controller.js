@@ -4,7 +4,7 @@
  * Never returns passwordHash in any response.
  */
 
-import bcrypt from 'bcrypt'
+import bcrypt from 'bcryptjs'
 import crypto from 'crypto'
 import jwt from 'jsonwebtoken'
 import prisma from '../config/database.js'
