@@ -9,7 +9,7 @@ WORKDIR /app
 
 # Create non-root user for security
 RUN addgroup -S app && adduser -S app -G app
-
+RUN apk add --no-cache openssl
 # Install dependencies (includes devDeps so prisma CLI is available for migrations)
 COPY package*.json ./
 COPY prisma/ ./prisma/
@@ -20,7 +20,7 @@ RUN npx prisma generate
 
 # Copy application source
 COPY src/ ./src/
-RUN apk add --no-cache openssl
+
 
 # Hand ownership to non-root user
 RUN chown -R app:app /app
