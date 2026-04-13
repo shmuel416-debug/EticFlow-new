@@ -74,15 +74,15 @@ export async function upload(req, res, next) {
     const files     = req.files   // multer array field "files"
 
     if (!files || files.length === 0) {
-      throw new AppError('No files provided', 400, 'NO_FILES')
+      throw new AppError('No files provided', 'NO_FILES', 400)
     }
 
     const submission = await prisma.submission.findUnique({ where: { id: subId } })
     if (!submission || !submission.isActive) {
-      throw new AppError('Submission not found', 404, 'NOT_FOUND')
+      throw new AppError('Submission not found', 'NOT_FOUND', 404)
     }
     if (!canWrite(req.user, submission)) {
-      throw new AppError('Forbidden', 403, 'FORBIDDEN')
+      throw new AppError('Forbidden', 'FORBIDDEN', 403)
     }
 
     const saved = []
@@ -91,7 +91,7 @@ export async function upload(req, res, next) {
       // Validate MIME + magic bytes + size
       const validation = validateFile(file)
       if (!validation.valid) {
-        throw new AppError(`Invalid file "${file.originalname}": ${validation.reason}`, 400, validation.reason)
+        throw new AppError(`Invalid file "${file.originalname}": ${validation.reason}`, validation.reason, 400)
       }
 
       const filename    = sanitizeName(file.originalname)
@@ -135,17 +135,17 @@ export async function list(req, res, next) {
 
     const submission = await prisma.submission.findUnique({ where: { id: subId } })
     if (!submission || !submission.isActive) {
-      throw new AppError('Submission not found', 404, 'NOT_FOUND')
+      throw new AppError('Submission not found', 'NOT_FOUND', 404)
     }
     if (!canAccess(req.user, submission)) {
-      throw new AppError('Forbidden', 403, 'FORBIDDEN')
+      throw new AppError('Forbidden', 'FORBIDDEN', 403)
     }
 
     const docs = await prisma.document.findMany({
       where:   { submissionId: subId, isActive: true },
       orderBy: { createdAt: 'asc' },
       include: {
-        uploadedBy: { select: { id: true, name: true, email: true } },
+        uploadedBy: { select: { id: true, fullName: true, email: true } },
       },
     })
 
@@ -175,15 +175,15 @@ export async function download(req, res, next) {
     })
 
     if (!doc || !doc.isActive) {
-      throw new AppError('Document not found', 404, 'NOT_FOUND')
+      throw new AppError('Document not found', 'NOT_FOUND', 404)
     }
     if (doc.submission && !canAccess(req.user, doc.submission)) {
-      throw new AppError('Forbidden', 403, 'FORBIDDEN')
+      throw new AppError('Forbidden', 'FORBIDDEN', 403)
     }
 
     const absPath = resolvePath(doc.storagePath)
     if (!fs.existsSync(absPath)) {
-      throw new AppError('File not found on storage', 404, 'FILE_MISSING')
+      throw new AppError('File not found on storage', 'FILE_MISSING', 404)
     }
 
     res.setHeader('Content-Type',        doc.mimeType)
@@ -217,10 +217,10 @@ export async function remove(req, res, next) {
     })
 
     if (!doc || !doc.isActive) {
-      throw new AppError('Document not found', 404, 'NOT_FOUND')
+      throw new AppError('Document not found', 'NOT_FOUND', 404)
     }
     if (doc.submission && !canWrite(req.user, doc.submission)) {
-      throw new AppError('Forbidden', 403, 'FORBIDDEN')
+      throw new AppError('Forbidden', 'FORBIDDEN', 403)
     }
 
     // Soft-delete in DB

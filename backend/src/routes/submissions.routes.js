@@ -19,6 +19,7 @@ import * as statusController from '../controllers/submissions.status.controller.
 import { generateApprovalLetter } from '../services/pdf.service.js'
 import { resolvePath } from '../services/storage.service.js'
 import { AppError } from '../utils/errors.js'
+import prisma from '../config/database.js'
 import fs from 'fs'
 
 const router = Router()
@@ -181,9 +182,17 @@ router.post(
       const { id }   = req.params
       const { role } = req.user
 
-      // RESEARCHER may only download their own approved letter
+      // REVIEWER is never allowed
       if (role === 'REVIEWER') {
-        throw new AppError('Forbidden', 403, 'FORBIDDEN')
+        throw new AppError('Forbidden', 'FORBIDDEN', 403)
+      }
+
+      // RESEARCHER may only download their own submission's letter
+      if (role === 'RESEARCHER') {
+        const sub = await prisma.submission.findUnique({ where: { id }, select: { authorId: true } })
+        if (!sub || sub.authorId !== req.user.id) {
+          throw new AppError('Forbidden', 'FORBIDDEN', 403)
+        }
       }
 
       const { docId, storagePath } = await generateApprovalLetter(id)

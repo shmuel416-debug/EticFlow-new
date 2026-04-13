@@ -34,16 +34,16 @@ export async function runAnalysis(req, res, next) {
     })
 
     if (!submission || !submission.isActive) {
-      throw new AppError('Submission not found', 404, 'NOT_FOUND')
+      throw new AppError('Submission not found', 'NOT_FOUND', 404)
     }
 
     // Access control: researchers see only own, reviewers see assigned
     const { role, id: userId } = req.user
     if (role === 'RESEARCHER' && submission.authorId !== userId) {
-      throw new AppError('Forbidden', 403, 'FORBIDDEN')
+      throw new AppError('Forbidden', 'FORBIDDEN', 403)
     }
     if (role === 'REVIEWER' && submission.reviewerId !== userId) {
-      throw new AppError('Forbidden', 403, 'FORBIDDEN')
+      throw new AppError('Forbidden', 'FORBIDDEN', 403)
     }
 
     const latestData = submission.versions[0]?.dataJson ?? {}
@@ -88,15 +88,15 @@ export async function getLatest(req, res, next) {
 
     const submission = await prisma.submission.findUnique({ where: { id: subId } })
     if (!submission || !submission.isActive) {
-      throw new AppError('Submission not found', 404, 'NOT_FOUND')
+      throw new AppError('Submission not found', 'NOT_FOUND', 404)
     }
 
     const { role, id: userId } = req.user
     if (role === 'RESEARCHER' && submission.authorId !== userId) {
-      throw new AppError('Forbidden', 403, 'FORBIDDEN')
+      throw new AppError('Forbidden', 'FORBIDDEN', 403)
     }
     if (role === 'REVIEWER' && submission.reviewerId !== userId) {
-      throw new AppError('Forbidden', 403, 'FORBIDDEN')
+      throw new AppError('Forbidden', 'FORBIDDEN', 403)
     }
 
     const analysis = await prisma.aIAnalysis.findFirst({
