@@ -118,7 +118,7 @@
 - [x] ResearcherDashboard.jsx — Design C split-screen (real data, Lev palette)
 - [x] SubmissionStatusPage.jsx — timeline + tabs (ציר זמן / הערות / תשובות)
 - [x] Route /submissions/:id for researcher
-- [ ] S4.2 SLA Engine (business days calculator + traffic lights)
+- [x] S4.2 SLA Engine (addBusinessDays, setDueDates, runSlaCheck, nightly cron)
 - [ ] S4.3 Document Upload (backend + frontend)
 - [ ] S4.4 PDF Approval Letter generation
 - [ ] S4.5 AI Mock Integration (pre-check + reviewer panel)

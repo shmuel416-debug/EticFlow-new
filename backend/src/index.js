@@ -12,6 +12,7 @@ import prisma from './config/database.js'
 import { logActiveProviders } from './config/services.js'
 import { errorHandler } from './middleware/error.js'
 import { apiLimiter } from './middleware/rateLimit.js'
+import { startSlaCron }    from './jobs/sla.cron.js'
 import healthRouter        from './routes/health.routes.js'
 import authRouter          from './routes/auth.routes.js'
 import formsRouter         from './routes/forms.routes.js'
@@ -52,7 +53,7 @@ app.use('/api/notifications', notificationsRouter)
 app.use('/api/users',         usersRouter)
 
 // 404 handler
-app.use((req, res) => {
+app.use((_req, res) => {
   res.status(404).json({ error: 'Route not found', code: 'NOT_FOUND' })
 })
 
@@ -80,6 +81,7 @@ async function start() {
     console.log(`🚀 EthicFlow API running on http://localhost:${PORT}`)
     console.log(`   Environment: ${process.env.NODE_ENV ?? 'development'}`)
     logActiveProviders()
+    startSlaCron()
   })
 }
 

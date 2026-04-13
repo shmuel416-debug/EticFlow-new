@@ -7,6 +7,7 @@
 | 2026-04-13 | UI/UX Design — Researcher Dashboard | ✅ Done | עיצוב C נבחר: split-screen + ציר זמן + Lev palette |
 | 2026-04-13 | S4.1 ResearcherDashboard | ✅ Done | Design C: list pane + timeline pane, real API data, SLA dots |
 | 2026-04-13 | S4.1 SubmissionStatusPage | ✅ Done | Tabs: timeline / comments / answers, progress bar, action buttons |
+| 2026-04-13 | S4.2 SLA Engine | ✅ Done | addBusinessDays (Sun–Thu), setDueDates on transitions, nightly cron, breach+warning notifications |
 
 ## Sprint 3 — Review Workflow
 

@@ -14,6 +14,7 @@
 import prisma from '../config/database.js'
 import { AppError } from '../utils/errors.js'
 import { notifyStatusChange } from '../services/notification.service.js'
+import { setDueDates } from '../services/sla.service.js'
 
 /** Allowed transitions per current status and actor roles. */
 const TRANSITIONS = {
@@ -66,6 +67,7 @@ export async function transitionStatus(req, res, next) {
       include: { author: { select: { id: true, email: true } }, reviewer: { select: { id: true, email: true } } },
     })
 
+    setDueDates(sub.id, newStatus).catch(() => {})
     notifyStatusChange(updated, newStatus).catch(() => {})
     res.json({ submission: updated })
   } catch (err) {
@@ -102,6 +104,7 @@ export async function assignReviewer(req, res, next) {
       },
     })
 
+    setDueDates(sub.id, 'ASSIGNED').catch(() => {})
     notifyStatusChange(updated, 'ASSIGNED').catch(() => {})
     res.json({ submission: updated })
   } catch (err) {
@@ -144,6 +147,7 @@ export async function submitReview(req, res, next) {
     ])
 
     const updated = await findOrFail(sub.id)
+    setDueDates(sub.id, 'IN_REVIEW').catch(() => {})
     notifyStatusChange(updated, 'IN_REVIEW').catch(() => {})
     res.json({ submission: updated })
   } catch (err) {

@@ -30,7 +30,8 @@
       "Bash(curl -s -X POST http://localhost:5000/api/auth/login -H \"Content-Type: application/json\" -d \"{\\\\\"email\\\\\":\\\\\"admin@test.com' OR '1'='1\\\\\",\\\\\"password\\\\\":\\\\\"wrong\\\\\"}\")",
       "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('Code:',d.get\\('code'\\),'SQL breach:',d.get\\('user'\\) is not None\\)\")",
       "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('No auth:',d.get\\('code','?'\\)\\)\")",
-      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('Wrong reviewer:',d.get\\('code','?'\\)\\)\")"
+      "Bash(python -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('Wrong reviewer:',d.get\\('code','?'\\)\\)\")",
+      "Bash(node --input-type=module)"
     ]
   }
 }
