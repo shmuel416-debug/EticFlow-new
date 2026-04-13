@@ -106,5 +106,19 @@
 ### S3.4 — Notifications + Polish
 - [x] S3.4.1 Email notifications on status change (notification.service.js + notifyStatusChange)
 - [x] S3.4.2 NotificationsPage — in-app notifications with mark-as-read
-- [ ] S3.4.2 Researcher dashboard — live submission status tracker — Sprint 4
+- [x] S3.4.2 Researcher dashboard — live submission status tracker (Design C, real API data)
 - [ ] S3.4.9 Sprint wrap-up: Code Review + QA + Accessibility + Security
+
+---
+
+## Current Sprint: Sprint 4 — SLA + Documents + AI
+**Status:** 🔄 In Progress | **Tag:** —
+
+### S4.1 — Researcher Dashboard + Status Page
+- [x] ResearcherDashboard.jsx — Design C split-screen (real data, Lev palette)
+- [x] SubmissionStatusPage.jsx — timeline + tabs (ציר זמן / הערות / תשובות)
+- [x] Route /submissions/:id for researcher
+- [ ] S4.2 SLA Engine (business days calculator + traffic lights)
+- [ ] S4.3 Document Upload (backend + frontend)
+- [ ] S4.4 PDF Approval Letter generation
+- [ ] S4.5 AI Mock Integration (pre-check + reviewer panel)

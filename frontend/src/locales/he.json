@@ -78,10 +78,20 @@
       "activeSubmissions": "בקשות פעילות",
       "pendingRevision": "ממתינות לתיקון",
       "approvedThisYear": "אושרו השנה",
-      "recentSubmissions": "הגשות אחרונות",
+      "recentSubmissions": "הגשות שלי",
       "viewAll": "הצג הכל",
       "newSubmission": "הגשה חדשה",
-      "greeting": "שלום"
+      "greeting": "שלום",
+      "noSubmissions": "אין הגשות עדיין",
+      "noSubmissionsHint": "לחץ על \"הגשה חדשה\" להתחיל",
+      "loadError": "שגיאה בטעינת הנתונים",
+      "urgentBanner": "נדרשת פעולה מיידית",
+      "selectToView": "בחר הגשה לצפייה בפרטים",
+      "slaRemaining": "{{days}} ימים נותרו",
+      "slaBreach": "SLA חרג",
+      "fixAndResubmit": "תקן ושלח",
+      "approvalLetter": "מכתב אישור PDF",
+      "step": "שלב {{current}} מתוך {{total}}"
     },
     "secretary": {
       "title": "דשבורד מזכירה",
@@ -194,6 +204,33 @@
       "signatureHint": "חתימה דיגיטלית תופעל בשלב מאוחר יותר",
       "sampleOption": "אפשרות {{n}}"
     }
+  },
+  "statusPage": {
+    "title": "מסלול הגשה",
+    "backToDashboard": "חזרה לדשבורד",
+    "loadError": "שגיאה בטעינת ההגשה",
+    "timeline": "ציר זמן",
+    "comments": "הערות",
+    "documents": "מסמכים",
+    "progressLabel": "שלב {{current}} מתוך {{total}}",
+    "fixAndResubmit": "תקן ושלח מחדש",
+    "downloadPdf": "הורד מכתב אישור PDF",
+    "steps": {
+      "DRAFT":            "טיוטה נשמרה",
+      "SUBMITTED":        "הוגש בהצלחה",
+      "IN_TRIAGE":        "טיוב ראשוני",
+      "ASSIGNED":         "הוקצה לסוקר",
+      "IN_REVIEW":        "בביקורת",
+      "PENDING_REVISION": "נדרש תיקון",
+      "APPROVED":         "אושר סופית",
+      "REJECTED":         "נדחה",
+      "WITHDRAWN":        "בוטל"
+    },
+    "currentStep": "← כאן עכשיו",
+    "slaLabel": "SLA",
+    "submittedBy": "הוגש על ידי",
+    "reviewer": "סוקר",
+    "noComments": "אין הערות עדיין"
   },
   "pages": {
     "submissions":    "הגשות",

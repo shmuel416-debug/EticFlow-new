@@ -78,10 +78,20 @@
       "activeSubmissions": "Active Submissions",
       "pendingRevision": "Pending Revision",
       "approvedThisYear": "Approved This Year",
-      "recentSubmissions": "Recent Submissions",
+      "recentSubmissions": "My Submissions",
       "viewAll": "View All",
       "newSubmission": "New Submission",
-      "greeting": "Hello"
+      "greeting": "Hello",
+      "noSubmissions": "No submissions yet",
+      "noSubmissionsHint": "Click \"New Submission\" to get started",
+      "loadError": "Failed to load data",
+      "urgentBanner": "Action required",
+      "selectToView": "Select a submission to view details",
+      "slaRemaining": "{{days}} days remaining",
+      "slaBreach": "SLA breached",
+      "fixAndResubmit": "Fix & Resubmit",
+      "approvalLetter": "Approval Letter PDF",
+      "step": "Step {{current}} of {{total}}"
     },
     "secretary": {
       "title": "Secretary Dashboard",
@@ -194,6 +204,33 @@
       "signatureHint": "Digital signature will be enabled at a later stage",
       "sampleOption": "Option {{n}}"
     }
+  },
+  "statusPage": {
+    "title": "Submission Status",
+    "backToDashboard": "Back to Dashboard",
+    "loadError": "Failed to load submission",
+    "timeline": "Timeline",
+    "comments": "Comments",
+    "documents": "Documents",
+    "progressLabel": "Step {{current}} of {{total}}",
+    "fixAndResubmit": "Fix & Resubmit",
+    "downloadPdf": "Download Approval Letter PDF",
+    "steps": {
+      "DRAFT":            "Draft saved",
+      "SUBMITTED":        "Submitted",
+      "IN_TRIAGE":        "Initial triage",
+      "ASSIGNED":         "Assigned to reviewer",
+      "IN_REVIEW":        "Under review",
+      "PENDING_REVISION": "Revision required",
+      "APPROVED":         "Approved",
+      "REJECTED":         "Rejected",
+      "WITHDRAWN":        "Withdrawn"
+    },
+    "currentStep": "← current",
+    "slaLabel": "SLA",
+    "submittedBy": "Submitted by",
+    "reviewer": "Reviewer",
+    "noComments": "No comments yet"
   },
   "pages": {
     "submissions":    "Submissions",

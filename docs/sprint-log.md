@@ -1,5 +1,13 @@
 # EthicFlow — Sprint Log
 
+## Sprint 4 — SLA + Documents + AI
+
+| Date | Task | Status | Notes |
+|------|------|--------|-------|
+| 2026-04-13 | UI/UX Design — Researcher Dashboard | ✅ Done | עיצוב C נבחר: split-screen + ציר זמן + Lev palette |
+| 2026-04-13 | S4.1 ResearcherDashboard | ✅ Done | Design C: list pane + timeline pane, real API data, SLA dots |
+| 2026-04-13 | S4.1 SubmissionStatusPage | ✅ Done | Tabs: timeline / comments / answers, progress bar, action buttons |
+
 ## Sprint 3 — Review Workflow
 
 | Date | Task | Status | Notes |

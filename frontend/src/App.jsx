@@ -23,6 +23,7 @@ import FormLibraryPage            from './pages/secretary/FormLibraryPage'
 import SecretarySubmissionsListPage from './pages/secretary/SubmissionsListPage'
 import SubmissionDetailPage       from './pages/secretary/SubmissionDetailPage'
 import SubmitPage                 from './pages/researcher/SubmitPage'
+import SubmissionStatusPage       from './pages/researcher/SubmissionStatusPage'
 import AssignmentsPage            from './pages/reviewer/AssignmentsPage'
 import ReviewDetailPage           from './pages/reviewer/ReviewDetailPage'
 import ChairmanQueuePage          from './pages/chairman/ChairmanQueuePage'
@@ -43,6 +44,7 @@ export default function App() {
             <Route element={<AppLayout />}>
               <Route path="/dashboard"       element={<DashboardPage />} />
               <Route path="/submissions/new" element={<SubmitPage />} />
+              <Route path="/submissions/:id" element={<SubmissionStatusPage />} />
               <Route path="/submissions"     element={<PlaceholderPage pageKey="submissions" />} />
               <Route path="/meetings"        element={<PlaceholderPage pageKey="meetings" />} />
               <Route path="/settings"        element={<PlaceholderPage pageKey="settings" />} />

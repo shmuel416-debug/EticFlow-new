@@ -15,6 +15,7 @@ const NAV_ITEMS = [
   { key: 'dashboard',            icon: '🏠', path: '/dashboard',              roles: ['RESEARCHER','SECRETARY','REVIEWER','CHAIRMAN','ADMIN'] },
   { key: 'mySubmissions',        icon: '📄', path: '/submissions',            roles: ['RESEARCHER'] },
   { key: 'newSubmission',        icon: '📬', path: '/submissions/new',        roles: ['RESEARCHER'] },
+  { key: 'allSubmissions',       icon: '📋', path: '/submissions',            roles: ['REVIEWER'] },
   { key: 'secretarySubmissions', icon: '📋', path: '/secretary/submissions',  roles: ['SECRETARY','ADMIN'] },
   { key: 'myAssignments',        icon: '🔍', path: '/reviewer/assignments',   roles: ['REVIEWER'] },
   { key: 'chairmanQueue',        icon: '⚖️', path: '/chairman/queue',         roles: ['CHAIRMAN','ADMIN'] },
