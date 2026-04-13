@@ -158,7 +158,7 @@
       "loadError":          "שגיאה בטעינת ההגשה",
       "backToList":         "חזרה לרשימה",
       "version":            "גרסה {{num}}"
-    }
+    },
     "submit": {
       "pageTitle": "הגשת בקשה לאישור מחקר",
       "pageSubtitle": "מלא את כל השדות המסומנים ב-*",

@@ -23,9 +23,15 @@ import { AppError } from '../utils/errors.js'
  * @returns {object} Prisma where clause
  */
 function roleFilter(user, extra = {}) {
-  if (user.role === 'RESEARCHER') return { authorId: user.id,   isActive: true, ...extra }
-  if (user.role === 'REVIEWER')   return { reviewerId: user.id, isActive: true, ...extra }
-  return { isActive: true, ...extra }
+  const base = { isActive: true }
+  if (user.role === 'RESEARCHER') base.authorId  = user.id
+  if (user.role === 'REVIEWER')   base.reviewerId = user.id
+  // Merge: if extra has OR (search), wrap everything in AND to avoid conflict
+  if (extra.OR) {
+    const { OR, ...rest } = extra
+    return { AND: [{ ...base, ...rest }, { OR }] }
+  }
+  return { ...base, ...extra }
 }
 
 /**
@@ -86,7 +92,14 @@ export async function list(req, res, next) {
     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit ?? '20', 10)))
     const skip  = (page - 1) * limit
 
-    const extra = req.query.status ? { status: req.query.status } : {}
+    const extra = {}
+    if (req.query.status) extra.status = req.query.status
+    if (req.query.search) {
+      extra.OR = [
+        { title:         { contains: req.query.search, mode: 'insensitive' } },
+        { applicationId: { contains: req.query.search, mode: 'insensitive' } },
+      ]
+    }
     const where = roleFilter(req.user, extra)
 
     const [submissions, total] = await Promise.all([

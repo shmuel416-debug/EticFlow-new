@@ -60,16 +60,16 @@ const assignSchema = z.object({
 const reviewSchema = z.object({
   score:          z.number().int().min(1).max(5),
   recommendation: z.enum(['APPROVED', 'REJECTED', 'REVISION_REQUIRED']),
-  comments:       z.string().min(10).max(5000),
+  comments:       z.string().min(10).max(5000).transform(stripHtml),
 })
 
 const decisionSchema = z.object({
   decision: z.enum(['APPROVED', 'REJECTED', 'REVISION_REQUIRED']),
-  note:     z.string().max(2000).optional(),
+  note:     z.string().max(2000).transform(stripHtml).optional(),
 })
 
 const commentSchema = z.object({
-  content:    z.string().min(1).max(5000),
+  content:    z.string().min(1).max(5000).transform(stripHtml),
   fieldKey:   z.string().max(100).optional(),
   isInternal: z.boolean().optional(),
 })

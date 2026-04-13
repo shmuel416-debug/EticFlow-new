@@ -158,7 +158,7 @@
       "loadError":          "Failed to load submission",
       "backToList":         "Back to list",
       "version":            "Version {{num}}"
-    }
+    },
     "submit": {
       "pageTitle": "Submit Research Approval Request",
       "pageSubtitle": "Fill in all fields marked with *",

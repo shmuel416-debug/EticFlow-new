@@ -118,7 +118,7 @@ export default function NotificationsPage() {
             role="button"
             tabIndex={notif.isRead ? -1 : 0}
             onKeyDown={(e) => e.key === 'Enter' && !notif.isRead && handleMarkRead(notif.id)}
-            aria-label={notif.isRead ? undefined : t('notifications.markAllRead')}
+            aria-label={notif.isRead ? undefined : `${t(`notifications.types.${notif.type}`, notif.type)} — ${t('notifications.markAllRead')}`}
           >
             <div className="flex items-start gap-3">
               {!notif.isRead && (
