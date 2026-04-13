@@ -120,5 +120,5 @@
 - [x] Route /submissions/:id for researcher
 - [x] S4.2 SLA Engine (addBusinessDays, setDueDates, runSlaCheck, nightly cron)
 - [x] S4.3 Document Upload (backend + frontend)
-- [ ] S4.4 PDF Approval Letter generation
+- [x] S4.4 PDF Approval Letter generation
 - [ ] S4.5 AI Mock Integration (pre-check + reviewer panel)

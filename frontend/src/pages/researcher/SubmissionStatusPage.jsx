@@ -9,6 +9,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams, Link } from 'react-router-dom'
 import api from '../../services/api'
+import { useAuth } from '../../context/AuthContext'
 import StatusBadge from '../../components/submissions/StatusBadge'
 import CommentThread from '../../components/submissions/CommentThread'
 import FormAnswersViewer from '../../components/submissions/FormAnswersViewer'
@@ -47,10 +48,12 @@ function SlaIndicator({ sla }) {
 export default function SubmissionStatusPage() {
   const { t }        = useTranslation()
   const { id }       = useParams()
+  const { user }     = useAuth()
   const [submission, setSubmission] = useState(null)
   const [loading,    setLoading]    = useState(true)
   const [error,      setError]      = useState('')
   const [activeTab,  setActiveTab]  = useState('timeline')
+  const [pdfLoading, setPdfLoading] = useState(false)
 
   /** Loads submission from API. */
   const load = useCallback(async () => {
@@ -65,6 +68,29 @@ export default function SubmissionStatusPage() {
   }, [id, t])
 
   useEffect(() => { load() }, [load])
+
+  /**
+   * Requests the approval letter PDF and triggers browser download.
+   */
+  async function handleDownloadPdf() {
+    setPdfLoading(true)
+    try {
+      const response = await api.post(`/submissions/${id}/approval-letter`, {}, { responseType: 'blob' })
+      const url  = URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }))
+      const link = document.createElement('a')
+      link.href     = url
+      link.download = `approval-letter-${submission.applicationId}.pdf`
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      URL.revokeObjectURL(url)
+    } catch {
+      // Error feedback via existing error state
+      setError(t('statusPage.pdfError'))
+    } finally {
+      setPdfLoading(false)
+    }
+  }
 
   if (loading) return <div className="py-20 text-center text-gray-400">{t('common.loading')}</div>
   if (error)   return <div className="py-20 text-center text-red-600" role="alert">{error}</div>
@@ -115,10 +141,13 @@ export default function SubmissionStatusPage() {
             {t('statusPage.fixAndResubmit')} →
           </Link>
         )}
-        {submission.status === 'APPROVED' && (
-          <button className="mt-4 w-full py-2.5 text-sm font-bold text-white rounded-xl hover:opacity-90 transition"
-            style={{ background: 'var(--lev-teal-text)' }}>
-            ⬇ {t('statusPage.downloadPdf')}
+        {submission.status === 'APPROVED' && user?.role !== 'REVIEWER' && (
+          <button
+            onClick={handleDownloadPdf}
+            disabled={pdfLoading}
+            className="mt-4 w-full py-2.5 text-sm font-bold text-white rounded-xl hover:opacity-90 transition disabled:opacity-60"
+            style={{ background: 'var(--lev-teal-text)', minHeight: '44px' }}>
+            {pdfLoading ? t('common.loading') : `⬇ ${t('statusPage.downloadPdf')}`}
           </button>
         )}
       </div>

@@ -230,7 +230,8 @@
     "slaLabel": "SLA",
     "submittedBy": "Submitted by",
     "reviewer": "Reviewer",
-    "noComments": "No comments yet"
+    "noComments": "No comments yet",
+    "pdfError": "Failed to generate PDF — please try again"
   },
   "pages": {
     "submissions":    "Submissions",

@@ -111,6 +111,25 @@ export default function SubmissionDetailPage() {
   const latestVersion = submission?.versions?.slice(-1)[0]
   const canAssign     = ['SECRETARY','ADMIN'].includes(user?.role) && ['IN_TRIAGE','ASSIGNED'].includes(submission?.status)
 
+  /**
+   * Generates and downloads the approval letter PDF.
+   */
+  async function handleDownloadPdf() {
+    try {
+      const response = await api.post(`/submissions/${id}/approval-letter`, {}, { responseType: 'blob' })
+      const url  = URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }))
+      const link = document.createElement('a')
+      link.href     = url
+      link.download = `approval-letter-${submission.applicationId}.pdf`
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      URL.revokeObjectURL(url)
+    } catch {
+      setError(t('statusPage.pdfError'))
+    }
+  }
+
   return (
     <main id="main-content" className="p-4 md:p-6 max-w-5xl mx-auto space-y-6">
       {/* Back + header */}
@@ -127,6 +146,16 @@ export default function SubmissionDetailPage() {
       </div>
 
       {successMsg && <p role="status" className="text-sm text-green-600 bg-green-50 border border-green-200 rounded-lg px-4 py-2">{successMsg}</p>}
+
+      {/* Approval letter download — only when approved */}
+      {submission?.status === 'APPROVED' && (
+        <button
+          onClick={handleDownloadPdf}
+          className="w-full sm:w-auto px-6 py-2.5 text-sm font-bold text-white rounded-xl hover:opacity-90 transition"
+          style={{ background: 'var(--lev-teal-text)', minHeight: '44px' }}>
+          ⬇ {t('statusPage.downloadPdf')}
+        </button>
+      )}
       {error      && <p role="alert"  className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-2">{error}</p>}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

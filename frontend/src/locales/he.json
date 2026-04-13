@@ -230,7 +230,8 @@
     "slaLabel": "SLA",
     "submittedBy": "הוגש על ידי",
     "reviewer": "סוקר",
-    "noComments": "אין הערות עדיין"
+    "noComments": "אין הערות עדיין",
+    "pdfError": "שגיאה ביצירת מסמך ה-PDF — נסה שנית"
   },
   "pages": {
     "submissions":    "הגשות",

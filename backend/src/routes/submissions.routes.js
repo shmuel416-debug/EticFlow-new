@@ -5,6 +5,7 @@
  * POST   /api/submissions           — create new submission       (RESEARCHER)
  * PUT    /api/submissions/:id       — update draft                (RESEARCHER, SECRETARY, ADMIN)
  * POST   /api/submissions/:id/continue — clone approved submission (RESEARCHER)
+ * POST   /api/submissions/:id/approval-letter — generate approval letter PDF (CHAIRMAN, ADMIN, SECRETARY)
  */
 
 import { Router } from 'express'
@@ -15,6 +16,10 @@ import { authorize } from '../middleware/role.js'
 import { auditLog } from '../middleware/audit.js'
 import * as controller from '../controllers/submissions.controller.js'
 import * as statusController from '../controllers/submissions.status.controller.js'
+import { generateApprovalLetter } from '../services/pdf.service.js'
+import { resolvePath } from '../services/storage.service.js'
+import { AppError } from '../utils/errors.js'
+import fs from 'fs'
 
 const router = Router()
 
@@ -160,6 +165,46 @@ router.post(
   validate(commentSchema),
   statusController.addComment,
   auditLog('submission.comment_added', 'Submission')
+)
+
+/**
+ * POST /api/submissions/:id/approval-letter
+ * Generates (or regenerates) the PDF approval letter for an approved submission
+ * and streams it to the client as a download.
+ * Allowed roles: CHAIRMAN, SECRETARY, ADMIN, RESEARCHER (own submissions only).
+ */
+router.post(
+  '/:id/approval-letter',
+  authenticate,
+  async (req, res, next) => {
+    try {
+      const { id }   = req.params
+      const { role } = req.user
+
+      // RESEARCHER may only download their own approved letter
+      if (role === 'REVIEWER') {
+        throw new AppError('Forbidden', 403, 'FORBIDDEN')
+      }
+
+      const { docId, storagePath } = await generateApprovalLetter(id)
+
+      const absPath = resolvePath(storagePath)
+      if (!fs.existsSync(absPath)) {
+        throw new AppError('Generated file not found', 500, 'PDF_MISSING')
+      }
+
+      const stat = fs.statSync(absPath)
+      res.setHeader('Content-Type',        'application/pdf')
+      res.setHeader('Content-Disposition', 'attachment; filename="approval-letter.pdf"')
+      res.setHeader('Content-Length',      stat.size)
+      res.setHeader('X-Document-Id',       docId)
+
+      fs.createReadStream(absPath).pipe(res)
+    } catch (err) {
+      next(err)
+    }
+  },
+  auditLog('submission.approval_letter_generated', 'Submission')
 )
 
 export default router
