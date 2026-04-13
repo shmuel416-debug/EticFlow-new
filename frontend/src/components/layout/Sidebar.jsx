@@ -12,15 +12,18 @@ import levLogo from '../../assets/LOGO.jpg'
 
 /** Navigation items — visible roles control who sees each link */
 const NAV_ITEMS = [
-  { key: 'dashboard',      icon: '🏠', path: '/dashboard',    roles: ['RESEARCHER','SECRETARY','REVIEWER','CHAIRMAN','ADMIN'] },
-  { key: 'mySubmissions',  icon: '📄', path: '/submissions',  roles: ['RESEARCHER'] },
-  { key: 'newSubmission',  icon: '📬', path: '/submissions/new', roles: ['RESEARCHER'] },
-  { key: 'allSubmissions', icon: '📋', path: '/submissions',       roles: ['SECRETARY','REVIEWER','CHAIRMAN','ADMIN'] },
-  { key: 'formLibrary',   icon: '📂', path: '/secretary/forms',  roles: ['SECRETARY','ADMIN'] },
-  { key: 'meetings',      icon: '📅', path: '/meetings',          roles: ['SECRETARY','CHAIRMAN','ADMIN'] },
-  { key: 'users',          icon: '👥', path: '/users',        roles: ['ADMIN'] },
-  { key: 'reports',        icon: '📊', path: '/reports',      roles: ['CHAIRMAN','ADMIN'] },
-  { key: 'settings',       icon: '⚙️', path: '/settings',    roles: ['RESEARCHER','SECRETARY','REVIEWER','CHAIRMAN','ADMIN'] },
+  { key: 'dashboard',            icon: '🏠', path: '/dashboard',              roles: ['RESEARCHER','SECRETARY','REVIEWER','CHAIRMAN','ADMIN'] },
+  { key: 'mySubmissions',        icon: '📄', path: '/submissions',            roles: ['RESEARCHER'] },
+  { key: 'newSubmission',        icon: '📬', path: '/submissions/new',        roles: ['RESEARCHER'] },
+  { key: 'secretarySubmissions', icon: '📋', path: '/secretary/submissions',  roles: ['SECRETARY','ADMIN'] },
+  { key: 'myAssignments',        icon: '🔍', path: '/reviewer/assignments',   roles: ['REVIEWER'] },
+  { key: 'chairmanQueue',        icon: '⚖️', path: '/chairman/queue',         roles: ['CHAIRMAN','ADMIN'] },
+  { key: 'formLibrary',          icon: '📂', path: '/secretary/forms',        roles: ['SECRETARY','ADMIN'] },
+  { key: 'meetings',             icon: '📅', path: '/meetings',               roles: ['SECRETARY','CHAIRMAN','ADMIN'] },
+  { key: 'notifications',        icon: '🔔', path: '/notifications',          roles: ['RESEARCHER','SECRETARY','REVIEWER','CHAIRMAN','ADMIN'] },
+  { key: 'users',                icon: '👥', path: '/users',                  roles: ['ADMIN'] },
+  { key: 'reports',              icon: '📊', path: '/reports',                roles: ['CHAIRMAN','ADMIN'] },
+  { key: 'settings',             icon: '⚙️', path: '/settings',              roles: ['RESEARCHER','SECRETARY','REVIEWER','CHAIRMAN','ADMIN'] },
 ]
 
 /**

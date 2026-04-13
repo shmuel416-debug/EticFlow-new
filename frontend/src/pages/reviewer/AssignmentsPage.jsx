@@ -1,0 +1,94 @@
+/**
+ * EthicFlow — Reviewer Assignments Page
+ * Lists submissions assigned to the authenticated reviewer with status ASSIGNED.
+ * IS 5568: table scope, caption, min touch targets.
+ */
+
+import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router-dom'
+import api from '../../services/api'
+import StatusBadge from '../../components/submissions/StatusBadge'
+
+/**
+ * Formats ISO date string to locale date.
+ * @param {string} iso
+ * @returns {string}
+ */
+function formatDate(iso) {
+  if (!iso) return '—'
+  return new Date(iso).toLocaleDateString('he-IL')
+}
+
+/**
+ * Reviewer's list of assigned submissions awaiting review.
+ */
+export default function AssignmentsPage() {
+  const { t }           = useTranslation()
+  const [submissions,   setSubmissions]   = useState([])
+  const [loading,       setLoading]       = useState(true)
+  const [error,         setError]         = useState('')
+
+  useEffect(() => {
+    /** Fetches assigned submissions for the current reviewer. */
+    async function fetchAssignments() {
+      try {
+        const { data } = await api.get('/submissions?status=ASSIGNED')
+        setSubmissions(data.data)
+      } catch {
+        setError(t('reviewer.assignments.loadError'))
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchAssignments()
+  }, [t])
+
+  return (
+    <main id="main-content" className="p-4 md:p-6 max-w-5xl mx-auto">
+      <h1 className="text-xl font-bold mb-6" style={{ color: 'var(--lev-navy)' }}>
+        {t('reviewer.assignments.pageTitle')}
+      </h1>
+
+      {error && <p role="alert" className="text-sm text-red-600 mb-4">{error}</p>}
+
+      <div className="overflow-x-auto rounded-xl border border-gray-200">
+        <table className="w-full text-sm" aria-label={t('reviewer.assignments.pageTitle')}>
+          <caption className="sr-only">{t('reviewer.assignments.pageTitle')}</caption>
+          <thead className="bg-gray-50 text-xs uppercase text-gray-500">
+            <tr>
+              <th scope="col" className="px-4 py-3 text-start">{t('submission.list.colId')}</th>
+              <th scope="col" className="px-4 py-3 text-start">{t('submission.list.colTitle')}</th>
+              <th scope="col" className="px-4 py-3 text-start">{t('submission.list.colStatus')}</th>
+              <th scope="col" className="px-4 py-3 text-start">{t('submission.list.colDate')}</th>
+              <th scope="col" className="px-4 py-3"><span className="sr-only">{t('submission.list.viewDetail')}</span></th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {loading && (
+              <tr><td colSpan={5} className="px-4 py-8 text-center text-gray-400">{t('common.loading')}</td></tr>
+            )}
+            {!loading && submissions.length === 0 && (
+              <tr><td colSpan={5} className="px-4 py-8 text-center text-gray-400">{t('reviewer.assignments.noAssignments')}</td></tr>
+            )}
+            {!loading && submissions.map((sub) => (
+              <tr key={sub.id} className="hover:bg-gray-50 transition-colors">
+                <td className="px-4 py-3 font-mono text-xs text-gray-600">{sub.applicationId}</td>
+                <td className="px-4 py-3 font-medium">{sub.title}</td>
+                <td className="px-4 py-3"><StatusBadge status={sub.status} /></td>
+                <td className="px-4 py-3 text-gray-500">{formatDate(sub.submittedAt)}</td>
+                <td className="px-4 py-3">
+                  <Link to={`/reviewer/assignments/${sub.id}`}
+                    className="text-xs font-medium hover:underline"
+                    style={{ color: 'var(--lev-navy)', minHeight: '44px', display: 'inline-flex', alignItems: 'center' }}>
+                    {t('submission.list.viewDetail')}
+                  </Link>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </main>
+  )
+}

@@ -56,18 +56,21 @@
     }
   },
   "nav": {
-    "dashboard": "Dashboard",
-    "mySubmissions": "My Submissions",
-    "newSubmission": "New Submission",
-    "notifications": "Notifications",
-    "settings": "Settings",
-    "allSubmissions": "All Submissions",
-    "formLibrary": "Form Library",
-    "meetings": "Meetings",
-    "users": "Users",
-    "reports": "Reports",
-    "system": "System",
-    "mainNavigation": "Main Navigation"
+    "dashboard":            "Dashboard",
+    "mySubmissions":        "My Submissions",
+    "newSubmission":        "New Submission",
+    "notifications":        "Notifications",
+    "settings":             "Settings",
+    "allSubmissions":       "All Submissions",
+    "secretarySubmissions": "Submission Management",
+    "myAssignments":        "My Assignments",
+    "chairmanQueue":        "Decision Queue",
+    "formLibrary":          "Form Library",
+    "meetings":             "Meetings",
+    "users":                "Users",
+    "reports":              "Reports",
+    "system":               "System",
+    "mainNavigation":       "Main Navigation"
   },
   "dashboard": {
     "researcher": {
@@ -110,14 +113,52 @@
       "status": "Status"
     },
     "status": {
-      "DRAFT": "Draft",
-      "SUBMITTED": "Submitted",
-      "UNDER_REVIEW": "Under Review",
-      "REVISION_REQUIRED": "Revision Required",
-      "APPROVED": "Approved",
-      "REJECTED": "Rejected",
-      "WITHDRAWN": "Withdrawn"
+      "DRAFT":            "Draft",
+      "SUBMITTED":        "Submitted",
+      "IN_TRIAGE":        "In Triage",
+      "ASSIGNED":         "Assigned",
+      "IN_REVIEW":        "In Review",
+      "PENDING_REVISION": "Pending Revision",
+      "APPROVED":         "Approved",
+      "REJECTED":         "Rejected",
+      "WITHDRAWN":        "Withdrawn",
+      "CONTINUED":        "Continued"
     },
+    "list": {
+      "pageTitle":         "Submission Management",
+      "searchPlaceholder": "Search by title or ID...",
+      "filterLabel":       "Filter by status",
+      "filterAll":         "All",
+      "noResults":         "No submissions found",
+      "loadError":         "Failed to load submissions",
+      "colId":             "ID",
+      "colTitle":          "Title",
+      "colStatus":         "Status",
+      "colDate":           "Submitted",
+      "colReviewer":       "Reviewer",
+      "colAuthor":         "Researcher",
+      "viewDetail":        "View details"
+    },
+    "detail": {
+      "pageTitle":          "Submission Details",
+      "sectionAnswers":     "Form Answers",
+      "sectionComments":    "Comments",
+      "sectionStatus":      "Status & Actions",
+      "sectionReviewer":    "Assigned Reviewer",
+      "changeStatus":       "Change Status",
+      "assignReviewer":     "Assign Reviewer",
+      "noReviewer":         "No reviewer assigned",
+      "addComment":         "Add Comment",
+      "commentPlaceholder": "Write a comment...",
+      "internalLabel":      "Internal comment (not visible to researcher)",
+      "submitComment":      "Submit Comment",
+      "statusUpdated":      "Status updated successfully",
+      "reviewerAssigned":   "Reviewer assigned successfully",
+      "noAnswer":           "No answer provided",
+      "loadError":          "Failed to load submission",
+      "backToList":         "Back to list",
+      "version":            "Version {{num}}"
+    }
     "submit": {
       "pageTitle": "Submit Research Approval Request",
       "pageSubtitle": "Fill in all fields marked with *",
@@ -295,6 +336,63 @@
       "file": "File Upload",
       "declaration": "Declaration",
       "signature": "Signature"
+    }
+  },
+  "reviewer": {
+    "assignments": {
+      "pageTitle":     "My Assignments",
+      "noAssignments": "No active assignments",
+      "loadError":     "Failed to load assignments"
+    },
+    "review": {
+      "pageTitle":       "Submit Review",
+      "scoreLabel":      "Score (1-5)",
+      "recommendLabel":  "Recommendation",
+      "commentsLabel":   "Review Comments",
+      "commentsHint":    "At least 10 characters",
+      "submitReview":    "Submit Review",
+      "submitting":      "Submitting...",
+      "submitSuccess":   "Review submitted successfully",
+      "rec_APPROVED":    "Approve",
+      "rec_REJECTED":    "Reject",
+      "rec_REVISION":    "Request Revision"
+    }
+  },
+  "chairman": {
+    "queue": {
+      "pageTitle":         "Decision Queue",
+      "noItems":           "No submissions awaiting decision",
+      "loadError":         "Failed to load queue",
+      "colRecommendation": "Reviewer Recommendation"
+    },
+    "decision": {
+      "pageTitle":        "Record Decision",
+      "approve":          "Approve",
+      "reject":           "Reject",
+      "requestRevision":  "Request Revision",
+      "noteLabel":        "Decision note",
+      "notePlaceholder":  "Explain the decision...",
+      "confirmApprove":   "Approve this submission?",
+      "confirmReject":    "Reject this submission?",
+      "confirmRevision":  "Request revision for this submission?",
+      "decisionRecorded": "Decision recorded successfully"
+    }
+  },
+  "notifications": {
+    "pageTitle":   "Notifications",
+    "markAllRead": "Mark all as read",
+    "noItems":     "No notifications",
+    "loadError":   "Failed to load notifications",
+    "unreadBadge": "{{count}} new",
+    "types": {
+      "SUBMISSION_RECEIVED": "New submission received",
+      "SUBMISSION_ASSIGNED": "Assigned as reviewer",
+      "REVIEW_REQUESTED":    "Review submitted",
+      "REVISION_REQUIRED":   "Revision required",
+      "APPROVED":            "Submission approved",
+      "REJECTED":            "Submission rejected",
+      "SLA_WARNING":         "SLA warning",
+      "SLA_BREACH":          "SLA breach"
     }
   },
   "roles": {

@@ -12,14 +12,21 @@ import { AuthProvider } from './context/AuthContext'
 import AppLayout         from './components/layout/AppLayout'
 import ProtectedRoute    from './components/layout/ProtectedRoute'
 
-import LoginPage           from './pages/LoginPage'
-import ForgotPasswordPage  from './pages/ForgotPasswordPage'
-import ResetPasswordPage   from './pages/ResetPasswordPage'
-import DashboardPage       from './pages/DashboardPage'
-import FormBuilderPage     from './pages/secretary/FormBuilderPage'
-import FormPreviewPage     from './pages/secretary/FormPreviewPage'
-import FormLibraryPage     from './pages/secretary/FormLibraryPage'
-import SubmitPage          from './pages/researcher/SubmitPage'
+import LoginPage                  from './pages/LoginPage'
+import ForgotPasswordPage         from './pages/ForgotPasswordPage'
+import ResetPasswordPage          from './pages/ResetPasswordPage'
+import DashboardPage              from './pages/DashboardPage'
+import NotificationsPage          from './pages/NotificationsPage'
+import FormBuilderPage            from './pages/secretary/FormBuilderPage'
+import FormPreviewPage            from './pages/secretary/FormPreviewPage'
+import FormLibraryPage            from './pages/secretary/FormLibraryPage'
+import SecretarySubmissionsListPage from './pages/secretary/SubmissionsListPage'
+import SubmissionDetailPage       from './pages/secretary/SubmissionDetailPage'
+import SubmitPage                 from './pages/researcher/SubmitPage'
+import AssignmentsPage            from './pages/reviewer/AssignmentsPage'
+import ReviewDetailPage           from './pages/reviewer/ReviewDetailPage'
+import ChairmanQueuePage          from './pages/chairman/ChairmanQueuePage'
+import ChairmanDecisionPage       from './pages/chairman/SubmissionDecisionPage'
 
 export default function App() {
   return (
@@ -34,28 +41,39 @@ export default function App() {
           {/* ── Protected (all authenticated roles) ── */}
           <Route element={<ProtectedRoute />}>
             <Route element={<AppLayout />}>
-              <Route path="/dashboard"  element={<DashboardPage />} />
-              <Route path="/submissions"     element={<PlaceholderPage pageKey="submissions" />} />
+              <Route path="/dashboard"       element={<DashboardPage />} />
               <Route path="/submissions/new" element={<SubmitPage />} />
+              <Route path="/submissions"     element={<PlaceholderPage pageKey="submissions" />} />
               <Route path="/meetings"        element={<PlaceholderPage pageKey="meetings" />} />
               <Route path="/settings"        element={<PlaceholderPage pageKey="settings" />} />
+              <Route path="/notifications"   element={<NotificationsPage />} />
 
               {/* Secretary + Admin */}
               <Route element={<ProtectedRoute roles={['SECRETARY', 'ADMIN']} />}>
-                <Route path="/secretary/forms"             element={<FormLibraryPage />} />
-                <Route path="/secretary/forms/new"         element={<FormBuilderPage />} />
-                <Route path="/secretary/forms/:id"         element={<FormBuilderPage />} />
-                <Route path="/secretary/forms/:id/preview" element={<FormPreviewPage />} />
+                <Route path="/secretary/forms"                element={<FormLibraryPage />} />
+                <Route path="/secretary/forms/new"            element={<FormBuilderPage />} />
+                <Route path="/secretary/forms/:id"            element={<FormBuilderPage />} />
+                <Route path="/secretary/forms/:id/preview"    element={<FormPreviewPage />} />
+                <Route path="/secretary/submissions"          element={<SecretarySubmissionsListPage />} />
+                <Route path="/secretary/submissions/:id"      element={<SubmissionDetailPage />} />
               </Route>
 
-              {/* Admin only */}
-              <Route element={<ProtectedRoute roles={['ADMIN']} />}>
-                <Route path="/users"    element={<PlaceholderPage pageKey="users" />} />
+              {/* Reviewer */}
+              <Route element={<ProtectedRoute roles={['REVIEWER']} />}>
+                <Route path="/reviewer/assignments"      element={<AssignmentsPage />} />
+                <Route path="/reviewer/assignments/:id"  element={<ReviewDetailPage />} />
               </Route>
 
               {/* Chairman + Admin */}
               <Route element={<ProtectedRoute roles={['CHAIRMAN', 'ADMIN']} />}>
-                <Route path="/reports"  element={<PlaceholderPage pageKey="reports" />} />
+                <Route path="/chairman/queue"      element={<ChairmanQueuePage />} />
+                <Route path="/chairman/queue/:id"  element={<ChairmanDecisionPage />} />
+                <Route path="/reports"             element={<PlaceholderPage pageKey="reports" />} />
+              </Route>
+
+              {/* Admin only */}
+              <Route element={<ProtectedRoute roles={['ADMIN']} />}>
+                <Route path="/users" element={<PlaceholderPage pageKey="users" />} />
               </Route>
             </Route>
           </Route>

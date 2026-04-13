@@ -12,10 +12,12 @@ import prisma from './config/database.js'
 import { logActiveProviders } from './config/services.js'
 import { errorHandler } from './middleware/error.js'
 import { apiLimiter } from './middleware/rateLimit.js'
-import healthRouter from './routes/health.routes.js'
-import authRouter from './routes/auth.routes.js'
-import formsRouter from './routes/forms.routes.js'
-import submissionsRouter from './routes/submissions.routes.js'
+import healthRouter        from './routes/health.routes.js'
+import authRouter          from './routes/auth.routes.js'
+import formsRouter         from './routes/forms.routes.js'
+import submissionsRouter   from './routes/submissions.routes.js'
+import notificationsRouter from './routes/notifications.routes.js'
+import usersRouter         from './routes/users.routes.js'
 
 const app  = express()
 const PORT = process.env.PORT ?? process.env.API_PORT ?? 5000
@@ -45,7 +47,9 @@ app.use('/api', apiLimiter)
 app.use('/api/health', healthRouter)
 app.use('/api/auth', authRouter)
 app.use('/api/forms', formsRouter)
-app.use('/api/submissions', submissionsRouter)
+app.use('/api/submissions',   submissionsRouter)
+app.use('/api/notifications', notificationsRouter)
+app.use('/api/users',         usersRouter)
 
 // 404 handler
 app.use((req, res) => {

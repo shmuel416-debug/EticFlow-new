@@ -56,18 +56,21 @@
     }
   },
   "nav": {
-    "dashboard": "דשבורד",
-    "mySubmissions": "הגשות שלי",
-    "newSubmission": "הגשה חדשה",
-    "notifications": "התראות",
-    "settings": "הגדרות",
-    "allSubmissions": "כל הגשות",
-    "formLibrary": "ספריית טפסים",
-    "meetings": "פגישות",
-    "users": "משתמשים",
-    "reports": "דוחות",
-    "system": "מערכת",
-    "mainNavigation": "ניווט ראשי"
+    "dashboard":       "דשבורד",
+    "mySubmissions":   "הגשות שלי",
+    "newSubmission":   "הגשה חדשה",
+    "notifications":   "התראות",
+    "settings":        "הגדרות",
+    "allSubmissions":  "כל ההגשות",
+    "secretarySubmissions": "ניהול הגשות",
+    "myAssignments":   "הקצאות שלי",
+    "chairmanQueue":   "תור להחלטה",
+    "formLibrary":     "ספריית טפסים",
+    "meetings":        "פגישות",
+    "users":           "משתמשים",
+    "reports":         "דוחות",
+    "system":          "מערכת",
+    "mainNavigation":  "ניווט ראשי"
   },
   "dashboard": {
     "researcher": {
@@ -110,14 +113,52 @@
       "status": "סטטוס"
     },
     "status": {
-      "DRAFT": "טיוטה",
-      "SUBMITTED": "הוגש",
-      "UNDER_REVIEW": "בבדיקה",
-      "REVISION_REQUIRED": "תיקון נדרש",
-      "APPROVED": "אושר",
-      "REJECTED": "נדחה",
-      "WITHDRAWN": "בוטל"
+      "DRAFT":            "טיוטה",
+      "SUBMITTED":        "הוגש",
+      "IN_TRIAGE":        "בבדיקה ראשונית",
+      "ASSIGNED":         "הוקצה לסוקר",
+      "IN_REVIEW":        "בביקורת",
+      "PENDING_REVISION": "ממתין לתיקון",
+      "APPROVED":         "אושר",
+      "REJECTED":         "נדחה",
+      "WITHDRAWN":        "בוטל",
+      "CONTINUED":        "המשך"
     },
+    "list": {
+      "pageTitle":         "ניהול הגשות",
+      "searchPlaceholder": "חיפוש לפי כותרת או מספר...",
+      "filterLabel":       "סינון לפי סטטוס",
+      "filterAll":         "הכל",
+      "noResults":         "לא נמצאו הגשות",
+      "loadError":         "שגיאה בטעינת הגשות",
+      "colId":             "מספר",
+      "colTitle":          "כותרת",
+      "colStatus":         "סטטוס",
+      "colDate":           "תאריך הגשה",
+      "colReviewer":       "סוקר",
+      "colAuthor":         "חוקר",
+      "viewDetail":        "צפה בפרטים"
+    },
+    "detail": {
+      "pageTitle":          "פרטי הגשה",
+      "sectionAnswers":     "תשובות הטופס",
+      "sectionComments":    "הערות ותגובות",
+      "sectionStatus":      "סטטוס ופעולות",
+      "sectionReviewer":    "סוקר מוקצה",
+      "changeStatus":       "שינוי סטטוס",
+      "assignReviewer":     "הקצה סוקר",
+      "noReviewer":         "לא הוקצה סוקר",
+      "addComment":         "הוסף הערה",
+      "commentPlaceholder": "כתוב הערה...",
+      "internalLabel":      "הערה פנימית (לא גלויה לחוקר)",
+      "submitComment":      "שלח הערה",
+      "statusUpdated":      "הסטטוס עודכן בהצלחה",
+      "reviewerAssigned":   "הסוקר הוקצה בהצלחה",
+      "noAnswer":           "לא ניתנה תשובה",
+      "loadError":          "שגיאה בטעינת ההגשה",
+      "backToList":         "חזרה לרשימה",
+      "version":            "גרסה {{num}}"
+    }
     "submit": {
       "pageTitle": "הגשת בקשה לאישור מחקר",
       "pageSubtitle": "מלא את כל השדות המסומנים ב-*",
@@ -295,6 +336,63 @@
       "file": "העלאת קובץ",
       "declaration": "הצהרה",
       "signature": "חתימה"
+    }
+  },
+  "reviewer": {
+    "assignments": {
+      "pageTitle":     "הקצאות שלי",
+      "noAssignments": "אין הקצאות פעילות",
+      "loadError":     "שגיאה בטעינת ההקצאות"
+    },
+    "review": {
+      "pageTitle":       "ביצוע ביקורת",
+      "scoreLabel":      "ציון (1-5)",
+      "recommendLabel":  "המלצה",
+      "commentsLabel":   "תגובת הביקורת",
+      "commentsHint":    "לפחות 10 תווים",
+      "submitReview":    "שלח ביקורת",
+      "submitting":      "שולח...",
+      "submitSuccess":   "הביקורת נשלחה בהצלחה",
+      "rec_APPROVED":    "מאשר",
+      "rec_REJECTED":    "דוחה",
+      "rec_REVISION":    "דורש תיקון"
+    }
+  },
+  "chairman": {
+    "queue": {
+      "pageTitle":         "תור להחלטה",
+      "noItems":           "אין הגשות הממתינות להחלטה",
+      "loadError":         "שגיאה בטעינת התור",
+      "colRecommendation": "המלצת סוקר"
+    },
+    "decision": {
+      "pageTitle":        "קבלת החלטה",
+      "approve":          "אשר",
+      "reject":           "דחה",
+      "requestRevision":  "בקש תיקון",
+      "noteLabel":        "הערה להחלטה",
+      "notePlaceholder":  "הסבר את ההחלטה...",
+      "confirmApprove":   "האם לאשר את ההגשה?",
+      "confirmReject":    "האם לדחות את ההגשה?",
+      "confirmRevision":  "האם לבקש תיקון?",
+      "decisionRecorded": "ההחלטה נרשמה בהצלחה"
+    }
+  },
+  "notifications": {
+    "pageTitle":   "התראות",
+    "markAllRead": "סמן הכל כנקרא",
+    "noItems":     "אין התראות",
+    "loadError":   "שגיאה בטעינת התראות",
+    "unreadBadge": "{{count}} חדשות",
+    "types": {
+      "SUBMISSION_RECEIVED": "הגשה חדשה התקבלה",
+      "SUBMISSION_ASSIGNED": "הוקצית לסוקר",
+      "REVIEW_REQUESTED":    "ביקורת הוגשה",
+      "REVISION_REQUIRED":   "נדרש תיקון",
+      "APPROVED":            "ההגשה אושרה",
+      "REJECTED":            "ההגשה נדחתה",
+      "SLA_WARNING":         "אזהרת SLA",
+      "SLA_BREACH":          "הפרת SLA"
     }
   },
   "roles": {

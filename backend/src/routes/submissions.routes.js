@@ -14,6 +14,7 @@ import { authenticate } from '../middleware/auth.js'
 import { authorize } from '../middleware/role.js'
 import { auditLog } from '../middleware/audit.js'
 import * as controller from '../controllers/submissions.controller.js'
+import * as statusController from '../controllers/submissions.status.controller.js'
 
 const router = Router()
 
@@ -37,13 +38,40 @@ const updateSchema = z.object({
   changeNote: z.string().max(1000).optional(),
 })
 
+const VALID_STATUSES = ['DRAFT','SUBMITTED','IN_TRIAGE','ASSIGNED','IN_REVIEW','PENDING_REVISION','APPROVED','REJECTED','WITHDRAWN','CONTINUED']
+
 const listQuerySchema = z.object({
-  status: z.enum([
-    'DRAFT', 'SUBMITTED', 'IN_TRIAGE', 'ASSIGNED',
-    'IN_REVIEW', 'PENDING_REVISION', 'APPROVED', 'REJECTED', 'WITHDRAWN', 'CONTINUED',
-  ]).optional(),
-  page:  z.string().regex(/^\d+$/).optional(),
-  limit: z.string().regex(/^\d+$/).optional(),
+  status:   z.enum(VALID_STATUSES).optional(),
+  statuses: z.string().optional(),
+  search:   z.string().max(200).optional(),
+  page:     z.string().regex(/^\d+$/).optional(),
+  limit:    z.string().regex(/^\d+$/).optional(),
+})
+
+const transitionSchema = z.object({
+  status: z.enum(VALID_STATUSES),
+  note:   z.string().max(2000).optional(),
+})
+
+const assignSchema = z.object({
+  reviewerId: z.string().uuid(),
+})
+
+const reviewSchema = z.object({
+  score:          z.number().int().min(1).max(5),
+  recommendation: z.enum(['APPROVED', 'REJECTED', 'REVISION_REQUIRED']),
+  comments:       z.string().min(10).max(5000),
+})
+
+const decisionSchema = z.object({
+  decision: z.enum(['APPROVED', 'REJECTED', 'REVISION_REQUIRED']),
+  note:     z.string().max(2000).optional(),
+})
+
+const commentSchema = z.object({
+  content:    z.string().min(1).max(5000),
+  fieldKey:   z.string().max(100).optional(),
+  isInternal: z.boolean().optional(),
 })
 
 // ─────────────────────────────────────────────
@@ -87,6 +115,51 @@ router.post(
   authorize('RESEARCHER'),
   controller.continueSubmission,
   auditLog('submission.continue', 'Submission')
+)
+
+router.patch(
+  '/:id/status',
+  authenticate,
+  authorize('SECRETARY', 'CHAIRMAN', 'ADMIN'),
+  validate(transitionSchema),
+  statusController.transitionStatus,
+  auditLog('submission.status_changed', 'Submission')
+)
+
+router.patch(
+  '/:id/assign',
+  authenticate,
+  authorize('SECRETARY', 'ADMIN'),
+  validate(assignSchema),
+  statusController.assignReviewer,
+  auditLog('submission.reviewer_assigned', 'Submission')
+)
+
+router.patch(
+  '/:id/review',
+  authenticate,
+  authorize('REVIEWER'),
+  validate(reviewSchema),
+  statusController.submitReview,
+  auditLog('submission.review_submitted', 'Submission')
+)
+
+router.patch(
+  '/:id/decision',
+  authenticate,
+  authorize('CHAIRMAN', 'ADMIN'),
+  validate(decisionSchema),
+  statusController.recordDecision,
+  auditLog('submission.decision_recorded', 'Submission')
+)
+
+router.post(
+  '/:id/comments',
+  authenticate,
+  authorize('SECRETARY', 'REVIEWER', 'CHAIRMAN', 'ADMIN'),
+  validate(commentSchema),
+  statusController.addComment,
+  auditLog('submission.comment_added', 'Submission')
 )
 
 export default router
