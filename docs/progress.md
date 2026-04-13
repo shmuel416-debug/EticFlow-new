@@ -89,21 +89,22 @@
 - [x] Full Accessibility audit — report: `docs/accessibility-report-sprint-3-pre.md`
 
 ### S3.1 — Submission Review (Secretary)
-- [ ] S3.1.1 Submission list page (secretary view — status filter, search, sort)
-- [ ] S3.1.2 Submission detail page (view answers, comments, status actions)
-- [ ] S3.1.3 Status transitions (DRAFT→SUBMITTED→IN_REVIEW→APPROVED/REJECTED)
+- [x] S3.1.1 Submission list page (secretary view — status filter, search, pagination)
+- [x] S3.1.2 Submission detail page (view answers, comments, status actions)
+- [x] S3.1.3 Status transitions (SUBMITTED→IN_TRIAGE→ASSIGNED→IN_REVIEW→APPROVED/REJECTED/PENDING_REVISION)
 
 ### S3.2 — Reviewer Workflow
-- [ ] S3.2.1 Reviewer submission list (assigned to me)
-- [ ] S3.2.2 Review form (score fields, recommendation, comments)
-- [ ] S3.2.3 Assign reviewer (secretary assigns reviewer to submission)
+- [x] S3.2.1 Reviewer submission list (assigned to me — AssignmentsPage)
+- [x] S3.2.2 Review form (score 1-5, recommendation, comments — ReviewForm)
+- [x] S3.2.3 Assign reviewer (secretary assigns reviewer via ReviewerSelect dropdown)
 
 ### S3.3 — Chairman Decisions
-- [ ] S3.3.1 Chairman queue (submissions awaiting final decision)
-- [ ] S3.3.2 Approve / Reject / Request revision actions
-- [ ] S3.3.3 Approval letter generation (PDF)
+- [x] S3.3.1 Chairman queue (submissions in IN_REVIEW awaiting decision)
+- [x] S3.3.2 Approve / Reject / Request revision actions (SubmissionDecisionPage)
+- [ ] S3.3.3 Approval letter generation (PDF) — Sprint 4
 
 ### S3.4 — Notifications + Polish
-- [ ] S3.4.1 Email notifications on status change
-- [ ] S3.4.2 Researcher dashboard — live submission status tracker
+- [x] S3.4.1 Email notifications on status change (notification.service.js + notifyStatusChange)
+- [x] S3.4.2 NotificationsPage — in-app notifications with mark-as-read
+- [ ] S3.4.2 Researcher dashboard — live submission status tracker — Sprint 4
 - [ ] S3.4.9 Sprint wrap-up: Code Review + QA + Accessibility + Security

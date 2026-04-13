@@ -1,5 +1,22 @@
 # EthicFlow — Sprint Log
 
+## Sprint 3 — Review Workflow
+
+| Date | Task | Status | Notes |
+|------|------|--------|-------|
+| 2026-04-13 | S3.1.1 Secretary Submissions List | ✅ Done | Search + status filter + pagination. Route: /secretary/submissions |
+| 2026-04-13 | S3.1.2 Submission Detail Page | ✅ Done | FormAnswersViewer + CommentThread + StatusTransitionPanel + ReviewerSelect |
+| 2026-04-13 | S3.1.3 Status Transitions Backend | ✅ Done | SUBMITTED→IN_TRIAGE→ASSIGNED→IN_REVIEW→APPROVED/REJECTED/PENDING_REVISION |
+| 2026-04-13 | S3.2.1 Reviewer Assignments Page | ✅ Done | Lists submissions assigned to reviewer. Route: /reviewer/assignments |
+| 2026-04-13 | S3.2.2 Review Form | ✅ Done | Score 1-5, recommendation radio, comments textarea |
+| 2026-04-13 | S3.2.3 Assign Reviewer | ✅ Done | ReviewerSelect dropdown + PATCH /api/submissions/:id/assign |
+| 2026-04-13 | S3.3.1 Chairman Queue | ✅ Done | IN_REVIEW submissions. Route: /chairman/queue |
+| 2026-04-13 | S3.3.2 Chairman Decision | ✅ Done | APPROVE/REJECT/REVISION with note. Route: /chairman/queue/:id |
+| 2026-04-13 | S3.4.1 Email Notifications | ✅ Done | notification.service.js — notifyStatusChange on every transition |
+| 2026-04-13 | S3.4.2 NotificationsPage | ✅ Done | In-app notifications list + mark-read. Route: /notifications |
+| 2026-04-13 | Shared Components | ✅ Done | StatusBadge, CommentThread, StatusTransitionPanel, ReviewerSelect, FormAnswersViewer, ReviewForm |
+| 2026-04-13 | i18n Sprint 3 | ✅ Done | Fixed status keys + added reviewer/chairman/notifications namespaces (he+en) |
+
 ## Sprint 1 — Infrastructure
 
 | Date | Task | Status | Notes |
