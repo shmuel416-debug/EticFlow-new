@@ -9,7 +9,7 @@ WORKDIR /app
 
 # Create non-root user for security
 RUN addgroup -S app && adduser -S app -G app
-RUN apk add --no-cache openssl python3 make g++
+RUN apk add --no-cache openssl
 # Install dependencies (includes devDeps so prisma CLI is available for migrations)
 COPY package*.json ./
 COPY prisma/ ./prisma/
