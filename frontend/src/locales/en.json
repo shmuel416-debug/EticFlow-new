@@ -439,6 +439,30 @@
     "CHAIRMAN": "Chairman",
     "ADMIN": "Admin"
   },
+  "documents": {
+    "tabLabel": "Documents",
+    "sectionTitle": "Attached Documents",
+    "sectionLabel": "Document list",
+    "listLabel": "Uploaded documents",
+    "dropZoneLabel": "Drag files here or click to upload",
+    "dropZoneTitle": "Drag files here or click to upload",
+    "dropZoneHint": "PDF, Word, Excel, JPG, PNG — up to 20 MB per file",
+    "fileInputLabel": "Select files to upload",
+    "uploading": "Uploading files...",
+    "empty": "No documents attached to this submission",
+    "downloadLabel": "Download {{name}}",
+    "deleteLabel": "Delete {{name}}",
+    "confirmDelete": "Are you sure you want to delete this document?",
+    "loadError": "Failed to load documents",
+    "deleteError": "Failed to delete document",
+    "uploadError": {
+      "FILE_TOO_LARGE": "File exceeds 20 MB",
+      "FILE_TYPE_NOT_ALLOWED": "File type not permitted",
+      "FILE_TYPE_MISMATCH": "File content does not match its extension",
+      "NO_FILES": "No file selected",
+      "generic": "Upload failed — please try again"
+    }
+  },
   "errors": {
     "VALIDATION_ERROR": "Validation error",
     "UNAUTHORIZED": "Unauthorized — please sign in again",

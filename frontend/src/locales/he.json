@@ -439,6 +439,30 @@
     "CHAIRMAN": "יו\"ר",
     "ADMIN": "מנהל"
   },
+  "documents": {
+    "tabLabel": "מסמכים",
+    "sectionTitle": "מסמכים מצורפים",
+    "sectionLabel": "רשימת מסמכים",
+    "listLabel": "מסמכים שהועלו",
+    "dropZoneLabel": "גרור קבצים לכאן או לחץ להעלאה",
+    "dropZoneTitle": "גרור קבצים לכאן או לחץ להעלאה",
+    "dropZoneHint": "PDF, Word, Excel, JPG, PNG — עד 20 MB לקובץ",
+    "fileInputLabel": "בחר קבצים להעלאה",
+    "uploading": "מעלה קבצים...",
+    "empty": "אין מסמכים מצורפים לבקשה זו",
+    "downloadLabel": "הורד את {{name}}",
+    "deleteLabel": "מחק את {{name}}",
+    "confirmDelete": "האם אתה בטוח שברצונך למחוק מסמך זה?",
+    "loadError": "שגיאה בטעינת המסמכים",
+    "deleteError": "שגיאה במחיקת המסמך",
+    "uploadError": {
+      "FILE_TOO_LARGE": "הקובץ גדול מ-20 MB",
+      "FILE_TYPE_NOT_ALLOWED": "סוג קובץ לא מאושר",
+      "FILE_TYPE_MISMATCH": "תוכן הקובץ אינו תואם את הסיומת",
+      "NO_FILES": "לא נבחר קובץ",
+      "generic": "שגיאה בהעלאת הקובץ — נסה שנית"
+    }
+  },
   "errors": {
     "VALIDATION_ERROR": "שגיאת אימות נתונים",
     "UNAUTHORIZED": "אין הרשאה — יש להתחבר מחדש",

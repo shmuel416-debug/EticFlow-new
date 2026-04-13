@@ -14,6 +14,7 @@ import CommentThread from '../../components/submissions/CommentThread'
 import StatusTransitionPanel from '../../components/submissions/StatusTransitionPanel'
 import ReviewerSelect from '../../components/submissions/ReviewerSelect'
 import FormAnswersViewer from '../../components/submissions/FormAnswersViewer'
+import DocumentList from '../../components/submissions/DocumentList'
 
 /**
  * Determines the back-link path based on user role.
@@ -187,6 +188,14 @@ export default function SubmissionDetailPage() {
           )}
         </aside>
       </div>
+
+      {/* Documents */}
+      <section className="bg-white rounded-xl border border-gray-200 p-5">
+        <h2 className="text-base font-semibold mb-4" style={{ color: 'var(--lev-navy)' }}>
+          {t('documents.sectionTitle')}
+        </h2>
+        <DocumentList submissionId={submission.id} canUpload />
+      </section>
 
       {/* Comments */}
       <section className="bg-white rounded-xl border border-gray-200 p-5">

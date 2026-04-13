@@ -8,6 +8,7 @@
 | 2026-04-13 | S4.1 ResearcherDashboard | ✅ Done | Design C: list pane + timeline pane, real API data, SLA dots |
 | 2026-04-13 | S4.1 SubmissionStatusPage | ✅ Done | Tabs: timeline / comments / answers, progress bar, action buttons |
 | 2026-04-13 | S4.2 SLA Engine | ✅ Done | addBusinessDays (Sun–Thu), setDueDates on transitions, nightly cron, breach+warning notifications |
+| 2026-04-13 | S4.3 Document Upload | ✅ Done | documents.controller.js + documents.routes.js, storage.service.js (magic bytes validation), DocumentList component (drag-and-drop, upload/download/delete), tab in SubmissionStatusPage + SubmissionDetailPage |
 
 ## Sprint 3 — Review Workflow
 

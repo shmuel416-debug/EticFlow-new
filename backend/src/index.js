@@ -19,6 +19,7 @@ import formsRouter         from './routes/forms.routes.js'
 import submissionsRouter   from './routes/submissions.routes.js'
 import notificationsRouter from './routes/notifications.routes.js'
 import usersRouter         from './routes/users.routes.js'
+import documentsRouter     from './routes/documents.routes.js'
 
 const app  = express()
 const PORT = process.env.PORT ?? process.env.API_PORT ?? 5000
@@ -51,6 +52,7 @@ app.use('/api/forms', formsRouter)
 app.use('/api/submissions',   submissionsRouter)
 app.use('/api/notifications', notificationsRouter)
 app.use('/api/users',         usersRouter)
+app.use('/api/documents',    documentsRouter)
 
 // 404 handler
 app.use((_req, res) => {

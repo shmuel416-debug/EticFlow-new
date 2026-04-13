@@ -12,6 +12,7 @@ import api from '../../services/api'
 import StatusBadge from '../../components/submissions/StatusBadge'
 import CommentThread from '../../components/submissions/CommentThread'
 import FormAnswersViewer from '../../components/submissions/FormAnswersViewer'
+import DocumentList from '../../components/submissions/DocumentList'
 
 const STATUS_ORDER = ['SUBMITTED','IN_TRIAGE','ASSIGNED','IN_REVIEW','PENDING_REVISION','APPROVED']
 const STATUS_STEP  = { DRAFT:0,SUBMITTED:1,IN_TRIAGE:2,ASSIGNED:3,IN_REVIEW:4,PENDING_REVISION:4,APPROVED:5,REJECTED:5,WITHDRAWN:5 }
@@ -126,9 +127,10 @@ export default function SubmissionStatusPage() {
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div role="tablist" className="flex border-b border-gray-100">
           {[
-            { key: 'timeline',  label: t('statusPage.timeline') },
-            { key: 'comments',  label: t('statusPage.comments') },
-            { key: 'answers',   label: t('submission.detail.sectionAnswers') },
+            { key: 'timeline',   label: t('statusPage.timeline') },
+            { key: 'comments',   label: t('statusPage.comments') },
+            { key: 'answers',    label: t('submission.detail.sectionAnswers') },
+            { key: 'documents',  label: t('documents.tabLabel') },
           ].map(tab => (
             <button key={tab.key} role="tab"
               aria-selected={activeTab === tab.key}
@@ -190,6 +192,13 @@ export default function SubmissionStatusPage() {
 
           {activeTab === 'answers' && (
             <FormAnswersViewer formConfig={submission.formConfig} dataJson={latest?.dataJson ?? {}} />
+          )}
+
+          {activeTab === 'documents' && (
+            <DocumentList
+              submissionId={submission.id}
+              canUpload={['DRAFT','SUBMITTED','PENDING_REVISION'].includes(submission.status)}
+            />
           )}
         </div>
       </div>
