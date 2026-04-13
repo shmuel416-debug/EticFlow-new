@@ -11,6 +11,7 @@ import StatusBadge from '../../components/submissions/StatusBadge'
 import FormAnswersViewer from '../../components/submissions/FormAnswersViewer'
 import CommentThread from '../../components/submissions/CommentThread'
 import ReviewForm from '../../components/submissions/ReviewForm'
+import AiPanel from '../../components/submissions/AiPanel'
 
 /**
  * Reviewer's detail page — read-only form answers + ReviewForm.
@@ -73,8 +74,10 @@ export default function ReviewDetailPage() {
           <FormAnswersViewer formConfig={submission?.formConfig} dataJson={latestVersion?.dataJson ?? {}} />
         </section>
 
-        {/* Review form */}
-        <aside>
+        {/* Sidebar: AI panel + Review form */}
+        <aside className="space-y-5">
+          <AiPanel submissionId={id} canRun={!alreadyReviewed} />
+
           <section className="bg-white rounded-xl border border-gray-200 p-5">
             <h2 className="text-base font-semibold mb-4" style={{ color: 'var(--lev-navy)' }}>
               {t('reviewer.review.pageTitle')}

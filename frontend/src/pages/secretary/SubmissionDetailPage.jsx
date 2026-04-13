@@ -15,6 +15,7 @@ import StatusTransitionPanel from '../../components/submissions/StatusTransition
 import ReviewerSelect from '../../components/submissions/ReviewerSelect'
 import FormAnswersViewer from '../../components/submissions/FormAnswersViewer'
 import DocumentList from '../../components/submissions/DocumentList'
+import AiPanel from '../../components/submissions/AiPanel'
 
 /**
  * Determines the back-link path based on user role.
@@ -215,6 +216,9 @@ export default function SubmissionDetailPage() {
               <p className="text-gray-400 text-xs">{submission.reviewer.email}</p>
             </section>
           )}
+
+          {/* AI advisory panel */}
+          <AiPanel submissionId={submission.id} canRun />
         </aside>
       </div>
 

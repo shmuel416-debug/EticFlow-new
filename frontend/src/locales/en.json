@@ -440,6 +440,29 @@
     "CHAIRMAN": "Chairman",
     "ADMIN": "Admin"
   },
+  "ai": {
+    "panelTitle": "AI Analysis — Advisory Only",
+    "panelLabel": "AI analysis panel",
+    "advisoryOnly": "Advisory only",
+    "riskLevel": "Risk level",
+    "score": "Advisory score",
+    "scoreLabel": "Score {{score}} out of 10",
+    "summary": "Summary",
+    "flags": "Areas of concern",
+    "suggestions": "Improvement suggestions",
+    "analysisDate": "Analysis date",
+    "noAnalysis": "No AI analysis has been run yet",
+    "run": "Run AI Analysis",
+    "rerun": "Refresh Analysis",
+    "running": "Analyzing...",
+    "loadError": "Failed to load AI analysis",
+    "runError": "AI analysis failed — please try again",
+    "risk": {
+      "LOW": "Low risk",
+      "MEDIUM": "Moderate risk",
+      "HIGH": "High risk"
+    }
+  },
   "documents": {
     "tabLabel": "Documents",
     "sectionTitle": "Attached Documents",

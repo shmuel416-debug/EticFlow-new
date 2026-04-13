@@ -121,4 +121,4 @@
 - [x] S4.2 SLA Engine (addBusinessDays, setDueDates, runSlaCheck, nightly cron)
 - [x] S4.3 Document Upload (backend + frontend)
 - [x] S4.4 PDF Approval Letter generation
-- [ ] S4.5 AI Mock Integration (pre-check + reviewer panel)
+- [x] S4.5 AI Mock Integration (pre-check + reviewer panel)

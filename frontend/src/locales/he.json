@@ -440,6 +440,29 @@
     "CHAIRMAN": "יו\"ר",
     "ADMIN": "מנהל"
   },
+  "ai": {
+    "panelTitle": "ניתוח AI — ייעוצי בלבד",
+    "panelLabel": "לוח ניתוח AI",
+    "advisoryOnly": "ייעוצי בלבד",
+    "riskLevel": "רמת סיכון",
+    "score": "ציון ייעוצי",
+    "scoreLabel": "ציון {{score}} מתוך 10",
+    "summary": "סיכום",
+    "flags": "תחומי תשומת לב",
+    "suggestions": "המלצות לשיפור",
+    "analysisDate": "תאריך ניתוח",
+    "noAnalysis": "לא בוצע ניתוח AI עדיין",
+    "run": "הרץ ניתוח AI",
+    "rerun": "עדכן ניתוח",
+    "running": "מנתח...",
+    "loadError": "שגיאה בטעינת ניתוח AI",
+    "runError": "שגיאה בהרצת ניתוח AI — נסה שנית",
+    "risk": {
+      "LOW": "סיכון נמוך",
+      "MEDIUM": "סיכון בינוני",
+      "HIGH": "סיכון גבוה"
+    }
+  },
   "documents": {
     "tabLabel": "מסמכים",
     "sectionTitle": "מסמכים מצורפים",
