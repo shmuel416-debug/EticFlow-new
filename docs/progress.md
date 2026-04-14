@@ -112,7 +112,7 @@
 ---
 
 ## Current Sprint: Sprint 4 — SLA + Documents + AI
-**Status:** 🔄 In Progress | **Tag:** —
+**Status:** ✅ Complete | **Tag:** v0.4.0
 
 ### S4.1 — Researcher Dashboard + Status Page
 - [x] ResearcherDashboard.jsx — Design C split-screen (real data, Lev palette)
@@ -122,3 +122,4 @@
 - [x] S4.3 Document Upload (backend + frontend)
 - [x] S4.4 PDF Approval Letter generation
 - [x] S4.5 AI Mock Integration (pre-check + reviewer panel)
+- [x] S4.9 Sprint wrap-up: Code Review + QA + Accessibility + Security — APPROVED FOR MERGE

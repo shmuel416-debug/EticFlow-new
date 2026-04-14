@@ -62,7 +62,7 @@ export async function generateApprovalLetter(submissionId) {
   const submission = await prisma.submission.findUnique({
     where:   { id: submissionId },
     include: {
-      author:    { select: { name: true, email: true } },
+      author:    { select: { fullName: true, email: true } },
       formConfig: { select: { name: true } },
       slaTracking: true,
     },
@@ -121,7 +121,7 @@ export async function generateApprovalLetter(submissionId) {
 
   doc.fontSize(12).fillColor('#1e293b')
      .text(`לכבוד,`, { align: 'right' })
-  doc.text(submission.author.name, { align: 'right' })
+  doc.text(submission.author.fullName, { align: 'right' })
   doc.text(submission.author.email, { align: 'right' })
   doc.moveDown(1)
 

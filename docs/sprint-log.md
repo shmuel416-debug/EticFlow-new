@@ -11,6 +11,11 @@
 | 2026-04-13 | S4.3 Document Upload | ✅ Done | documents.controller.js + documents.routes.js, storage.service.js (magic bytes validation), DocumentList component (drag-and-drop, upload/download/delete), tab in SubmissionStatusPage + SubmissionDetailPage |
 | 2026-04-13 | S4.4 PDF Approval Letter | ✅ Done | pdf.service.js (pdfkit — Hebrew letter, details box, conditions, signature area), POST /api/submissions/:id/approval-letter, download button in SubmissionStatusPage + SubmissionDetailPage |
 | 2026-04-13 | S4.5 AI Mock Integration | ✅ Done | mock.provider.js (keyword rules, risk levels), ai.service.js (factory), ai.controller.js, /api/ai routes, AiPanel.jsx (risk badge, score bar, flags, suggestions), wired into ReviewDetailPage + SubmissionDetailPage |
+| 2026-04-14 | S4.9 Code Review | ✅ Done | 1 critical fixed (RESEARCHER ownership bypass on approval-letter), 3 warnings, 4 info. Report: docs/code-review-sprint-4.md |
+| 2026-04-14 | S4.9 QA Testing | ✅ Done | 3 critical fixed (fullName field mismatch ×2, AppError arg order), 0 open. Report: docs/qa-report-sprint-4.md |
+| 2026-04-14 | S4.9 Accessibility Audit | ✅ Done | 2 fixed (aria-live on AiPanel, fullName in DocumentList). WCAG 2.2 AA compliant. Report: docs/accessibility-report-sprint-4.md |
+| 2026-04-14 | S4.9 Security Audit | ✅ Done | 0 critical/high, 1 medium tracked (setTimeout), OWASP Top 10 clean. Report: docs/security-report-sprint-4.md |
+| 2026-04-14 | Sprint 4 Release | ✅ Done | Tagged v0.4.0. Report: docs/sprint-4-release-report.md |
 
 ## Sprint 3 — Review Workflow
 

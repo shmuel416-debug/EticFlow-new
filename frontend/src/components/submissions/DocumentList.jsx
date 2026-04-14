@@ -183,7 +183,7 @@ export default function DocumentList({ submissionId, canUpload = false }) {
                 </p>
                 <p className="text-xs text-gray-400">
                   {fmtSize(doc.sizeBytes)}
-                  {doc.uploadedBy && ` · ${doc.uploadedBy.name}`}
+                  {doc.uploadedBy && ` · ${doc.uploadedBy.fullName}`}
                 </p>
               </div>
               <div className="flex gap-1 flex-shrink-0">

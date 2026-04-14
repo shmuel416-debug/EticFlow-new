@@ -191,17 +191,19 @@ export default function AiPanel({ submissionId, canRun = false }) {
 
         {/* Run button */}
         {canRun && (
-          <button
-            onClick={handleRun}
-            disabled={running}
-            className="w-full py-2.5 text-sm font-bold rounded-xl text-white disabled:opacity-60 transition hover:opacity-90"
-            style={{ background: 'var(--lev-navy)', minHeight: '44px' }}>
-            {running
-              ? t('ai.running')
-              : result
-                ? t('ai.rerun')
-                : t('ai.run')}
-          </button>
+          <div aria-live="polite" aria-atomic="true">
+            <button
+              onClick={handleRun}
+              disabled={running}
+              className="w-full py-2.5 text-sm font-bold rounded-xl text-white disabled:opacity-60 transition hover:opacity-90"
+              style={{ background: 'var(--lev-navy)', minHeight: '44px' }}>
+              {running
+                ? t('ai.running')
+                : result
+                  ? t('ai.rerun')
+                  : t('ai.run')}
+            </button>
+          </div>
         )}
       </div>
     </section>
