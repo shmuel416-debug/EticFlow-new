@@ -22,6 +22,9 @@ import usersRouter         from './routes/users.routes.js'
 import documentsRouter     from './routes/documents.routes.js'
 import aiRouter            from './routes/ai.routes.js'
 import meetingsRouter      from './routes/meetings.routes.js'
+import protocolsRouter, { publicSignRouter } from './routes/protocols.routes.js'
+import reportsRouter, { auditLogsRouter } from './routes/reports.routes.js'
+import settingsRouter      from './routes/settings.routes.js'
 
 const app  = express()
 const PORT = process.env.PORT ?? process.env.API_PORT ?? 5000
@@ -57,6 +60,11 @@ app.use('/api/users',         usersRouter)
 app.use('/api/documents',    documentsRouter)
 app.use('/api/ai',           aiRouter)
 app.use('/api/meetings',    meetingsRouter)
+app.use('/api/protocols',  protocolsRouter)
+app.use('/api/protocol',   publicSignRouter)  // Public sign endpoint (no auth)
+app.use('/api/reports',     reportsRouter)
+app.use('/api/audit-logs',  auditLogsRouter)
+app.use('/api/settings',    settingsRouter)
 
 // 404 handler
 app.use((_req, res) => {

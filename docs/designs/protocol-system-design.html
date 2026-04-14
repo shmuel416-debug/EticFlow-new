@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EthicFlow — Protocol System Design Options</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Heebo', sans-serif; }
+    .tab-btn { border-bottom: 3px solid transparent; transition: all .2s; }
+    .tab-btn.active { border-bottom: 3px solid #3b82f6; color: #3b82f6; font-weight: 700; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .screen-tab-btn { transition: all .2s; }
+    .screen-tab-btn.active { background:#1e3a5f; color:#fff; }
+    .screen-tab-content { display: none; }
+    .screen-tab-content.active { display: block; }
+    .preview-frame { border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,.08); }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    /* Sidebar */
+    .sidebar-item { display:flex; align-items:center; gap:10px; padding:10px 16px; border-radius:8px; cursor:pointer; font-size:14px; color:#94a3b8; transition:all .15s; }
+    .sidebar-item.active { background:rgba(59,130,246,.15); color:#3b82f6; font-weight:600; }
+    .sidebar-item:hover:not(.active) { background:rgba(255,255,255,.07); color:#cbd5e1; }
+    /* Badges */
+    .badge-draft { background:#fef9c3; color:#854d0e; border:1px solid #fde68a; }
+    .badge-pending { background:#dbeafe; color:#1e40af; border:1px solid #93c5fd; }
+    .badge-signed { background:#dcfce7; color:#166534; border:1px solid #86efac; }
+    .badge-archived { background:#f1f5f9; color:#64748b; border:1px solid #cbd5e1; }
+    textarea { resize: vertical; }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+  <!-- Top navigation -->
+  <div class="sticky top-0 bg-white border-b z-50 shadow-sm">
+    <div class="max-w-7xl mx-auto px-6">
+      <div class="flex items-center gap-1 overflow-x-auto">
+        <div class="flex items-center gap-3 border-l pl-4 ml-4 py-3 shrink-0">
+          <span class="text-xl font-black text-[#1e3a5f]">EthicFlow</span>
+          <span class="text-xs text-gray-400 hidden md:block">Protocol System — Design Options</span>
+        </div>
+        <button class="tab-btn active py-4 px-4 text-sm whitespace-nowrap" onclick="showTab('a',this)">A — ספרייה מינימלית</button>
+        <button class="tab-btn py-4 px-4 text-sm text-gray-500 whitespace-nowrap" onclick="showTab('b',this)">B — לוח פעולות</button>
+        <button class="tab-btn py-4 px-4 text-sm text-gray-500 whitespace-nowrap" onclick="showTab('c',this)">C — מסך מפוצל</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
+
+    <!-- ═══════════════════════════════════════════════════
+         OPTION A — Clean & Minimal
+    ═══════════════════════════════════════════════════ -->
+    <div id="tab-a" class="tab-content active space-y-4">
+      <div class="bg-white rounded-xl p-4 border text-sm text-gray-600">
+        <strong class="text-[#1e3a5f]">Option A — "ספרייה נקייה":</strong>
+        רשימת כרטיסיות לבנות עם בדג'ים, עמוד עריכה דו-עמודי רגוע, ודף חתימה מינימלי ונגיש.
+      </div>
+
+      <!-- Screen sub-tabs for A -->
+      <div class="flex gap-2 flex-wrap">
+        <button class="screen-tab-btn active text-xs font-semibold px-4 py-2 rounded-lg border" onclick="showScreen('a','list',this)">📋 רשימת פרוטוקולים</button>
+        <button class="screen-tab-btn text-xs font-semibold px-4 py-2 rounded-lg border bg-white" onclick="showScreen('a','detail',this)">📝 עריכת פרוטוקול</button>
+        <button class="screen-tab-btn text-xs font-semibold px-4 py-2 rounded-lg border bg-white" onclick="showScreen('a','sign',this)">✍️ דף חתימה</button>
+      </div>
+
+      <!-- A: List -->
+      <div id="screen-a-list" class="screen-tab-content active">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Desktop -->
+          <div class="lg:col-span-2">
+            <p class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wide">💻 Desktop</p>
+            <div class="preview-frame bg-gray-50">
+              <div class="flex h-[600px]">
+                <!-- Sidebar A -->
+                <div class="w-[220px] bg-[#1e3a5f] flex flex-col shrink-0">
+                  <div class="p-4 border-b border-white/10">
+                    <div class="text-white font-bold text-base">EthicFlow</div>
+                    <div class="text-[#93c5fd] text-xs mt-0.5">ועדת האתיקה</div>
+                  </div>
+                  <nav class="flex-1 p-3 space-y-1 overflow-auto">
+                    <div class="sidebar-item"><span>🏠</span> לוח בקרה</div>
+                    <div class="sidebar-item"><span>📄</span> הגשות</div>
+                    <div class="sidebar-item"><span>📅</span> פגישות</div>
+                    <div class="sidebar-item active"><span>📋</span> פרוטוקולים</div>
+                    <div class="sidebar-item"><span>📊</span> דוחות</div>
+                    <div class="sidebar-item"><span>⚙️</span> הגדרות</div>
+                  </nav>
+                  <div class="p-3 border-t border-white/10">
+                    <div class="flex items-center gap-2">
+                      <div class="w-8 h-8 rounded-full bg-[#3b82f6] flex items-center justify-center text-white text-xs font-bold">מ</div>
+                      <div><div class="text-white text-xs font-medium">מירה לוי</div><div class="text-[#94a3b8] text-[10px]">מזכירה</div></div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Main A List -->
+                <div class="flex-1 flex flex-col overflow-hidden">
+                  <div class="bg-white border-b px-6 py-4 flex items-center justify-between">
+                    <div>
+                      <h1 class="text-lg font-bold text-[#1e3a5f]">פרוטוקולים</h1>
+                      <p class="text-xs text-gray-400">ניהול פרוטוקולי ועדת האתיקה</p>
+                    </div>
+                    <button class="bg-[#1e3a5f] text-white text-sm px-4 py-2 rounded-lg font-medium hover:bg-[#2d4f7c] flex items-center gap-2">
+                      <span>+</span> פרוטוקול חדש
+                    </button>
+                  </div>
+                  <!-- Filter tabs -->
+                  <div class="bg-white border-b px-6">
+                    <div class="flex gap-6 text-sm">
+                      <button class="py-3 border-b-2 border-[#3b82f6] text-[#3b82f6] font-semibold">הכל <span class="bg-gray-100 text-gray-600 text-xs px-1.5 py-0.5 rounded-full mr-1">12</span></button>
+                      <button class="py-3 text-gray-400">טיוטה <span class="bg-yellow-50 text-yellow-700 text-xs px-1.5 py-0.5 rounded-full mr-1">3</span></button>
+                      <button class="py-3 text-gray-400">ממתין לחתימות <span class="bg-blue-50 text-blue-700 text-xs px-1.5 py-0.5 rounded-full mr-1">2</span></button>
+                      <button class="py-3 text-gray-400">חתום <span class="bg-green-50 text-green-700 text-xs px-1.5 py-0.5 rounded-full mr-1">7</span></button>
+                    </div>
+                  </div>
+                  <!-- List -->
+                  <div class="flex-1 overflow-auto p-4 space-y-3">
+                    <!-- Card 1 -->
+                    <div class="bg-white rounded-xl border hover:shadow-md transition-shadow p-4 cursor-pointer">
+                      <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                          <div class="flex items-center gap-2 mb-1">
+                            <span class="badge-draft text-xs font-semibold px-2.5 py-0.5 rounded-full">טיוטה</span>
+                          </div>
+                          <h3 class="font-semibold text-[#1e3a5f] text-sm">פרוטוקול ישיבת ועדה — מרץ 2026</h3>
+                          <p class="text-xs text-gray-400 mt-0.5">פגישה: ישיבה חודשית מס׳ 3 • 15/03/2026</p>
+                        </div>
+                        <div class="text-left shrink-0 mr-3">
+                          <div class="text-xs text-gray-400">חתימות</div>
+                          <div class="text-sm font-semibold text-gray-600">0/4</div>
+                        </div>
+                      </div>
+                    </div>
+                    <!-- Card 2 -->
+                    <div class="bg-white rounded-xl border hover:shadow-md transition-shadow p-4 cursor-pointer">
+                      <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                          <div class="flex items-center gap-2 mb-1">
+                            <span class="badge-pending text-xs font-semibold px-2.5 py-0.5 rounded-full">ממתין לחתימות</span>
+                          </div>
+                          <h3 class="font-semibold text-[#1e3a5f] text-sm">פרוטוקול ישיבת ועדה — פברואר 2026</h3>
+                          <p class="text-xs text-gray-400 mt-0.5">פגישה: ישיבה חודשית מס׳ 2 • 18/02/2026</p>
+                        </div>
+                        <div class="text-left shrink-0 mr-3">
+                          <div class="text-xs text-gray-400">חתימות</div>
+                          <div class="flex items-center gap-1 mt-1">
+                            <div class="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                              <div class="h-full bg-[#3b82f6] rounded-full" style="width:50%"></div>
+                            </div>
+                            <span class="text-xs font-medium text-gray-600">2/4</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <!-- Card 3 -->
+                    <div class="bg-white rounded-xl border hover:shadow-md transition-shadow p-4 cursor-pointer">
+                      <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                          <div class="flex items-center gap-2 mb-1">
+                            <span class="badge-signed text-xs font-semibold px-2.5 py-0.5 rounded-full">חתום</span>
+                          </div>
+                          <h3 class="font-semibold text-[#1e3a5f] text-sm">פרוטוקול ישיבת ועדה — ינואר 2026</h3>
+                          <p class="text-xs text-gray-400 mt-0.5">פגישה: ישיבה חודשית מס׳ 1 • 20/01/2026</p>
+                        </div>
+                        <div class="text-left shrink-0 mr-3">
+                          <div class="text-xs text-gray-400">חתימות</div>
+                          <div class="flex items-center gap-1 mt-1">
+                            <div class="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                              <div class="h-full bg-green-500 rounded-full" style="width:100%"></div>
+                            </div>
+                            <span class="text-xs font-medium text-green-600">4/4 ✓</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="bg-white rounded-xl border p-4 cursor-pointer opacity-60">
+                      <div class="flex items-center gap-2 mb-1"><span class="badge-archived text-xs font-semibold px-2.5 py-0.5 rounded-full">ארכיון</span></div>
+                      <h3 class="font-semibold text-gray-500 text-sm">פרוטוקול ישיבה — דצמבר 2025</h3>
+                      <p class="text-xs text-gray-400">פגישה: ישיבת רבעון Q4 • 22/12/2025</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Mobile A List -->
+          <div>
+            <p class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wide">📱 Mobile (375px)</p>
+            <div class="preview-frame bg-gray-50 max-w-[375px] mx-auto">
+              <div class="bg-[#1e3a5f] px-4 py-3 flex items-center justify-between">
+                <div class="text-white font-bold text-sm">פרוטוקולים</div>
+                <button class="text-white text-sm font-bold bg-white/20 px-3 py-1.5 rounded-lg">+ חדש</button>
+              </div>
+              <div class="bg-white border-b px-4 overflow-x-auto">
+                <div class="flex gap-4 text-xs py-2.5 min-w-max">
+                  <button class="text-[#3b82f6] font-semibold border-b-2 border-[#3b82f6] pb-0.5">הכל</button>
+                  <button class="text-gray-400">טיוטה</button>
+                  <button class="text-gray-400">ממתין</button>
+                  <button class="text-gray-400">חתום</button>
+                </div>
+              </div>
+              <div class="p-3 space-y-2 bg-gray-50">
+                <div class="bg-white rounded-xl border p-3">
+                  <div class="flex justify-between items-start">
+                    <span class="badge-draft text-xs font-semibold px-2 py-0.5 rounded-full">טיוטה</span>
+                    <span class="text-gray-400 text-xs">0/4</span>
+                  </div>
+                  <div class="font-semibold text-[#1e3a5f] text-sm mt-1.5">פרוטוקול ישיבה — מרץ 2026</div>
+                  <div class="text-xs text-gray-400 mt-0.5">15/03/2026</div>
+                </div>
+                <div class="bg-white rounded-xl border p-3">
+                  <div class="flex justify-between items-start">
+                    <span class="badge-pending text-xs font-semibold px-2 py-0.5 rounded-full">ממתין</span>
+                    <div class="flex items-center gap-1"><div class="w-12 h-1.5 bg-gray-200 rounded-full overflow-hidden"><div class="h-full bg-[#3b82f6]" style="width:50%"></div></div><span class="text-xs text-gray-500">2/4</span></div>
+                  </div>
+                  <div class="font-semibold text-[#1e3a5f] text-sm mt-1.5">פרוטוקול ישיבה — פברואר 2026</div>
+                  <div class="text-xs text-gray-400 mt-0.5">18/02/2026</div>
+                </div>
+                <div class="bg-white rounded-xl border p-3">
+                  <div class="flex justify-between items-start">
+                    <span class="badge-signed text-xs font-semibold px-2 py-0.5 rounded-full">חתום</span>
+                    <span class="text-xs text-green-600 font-semibold">4/4 ✓</span>
+                  </div>
+                  <div class="font-semibold text-[#1e3a5f] text-sm mt-1.5">פרוטוקול ישיבה — ינואר 2026</div>
+                  <div class="text-xs text-gray-400 mt-0.5">20/01/2026</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- A: Detail -->
+      <div id="screen-a-detail" class="screen-tab-content">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="lg:col-span-2">
+            <p class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wide">💻 Desktop</p>
+            <div class="preview-frame bg-gray-50">
+              <div class="flex h-[680px]">
+                <div class="w-[220px] bg-[#1e3a5f] flex flex-col shrink-0">
+                  <div class="p-4 border-b border-white/10"><div class="text-white font-bold">EthicFlow</div></div>
+                  <nav class="flex-1 p-3 space-y-1">
+                    <div class="sidebar-item">🏠 לוח בקרה</div>
+                    <div class="sidebar-item">📄 הגשות</div>
+                    <div class="sidebar-item active">📋 פרוטוקולים</div>
+                    <div class="sidebar-item">📊 דוחות</div>
+                  </nav>
+                </div>
+                <div class="flex-1 flex flex-col overflow-hidden">
+                  <!-- Top bar -->
+                  <div class="bg-white border-b px-6 py-3 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                      <button class="text-gray-400 text-sm hover:text-gray-600">← חזרה</button>
+                      <span class="text-gray-300">|</span>
+                      <div>
+                        <div class="font-bold text-[#1e3a5f] text-sm">פרוטוקול ישיבת ועדה — מרץ 2026</div>
+                        <div class="text-xs text-gray-400">פגישה: ישיבה חודשית מס׳ 3 • 15/03/2026</div>
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <span class="badge-draft text-xs font-semibold px-2.5 py-1 rounded-full">טיוטה</span>
+                      <button class="text-sm text-gray-500 border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-50">שמור</button>
+                      <button class="text-sm bg-amber-500 text-white px-3 py-1.5 rounded-lg font-medium">הגמר</button>
+                    </div>
+                  </div>
+                  <div class="flex-1 overflow-auto flex">
+                    <!-- Editor -->
+                    <div class="flex-1 p-4 space-y-4">
+                      <div class="bg-white rounded-xl border p-4 space-y-3">
+                        <div>
+                          <label class="text-xs font-semibold text-gray-500 block mb-1">כותרת</label>
+                          <div class="border border-[#3b82f6] rounded-lg px-3 py-2 text-sm text-[#1e3a5f] font-medium">פרוטוקול ישיבת ועדה — מרץ 2026</div>
+                        </div>
+                      </div>
+                      <!-- Sections -->
+                      <div class="bg-white rounded-xl border p-4 space-y-3">
+                        <div class="flex items-center justify-between mb-1">
+                          <div class="text-sm font-bold text-[#1e3a5f]">סעיפים</div>
+                          <button class="text-xs text-[#3b82f6] font-medium">+ הוסף סעיף</button>
+                        </div>
+                        <!-- Section 1 -->
+                        <div class="border rounded-lg p-3 bg-gray-50">
+                          <div class="text-xs font-semibold text-gray-500 mb-1">כותרת הסעיף</div>
+                          <div class="border bg-white rounded px-2 py-1.5 text-sm text-[#1e3a5f] font-medium mb-2">פתיחה</div>
+                          <div class="text-xs font-semibold text-gray-500 mb-1">תוכן</div>
+                          <textarea class="w-full border bg-white rounded px-2 py-1.5 text-xs text-gray-700 min-h-[60px]">הפגישה נפתחה ב-15/03/2026 בשעה 10:00. נכחו: פרופ׳ יוסף כהן, ד״ר שרה לוי, ד״ר אהרון מזרחי, ומירה לוי.</textarea>
+                        </div>
+                        <div class="border rounded-lg p-3 bg-gray-50">
+                          <div class="border bg-white rounded px-2 py-1.5 text-sm text-[#1e3a5f] font-medium mb-2">סדר יום</div>
+                          <textarea class="w-full border bg-white rounded px-2 py-1.5 text-xs text-gray-700 min-h-[60px]">1. ETH-2026-042 — מחקר על השפעת לחץ בעבודה על קבלת החלטות
+2. ETH-2026-038 — סקר מקוון — דפוסי שימוש במדיה חברתית
+3. שונות</textarea>
+                        </div>
+                        <div class="border-2 border-dashed border-gray-200 rounded-lg p-3 text-center text-xs text-gray-400">
+                          + הוסף סעיף חדש
+                        </div>
+                      </div>
+                    </div>
+                    <!-- Signatures panel -->
+                    <div class="w-[240px] border-r bg-white p-3 overflow-auto shrink-0">
+                      <div class="font-semibold text-[#1e3a5f] text-sm mb-3">חתימות</div>
+                      <div class="space-y-2 mb-4">
+                        <div class="flex items-center gap-2 p-2 rounded-lg bg-yellow-50 border border-yellow-100">
+                          <div class="w-7 h-7 rounded-full bg-yellow-200 flex items-center justify-center text-xs font-bold text-yellow-700">י</div>
+                          <div class="flex-1">
+                            <div class="text-xs font-medium text-gray-700">פרופ׳ יוסף כהן</div>
+                            <div class="text-[10px] text-yellow-600">ממתין</div>
+                          </div>
+                        </div>
+                        <div class="flex items-center gap-2 p-2 rounded-lg bg-gray-50 border">
+                          <div class="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-500">ש</div>
+                          <div class="flex-1">
+                            <div class="text-xs font-medium text-gray-700">ד״ר שרה לוי</div>
+                            <div class="text-[10px] text-gray-400">לא נשלח</div>
+                          </div>
+                        </div>
+                      </div>
+                      <button class="w-full bg-[#3b82f6] text-white text-xs py-2 rounded-lg font-semibold mb-2">בקש חתימות</button>
+                      <button class="w-full border text-gray-600 text-xs py-2 rounded-lg font-medium">הורד PDF</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Mobile Detail -->
+          <div>
+            <p class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wide">📱 Mobile</p>
+            <div class="preview-frame bg-white max-w-[375px] mx-auto">
+              <div class="bg-[#1e3a5f] px-4 py-3">
+                <div class="flex items-center gap-2 mb-1"><span class="text-white text-sm">←</span><span class="text-[#93c5fd] text-xs">פרוטוקולים</span></div>
+                <div class="text-white font-bold text-sm">פרוטוקול — מרץ 2026</div>
+                <div class="flex items-center justify-between mt-2">
+                  <span class="badge-draft text-xs font-semibold px-2.5 py-0.5 rounded-full">טיוטה</span>
+                  <div class="flex gap-2">
+                    <button class="bg-white/20 text-white text-xs px-3 py-1.5 rounded-lg">שמור</button>
+                    <button class="bg-amber-400 text-white text-xs px-3 py-1.5 rounded-lg font-semibold">הגמר</button>
+                  </div>
+                </div>
+              </div>
+              <!-- Tabs mobile -->
+              <div class="border-b bg-white flex">
+                <button class="flex-1 text-xs py-2.5 font-semibold text-[#3b82f6] border-b-2 border-[#3b82f6]">עריכה</button>
+                <button class="flex-1 text-xs py-2.5 text-gray-400">חתימות (0/4)</button>
+              </div>
+              <div class="p-3 space-y-3">
+                <div class="border rounded-lg p-3 bg-gray-50 space-y-2">
+                  <div class="text-xs font-semibold text-[#1e3a5f]">פתיחה</div>
+                  <textarea class="w-full border rounded text-xs p-2 min-h-[55px] bg-white">הפגישה נפתחה ב-15/03/2026...</textarea>
+                </div>
+                <div class="border rounded-lg p-3 bg-gray-50 space-y-2">
+                  <div class="text-xs font-semibold text-[#1e3a5f]">סדר יום</div>
+                  <textarea class="w-full border rounded text-xs p-2 min-h-[55px] bg-white">1. ETH-2026-042 — מחקר...</textarea>
+                </div>
+                <button class="w-full border-2 border-dashed border-gray-200 text-gray-400 text-xs py-3 rounded-lg">+ הוסף סעיף</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- A: Sign -->
+      <div id="screen-a-sign" class="screen-tab-content">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+          <div>
+            <p class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wide">💻 Desktop / Tablet</p>
+            <div class="preview-frame bg-gray-50 min-h-[500px] flex items-center justify-center">
+              <div class="bg-white rounded-2xl border shadow-lg p-8 w-[380px]">
+                <div class="text-center mb-6">
+                  <div class="w-14 h-14 bg-[#1e3a5f] rounded-2xl flex items-center justify-center mx-auto mb-3">
+                    <span class="text-white text-2xl">📋</span>
+                  </div>
+                  <div class="text-[#1e3a5f] font-bold text-base">בקשה לחתימה על פרוטוקול</div>
+                  <div class="text-gray-400 text-xs mt-1">EthicFlow — ועדת האתיקה</div>
+                </div>
+                <div class="bg-gray-50 rounded-xl p-4 mb-6 text-right">
+                  <div class="text-xs text-gray-500 mb-1">פרוטוקול:</div>
+                  <div class="font-semibold text-[#1e3a5f] text-sm">פרוטוקול ישיבת ועדה — מרץ 2026</div>
+                  <div class="text-xs text-gray-400 mt-1">פגישה: 15/03/2026</div>
+                  <div class="border-t mt-3 pt-3">
+                    <div class="text-xs text-gray-500 mb-0.5">שלום,</div>
+                    <div class="font-semibold text-[#1e3a5f] text-sm">פרופ׳ יוסף כהן</div>
+                    <div class="text-xs text-gray-400">יו״ר הועדה</div>
+                  </div>
+                </div>
+                <div class="space-y-3">
+                  <button class="w-full bg-[#1e3a5f] text-white py-3 rounded-xl font-bold text-base hover:bg-[#2d4f7c] transition-colors flex items-center justify-center gap-2">
+                    <span>✓</span> חתום על הפרוטוקול
+                  </button>
+                  <button class="w-full border-2 border-red-200 text-red-600 py-3 rounded-xl font-semibold text-sm hover:bg-red-50 transition-colors">
+                    דחה חתימה
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <p class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wide">📱 Mobile (375px)</p>
+            <div class="preview-frame bg-gray-100 max-w-[375px] mx-auto min-h-[500px] flex flex-col">
+              <div class="bg-[#1e3a5f] px-4 py-5 text-center">
+                <div class="text-white text-2xl mb-1">📋</div>
+                <div class="text-white font-bold text-sm">חתימה על פרוטוקול</div>
+                <div class="text-[#93c5fd] text-xs mt-0.5">EthicFlow</div>
+              </div>
+              <div class="flex-1 p-4 flex flex-col justify-between">
+                <div class="bg-white rounded-xl border p-4 space-y-3">
+                  <div>
+                    <div class="text-xs text-gray-500">פרוטוקול</div>
+                    <div class="font-semibold text-[#1e3a5f] text-sm mt-0.5">פרוטוקול ישיבה — מרץ 2026</div>
+                    <div class="text-xs text-gray-400">15/03/2026</div>
+                  </div>
+                  <div class="border-t pt-3">
+                    <div class="text-xs text-gray-500">שלום,</div>
+                    <div class="font-bold text-[#1e3a5f]">פרופ׳ יוסף כהן</div>
+                  </div>
+                </div>
+                <div class="space-y-3 mt-4">
+                  <button class="w-full bg-[#1e3a5f] text-white py-4 rounded-2xl font-bold text-base">✓ חתום על הפרוטוקול</button>
+                  <button class="w-full border-2 border-red-200 text-red-600 py-3 rounded-2xl font-semibold">דחה</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════
+         OPTION B — Bold & Structured
+    ═══════════════════════════════════════════════════ -->
+    <div id="tab-b" class="tab-content space-y-4">
+      <div class="bg-white rounded-xl p-4 border text-sm text-gray-600">
+        <strong class="text-[#1e3a5f]">Option B — "לוח פעולות":</strong>
+        כותרת צבעונית בולטת עם סרגל פעולות, טבלת פרוטוקולים עם שורות, פאנל חתימות עם סטטוס ויזואלי עשיר.
+      </div>
+      <div class="flex gap-2 flex-wrap">
+        <button class="screen-tab-btn active text-xs font-semibold px-4 py-2 rounded-lg border" onclick="showScreen('b','list',this)">📋 רשימת פרוטוקולים</button>
+        <button class="screen-tab-btn text-xs font-semibold px-4 py-2 rounded-lg border bg-white" onclick="showScreen('b','detail',this)">📝 עריכת פרוטוקול</button>
+        <button class="screen-tab-btn text-xs font-semibold px-4 py-2 rounded-lg border bg-white" onclick="showScreen('b','sign',this)">✍️ דף חתימה</button>
+      </div>
+
+      <!-- B: List -->
+      <div id="screen-b-list" class="screen-tab-content active">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="lg:col-span-2">
+            <p class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wide">💻 Desktop</p>
+            <div class="preview-frame">
+              <div class="flex h-[620px]">
+                <div class="w-[220px] bg-[#1e3a5f] flex flex-col shrink-0">
+                  <div class="p-4 border-b border-white/10"><div class="text-white font-bold">EthicFlow</div></div>
+                  <nav class="flex-1 p-3 space-y-1">
+                    <div class="sidebar-item">🏠 לוח בקרה</div>
+                    <div class="sidebar-item">📄 הגשות</div>
+                    <div class="sidebar-item">📅 פגישות</div>
+                    <div class="sidebar-item active">📋 פרוטוקולים</div>
+                    <div class="sidebar-item">📊 דוחות</div>
+                  </nav>
+                </div>
+                <div class="flex-1 flex flex-col overflow-hidden bg-gray-50">
+                  <!-- Bold header -->
+                  <div class="bg-[#1e3a5f] px-6 py-5">
+                    <div class="flex items-center justify-between">
+                      <div>
+                        <h1 class="text-white font-bold text-xl">פרוטוקולים</h1>
+                        <p class="text-[#93c5fd] text-sm mt-0.5">12 פרוטוקולים • 2 ממתינים לחתימה</p>
+                      </div>
+                      <button class="bg-white text-[#1e3a5f] font-bold text-sm px-4 py-2.5 rounded-xl hover:bg-gray-100 flex items-center gap-2">
+                        <span class="text-lg">+</span> פרוטוקול חדש
+                      </button>
+                    </div>
+                    <!-- Quick stats -->
+                    <div class="flex gap-4 mt-4">
+                      <div class="bg-white/10 rounded-xl px-4 py-2 text-center"><div class="text-white font-bold text-lg">3</div><div class="text-[#93c5fd] text-xs">טיוטות</div></div>
+                      <div class="bg-white/10 rounded-xl px-4 py-2 text-center"><div class="text-white font-bold text-lg">2</div><div class="text-[#93c5fd] text-xs">ממתין</div></div>
+                      <div class="bg-white/10 rounded-xl px-4 py-2 text-center"><div class="text-white font-bold text-lg">7</div><div class="text-[#93c5fd] text-xs">חתומים</div></div>
+                    </div>
+                  </div>
+                  <!-- Filter + Table -->
+                  <div class="flex-1 overflow-auto p-4">
+                    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                      <div class="flex items-center gap-3 px-4 py-3 border-b bg-gray-50">
+                        <div class="flex gap-2 text-xs">
+                          <button class="bg-[#1e3a5f] text-white px-3 py-1.5 rounded-lg font-medium">הכל</button>
+                          <button class="bg-white border px-3 py-1.5 rounded-lg text-gray-500">טיוטה</button>
+                          <button class="bg-white border px-3 py-1.5 rounded-lg text-gray-500">ממתין לחתימה</button>
+                          <button class="bg-white border px-3 py-1.5 rounded-lg text-gray-500">חתום</button>
+                        </div>
+                      </div>
+                      <table class="w-full text-sm">
+                        <thead><tr class="text-xs text-gray-500 border-b bg-gray-50">
+                          <th class="text-right px-4 py-3 font-semibold">פרוטוקול</th>
+                          <th class="text-right px-4 py-3 font-semibold">פגישה</th>
+                          <th class="text-right px-4 py-3 font-semibold">סטטוס</th>
+                          <th class="text-right px-4 py-3 font-semibold">חתימות</th>
+                          <th class="px-4 py-3"></th>
+                        </tr></thead>
+                        <tbody>
+                          <tr class="border-b hover:bg-blue-50/30 cursor-pointer">
+                            <td class="px-4 py-3"><div class="font-medium text-[#1e3a5f]">פרוטוקול — מרץ 2026</div></td>
+                            <td class="px-4 py-3 text-gray-500 text-xs">ישיבה חודשית #3</td>
+                            <td class="px-4 py-3"><span class="badge-draft text-xs font-semibold px-2.5 py-1 rounded-full">טיוטה</span></td>
+                            <td class="px-4 py-3"><div class="flex items-center gap-2"><div class="w-16 h-2 bg-gray-200 rounded-full"><div class="h-full bg-gray-400 rounded-full" style="width:0%"></div></div><span class="text-xs text-gray-500">0/4</span></div></td>
+                            <td class="px-4 py-3 text-left"><button class="text-[#3b82f6] text-xs font-medium">ערוך →</button></td>
+                          </tr>
+                          <tr class="border-b hover:bg-blue-50/30 cursor-pointer bg-blue-50/20">
+                            <td class="px-4 py-3"><div class="font-medium text-[#1e3a5f]">פרוטוקול — פברואר 2026</div></td>
+                            <td class="px-4 py-3 text-gray-500 text-xs">ישיבה חודשית #2</td>
+                            <td class="px-4 py-3"><span class="badge-pending text-xs font-semibold px-2.5 py-1 rounded-full">ממתין לחתימות</span></td>
+                            <td class="px-4 py-3"><div class="flex items-center gap-2"><div class="w-16 h-2 bg-gray-200 rounded-full"><div class="h-full bg-[#3b82f6] rounded-full" style="width:50%"></div></div><span class="text-xs text-blue-600 font-semibold">2/4</span></div></td>
+                            <td class="px-4 py-3 text-left"><button class="text-[#3b82f6] text-xs font-medium">ניהול →</button></td>
+                          </tr>
+                          <tr class="hover:bg-green-50/20 cursor-pointer">
+                            <td class="px-4 py-3"><div class="font-medium text-[#1e3a5f]">פרוטוקול — ינואר 2026</div></td>
+                            <td class="px-4 py-3 text-gray-500 text-xs">ישיבה חודשית #1</td>
+                            <td class="px-4 py-3"><span class="badge-signed text-xs font-semibold px-2.5 py-1 rounded-full">✓ חתום</span></td>
+                            <td class="px-4 py-3"><div class="flex items-center gap-2"><div class="w-16 h-2 bg-gray-200 rounded-full"><div class="h-full bg-green-500 rounded-full" style="width:100%"></div></div><span class="text-xs text-green-600 font-semibold">4/4</span></div></td>
+                            <td class="px-4 py-3 text-left"><button class="text-gray-400 text-xs">PDF ↓</button></td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <p class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wide">📱 Mobile</p>
+            <div class="preview-frame max-w-[375px] mx-auto">
+              <div class="bg-[#1e3a5f] px-4 py-4">
+                <div class="flex justify-between items-center">
+                  <div class="text-white font-bold text-sm">פרוטוקולים</div>
+                  <button class="bg-white text-[#1e3a5f] text-xs font-bold px-3 py-1.5 rounded-lg">+ חדש</button>
+                </div>
+                <div class="flex gap-3 mt-3">
+                  <div class="bg-white/10 rounded-lg px-3 py-2 text-center flex-1"><div class="text-white font-bold">3</div><div class="text-[#93c5fd] text-[10px]">טיוטות</div></div>
+                  <div class="bg-white/10 rounded-lg px-3 py-2 text-center flex-1"><div class="text-white font-bold">2</div><div class="text-[#93c5fd] text-[10px]">ממתין</div></div>
+                  <div class="bg-white/10 rounded-lg px-3 py-2 text-center flex-1"><div class="text-white font-bold">7</div><div class="text-[#93c5fd] text-[10px]">חתומים</div></div>
+                </div>
+              </div>
+              <div class="p-3 bg-gray-50 space-y-2">
+                <div class="bg-white rounded-xl shadow-sm p-3 border-r-4 border-yellow-400">
+                  <div class="flex justify-between"><span class="badge-draft text-xs font-semibold px-2 py-0.5 rounded-full">טיוטה</span><span class="text-gray-400 text-xs">0/4</span></div>
+                  <div class="font-semibold text-[#1e3a5f] text-sm mt-1.5">פרוטוקול — מרץ 2026</div>
+                  <div class="text-xs text-gray-400">15/03/2026</div>
+                  <button class="mt-2 text-[#3b82f6] text-xs font-medium">ערוך →</button>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm p-3 border-r-4 border-blue-400">
+                  <div class="flex justify-between"><span class="badge-pending text-xs font-semibold px-2 py-0.5 rounded-full">ממתין</span><div class="flex items-center gap-1"><div class="w-10 h-1.5 bg-gray-200 rounded-full overflow-hidden"><div class="h-full bg-[#3b82f6]" style="width:50%"></div></div><span class="text-xs text-blue-600">2/4</span></div></div>
+                  <div class="font-semibold text-[#1e3a5f] text-sm mt-1.5">פרוטוקול — פברואר 2026</div>
+                  <div class="text-xs text-gray-400">18/02/2026</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- B: Detail -->
+      <div id="screen-b-detail" class="screen-tab-content">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="lg:col-span-2">
+            <p class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wide">💻 Desktop</p>
+            <div class="preview-frame">
+              <div class="flex h-[680px]">
+                <div class="w-[220px] bg-[#1e3a5f] flex flex-col shrink-0">
+                  <div class="p-4 border-b border-white/10"><div class="text-white font-bold">EthicFlow</div></div>
+                  <nav class="flex-1 p-3 space-y-1">
+                    <div class="sidebar-item">🏠 לוח בקרה</div>
+                    <div class="sidebar-item active">📋 פרוטוקולים</div>
+                    <div class="sidebar-item">📊 דוחות</div>
+                  </nav>
+                </div>
+                <div class="flex-1 flex flex-col overflow-hidden bg-gray-50">
+                  <!-- Bold header with actions -->
+                  <div class="bg-gradient-to-l from-[#1e3a5f] to-[#2d5f9a] px-6 py-5">
+                    <div class="flex items-center gap-3 mb-1 text-sm text-[#93c5fd]">
+                      <span class="cursor-pointer hover:text-white">← פרוטוקולים</span>
+                      <span>›</span>
+                      <span class="text-white">מרץ 2026</span>
+                    </div>
+                    <div class="flex items-start justify-between">
+                      <div>
+                        <h1 class="text-white font-bold text-lg">פרוטוקול ישיבת ועדה — מרץ 2026</h1>
+                        <p class="text-[#93c5fd] text-xs mt-0.5">ישיבה חודשית מס׳ 3 • 15/03/2026</p>
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <span class="badge-draft text-xs font-semibold px-3 py-1 rounded-full">טיוטה</span>
+                      </div>
+                    </div>
+                    <!-- Action bar -->
+                    <div class="flex gap-2 mt-4">
+                      <button class="bg-white/20 text-white text-sm px-4 py-2 rounded-lg hover:bg-white/30 font-medium">💾 שמור</button>
+                      <button class="bg-amber-500 text-white text-sm px-4 py-2 rounded-lg font-bold hover:bg-amber-600">🔒 הגמר פרוטוקול</button>
+                      <button class="bg-white/10 text-white text-sm px-4 py-2 rounded-lg hover:bg-white/20">📄 PDF</button>
+                    </div>
+                  </div>
+                  <div class="flex-1 overflow-auto flex gap-0">
+                    <!-- Editor -->
+                    <div class="flex-1 p-5 space-y-4 overflow-auto">
+                      <div class="bg-white rounded-2xl shadow-sm p-4">
+                        <label class="text-xs font-bold text-gray-400 uppercase tracking-wide block mb-2">כותרת הפרוטוקול</label>
+                        <input class="w-full border-2 border-[#3b82f6]/30 focus:border-[#3b82f6] rounded-xl px-4 py-2.5 text-[#1e3a5f] font-semibold text-sm outline-none" value="פרוטוקול ישיבת ועדה — מרץ 2026" />
+                      </div>
+                      <!-- Sections B -->
+                      <div class="bg-white rounded-2xl shadow-sm p-4 space-y-3">
+                        <div class="flex justify-between items-center">
+                          <span class="text-sm font-bold text-[#1e3a5f]">📝 סעיפי הפרוטוקול</span>
+                          <button class="bg-[#3b82f6] text-white text-xs px-3 py-1.5 rounded-lg font-medium">+ הוסף סעיף</button>
+                        </div>
+                        <div class="border-2 border-[#e2e8f0] rounded-xl p-3 hover:border-[#3b82f6]/40 transition-colors">
+                          <input class="w-full text-sm font-bold text-[#1e3a5f] outline-none bg-transparent border-b mb-2 pb-1" value="פתיחה" />
+                          <textarea class="w-full text-xs text-gray-600 outline-none bg-transparent min-h-[60px]">הפגישה נפתחה ב-15/03/2026 בשעה 10:00. נכחו: פרופ׳ יוסף כהן, ד״ר שרה לוי, ד״ר אהרון מזרחי, ומירה לוי.</textarea>
+                        </div>
+                        <div class="border-2 border-[#e2e8f0] rounded-xl p-3 hover:border-[#3b82f6]/40 transition-colors">
+                          <input class="w-full text-sm font-bold text-[#1e3a5f] outline-none bg-transparent border-b mb-2 pb-1" value="סדר יום" />
+                          <textarea class="w-full text-xs text-gray-600 outline-none bg-transparent min-h-[60px]">1. ETH-2026-042 — מחקר על לחץ בעבודה
+2. ETH-2026-038 — סקר מדיה חברתית
+3. שונות</textarea>
+                        </div>
+                        <button class="w-full border-2 border-dashed border-[#3b82f6]/30 text-[#3b82f6] py-3 rounded-xl text-sm font-medium hover:border-[#3b82f6] hover:bg-blue-50/50">+ סעיף חדש</button>
+                      </div>
+                    </div>
+                    <!-- Bold Signatures panel -->
+                    <div class="w-[260px] bg-white border-r shadow-sm p-4 overflow-auto shrink-0">
+                      <div class="text-sm font-bold text-[#1e3a5f] mb-1">✍️ חתימות</div>
+                      <div class="text-xs text-gray-400 mb-3">0 מתוך 4 חתמו</div>
+                      <div class="w-full h-2 bg-gray-100 rounded-full mb-4 overflow-hidden">
+                        <div class="h-full bg-gradient-to-l from-[#3b82f6] to-[#1e3a5f] rounded-full" style="width:0%"></div>
+                      </div>
+                      <div class="space-y-2 mb-4">
+                        <div class="flex items-center gap-2 p-2.5 rounded-xl bg-amber-50 border border-amber-100">
+                          <div class="w-8 h-8 rounded-full bg-amber-200 text-amber-700 flex items-center justify-center text-sm font-bold">י</div>
+                          <div><div class="text-xs font-semibold text-gray-800">פרופ׳ יוסף כהן</div><div class="text-[10px] text-amber-600 font-medium">ממתין לחתימה</div></div>
+                        </div>
+                        <div class="flex items-center gap-2 p-2.5 rounded-xl bg-gray-50 border">
+                          <div class="w-8 h-8 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-sm font-bold">ש</div>
+                          <div><div class="text-xs font-semibold text-gray-700">ד״ר שרה לוי</div><div class="text-[10px] text-gray-400">טרם נשלח</div></div>
+                        </div>
+                        <div class="flex items-center gap-2 p-2.5 rounded-xl bg-gray-50 border">
+                          <div class="w-8 h-8 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center text-sm font-bold">א</div>
+                          <div><div class="text-xs font-semibold text-gray-700">ד״ר אהרון מזרחי</div><div class="text-[10px] text-gray-400">טרם נשלח</div></div>
+                        </div>
+                      </div>
+                      <button class="w-full bg-gradient-to-l from-[#1e3a5f] to-[#3b82f6] text-white text-sm py-2.5 rounded-xl font-bold mb-2">📨 בקש חתימות</button>
+                      <button class="w-full border text-gray-600 text-xs py-2 rounded-xl">📄 הורד PDF</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <p class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wide">📱 Mobile</p>
+            <div class="preview-frame bg-gray-50 max-w-[375px] mx-auto">
+              <div class="bg-gradient-to-b from-[#1e3a5f] to-[#2d5f9a] px-4 py-4">
+                <div class="text-[#93c5fd] text-xs mb-1">← פרוטוקולים</div>
+                <div class="text-white font-bold text-sm">פרוטוקול — מרץ 2026</div>
+                <div class="flex gap-2 mt-3">
+                  <button class="bg-white/20 text-white text-xs px-3 py-1.5 rounded-lg flex-1 text-center">💾 שמור</button>
+                  <button class="bg-amber-500 text-white text-xs px-3 py-1.5 rounded-lg flex-1 font-bold text-center">🔒 הגמר</button>
+                </div>
+              </div>
+              <div class="flex border-b bg-white text-xs">
+                <button class="flex-1 py-2.5 text-[#3b82f6] font-semibold border-b-2 border-[#3b82f6]">📝 עריכה</button>
+                <button class="flex-1 py-2.5 text-gray-400">✍️ חתימות</button>
+                <button class="flex-1 py-2.5 text-gray-400">📄 PDF</button>
+              </div>
+              <div class="p-3 space-y-3">
+                <div class="border-2 border-[#e2e8f0] rounded-xl p-3">
+                  <input class="w-full text-sm font-bold text-[#1e3a5f] outline-none border-b mb-2 pb-1" value="פתיחה" />
+                  <textarea class="w-full text-xs text-gray-600 outline-none min-h-[60px]">הפגישה נפתחה ב-15/03/2026...</textarea>
+                </div>
+                <div class="border-2 border-[#e2e8f0] rounded-xl p-3">
+                  <input class="w-full text-sm font-bold text-[#1e3a5f] outline-none border-b mb-2 pb-1" value="סדר יום" />
+                  <textarea class="w-full text-xs text-gray-600 outline-none min-h-[55px]">1. ETH-2026-042 — מחקר...</textarea>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- B: Sign -->
+      <div id="screen-b-sign" class="screen-tab-content">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+          <div>
+            <p class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wide">💻 Desktop</p>
+            <div class="preview-frame bg-gradient-to-br from-[#1e3a5f] to-[#2d5f9a] min-h-[500px] flex items-center justify-center p-6">
+              <div class="bg-white rounded-3xl shadow-2xl p-8 w-[360px]">
+                <div class="bg-[#1e3a5f] rounded-2xl p-4 mb-6 text-center">
+                  <div class="text-white text-3xl mb-1">📋</div>
+                  <div class="text-white font-bold">פרוטוקול ועדת האתיקה</div>
+                  <div class="text-[#93c5fd] text-xs">EthicFlow</div>
+                </div>
+                <div class="space-y-3 mb-6 text-right">
+                  <div><div class="text-xs text-gray-400">פרוטוקול</div><div class="font-bold text-[#1e3a5f]">פרוטוקול ישיבה — מרץ 2026</div></div>
+                  <div><div class="text-xs text-gray-400">תאריך</div><div class="font-semibold text-gray-700">15/03/2026</div></div>
+                  <div class="bg-blue-50 rounded-xl p-3 border border-blue-100"><div class="text-xs text-blue-400">חתימה מבוקשת מ</div><div class="font-bold text-[#1e3a5f] text-base">פרופ׳ יוסף כהן</div><div class="text-xs text-gray-500">יו״ר הועדה</div></div>
+                </div>
+                <button class="w-full bg-[#1e3a5f] text-white py-3.5 rounded-2xl font-bold text-base mb-3 flex items-center justify-center gap-2 hover:bg-[#2d4f7c]">
+                  <span class="text-xl">✓</span> חתום על הפרוטוקול
+                </button>
+                <button class="w-full border-2 border-red-200 text-red-500 py-3 rounded-2xl font-semibold hover:bg-red-50">דחה חתימה</button>
+              </div>
+            </div>
+          </div>
+          <div>
+            <p class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wide">📱 Mobile</p>
+            <div class="preview-frame bg-gradient-to-b from-[#1e3a5f] to-[#2d5f9a] max-w-[375px] mx-auto min-h-[520px]">
+              <div class="p-4 text-center pt-8">
+                <div class="w-16 h-16 bg-white/20 rounded-3xl flex items-center justify-center text-3xl mx-auto mb-3">📋</div>
+                <div class="text-white font-bold text-base">חתימה על פרוטוקול</div>
+                <div class="text-[#93c5fd] text-xs">EthicFlow</div>
+              </div>
+              <div class="bg-white rounded-t-3xl mt-4 p-5 min-h-[300px]">
+                <div class="text-right space-y-3 mb-6">
+                  <div><div class="text-xs text-gray-400">פרוטוקול</div><div class="font-bold text-[#1e3a5f] text-sm">פרוטוקול ישיבה — מרץ 2026</div></div>
+                  <div class="bg-blue-50 rounded-xl p-3 border border-blue-100"><div class="text-xs text-blue-400">בקשת חתימה עבור</div><div class="font-bold text-[#1e3a5f]">פרופ׳ יוסף כהן</div></div>
+                </div>
+                <button class="w-full bg-[#1e3a5f] text-white py-4 rounded-2xl font-bold text-base mb-3">✓ חתום</button>
+                <button class="w-full border-2 border-red-200 text-red-500 py-3 rounded-2xl font-semibold text-sm">דחה</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════
+         OPTION C — Compact & Efficient (Split Screen)
+    ═══════════════════════════════════════════════════ -->
+    <div id="tab-c" class="tab-content space-y-4">
+      <div class="bg-white rounded-xl p-4 border text-sm text-gray-600">
+        <strong class="text-[#1e3a5f]">Option C — "מסך מפוצל יעיל":</strong>
+        רשימה בצד שמאל + תצוגת פרטים/עריכה בצד ימין — ניווט מהיר בין פרוטוקולים ללא ניווט בין דפים. עריכה ישירה עם פאנל חתימות צמוד.
+      </div>
+      <div class="flex gap-2 flex-wrap">
+        <button class="screen-tab-btn active text-xs font-semibold px-4 py-2 rounded-lg border" onclick="showScreen('c','split',this)">🖥️ מסך מפוצל (רשימה + עריכה)</button>
+        <button class="screen-tab-btn text-xs font-semibold px-4 py-2 rounded-lg border bg-white" onclick="showScreen('c','sign',this)">✍️ דף חתימה</button>
+      </div>
+
+      <!-- C: Split -->
+      <div id="screen-c-split" class="screen-tab-content active">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="lg:col-span-2">
+            <p class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wide">💻 Desktop — מסך מפוצל</p>
+            <div class="preview-frame">
+              <div class="flex h-[680px]">
+                <!-- Sidebar -->
+                <div class="w-[180px] bg-[#1e3a5f] flex flex-col shrink-0">
+                  <div class="p-3 border-b border-white/10"><div class="text-white font-bold text-sm">EthicFlow</div></div>
+                  <nav class="flex-1 p-2 space-y-1">
+                    <div class="sidebar-item text-xs">🏠 לוח בקרה</div>
+                    <div class="sidebar-item text-xs">📄 הגשות</div>
+                    <div class="sidebar-item text-xs active">📋 פרוטוקולים</div>
+                    <div class="sidebar-item text-xs">📊 דוחות</div>
+                    <div class="sidebar-item text-xs">⚙️ הגדרות</div>
+                  </nav>
+                </div>
+                <!-- Protocol list column -->
+                <div class="w-[220px] bg-gray-50 border-l flex flex-col shrink-0">
+                  <div class="bg-white border-b px-3 py-3 flex items-center justify-between">
+                    <div class="text-sm font-bold text-[#1e3a5f]">פרוטוקולים</div>
+                    <button class="bg-[#1e3a5f] text-white text-xs px-2 py-1 rounded-lg">+</button>
+                  </div>
+                  <!-- Quick filter -->
+                  <div class="bg-white border-b px-3 py-1.5">
+                    <select class="w-full text-xs border-0 outline-none text-gray-500 bg-transparent">
+                      <option>כל הסטטוסים</option>
+                      <option>טיוטה</option>
+                      <option>ממתין לחתימות</option>
+                      <option>חתום</option>
+                    </select>
+                  </div>
+                  <div class="flex-1 overflow-auto">
+                    <!-- Protocol items in narrow list -->
+                    <div class="border-b p-3 cursor-pointer bg-blue-50 border-r-2 border-r-[#3b82f6]">
+                      <div class="flex justify-between items-start mb-1">
+                        <span class="badge-draft text-[10px] font-semibold px-1.5 py-0.5 rounded-full">טיוטה</span>
+                        <span class="text-gray-400 text-[10px]">מרץ</span>
+                      </div>
+                      <div class="text-xs font-semibold text-[#1e3a5f] leading-tight">ישיבה חודשית #3</div>
+                      <div class="text-[10px] text-gray-400 mt-0.5">0/4 חתימות</div>
+                    </div>
+                    <div class="border-b p-3 cursor-pointer hover:bg-gray-100">
+                      <div class="flex justify-between items-start mb-1">
+                        <span class="badge-pending text-[10px] font-semibold px-1.5 py-0.5 rounded-full">ממתין</span>
+                        <span class="text-gray-400 text-[10px]">פבר׳</span>
+                      </div>
+                      <div class="text-xs font-semibold text-[#1e3a5f] leading-tight">ישיבה חודשית #2</div>
+                      <div class="text-[10px] text-[#3b82f6] mt-0.5 font-medium">2/4 ●●○○</div>
+                    </div>
+                    <div class="border-b p-3 cursor-pointer hover:bg-gray-100">
+                      <div class="flex justify-between items-start mb-1">
+                        <span class="badge-signed text-[10px] font-semibold px-1.5 py-0.5 rounded-full">חתום</span>
+                        <span class="text-gray-400 text-[10px]">ינו׳</span>
+                      </div>
+                      <div class="text-xs font-semibold text-[#1e3a5f] leading-tight">ישיבה חודשית #1</div>
+                      <div class="text-[10px] text-green-600 mt-0.5 font-medium">4/4 ●●●●</div>
+                    </div>
+                    <div class="p-3 cursor-pointer hover:bg-gray-100 opacity-60">
+                      <div class="flex justify-between items-start mb-1">
+                        <span class="badge-archived text-[10px] font-semibold px-1.5 py-0.5 rounded-full">ארכיון</span>
+                        <span class="text-gray-400 text-[10px]">דצמ׳</span>
+                      </div>
+                      <div class="text-xs font-semibold text-gray-500 leading-tight">רבעון Q4 2025</div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Editor panel -->
+                <div class="flex-1 flex flex-col overflow-hidden bg-white">
+                  <!-- Toolbar -->
+                  <div class="border-b px-4 py-2 flex items-center justify-between bg-gray-50">
+                    <div class="text-xs text-gray-500">פרוטוקול — מרץ 2026 <span class="badge-draft ml-2 px-2 py-0.5 rounded-full text-[10px] font-semibold">טיוטה</span></div>
+                    <div class="flex items-center gap-1.5">
+                      <button class="text-xs border px-2.5 py-1 rounded bg-white hover:bg-gray-50">💾</button>
+                      <button class="text-xs bg-amber-500 text-white px-2.5 py-1 rounded font-medium">🔒 הגמר</button>
+                      <button class="text-xs border px-2.5 py-1 rounded bg-white hover:bg-gray-50">📄 PDF</button>
+                    </div>
+                  </div>
+                  <div class="flex flex-1 overflow-hidden">
+                    <!-- Sections editor -->
+                    <div class="flex-1 overflow-auto p-3 space-y-3">
+                      <input class="w-full text-base font-bold text-[#1e3a5f] outline-none border-b-2 border-[#3b82f6]/30 pb-1 bg-transparent" value="פרוטוקול ישיבת ועדה — מרץ 2026" />
+                      <div class="border rounded-lg overflow-hidden">
+                        <div class="bg-gray-50 border-b px-3 py-1.5 flex justify-between items-center">
+                          <input class="text-xs font-bold text-[#1e3a5f] outline-none bg-transparent flex-1" value="פתיחה" />
+                          <button class="text-gray-300 text-xs hover:text-red-400">✕</button>
+                        </div>
+                        <textarea class="w-full p-3 text-xs text-gray-600 outline-none min-h-[70px] bg-white">הפגישה נפתחה ב-15/03/2026 בשעה 10:00. נכחו: פרופ׳ יוסף כהן, ד״ר שרה לוי, ד״ר אהרון מזרחי, ומירה לוי.</textarea>
+                      </div>
+                      <div class="border rounded-lg overflow-hidden">
+                        <div class="bg-gray-50 border-b px-3 py-1.5 flex justify-between items-center">
+                          <input class="text-xs font-bold text-[#1e3a5f] outline-none bg-transparent flex-1" value="סדר יום" />
+                          <button class="text-gray-300 text-xs hover:text-red-400">✕</button>
+                        </div>
+                        <textarea class="w-full p-3 text-xs text-gray-600 outline-none min-h-[70px] bg-white">1. ETH-2026-042 — מחקר על לחץ בעבודה
+2. ETH-2026-038 — סקר מדיה חברתית
+3. שונות</textarea>
+                      </div>
+                      <div class="border rounded-lg overflow-hidden">
+                        <div class="bg-gray-50 border-b px-3 py-1.5 flex justify-between items-center">
+                          <input class="text-xs font-bold text-[#1e3a5f] outline-none bg-transparent flex-1" value="דיון והחלטות" />
+                          <button class="text-gray-300 text-xs hover:text-red-400">✕</button>
+                        </div>
+                        <textarea class="w-full p-3 text-xs text-gray-500 outline-none min-h-[50px] bg-white" placeholder="הוסף פרטים..."></textarea>
+                      </div>
+                      <button class="w-full border-dashed border-2 border-gray-200 text-gray-400 py-2 rounded-lg text-xs hover:border-[#3b82f6] hover:text-[#3b82f6]">+ הוסף סעיף</button>
+                    </div>
+                    <!-- Compact signatures -->
+                    <div class="w-[170px] border-r bg-gray-50 p-3 overflow-auto">
+                      <div class="text-xs font-bold text-[#1e3a5f] mb-2">חתימות</div>
+                      <div class="mb-2">
+                        <div class="flex justify-between text-[10px] text-gray-400 mb-1"><span>0/4</span><span>0%</span></div>
+                        <div class="h-1.5 bg-gray-200 rounded-full"><div class="h-full bg-[#3b82f6] rounded-full" style="width:0%"></div></div>
+                      </div>
+                      <div class="space-y-1.5 mb-3">
+                        <div class="flex items-center gap-1.5 p-1.5 rounded-lg bg-amber-50 border border-amber-100">
+                          <div class="w-6 h-6 rounded-full bg-amber-200 text-amber-700 text-[10px] font-bold flex items-center justify-center">י</div>
+                          <div class="flex-1 min-w-0"><div class="text-[10px] font-medium text-gray-700 truncate">פרופ׳ כהן</div><div class="text-[9px] text-amber-500">ממתין</div></div>
+                        </div>
+                        <div class="flex items-center gap-1.5 p-1.5 rounded-lg bg-gray-100 border">
+                          <div class="w-6 h-6 rounded-full bg-gray-200 text-gray-500 text-[10px] font-bold flex items-center justify-center">ש</div>
+                          <div class="flex-1 min-w-0"><div class="text-[10px] font-medium text-gray-600 truncate">ד״ר לוי</div><div class="text-[9px] text-gray-400">לא נשלח</div></div>
+                        </div>
+                        <div class="flex items-center gap-1.5 p-1.5 rounded-lg bg-gray-100 border">
+                          <div class="w-6 h-6 rounded-full bg-gray-200 text-gray-500 text-[10px] font-bold flex items-center justify-center">א</div>
+                          <div class="flex-1 min-w-0"><div class="text-[10px] font-medium text-gray-600 truncate">ד״ר מזרחי</div><div class="text-[9px] text-gray-400">לא נשלח</div></div>
+                        </div>
+                      </div>
+                      <button class="w-full bg-[#3b82f6] text-white text-[10px] py-1.5 rounded-lg font-semibold mb-1.5">📨 בקש חתימות</button>
+                      <button class="w-full border text-gray-500 text-[10px] py-1.5 rounded-lg">📄 PDF</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div>
+            <p class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wide">📱 Mobile — Tabs</p>
+            <div class="preview-frame bg-white max-w-[375px] mx-auto">
+              <div class="bg-[#1e3a5f] px-4 py-3">
+                <div class="flex items-center justify-between">
+                  <div class="text-white font-bold text-sm">פרוטוקולים</div>
+                  <button class="text-white text-lg">☰</button>
+                </div>
+              </div>
+              <!-- On mobile: show list first, tap to open detail -->
+              <div class="border-b bg-white flex text-xs">
+                <button class="flex-1 py-2.5 text-[#3b82f6] font-semibold border-b-2 border-[#3b82f6]">רשימה</button>
+                <button class="flex-1 py-2.5 text-gray-400">עריכה</button>
+                <button class="flex-1 py-2.5 text-gray-400">חתימות</button>
+              </div>
+              <div class="divide-y text-sm">
+                <div class="p-3 flex items-center gap-3 bg-blue-50/40">
+                  <div class="w-2 h-8 rounded bg-yellow-400 shrink-0"></div>
+                  <div class="flex-1 min-w-0">
+                    <div class="text-xs font-bold text-[#1e3a5f] truncate">ישיבה חודשית #3 — מרץ</div>
+                    <span class="badge-draft text-[10px] font-semibold px-1.5 py-0.5 rounded-full">טיוטה</span>
+                  </div>
+                  <span class="text-gray-400 text-xs shrink-0">›</span>
+                </div>
+                <div class="p-3 flex items-center gap-3">
+                  <div class="w-2 h-8 rounded bg-blue-400 shrink-0"></div>
+                  <div class="flex-1 min-w-0">
+                    <div class="text-xs font-bold text-[#1e3a5f] truncate">ישיבה חודשית #2 — פברואר</div>
+                    <span class="badge-pending text-[10px] font-semibold px-1.5 py-0.5 rounded-full">2/4 ממתין</span>
+                  </div>
+                  <span class="text-gray-400 text-xs shrink-0">›</span>
+                </div>
+                <div class="p-3 flex items-center gap-3">
+                  <div class="w-2 h-8 rounded bg-green-400 shrink-0"></div>
+                  <div class="flex-1 min-w-0">
+                    <div class="text-xs font-bold text-[#1e3a5f] truncate">ישיבה חודשית #1 — ינואר</div>
+                    <span class="badge-signed text-[10px] font-semibold px-1.5 py-0.5 rounded-full">✓ חתום</span>
+                  </div>
+                  <span class="text-gray-400 text-xs shrink-0">›</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- C: Sign -->
+      <div id="screen-c-sign" class="screen-tab-content">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
+          <div>
+            <p class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wide">💻 Desktop</p>
+            <div class="preview-frame bg-gray-100 min-h-[500px] flex items-center justify-center p-6">
+              <div class="bg-white rounded-2xl shadow-lg p-6 w-[360px]">
+                <div class="flex items-center gap-3 border-b pb-4 mb-4">
+                  <div class="w-10 h-10 bg-[#1e3a5f] rounded-xl flex items-center justify-center text-white text-base">📋</div>
+                  <div><div class="font-bold text-[#1e3a5f] text-sm">EthicFlow</div><div class="text-xs text-gray-400">בקשת חתימה</div></div>
+                </div>
+                <div class="bg-[#f8fafc] rounded-xl p-4 mb-5 border text-right space-y-2">
+                  <div class="flex justify-between text-xs"><span class="text-gray-400">פרוטוקול</span><span class="font-semibold text-[#1e3a5f]">ישיבה — מרץ 2026</span></div>
+                  <div class="flex justify-between text-xs"><span class="text-gray-400">תאריך</span><span class="text-gray-600">15/03/2026</span></div>
+                  <div class="flex justify-between text-xs"><span class="text-gray-400">חותם</span><span class="font-semibold text-[#1e3a5f]">פרופ׳ יוסף כהן</span></div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                  <button class="bg-[#1e3a5f] text-white py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-1.5 hover:bg-[#2d4f7c]"><span>✓</span> חתום</button>
+                  <button class="border-2 border-red-200 text-red-500 py-3 rounded-xl font-semibold text-sm hover:bg-red-50 flex items-center justify-center gap-1.5"><span>✕</span> דחה</button>
+                </div>
+                <p class="text-center text-[10px] text-gray-400 mt-3">הקישור בתוקף ל-72 שעות</p>
+              </div>
+            </div>
+          </div>
+          <div>
+            <p class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wide">📱 Mobile</p>
+            <div class="preview-frame bg-gray-100 max-w-[375px] mx-auto min-h-[500px] flex flex-col justify-center p-4">
+              <div class="bg-white rounded-3xl shadow-xl p-6 mx-2">
+                <div class="flex items-center gap-3 border-b pb-3 mb-4">
+                  <div class="w-9 h-9 bg-[#1e3a5f] rounded-xl flex items-center justify-center text-white text-sm">📋</div>
+                  <div><div class="font-bold text-[#1e3a5f] text-sm">EthicFlow</div><div class="text-[10px] text-gray-400">בקשת חתימה</div></div>
+                </div>
+                <div class="bg-gray-50 rounded-xl p-3 border mb-5 text-right space-y-2">
+                  <div class="flex justify-between text-xs"><span class="text-gray-400">פרוטוקול</span><span class="font-semibold text-[#1e3a5f] text-xs leading-tight text-left">ישיבה — מרץ 2026</span></div>
+                  <div class="flex justify-between text-xs"><span class="text-gray-400">חותם</span><span class="font-semibold text-[#1e3a5f]">פרופ׳ יוסף כהן</span></div>
+                </div>
+                <div class="space-y-2.5">
+                  <button class="w-full bg-[#1e3a5f] text-white py-4 rounded-2xl font-bold text-base flex items-center justify-center gap-2">✓ חתום על הפרוטוקול</button>
+                  <button class="w-full border-2 border-red-100 text-red-500 py-3 rounded-2xl font-semibold">✕ דחה</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- User Flow Diagram -->
+    <div class="bg-white rounded-2xl border p-6">
+      <h2 class="font-bold text-[#1e3a5f] text-base mb-4">📊 User Flow — מערכת פרוטוקולים</h2>
+      <pre class="text-xs text-gray-600 leading-relaxed overflow-x-auto font-mono bg-gray-50 p-4 rounded-xl" dir="ltr">
+SECRETARY: Meetings Page
+     │
+     ▼
+[Create Protocol] ─── auto-fills from meeting agenda
+     │
+     ▼
+[ProtocolDetailPage] ── DRAFT status
+     │
+     ├─ Edit sections (heading + content textareas)
+     ├─ Save draft
+     └─ Finalize → PENDING_SIGNATURES
+                          │
+                          ▼
+              [Request Signatures]
+              ── select signers (meeting attendees)
+              ── sends email with unique token per signer
+                          │
+                          ▼
+              [ProtocolSignPage] ─── PUBLIC, no auth
+              ── signer opens email link
+              ── sees: protocol title, date, their name
+              ── action: Sign ✓ or Decline ✕
+              ── token invalidated after use
+                          │
+                    ┌─────┴──────┐
+                    ▼            ▼
+                 SIGNED       DECLINED
+                    │
+                    ▼ (all signed)
+              Protocol → SIGNED status
+                    │
+                    ▼
+              [Download PDF] ── available any time
+      </pre>
+    </div>
+
+  </div>
+
+  <script>
+    function showTab(id, btn) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('active'); });
+      document.getElementById('tab-' + id).classList.add('active');
+      btn.classList.add('active');
+    }
+
+    function showScreen(tab, screen, btn) {
+      // Find all screen tabs within this tab panel
+      const tabPanel = document.getElementById('tab-' + tab);
+      tabPanel.querySelectorAll('.screen-tab-content').forEach(t => t.classList.remove('active'));
+      tabPanel.querySelectorAll('.screen-tab-btn').forEach(b => { b.classList.remove('active'); b.classList.add('bg-white'); });
+      document.getElementById('screen-' + tab + '-' + screen).classList.add('active');
+      btn.classList.add('active');
+      btn.classList.remove('bg-white');
+    }
+  </script>
+</body>
+</html>

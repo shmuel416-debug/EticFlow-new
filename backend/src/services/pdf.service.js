@@ -13,8 +13,9 @@ import fs          from 'fs/promises'
 import { createWriteStream } from 'fs'
 import prisma              from '../config/database.js'
 
-/** Relative output dir within UPLOAD_DIR. */
-const GENERATED_DIR = path.resolve('uploads', 'generated', 'approval')
+/** Output dirs for generated PDFs. */
+const GENERATED_DIR          = path.resolve('uploads', 'generated', 'approval')
+const PROTOCOL_GENERATED_DIR = path.resolve('uploads', 'generated', 'protocols')
 
 // ─────────────────────────────────────────────
 // HELPERS
@@ -228,6 +229,123 @@ export async function generateApprovalLetter(submissionId) {
   }
 
   return { docId: dbDoc.id, storagePath }
+}
+
+// ─────────────────────────────────────────────
+// PROTOCOL PDF
+// ─────────────────────────────────────────────
+
+/**
+ * Generates a protocol PDF for a meeting protocol record.
+ * Writes to uploads/generated/protocols/{protocolId}/protocol.pdf
+ * and upserts the Document DB record.
+ *
+ * @param {object} protocol - Protocol with meeting and signatures included
+ * @returns {Promise<{ docId: string, storagePath: string }>}
+ */
+export async function generateProtocolPdf(protocol) {
+  const dir         = path.join(PROTOCOL_GENERATED_DIR, protocol.id)
+  await fs.mkdir(dir, { recursive: true })
+  const filename    = 'protocol.pdf'
+  const absPath     = path.join(dir, filename)
+  const storagePath = path.join('generated', 'protocols', protocol.id, filename)
+
+  const doc = new PDFDocument({
+    size:    'A4',
+    margins: { top: 60, bottom: 60, left: 72, right: 72 },
+  })
+
+  // ── Header band ──────────────────────────────────
+  doc.rect(0, 0, 595, 100).fill('#1e3a5f')
+  doc.fontSize(20).fillColor('#ffffff')
+     .text('EthicFlow', 72, 25, { align: 'center' })
+  doc.fontSize(11).fillColor('#93c5fd')
+     .text('פרוטוקול ועדת אתיקה', 72, 52, { align: 'center' })
+  doc.fontSize(9).fillColor('#cbd5e1')
+     .text('ETHICS COMMITTEE PROTOCOL', 72, 70, { align: 'center' })
+
+  // ── Title + Date ──────────────────────────────────
+  doc.moveDown(3)
+  doc.fontSize(16).fillColor('#1e3a5f')
+     .text(protocol.title, { align: 'center' })
+
+  if (protocol.meeting?.scheduledAt) {
+    doc.fontSize(11).fillColor('#64748b')
+       .text(`תאריך פגישה: ${fmtDate(protocol.meeting.scheduledAt)}`, { align: 'center' })
+  }
+
+  doc.moveDown(0.5)
+  doc.moveTo(72, doc.y).lineTo(523, doc.y).lineWidth(1.5).strokeColor('#1e3a5f').stroke()
+  doc.moveDown(0.8)
+
+  // ── Content sections ──────────────────────────────
+  const sections = Array.isArray(protocol.contentJson?.sections)
+    ? protocol.contentJson.sections
+    : [{ heading: 'תוכן', content: JSON.stringify(protocol.contentJson) }]
+
+  for (const section of sections) {
+    doc.fontSize(13).fillColor('#1e3a5f')
+       .text(section.heading ?? '', { align: 'right' })
+    doc.moveDown(0.3)
+    doc.fontSize(11).fillColor('#1e293b')
+       .text(section.content ?? '', { align: 'right', lineGap: 4 })
+    doc.moveDown(1)
+  }
+
+  // ── Signatures ────────────────────────────────────
+  if (protocol.signatures?.length > 0) {
+    doc.addPage()
+    doc.fontSize(13).fillColor('#1e3a5f').text('חתימות', { align: 'right' })
+    doc.moveDown(0.5)
+    doc.moveTo(72, doc.y).lineTo(523, doc.y).lineWidth(1).strokeColor('#e2e8f0').stroke()
+    doc.moveDown(0.5)
+
+    for (const sig of protocol.signatures) {
+      const label  = sig.user?.fullName ?? sig.userId
+      const status = sig.status === 'SIGNED'   ? `✓ חתם ב-${fmtDate(sig.signedAt)}`
+                   : sig.status === 'DECLINED' ? '✗ סירב'
+                   : 'ממתין לחתימה'
+      doc.fontSize(11).fillColor('#1e293b')
+         .text(`${label}: ${status}`, { align: 'right', lineGap: 3 })
+    }
+  }
+
+  // ── Footer ────────────────────────────────────────
+  const today      = fmtDate(new Date())
+  const pageHeight = doc.page.height
+  doc.fontSize(8).fillColor('#94a3b8')
+     .text(
+       `מסמך זה הופק על ידי מערכת EthicFlow • ${today}`,
+       72, pageHeight - 50, { align: 'center', width: 451 }
+     )
+
+  await streamToFile(doc, absPath)
+
+  // ── Upsert Document record ────────────────────────
+  const stat     = await fs.stat(absPath)
+  const existing = await prisma.document.findFirst({ where: { storagePath } })
+
+  let dbDoc
+  if (existing) {
+    dbDoc = await prisma.document.update({
+      where: { id: existing.id },
+      data:  { sizeBytes: stat.size, isActive: true },
+    })
+  } else {
+    dbDoc = await prisma.document.create({
+      data: {
+        filename:     filename,
+        originalName: `protocol-${protocol.id}.pdf`,
+        mimeType:     'application/pdf',
+        sizeBytes:    stat.size,
+        storagePath,
+        source:       'GENERATED',
+        uploadedById: null,
+      },
+    })
+  }
+
+  return { docId: dbDoc.id, storagePath: absPath }
 }
 
 // ─────────────────────────────────────────────
