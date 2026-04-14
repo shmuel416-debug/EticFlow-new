@@ -127,7 +127,7 @@
 ---
 
 ## Current Sprint: Sprint 5 — Secretary Dashboard + Meetings + Admin Users + Impersonation
-**Status:** 🔄 In Progress | **Tag:** —
+**Status:** ✅ Complete | **Tag:** v0.5.0
 
 ### Phase 1 — Admin Users CRUD + Impersonation (Backend)
 - [x] `users.controller.js` — listAll, create, update, deactivate, impersonate
@@ -160,4 +160,4 @@
 
 ### Phase 6 — i18n + Sprint End
 - [x] `he.json` + `en.json` — admin.* and meetings.* namespaces + lowercase role aliases
-- [ ] Sprint-end pipeline → tag v0.5.0
+- [x] Sprint-end pipeline → tag v0.5.0

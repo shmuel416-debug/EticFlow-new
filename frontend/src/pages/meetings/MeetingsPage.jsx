@@ -39,6 +39,13 @@ function CreateMeetingModal({ onClose, onCreated, t }) {
   const [error, setError] = useState(null)
   const [saving, setSaving] = useState(false)
 
+  /* Close on Escape */
+  useEffect(() => {
+    const handler = (e) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [onClose])
+
   /**
    * Submits the create meeting form.
    */

@@ -76,6 +76,14 @@ export default function UsersPage() {
 
   useEffect(() => { fetchUsers() }, [fetchUsers])
 
+  /* Close modal on Escape */
+  useEffect(() => {
+    if (!modalOpen) return
+    const handler = (e) => { if (e.key === 'Escape') setModalOpen(false) }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [modalOpen])
+
   /**
    * Opens the create/edit modal.
    * @param {object|null} user - null for create mode
@@ -303,16 +311,19 @@ export default function UsersPage() {
                 <div className="flex flex-wrap gap-2 mt-3">
                   {!isImpersonating && u.role !== 'ADMIN' && u.isActive && (
                     <button onClick={() => handleImpersonate(u)}
+                      aria-label={`${t('admin.impersonate')} ${u.fullName}`}
                       className="text-xs px-3 py-2 rounded bg-amber-50 text-amber-700 min-h-[44px]">
                       {t('admin.impersonate')}
                     </button>
                   )}
                   <button onClick={() => openModal(u)}
+                    aria-label={`${t('admin.editUser')} ${u.fullName}`}
                     className="text-xs px-3 py-2 rounded bg-blue-50 text-blue-700 min-h-[44px]">
                     {t('admin.editUser')}
                   </button>
                   {u.isActive && (
                     <button onClick={() => handleDeactivate(u)}
+                      aria-label={`${t('admin.deactivate')} ${u.fullName}`}
                       className="text-xs px-3 py-2 rounded bg-red-50 text-red-700 min-h-[44px]">
                       {t('admin.deactivate')}
                     </button>

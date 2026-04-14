@@ -18,6 +18,11 @@
 | 2026-04-14 | Phase 5 Frontend — ChairmanDashboard | ✅ Done | Kanban board (IN_REVIEW/APPROVED/REJECTED) with real API data |
 | 2026-04-14 | Phase 6 — i18n | ✅ Done | admin.* + meetings.* namespaces, lowercase role aliases, common.* additions |
 | 2026-04-14 | Phase 6 — App.jsx routes | ✅ Done | /meetings, /meetings/:id, /users wired to real pages |
+| 2026-04-14 | S5.9 Code Review | ✅ Done | 2 critical fixed (SLATracking fields, i18n keys), 3 warnings. Report: docs/code-review-sprint-5.md |
+| 2026-04-14 | S5.9 QA Testing | ✅ Done | 0 critical bugs, 1 lint fix (unused t). Report: docs/qa-report-sprint-5.md |
+| 2026-04-14 | S5.9 Accessibility Audit | ✅ Done | 2 issues fixed (mobile aria-labels, Escape key). WCAG 2.2 AA compliant. Report: docs/accessibility-report-sprint-5.md |
+| 2026-04-14 | S5.9 Security Audit | ✅ Done | 1 medium fixed (javascript: URL in meetingLink). OWASP Top 10 clean. Report: docs/security-report-sprint-5.md |
+| 2026-04-14 | Sprint 5 Release | ✅ Done | Tagged v0.5.0. Report: docs/sprint-5-release-report.md |
 
 ## Sprint 4 — SLA + Documents + AI
 

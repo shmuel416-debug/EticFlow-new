@@ -31,11 +31,17 @@ const listQuerySchema = z.object({
   limit:  z.string().regex(/^\d+$/).optional(),
 })
 
+/** Validates URL allows only http/https — blocks javascript: and other protocol XSS */
+const safeUrl = z.string().url().refine(
+  (u) => /^https?:\/\//i.test(u),
+  { message: 'Meeting link must use http or https protocol' }
+)
+
 const createSchema = z.object({
   title:       z.string().min(2).max(300),
   scheduledAt: z.string().datetime(),
   location:    z.string().max(300).optional(),
-  meetingLink: z.string().url().optional(),
+  meetingLink: safeUrl.optional(),
   attendeeIds: z.array(z.string().uuid()).optional(),
 })
 
@@ -43,7 +49,7 @@ const updateSchema = z.object({
   title:       z.string().min(2).max(300).optional(),
   scheduledAt: z.string().datetime().optional(),
   location:    z.string().max(300).optional(),
-  meetingLink: z.string().url().optional().nullable(),
+  meetingLink: safeUrl.optional().nullable(),
   agendaNote:  z.string().max(5000).optional(),
 })
 
