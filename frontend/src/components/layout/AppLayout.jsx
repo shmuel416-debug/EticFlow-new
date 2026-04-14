@@ -9,6 +9,7 @@ import { Outlet } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import Sidebar from './Sidebar'
 import LanguageSwitcher from '../ui/LanguageSwitcher'
+import ImpersonationBanner from './ImpersonationBanner'
 
 /**
  * Shell layout used by all protected routes.
@@ -18,7 +19,12 @@ export default function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
-    <div className="min-h-screen flex bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-gray-50">
+
+      {/* Impersonation banner — shown above everything when admin is impersonating */}
+      <ImpersonationBanner />
+
+      <div className="flex flex-1 min-h-0">
 
       {/* IS 5568 — skip navigation to main content */}
       <a href="#main-content" className="skip-link">{t('common.skipToMain')}</a>
@@ -74,6 +80,8 @@ export default function AppLayout() {
         </main>
 
       </div>
+
+      </div>{/* end flex row */}
     </div>
   )
 }

@@ -13,7 +13,14 @@
     "skipToMain": "דלג לתוכן הראשי",
     "error": "שגיאה",
     "success": "הצלחה",
-    "requiredField": "שדה חובה"
+    "requiredField": "שדה חובה",
+    "actions": "פעולות",
+    "researcher": "חוקר",
+    "status": "סטטוס",
+    "title": "כותרת",
+    "viewAll": "הצג הכל",
+    "prevPage": "עמוד קודם",
+    "nextPage": "עמוד הבא"
   },
   "auth": {
     "login": {
@@ -53,6 +60,10 @@
       "errorMismatch": "הסיסמאות אינן תואמות",
       "errorNoToken": "קישור האיפוס חסר — בקש קישור חדש",
       "backToLogin": "חזרה לדף הכניסה"
+    },
+    "register": {
+      "fullName": "שם מלא",
+      "email":    "כתובת אימייל"
     }
   },
   "nav": {
@@ -438,7 +449,14 @@
     "SECRETARY": "מזכירה",
     "REVIEWER": "סוקר",
     "CHAIRMAN": "יו\"ר",
-    "ADMIN": "מנהל"
+    "ADMIN": "מנהל",
+    "researcher": "חוקר",
+    "secretary": "מזכירה",
+    "reviewer": "סוקר",
+    "chairman": "יו\"ר",
+    "admin": "מנהל",
+    "unknown": "לא ידוע",
+    "role": "תפקיד"
   },
   "ai": {
     "panelTitle": "ניתוח AI — ייעוצי בלבד",
@@ -487,6 +505,66 @@
       "generic": "שגיאה בהעלאת הקובץ — נסה שנית"
     }
   },
+  "admin": {
+    "usersPage":              "ניהול משתמשים",
+    "addUser":                "הוסף משתמש",
+    "editUser":               "ערוך משתמש",
+    "deactivate":             "השבת",
+    "activate":               "הפעל",
+    "impersonate":            "התחזה",
+    "impersonationBanner":    "מצב התחזות — צופה בתור: {{name}} ({{role}})",
+    "stopImpersonation":      "חזור למנהל",
+    "impersonatingAs":        "מנהל מקורי: {{name}}",
+    "cannotImpersonateAdmin": "לא ניתן להתחזות לאדמין",
+    "confirmDeactivate":      "האם לבטל גישת המשתמש?",
+    "searchUsers":            "חפש לפי שם או אימייל",
+    "filterRole":             "סנן לפי תפקיד",
+    "filterStatus":           "סנן לפי סטטוס",
+    "active":                 "פעיל",
+    "inactive":               "לא פעיל",
+    "allRoles":               "כל התפקידים",
+    "allStatuses":            "כל הסטטוסים",
+    "department":             "מחלקה",
+    "phone":                  "טלפון",
+    "password":               "סיסמה (אופציונלי)",
+    "createSuccess":          "המשתמש נוצר בהצלחה",
+    "updateSuccess":          "פרטי המשתמש עודכנו",
+    "deactivateSuccess":      "המשתמש הושבת",
+    "noUsers":                "לא נמצאו משתמשים",
+    "lastLogin":              "כניסה אחרונה"
+  },
+  "meetings": {
+    "title":            "פגישות ועדה",
+    "create":           "צור פגישה",
+    "edit":             "ערוך פגישה",
+    "cancel":           "בטל פגישה",
+    "confirmCancel":    "האם לבטל את הפגישה?",
+    "date":             "תאריך ושעה",
+    "location":         "מיקום",
+    "meetingLink":      "קישור לפגישה מקוונת",
+    "agenda":           "סדר יום",
+    "addToAgenda":      "הוסף לסדר יום",
+    "removeFromAgenda": "הסר מסדר היום",
+    "attendance":       "נוכחות",
+    "attended":         "נכח",
+    "absent":           "נעדר",
+    "recordAttendance": "רשום נוכחות",
+    "upcoming":         "עתידיות",
+    "past":             "עברו",
+    "all":              "כל הפגישות",
+    "noMeetings":       "לא נמצאו פגישות",
+    "agendaItems":      "סעיפי סדר יום",
+    "attendees":        "משתתפים",
+    "statusScheduled":  "מתוכנן",
+    "statusCompleted":  "הושלם",
+    "statusCancelled":  "בוטל",
+    "addSubmission":    "הוסף בקשה לסדר היום",
+    "duration":         "משך (דקות)",
+    "selectSubmission": "בחר בקשה",
+    "noAgendaItems":    "סדר היום ריק",
+    "saveSuccess":      "הפגישה נשמרה בהצלחה",
+    "cancelSuccess":    "הפגישה בוטלה"
+  },
   "errors": {
     "VALIDATION_ERROR": "שגיאת אימות נתונים",
     "UNAUTHORIZED": "אין הרשאה — יש להתחבר מחדש",
@@ -495,6 +573,8 @@
     "CONFLICT": "הרשומה כבר קיימת במערכת",
     "INVALID_CREDENTIALS": "כתובת האימייל או הסיסמה שגויים",
     "INVALID_TOKEN": "הקישור אינו תקין או שפג תוקפו",
-    "SERVER_ERROR": "שגיאת שרת. נסה שוב מאוחר יותר"
+    "SERVER_ERROR": "שגיאת שרת. נסה שוב מאוחר יותר",
+    "NESTED_IMPERSONATION": "לא ניתן להתחזות כאשר כבר במצב התחזות",
+    "CANNOT_IMPERSONATE_ADMIN": "לא ניתן להתחזות לאדמין"
   }
 }

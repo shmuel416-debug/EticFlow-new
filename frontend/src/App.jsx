@@ -28,6 +28,9 @@ import AssignmentsPage            from './pages/reviewer/AssignmentsPage'
 import ReviewDetailPage           from './pages/reviewer/ReviewDetailPage'
 import ChairmanQueuePage          from './pages/chairman/ChairmanQueuePage'
 import ChairmanDecisionPage       from './pages/chairman/SubmissionDecisionPage'
+import UsersPage                  from './pages/admin/UsersPage'
+import MeetingsPage               from './pages/meetings/MeetingsPage'
+import MeetingDetailPage          from './pages/meetings/MeetingDetailPage'
 
 export default function App() {
   return (
@@ -46,7 +49,8 @@ export default function App() {
               <Route path="/submissions/new" element={<SubmitPage />} />
               <Route path="/submissions/:id" element={<SubmissionStatusPage />} />
               <Route path="/submissions"     element={<PlaceholderPage pageKey="submissions" />} />
-              <Route path="/meetings"        element={<PlaceholderPage pageKey="meetings" />} />
+              <Route path="/meetings/:id"     element={<MeetingDetailPage />} />
+              <Route path="/meetings"        element={<MeetingsPage />} />
               <Route path="/settings"        element={<PlaceholderPage pageKey="settings" />} />
               <Route path="/notifications"   element={<NotificationsPage />} />
 
@@ -75,7 +79,7 @@ export default function App() {
 
               {/* Admin only */}
               <Route element={<ProtectedRoute roles={['ADMIN']} />}>
-                <Route path="/users" element={<PlaceholderPage pageKey="users" />} />
+                <Route path="/users" element={<UsersPage />} />
               </Route>
             </Route>
           </Route>

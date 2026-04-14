@@ -93,7 +93,14 @@ export async function list(req, res, next) {
     const skip  = (page - 1) * limit
 
     const extra = {}
-    if (req.query.status) extra.status = req.query.status
+    if (req.query.statuses) {
+      // Comma-separated list of statuses e.g. ?statuses=IN_REVIEW,APPROVED
+      const list = req.query.statuses.split(',').map(s => s.trim()).filter(Boolean)
+      if (list.length === 1) extra.status = list[0]
+      else if (list.length > 1) extra.status = { in: list }
+    } else if (req.query.status) {
+      extra.status = req.query.status
+    }
     if (req.query.search) {
       extra.OR = [
         { title:         { contains: req.query.search, mode: 'insensitive' } },
@@ -109,8 +116,9 @@ export async function list(req, res, next) {
         take:    limit,
         orderBy: { createdAt: 'desc' },
         include: {
-          author:     { select: { id: true, fullName: true, email: true } },
-          formConfig: { select: { id: true, name: true, nameEn: true, version: true } },
+          author:      { select: { id: true, fullName: true, email: true } },
+          formConfig:  { select: { id: true, name: true, nameEn: true, version: true } },
+          slaTracking: { select: { triageDue: true, reviewDue: true, revisionDue: true, isBreached: true } },
         },
       }),
       prisma.submission.count({ where }),
@@ -331,6 +339,49 @@ export async function continueSubmission(req, res, next) {
 
     res.locals.entityId = submission.id
     res.status(201).json({ submission })
+  } catch (err) {
+    next(err)
+  }
+}
+
+// ─────────────────────────────────────────────
+// SECRETARY DASHBOARD
+// ─────────────────────────────────────────────
+
+/**
+ * GET /api/submissions/dashboard/secretary
+ * Returns aggregate stats for the Secretary dashboard.
+ * @param {import('express').Request}  req
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
+export async function secretaryDashboard(req, res, next) {
+  try {
+    const [total, inTriage, inReview, pendingRevision, slaBreach, recentSubmissions] =
+      await Promise.all([
+        prisma.submission.count({ where: { isActive: true, status: { notIn: ['REJECTED', 'WITHDRAWN', 'APPROVED'] } } }),
+        prisma.submission.count({ where: { isActive: true, status: 'IN_TRIAGE' } }),
+        prisma.submission.count({ where: { isActive: true, status: 'IN_REVIEW' } }),
+        prisma.submission.count({ where: { isActive: true, status: 'PENDING_REVISION' } }),
+        prisma.sLATracking.count({ where: { submission: { isActive: true }, isBreached: true } }),
+        prisma.submission.findMany({
+          where:   { isActive: true },
+          orderBy: { updatedAt: 'desc' },
+          take:    10,
+          select:  {
+            id:            true,
+            applicationId: true,
+            title:         true,
+            status:        true,
+            track:         true,
+            updatedAt:     true,
+            slaTracking:   { select: { triageDue: true, reviewDue: true, revisionDue: true, isBreached: true } },
+            author:        { select: { fullName: true } },
+          },
+        }),
+      ])
+
+    res.json({ data: { total, inTriage, inReview, pendingRevision, slaBreach, recentSubmissions } })
   } catch (err) {
     next(err)
   }

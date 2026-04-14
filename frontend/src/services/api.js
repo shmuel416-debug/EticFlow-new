@@ -25,6 +25,15 @@ export function setToken(token) {
   _token = token
 }
 
+/**
+ * Returns the current in-memory JWT token.
+ * Used by AuthContext to save the original token before impersonation.
+ * @returns {string|null}
+ */
+export function getToken() {
+  return _token
+}
+
 api.interceptors.request.use((config) => {
   if (_token) {
     config.headers.Authorization = `Bearer ${_token}`

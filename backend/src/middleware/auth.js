@@ -25,7 +25,12 @@ export function authenticate(req, res, next) {
   const token = authHeader.slice(7)
   try {
     const payload = jwt.verify(token, authConfig.jwt.secret)
-    req.user = { id: payload.id, email: payload.email, role: payload.role }
+    req.user = {
+      id:              payload.id,
+      email:           payload.email,
+      role:            payload.role,
+      impersonatedBy:  payload.impersonatedBy ?? null,
+    }
     next()
   } catch {
     next(AppError.unauthorized())

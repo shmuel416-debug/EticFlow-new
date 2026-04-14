@@ -13,7 +13,14 @@
     "skipToMain": "Skip to main content",
     "error": "Error",
     "success": "Success",
-    "requiredField": "Required field"
+    "requiredField": "Required field",
+    "actions": "Actions",
+    "researcher": "Researcher",
+    "status": "Status",
+    "title": "Title",
+    "viewAll": "View All",
+    "prevPage": "Previous page",
+    "nextPage": "Next page"
   },
   "auth": {
     "login": {
@@ -53,6 +60,10 @@
       "errorMismatch": "Passwords do not match",
       "errorNoToken": "Reset link is missing — please request a new one",
       "backToLogin": "Back to login"
+    },
+    "register": {
+      "fullName": "Full Name",
+      "email":    "Email Address"
     }
   },
   "nav": {
@@ -438,7 +449,14 @@
     "SECRETARY": "Secretary",
     "REVIEWER": "Reviewer",
     "CHAIRMAN": "Chairman",
-    "ADMIN": "Admin"
+    "ADMIN": "Admin",
+    "researcher": "Researcher",
+    "secretary": "Secretary",
+    "reviewer": "Reviewer",
+    "chairman": "Chairman",
+    "admin": "Admin",
+    "unknown": "Unknown",
+    "role": "Role"
   },
   "ai": {
     "panelTitle": "AI Analysis — Advisory Only",
@@ -487,6 +505,66 @@
       "generic": "Upload failed — please try again"
     }
   },
+  "admin": {
+    "usersPage":              "User Management",
+    "addUser":                "Add User",
+    "editUser":               "Edit User",
+    "deactivate":             "Deactivate",
+    "activate":               "Activate",
+    "impersonate":            "Impersonate",
+    "impersonationBanner":    "Impersonation mode — viewing as: {{name}} ({{role}})",
+    "stopImpersonation":      "Return to Admin",
+    "impersonatingAs":        "Original admin: {{name}}",
+    "cannotImpersonateAdmin": "Cannot impersonate an Admin",
+    "confirmDeactivate":      "Deactivate this user's access?",
+    "searchUsers":            "Search by name or email",
+    "filterRole":             "Filter by role",
+    "filterStatus":           "Filter by status",
+    "active":                 "Active",
+    "inactive":               "Inactive",
+    "allRoles":               "All Roles",
+    "allStatuses":            "All Statuses",
+    "department":             "Department",
+    "phone":                  "Phone",
+    "password":               "Password (optional)",
+    "createSuccess":          "User created successfully",
+    "updateSuccess":          "User details updated",
+    "deactivateSuccess":      "User deactivated",
+    "noUsers":                "No users found",
+    "lastLogin":              "Last login"
+  },
+  "meetings": {
+    "title":            "Committee Meetings",
+    "create":           "Create Meeting",
+    "edit":             "Edit Meeting",
+    "cancel":           "Cancel Meeting",
+    "confirmCancel":    "Cancel this meeting?",
+    "date":             "Date & Time",
+    "location":         "Location",
+    "meetingLink":      "Online meeting link",
+    "agenda":           "Agenda",
+    "addToAgenda":      "Add to Agenda",
+    "removeFromAgenda": "Remove from Agenda",
+    "attendance":       "Attendance",
+    "attended":         "Attended",
+    "absent":           "Absent",
+    "recordAttendance": "Record Attendance",
+    "upcoming":         "Upcoming",
+    "past":             "Past",
+    "all":              "All Meetings",
+    "noMeetings":       "No meetings found",
+    "agendaItems":      "Agenda Items",
+    "attendees":        "Attendees",
+    "statusScheduled":  "Scheduled",
+    "statusCompleted":  "Completed",
+    "statusCancelled":  "Cancelled",
+    "addSubmission":    "Add Submission to Agenda",
+    "duration":         "Duration (minutes)",
+    "selectSubmission": "Select submission",
+    "noAgendaItems":    "Agenda is empty",
+    "saveSuccess":      "Meeting saved successfully",
+    "cancelSuccess":    "Meeting cancelled"
+  },
   "errors": {
     "VALIDATION_ERROR": "Validation error",
     "UNAUTHORIZED": "Unauthorized — please sign in again",
@@ -495,6 +573,8 @@
     "CONFLICT": "This record already exists",
     "INVALID_CREDENTIALS": "Incorrect email or password",
     "INVALID_TOKEN": "This link is invalid or has expired",
-    "SERVER_ERROR": "Server error. Please try again later"
+    "SERVER_ERROR": "Server error. Please try again later",
+    "NESTED_IMPERSONATION": "Cannot impersonate while already impersonating",
+    "CANNOT_IMPERSONATE_ADMIN": "Cannot impersonate an Admin"
   }
 }

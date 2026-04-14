@@ -40,6 +40,8 @@ npm-debug.log*
 # Testing
 coverage/
 .nyc_output/
+tmp_*.txt
+tmp_*.mjs
 
 # Prisma
 backend/prisma/migrations/**/migration_lock.toml

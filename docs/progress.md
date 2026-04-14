@@ -123,3 +123,41 @@
 - [x] S4.4 PDF Approval Letter generation
 - [x] S4.5 AI Mock Integration (pre-check + reviewer panel)
 - [x] S4.9 Sprint wrap-up: Code Review + QA + Accessibility + Security — APPROVED FOR MERGE
+
+---
+
+## Current Sprint: Sprint 5 — Secretary Dashboard + Meetings + Admin Users + Impersonation
+**Status:** 🔄 In Progress | **Tag:** —
+
+### Phase 1 — Admin Users CRUD + Impersonation (Backend)
+- [x] `users.controller.js` — listAll, create, update, deactivate, impersonate
+- [x] `users.routes.js` — 5 admin routes (GET/POST /admin/users, PUT/PATCH /admin/users/:id, POST /admin/impersonate/:userId)
+- [x] `auth.js` — impersonatedBy field in req.user
+- [x] `meetings.controller.js` — list, create, getById, update, cancel, addAgendaItem, removeAgendaItem, recordAttendance
+- [x] `meetings.routes.js` — full REST API for meetings
+- [x] `index.js` — meetingsRouter registered at /api/meetings
+- [x] `submissions.controller.js` — secretaryDashboard() added
+- [x] `submissions.routes.js` — GET /api/submissions/dashboard/secretary
+
+### Phase 2 — Admin Users Page + Impersonation UI (Frontend)
+- [x] `AuthContext.jsx` — impersonation state, startImpersonation, stopImpersonation
+- [x] `api.js` — getToken() exported for impersonation token save
+- [x] `ImpersonationBanner.jsx` — amber sticky banner with stop button
+- [x] `AppLayout.jsx` — ImpersonationBanner added above layout
+- [x] `Sidebar.jsx` — impersonation indicator in user footer
+- [x] `pages/admin/UsersPage.jsx` — full CRUD table + impersonate actions
+
+### Phase 3 — Secretary Dashboard (real data)
+- [x] `SecretaryDashboard.jsx` — 5 KPI cards + recent submissions table (real API)
+
+### Phase 4 — Meeting Management
+- [x] `pages/meetings/MeetingsPage.jsx` — list with filter tabs + create modal
+- [x] `pages/meetings/MeetingDetailPage.jsx` — agenda + attendance tabs
+- [x] `App.jsx` — routes for /meetings, /meetings/:id, /users (real pages)
+
+### Phase 5 — Chairman Dashboard (real data)
+- [x] `ChairmanDashboard.jsx` — Kanban with real data
+
+### Phase 6 — i18n + Sprint End
+- [x] `he.json` + `en.json` — admin.* and meetings.* namespaces + lowercase role aliases
+- [ ] Sprint-end pipeline → tag v0.5.0

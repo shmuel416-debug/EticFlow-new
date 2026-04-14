@@ -85,6 +85,13 @@ const commentSchema = z.object({
 // ─────────────────────────────────────────────
 
 router.get(
+  '/dashboard/secretary',
+  authenticate,
+  authorize('SECRETARY', 'ADMIN'),
+  controller.secretaryDashboard
+)
+
+router.get(
   '/',
   authenticate,
   validateQuery(listQuerySchema),

@@ -1,5 +1,24 @@
 # EthicFlow — Sprint Log
 
+## Sprint 5 — Secretary Dashboard + Meetings + Admin Users + Impersonation
+
+| Date | Task | Status | Notes |
+|------|------|--------|-------|
+| 2026-04-14 | Phase 1 Backend — Admin Users CRUD | ✅ Done | users.controller.js: listAll, create, update, deactivate, impersonate |
+| 2026-04-14 | Phase 1 Backend — Impersonation | ✅ Done | 1h JWT with impersonatedBy, blocks ADMIN target + nested impersonation |
+| 2026-04-14 | Phase 1 Backend — Meetings API | ✅ Done | meetings.controller.js + meetings.routes.js — 8 endpoints |
+| 2026-04-14 | Phase 1 Backend — Secretary Dashboard endpoint | ✅ Done | GET /api/submissions/dashboard/secretary — 5 KPIs + 10 recent |
+| 2026-04-14 | Phase 2 Frontend — Impersonation | ✅ Done | AuthContext: startImpersonation/stopImpersonation, getToken() in api.js |
+| 2026-04-14 | Phase 2 Frontend — ImpersonationBanner | ✅ Done | Amber sticky banner, aria-live, stop button |
+| 2026-04-14 | Phase 2 Frontend — AppLayout + Sidebar | ✅ Done | Banner above layout, impersonation indicator in sidebar user footer |
+| 2026-04-14 | Phase 2 Frontend — UsersPage | ✅ Done | Admin CRUD table — search, role/status filter, impersonate, edit, deactivate |
+| 2026-04-14 | Phase 3 Frontend — SecretaryDashboard | ✅ Done | 5 KPI cards + recent submissions table with SLA dots, real API |
+| 2026-04-14 | Phase 4 Frontend — MeetingsPage | ✅ Done | Filter tabs (upcoming/past/all) + create meeting modal |
+| 2026-04-14 | Phase 4 Frontend — MeetingDetailPage | ✅ Done | Agenda (add/remove) + attendance (record per user) tabs |
+| 2026-04-14 | Phase 5 Frontend — ChairmanDashboard | ✅ Done | Kanban board (IN_REVIEW/APPROVED/REJECTED) with real API data |
+| 2026-04-14 | Phase 6 — i18n | ✅ Done | admin.* + meetings.* namespaces, lowercase role aliases, common.* additions |
+| 2026-04-14 | Phase 6 — App.jsx routes | ✅ Done | /meetings, /meetings/:id, /users wired to real pages |
+
 ## Sprint 4 — SLA + Documents + AI
 
 | Date | Task | Status | Notes |

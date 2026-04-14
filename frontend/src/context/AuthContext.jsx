@@ -2,11 +2,12 @@
  * EthicFlow — Auth Context
  * Stores JWT in memory (never localStorage). Provides login/logout/user state.
  * Also manages i18n language + HTML dir/lang attribute on language change.
+ * Sprint 5: adds impersonation state + startImpersonation/stopImpersonation actions.
  */
 
-import { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import api, { setToken } from '../services/api'
+import api, { setToken, getToken } from '../services/api'
 
 /** @type {React.Context} */
 const AuthContext = createContext(null)
@@ -17,8 +18,12 @@ const AuthContext = createContext(null)
  */
 export function AuthProvider({ children }) {
   const { i18n } = useTranslation()
-  const [user, setUser]       = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [user, setUser]               = useState(null)
+  const [loading, setLoading]         = useState(true)
+  const [impersonation, setImpersonation] = useState(null) // { originalUser, originalToken }
+
+  /** Holds the original token during impersonation so we can restore it. */
+  const originalTokenRef = useRef(null)
 
   /** Apply direction + lang to <html> element */
   const applyDirection = useCallback((lang) => {
@@ -67,10 +72,61 @@ export function AuthProvider({ children }) {
   function logout() {
     setToken(null)
     setUser(null)
+    setImpersonation(null)
+    originalTokenRef.current = null
   }
 
+  /**
+   * Starts impersonating a target user.
+   * Saves the current admin token + user, then swaps to the impersonation token.
+   * @param {string} userId - Target user ID to impersonate
+   * @returns {Promise<void>}
+   */
+  async function startImpersonation(userId) {
+    // Capture original state before any async work
+    const savedToken = getToken()
+    const savedUser  = user
+
+    const { data } = await api.post(`/users/admin/impersonate/${userId}`)
+
+    // Save original state for restoration
+    originalTokenRef.current = savedToken
+    setImpersonation({ originalUser: savedUser, originalToken: savedToken })
+
+    // Swap to impersonation token + user
+    setToken(data.token)
+    setUser(data.user)
+  }
+
+  /**
+   * Stops impersonation and restores the original admin session.
+   * @returns {void}
+   */
+  function stopImpersonation() {
+    if (!impersonation) return
+
+    // Restore original token + user
+    setToken(originalTokenRef.current)
+    setUser(impersonation.originalUser)
+    setImpersonation(null)
+    originalTokenRef.current = null
+  }
+
+  /** True when currently impersonating another user. */
+  const isImpersonating = !!impersonation
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, changeLanguage }}>
+    <AuthContext.Provider value={{
+      user,
+      loading,
+      login,
+      logout,
+      changeLanguage,
+      impersonation,
+      isImpersonating,
+      startImpersonation,
+      stopImpersonation,
+    }}>
       {children}
     </AuthContext.Provider>
   )
@@ -78,7 +134,9 @@ export function AuthProvider({ children }) {
 
 /**
  * Hook to access auth context.
- * @returns {{ user: object|null, loading: boolean, login: Function, logout: Function, changeLanguage: Function }}
+ * @returns {{ user: object|null, loading: boolean, login: Function, logout: Function,
+ *   changeLanguage: Function, impersonation: object|null, isImpersonating: boolean,
+ *   startImpersonation: Function, stopImpersonation: Function }}
  */
 export function useAuth() {
   const ctx = useContext(AuthContext)

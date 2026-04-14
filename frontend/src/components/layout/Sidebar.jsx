@@ -32,7 +32,7 @@ const NAV_ITEMS = [
  */
 export default function Sidebar({ isOpen, onClose }) {
   const { t }    = useTranslation()
-  const { user, logout } = useAuth()
+  const { user, logout, isImpersonating, impersonation } = useAuth()
   const navigate = useNavigate()
 
   const visibleItems = NAV_ITEMS.filter(
@@ -142,14 +142,21 @@ export default function Sidebar({ isOpen, onClose }) {
 
         {/* User footer */}
         <div className="p-3 border-t border-gray-100">
+          {/* Impersonation indicator */}
+          {isImpersonating && impersonation?.originalUser && (
+            <div className="mb-2 px-2 py-1.5 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-800 flex items-center gap-1.5">
+              <span aria-hidden="true">👤</span>
+              <span>{t('admin.impersonatingAs', { name: impersonation.originalUser.fullName })}</span>
+            </div>
+          )}
           <div className="flex items-center gap-2 p-2 rounded-lg">
             <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
-              style={{ background: 'var(--lev-navy)' }}
+              style={{ background: isImpersonating ? '#d97706' : 'var(--lev-navy)' }}
               aria-hidden="true">
               {initials}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold truncate" style={{ color: 'var(--lev-navy)' }}>
+              <p className="text-xs font-semibold truncate" style={{ color: isImpersonating ? '#92400e' : 'var(--lev-navy)' }}>
                 {user?.fullName}
               </p>
               <p className="text-xs text-gray-600">{t(`roles.${user?.role}`)}</p>
