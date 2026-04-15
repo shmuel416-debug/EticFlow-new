@@ -1,5 +1,20 @@
 # EthicFlow — Sprint Log
 
+## Sprint 6 — Protocol System + Statistics + Settings + v1.0
+
+| Date | Task | Status | Notes |
+|------|------|--------|-------|
+| 2026-04-15 | Phase 1 Backend — Protocol System | ✅ Done | protocols.controller.js (8 endpoints), protocols.routes.js, public sign endpoint, token-based signing, auto-transition to SIGNED |
+| 2026-04-15 | Phase 1 Backend — PDF generation | ✅ Done | generateProtocolPdf() added to pdf.service.js, PDFKit A4 with sections + signature page |
+| 2026-04-15 | Phase 2 Frontend — Protocol pages | ✅ Done | ProtocolsListPage, ProtocolDetailPage (rich sections editor), ProtocolSignPage (public token page) |
+| 2026-04-15 | Phase 2 Frontend — i18n protocols | ✅ Done | 40+ keys in protocols.* namespace (he + en) |
+| 2026-04-15 | Phase 3 Backend — Reports + AuditLogs | ✅ Done | reports.controller.js (stats/export/auditLogs), reports.routes.js, ExcelJS XLSX streaming |
+| 2026-04-15 | Phase 5 Backend — Settings | ✅ Done | settings.controller.js + settings.routes.js, ALLOWED_KEYS allowlist, ADMIN-only |
+| 2026-04-15 | Phase 4 UI/UX — Stats design | ✅ Done | 3 options (A/B/C), user chose B + Lev palette. docs/designs/stats-reports-design.html |
+| 2026-04-15 | Phase 4 Frontend — StatsPage | ✅ Done | Option B: navy gradient header, KPI cards, bar chart, track breakdown, line chart, XLSX export |
+| 2026-04-15 | Phase 4 Frontend — AuditLogPage | ✅ Done | Paginated table + mobile cards, filters: action/entityType/dateRange, ADMIN only |
+| 2026-04-15 | Phase 4 Frontend — routing + sidebar | ✅ Done | /reports → StatsPage, /reports/audit-log → AuditLogPage, auditLog sub-link in sidebar |
+
 ## Sprint 5 — Secretary Dashboard + Meetings + Admin Users + Impersonation
 
 | Date | Task | Status | Notes |

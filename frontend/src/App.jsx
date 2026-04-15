@@ -31,6 +31,11 @@ import ChairmanDecisionPage       from './pages/chairman/SubmissionDecisionPage'
 import UsersPage                  from './pages/admin/UsersPage'
 import MeetingsPage               from './pages/meetings/MeetingsPage'
 import MeetingDetailPage          from './pages/meetings/MeetingDetailPage'
+import ProtocolsListPage          from './pages/protocols/ProtocolsListPage'
+import ProtocolDetailPage         from './pages/protocols/ProtocolDetailPage'
+import ProtocolSignPage           from './pages/protocols/ProtocolSignPage'
+import StatsPage                  from './pages/reports/StatsPage'
+import AuditLogPage               from './pages/reports/AuditLogPage'
 
 export default function App() {
   return (
@@ -38,9 +43,10 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           {/* ── Public ── */}
-          <Route path="/login"            element={<LoginPage />} />
-          <Route path="/forgot-password"  element={<ForgotPasswordPage />} />
-          <Route path="/reset-password"   element={<ResetPasswordPage />} />
+          <Route path="/login"                 element={<LoginPage />} />
+          <Route path="/forgot-password"       element={<ForgotPasswordPage />} />
+          <Route path="/reset-password"        element={<ResetPasswordPage />} />
+          <Route path="/protocol/sign/:token"  element={<ProtocolSignPage />} />
 
           {/* ── Protected (all authenticated roles) ── */}
           <Route element={<ProtectedRoute />}>
@@ -53,6 +59,13 @@ export default function App() {
               <Route path="/meetings"        element={<MeetingsPage />} />
               <Route path="/settings"        element={<PlaceholderPage pageKey="settings" />} />
               <Route path="/notifications"   element={<NotificationsPage />} />
+
+              {/* Protocols — SECRETARY, CHAIRMAN, ADMIN */}
+              <Route element={<ProtectedRoute roles={['SECRETARY', 'CHAIRMAN', 'ADMIN']} />}>
+                <Route path="/protocols"     element={<ProtocolsListPage />} />
+                <Route path="/protocols/new" element={<ProtocolDetailPage />} />
+                <Route path="/protocols/:id" element={<ProtocolDetailPage />} />
+              </Route>
 
               {/* Secretary + Admin */}
               <Route element={<ProtectedRoute roles={['SECRETARY', 'ADMIN']} />}>
@@ -74,7 +87,12 @@ export default function App() {
               <Route element={<ProtectedRoute roles={['CHAIRMAN', 'ADMIN']} />}>
                 <Route path="/chairman/queue"      element={<ChairmanQueuePage />} />
                 <Route path="/chairman/queue/:id"  element={<ChairmanDecisionPage />} />
-                <Route path="/reports"             element={<PlaceholderPage pageKey="reports" />} />
+                <Route path="/reports"             element={<StatsPage />} />
+              </Route>
+
+              {/* Admin only — Audit Log */}
+              <Route element={<ProtectedRoute roles={['ADMIN']} />}>
+                <Route path="/reports/audit-log"   element={<AuditLogPage />} />
               </Route>
 
               {/* Admin only */}

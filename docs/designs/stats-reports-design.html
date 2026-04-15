@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EthicFlow — Stats & Reports Design Options</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Heebo', sans-serif; }
+    .tab-btn { border-bottom: 3px solid transparent; transition: all 0.2s; }
+    .tab-btn.active { border-bottom-color: #3b82f6; color: #3b82f6; font-weight: 700; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* Sidebar */
+    .sidebar { width: 220px; background: white; border-left: 1px solid #f0f0f0; flex-shrink: 0; }
+    .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 8px; font-size: 14px; color: #374151; min-height: 44px; cursor: pointer; }
+    .nav-item.active { background: #cceef5; color: #1e3a5f; font-weight: 600; }
+
+    /* Chart bars (CSS simulation) */
+    .bar { border-radius: 4px 4px 0 0; transition: height 0.3s; }
+    .line-chart { position: relative; height: 120px; }
+    .line-chart svg { width: 100%; height: 100%; }
+
+    /* Donut simulation */
+    .donut-wrap { position: relative; width: 100px; height: 100px; }
+    .donut-wrap svg { transform: rotate(-90deg); }
+
+    /* Mobile nav for mobile view */
+    .mobile-bottom-nav { display: flex; background: white; border-top: 1px solid #e5e7eb; }
+    .mobile-nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 8px 4px; font-size: 10px; color: #6b7280; min-height: 44px; }
+    .mobile-nav-item.active { color: #1e3a5f; font-weight: 600; }
+  </style>
+</head>
+<body class="bg-gray-100">
+
+  <!-- Tab Navigation -->
+  <div class="sticky top-0 bg-white border-b z-50 px-6 shadow-sm">
+    <div class="max-w-7xl mx-auto flex items-center gap-8">
+      <div class="font-bold text-sm text-gray-700 py-4">EthicFlow — Stats & Reports</div>
+      <button class="tab-btn active py-4 px-2 text-sm" onclick="showTab('a', event)">
+        A — Clean &amp; Cards
+      </button>
+      <button class="tab-btn py-4 px-2 text-sm text-gray-500" onclick="showTab('b', event)">
+        B — Bold &amp; Structured
+      </button>
+      <button class="tab-btn py-4 px-2 text-sm text-gray-500" onclick="showTab('c', event)">
+        C — Compact &amp; Tabbed
+      </button>
+    </div>
+  </div>
+
+  <div class="max-w-7xl mx-auto p-6 space-y-8">
+
+    <!-- ═══════════════════════════════════════════════════ -->
+    <!--  OPTION A — Clean & Cards                          -->
+    <!-- ═══════════════════════════════════════════════════ -->
+    <div id="tab-a" class="tab-content active space-y-8">
+
+      <!-- SUB-HEADING -->
+      <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-800">
+        <strong>Option A — "Clean &amp; Cards"</strong> — לבן, כרטיסיות אורות, גרפים גדולים ומרווחים. מתאים למנהל שרוצה לראות הכל בבת אחת ללא עומס ויזואלי.
+      </div>
+
+      <!-- SCREEN 1: StatsPage Desktop -->
+      <div>
+        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">📊 StatsPage (/reports) — Desktop</h3>
+        <div class="border border-gray-200 rounded-2xl overflow-hidden bg-white shadow-sm">
+          <div class="flex h-[680px]">
+            <!-- Sidebar -->
+            <div class="sidebar flex flex-col border-l border-gray-100">
+              <div class="p-4 border-b border-gray-100 flex items-center gap-2">
+                <div class="w-7 h-7 rounded bg-[#1e3a5f] flex items-center justify-center text-white text-xs font-bold">E</div>
+                <div>
+                  <p class="text-xs font-bold text-[#1e3a5f]">EthicFlow</p>
+                  <p class="text-xs text-gray-400">מוסד לוינסקי</p>
+                </div>
+              </div>
+              <nav class="flex-1 p-3 space-y-0.5 overflow-y-auto">
+                <div class="nav-item">🏠 <span>דשבורד</span></div>
+                <div class="nav-item">📋 <span>הגשות</span></div>
+                <div class="nav-item">📅 <span>ישיבות</span></div>
+                <div class="nav-item">📋 <span>פרוטוקולים</span></div>
+                <div class="nav-item active">📊 <span>דוחות</span></div>
+                <div class="nav-item">👥 <span>משתמשים</span></div>
+                <div class="nav-item">⚙️ <span>הגדרות</span></div>
+              </nav>
+              <div class="p-3 border-t border-gray-100">
+                <div class="flex items-center gap-2 p-2">
+                  <div class="w-8 h-8 rounded-full bg-[#1e3a5f] text-white flex items-center justify-center text-xs font-bold">מ</div>
+                  <div class="flex-1">
+                    <p class="text-xs font-semibold text-[#1e3a5f]">מרים לוי</p>
+                    <p class="text-xs text-gray-400">מנהל</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Main -->
+            <div class="flex-1 flex flex-col overflow-hidden">
+              <!-- Page Header -->
+              <div class="bg-white border-b px-6 py-4 flex items-center justify-between">
+                <div>
+                  <h1 class="text-lg font-bold text-[#1e3a5f]">סטטיסטיקות ודוחות</h1>
+                  <p class="text-xs text-gray-400">נכון לתאריך 14/04/2026</p>
+                </div>
+                <button class="flex items-center gap-2 text-sm font-semibold text-white px-4 py-2 rounded-lg bg-[#1e3a5f]" style="min-height:44px">
+                  <span>⬇</span> ייצוא Excel
+                </button>
+              </div>
+
+              <!-- Content -->
+              <div class="flex-1 overflow-auto bg-gray-50 p-5">
+
+                <!-- KPI Cards Row -->
+                <div class="grid grid-cols-4 gap-4 mb-5">
+                  <div class="bg-white rounded-xl border p-4 text-center shadow-sm">
+                    <div class="text-3xl font-bold text-[#1e3a5f]">127</div>
+                    <div class="text-xs text-gray-400 mt-1">סה״כ הגשות</div>
+                  </div>
+                  <div class="bg-white rounded-xl border p-4 text-center shadow-sm">
+                    <div class="text-3xl font-bold text-green-600">78%</div>
+                    <div class="text-xs text-gray-400 mt-1">שיעור אישור</div>
+                  </div>
+                  <div class="bg-white rounded-xl border p-4 text-center shadow-sm">
+                    <div class="text-3xl font-bold text-[#1e3a5f]">14.2</div>
+                    <div class="text-xs text-gray-400 mt-1">ממוצע ימי טיפול</div>
+                  </div>
+                  <div class="bg-white rounded-xl border p-4 text-center shadow-sm">
+                    <div class="text-3xl font-bold text-green-600">94</div>
+                    <div class="text-xs text-gray-400 mt-1">אושרו השנה</div>
+                  </div>
+                </div>
+
+                <!-- Two columns: Bar Chart + Donut -->
+                <div class="grid grid-cols-3 gap-4 mb-4">
+                  <!-- Bar Chart: Status -->
+                  <div class="bg-white rounded-xl border p-4 shadow-sm col-span-2">
+                    <h2 class="text-sm font-semibold text-[#1e3a5f] mb-3">הגשות לפי סטטוס</h2>
+                    <div class="flex items-end gap-2 h-32">
+                      <div class="flex flex-col items-center gap-1 flex-1">
+                        <span class="text-xs text-gray-500">18</span>
+                        <div class="bar bg-yellow-400 w-full" style="height:45px"></div>
+                        <span class="text-xs text-gray-400 text-center leading-tight">הוגש</span>
+                      </div>
+                      <div class="flex flex-col items-center gap-1 flex-1">
+                        <span class="text-xs text-gray-500">12</span>
+                        <div class="bar bg-blue-300 w-full" style="height:30px"></div>
+                        <span class="text-xs text-gray-400 text-center leading-tight">בטריאז׳</span>
+                      </div>
+                      <div class="flex flex-col items-center gap-1 flex-1">
+                        <span class="text-xs text-gray-500">23</span>
+                        <div class="bar bg-blue-500 w-full" style="height:58px"></div>
+                        <span class="text-xs text-gray-400 text-center leading-tight">בביקורת</span>
+                      </div>
+                      <div class="flex flex-col items-center gap-1 flex-1">
+                        <span class="text-xs text-gray-500">57</span>
+                        <div class="bar bg-green-500 w-full" style="height:128px"></div>
+                        <span class="text-xs text-gray-400 text-center leading-tight">מאושר</span>
+                      </div>
+                      <div class="flex flex-col items-center gap-1 flex-1">
+                        <span class="text-xs text-gray-500">9</span>
+                        <div class="bar bg-red-400 w-full" style="height:23px"></div>
+                        <span class="text-xs text-gray-400 text-center leading-tight">נדחה</span>
+                      </div>
+                      <div class="flex flex-col items-center gap-1 flex-1">
+                        <span class="text-xs text-gray-500">8</span>
+                        <div class="bar bg-orange-400 w-full" style="height:20px"></div>
+                        <span class="text-xs text-gray-400 text-center leading-tight">תיקון</span>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- Donut: Track -->
+                  <div class="bg-white rounded-xl border p-4 shadow-sm flex flex-col items-center justify-center">
+                    <h2 class="text-sm font-semibold text-[#1e3a5f] mb-3 self-start">פירוט לפי מסלול</h2>
+                    <!-- Simple donut simulation -->
+                    <svg viewBox="0 0 36 36" class="w-20 h-20">
+                      <circle cx="18" cy="18" r="15.9" fill="none" stroke="#e5e7eb" stroke-width="3"/>
+                      <circle cx="18" cy="18" r="15.9" fill="none" stroke="#3b82f6" stroke-width="3"
+                        stroke-dasharray="50 50" stroke-dashoffset="0" transform="rotate(-90 18 18)"/>
+                      <circle cx="18" cy="18" r="15.9" fill="none" stroke="#10b981" stroke-width="3"
+                        stroke-dasharray="30 70" stroke-dashoffset="-50" transform="rotate(-90 18 18)"/>
+                      <circle cx="18" cy="18" r="15.9" fill="none" stroke="#f59e0b" stroke-width="3"
+                        stroke-dasharray="20 80" stroke-dashoffset="-80" transform="rotate(-90 18 18)"/>
+                    </svg>
+                    <div class="space-y-1 mt-3 w-full text-xs">
+                      <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-blue-500 flex-shrink-0"></span><span class="text-gray-600">מלא</span><span class="ms-auto font-semibold">50%</span></div>
+                      <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-green-500 flex-shrink-0"></span><span class="text-gray-600">מואץ</span><span class="ms-auto font-semibold">30%</span></div>
+                      <div class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-amber-500 flex-shrink-0"></span><span class="text-gray-600">פטור</span><span class="ms-auto font-semibold">20%</span></div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Line Chart: Monthly Trend -->
+                <div class="bg-white rounded-xl border p-4 shadow-sm">
+                  <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-sm font-semibold text-[#1e3a5f]">מגמה חודשית — 12 חודשים אחרונים</h2>
+                    <span class="text-xs text-gray-400">מאי 2025 – אפריל 2026</span>
+                  </div>
+                  <div class="relative h-24">
+                    <svg viewBox="0 0 400 80" class="w-full h-full" preserveAspectRatio="none">
+                      <defs>
+                        <linearGradient id="lineGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.2"/>
+                          <stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/>
+                        </linearGradient>
+                      </defs>
+                      <!-- Grid lines -->
+                      <line x1="0" y1="20" x2="400" y2="20" stroke="#f0f0f0" stroke-width="1"/>
+                      <line x1="0" y1="40" x2="400" y2="40" stroke="#f0f0f0" stroke-width="1"/>
+                      <line x1="0" y1="60" x2="400" y2="60" stroke="#f0f0f0" stroke-width="1"/>
+                      <!-- Area -->
+                      <polyline points="0,65 33,58 66,52 99,60 132,45 165,38 198,42 231,30 264,25 297,20 330,28 400,18"
+                        fill="url(#lineGrad)" stroke="none"/>
+                      <polygon points="0,80 0,65 33,58 66,52 99,60 132,45 165,38 198,42 231,30 264,25 297,20 330,28 400,18 400,80"
+                        fill="url(#lineGrad)"/>
+                      <!-- Line -->
+                      <polyline points="0,65 33,58 66,52 99,60 132,45 165,38 198,42 231,30 264,25 297,20 330,28 400,18"
+                        fill="none" stroke="#3b82f6" stroke-width="2"/>
+                      <!-- Dots -->
+                      <circle cx="297" cy="20" r="3" fill="#3b82f6"/>
+                      <circle cx="400" cy="18" r="3" fill="#3b82f6"/>
+                    </svg>
+                    <!-- Month labels -->
+                    <div class="flex justify-between text-xs text-gray-400 mt-1">
+                      <span>מאי</span><span>יוני</span><span>יולי</span><span>אוג׳</span>
+                      <span>ספט׳</span><span>אוק׳</span><span>נוב׳</span><span>דצמ׳</span>
+                      <span>ינו׳</span><span>פבר׳</span><span>מרץ</span><span>אפר׳</span>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SCREEN 2: StatsPage Mobile -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div>
+          <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">📱 StatsPage — Mobile (375px)</h3>
+          <div class="border border-gray-200 rounded-2xl overflow-hidden bg-white shadow-sm max-w-[375px] mx-auto">
+            <div class="flex flex-col h-[600px]">
+              <!-- Mobile Header -->
+              <div class="bg-white border-b px-4 py-3 flex items-center justify-between">
+                <div>
+                  <h1 class="text-base font-bold text-[#1e3a5f]">סטטיסטיקות</h1>
+                  <p class="text-xs text-gray-400">14/04/2026</p>
+                </div>
+                <button class="text-xs font-semibold text-white px-3 py-2 rounded-lg bg-[#1e3a5f]" style="min-height:44px">⬇ Excel</button>
+              </div>
+              <!-- Scrollable Content -->
+              <div class="flex-1 overflow-auto bg-gray-50 p-3 space-y-3">
+                <!-- KPI 2x2 -->
+                <div class="grid grid-cols-2 gap-3">
+                  <div class="bg-white rounded-xl border p-3 text-center">
+                    <div class="text-2xl font-bold text-[#1e3a5f]">127</div>
+                    <div class="text-xs text-gray-400">הגשות</div>
+                  </div>
+                  <div class="bg-white rounded-xl border p-3 text-center">
+                    <div class="text-2xl font-bold text-green-600">78%</div>
+                    <div class="text-xs text-gray-400">שיעור אישור</div>
+                  </div>
+                  <div class="bg-white rounded-xl border p-3 text-center">
+                    <div class="text-2xl font-bold text-[#1e3a5f]">14.2</div>
+                    <div class="text-xs text-gray-400">ימי טיפול</div>
+                  </div>
+                  <div class="bg-white rounded-xl border p-3 text-center">
+                    <div class="text-2xl font-bold text-green-600">94</div>
+                    <div class="text-xs text-gray-400">אושרו</div>
+                  </div>
+                </div>
+                <!-- Bar Chart -->
+                <div class="bg-white rounded-xl border p-3">
+                  <h2 class="text-xs font-semibold text-[#1e3a5f] mb-2">לפי סטטוס</h2>
+                  <div class="flex items-end gap-1.5 h-20">
+                    <div class="flex flex-col items-center gap-0.5 flex-1">
+                      <span class="text-xs text-gray-500" style="font-size:9px">18</span>
+                      <div class="bar bg-yellow-400 w-full" style="height:28px"></div>
+                      <span class="text-gray-400" style="font-size:8px">הוגש</span>
+                    </div>
+                    <div class="flex flex-col items-center gap-0.5 flex-1">
+                      <span class="text-xs text-gray-500" style="font-size:9px">12</span>
+                      <div class="bar bg-blue-300 w-full" style="height:19px"></div>
+                      <span class="text-gray-400" style="font-size:8px">טריאז׳</span>
+                    </div>
+                    <div class="flex flex-col items-center gap-0.5 flex-1">
+                      <span class="text-xs text-gray-500" style="font-size:9px">23</span>
+                      <div class="bar bg-blue-500 w-full" style="height:36px"></div>
+                      <span class="text-gray-400" style="font-size:8px">ביקורת</span>
+                    </div>
+                    <div class="flex flex-col items-center gap-0.5 flex-1">
+                      <span class="text-xs text-gray-500" style="font-size:9px">57</span>
+                      <div class="bar bg-green-500 w-full" style="height:72px"></div>
+                      <span class="text-gray-400" style="font-size:8px">מאושר</span>
+                    </div>
+                    <div class="flex flex-col items-center gap-0.5 flex-1">
+                      <span class="text-xs text-gray-500" style="font-size:9px">9</span>
+                      <div class="bar bg-red-400 w-full" style="height:14px"></div>
+                      <span class="text-gray-400" style="font-size:8px">נדחה</span>
+                    </div>
+                    <div class="flex flex-col items-center gap-0.5 flex-1">
+                      <span class="text-xs text-gray-500" style="font-size:9px">8</span>
+                      <div class="bar bg-orange-400 w-full" style="height:13px"></div>
+                      <span class="text-gray-400" style="font-size:8px">תיקון</span>
+                    </div>
+                  </div>
+                </div>
+                <!-- Monthly line (compact) -->
+                <div class="bg-white rounded-xl border p-3">
+                  <h2 class="text-xs font-semibold text-[#1e3a5f] mb-2">מגמה חודשית</h2>
+                  <svg viewBox="0 0 300 60" class="w-full h-16" preserveAspectRatio="none">
+                    <polyline points="0,55 25,48 50,42 75,50 100,35 125,28 150,32 175,20 200,15 225,10 250,18 300,8"
+                      fill="none" stroke="#3b82f6" stroke-width="2"/>
+                  </svg>
+                </div>
+              </div>
+              <!-- Mobile Bottom Nav -->
+              <div class="mobile-bottom-nav">
+                <div class="mobile-nav-item">🏠<span>דשבורד</span></div>
+                <div class="mobile-nav-item">📋<span>הגשות</span></div>
+                <div class="mobile-nav-item active">📊<span>דוחות</span></div>
+                <div class="mobile-nav-item">👥<span>משתמשים</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- AuditLog Desktop -->
+        <div class="lg:col-span-2">
+          <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">🔍 AuditLogPage (/reports/audit-log) — Desktop</h3>
+          <div class="border border-gray-200 rounded-2xl overflow-hidden bg-white shadow-sm">
+            <div class="flex h-[600px]">
+              <div class="sidebar flex flex-col border-l border-gray-100 text-xs">
+                <div class="p-3 border-b flex items-center gap-1.5">
+                  <div class="w-6 h-6 rounded bg-[#1e3a5f] text-white flex items-center justify-center font-bold text-xs">E</div>
+                  <p class="font-bold text-[#1e3a5f]">EthicFlow</p>
+                </div>
+                <nav class="flex-1 p-2 space-y-0.5">
+                  <div class="nav-item text-xs">🏠 <span>דשבורד</span></div>
+                  <div class="nav-item text-xs">📋 <span>הגשות</span></div>
+                  <div class="nav-item text-xs">📅 <span>ישיבות</span></div>
+                  <div class="nav-item active text-xs">📊 <span>דוחות</span></div>
+                  <div class="ps-8 space-y-0.5">
+                    <div class="text-xs text-gray-500 py-1.5 px-2 cursor-pointer hover:text-[#1e3a5f]">סטטיסטיקות</div>
+                    <div class="text-xs text-[#1e3a5f] font-semibold py-1.5 px-2 bg-blue-50 rounded">יומן ביקורת</div>
+                  </div>
+                  <div class="nav-item text-xs">👥 <span>משתמשים</span></div>
+                </nav>
+              </div>
+              <div class="flex-1 flex flex-col overflow-hidden">
+                <div class="bg-white border-b px-5 py-3 flex items-center justify-between">
+                  <div>
+                    <h1 class="text-base font-bold text-[#1e3a5f]">יומן ביקורת</h1>
+                    <p class="text-xs text-gray-400">לוג פעולות מערכת</p>
+                  </div>
+                </div>
+                <!-- Filters -->
+                <div class="bg-white border-b px-5 py-2 flex items-center gap-3">
+                  <input placeholder="סנן לפי פעולה..." class="text-xs border rounded-lg px-3 py-2 outline-none focus:ring-1 focus:ring-blue-300" style="min-height:36px"/>
+                  <select class="text-xs border rounded-lg px-3 py-2 outline-none" style="min-height:36px">
+                    <option>כל הישויות</option>
+                    <option>SUBMISSION</option>
+                    <option>USER</option>
+                    <option>FORM</option>
+                  </select>
+                  <input type="date" class="text-xs border rounded-lg px-3 py-2 outline-none" style="min-height:36px"/>
+                </div>
+                <!-- Table -->
+                <div class="flex-1 overflow-auto">
+                  <table class="w-full text-xs">
+                    <thead class="bg-gray-50 border-b sticky top-0">
+                      <tr>
+                        <th class="text-right px-4 py-2.5 font-semibold text-gray-500">תאריך</th>
+                        <th class="text-right px-4 py-2.5 font-semibold text-gray-500">משתמש</th>
+                        <th class="text-right px-4 py-2.5 font-semibold text-gray-500">פעולה</th>
+                        <th class="text-right px-4 py-2.5 font-semibold text-gray-500">ישות</th>
+                        <th class="text-right px-4 py-2.5 font-semibold text-gray-500">IP</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-50">
+                      <tr class="hover:bg-gray-50"><td class="px-4 py-2.5 text-gray-400">14/04/2026 09:12</td><td class="px-4 py-2.5 font-medium">שרה כהן</td><td class="px-4 py-2.5"><span class="bg-green-50 text-green-700 px-2 py-0.5 rounded text-xs">SUBMISSION_APPROVED</span></td><td class="px-4 py-2.5 text-gray-500">SUBMISSION</td><td class="px-4 py-2.5 text-gray-400">192.168.1.5</td></tr>
+                      <tr class="hover:bg-gray-50"><td class="px-4 py-2.5 text-gray-400">14/04/2026 08:47</td><td class="px-4 py-2.5 font-medium">אבי לוי</td><td class="px-4 py-2.5"><span class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-xs">REVIEW_SUBMITTED</span></td><td class="px-4 py-2.5 text-gray-500">SUBMISSION</td><td class="px-4 py-2.5 text-gray-400">10.0.0.2</td></tr>
+                      <tr class="hover:bg-gray-50"><td class="px-4 py-2.5 text-gray-400">13/04/2026 16:30</td><td class="px-4 py-2.5 font-medium">מרים לוי</td><td class="px-4 py-2.5"><span class="bg-amber-50 text-amber-700 px-2 py-0.5 rounded text-xs">USER_CREATED</span></td><td class="px-4 py-2.5 text-gray-500">USER</td><td class="px-4 py-2.5 text-gray-400">192.168.1.1</td></tr>
+                      <tr class="hover:bg-gray-50"><td class="px-4 py-2.5 text-gray-400">13/04/2026 14:15</td><td class="px-4 py-2.5 font-medium">יוסי דוד</td><td class="px-4 py-2.5"><span class="bg-purple-50 text-purple-700 px-2 py-0.5 rounded text-xs">FORM_PUBLISHED</span></td><td class="px-4 py-2.5 text-gray-500">FORM</td><td class="px-4 py-2.5 text-gray-400">10.0.0.5</td></tr>
+                      <tr class="hover:bg-gray-50"><td class="px-4 py-2.5 text-gray-400">13/04/2026 11:00</td><td class="px-4 py-2.5 font-medium">שרה כהן</td><td class="px-4 py-2.5"><span class="bg-red-50 text-red-700 px-2 py-0.5 rounded text-xs">SUBMISSION_REJECTED</span></td><td class="px-4 py-2.5 text-gray-500">SUBMISSION</td><td class="px-4 py-2.5 text-gray-400">192.168.1.5</td></tr>
+                      <tr class="hover:bg-gray-50"><td class="px-4 py-2.5 text-gray-400">12/04/2026 17:22</td><td class="px-4 py-2.5 font-medium">מרים לוי</td><td class="px-4 py-2.5"><span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-xs">LOGIN</span></td><td class="px-4 py-2.5 text-gray-500">AUTH</td><td class="px-4 py-2.5 text-gray-400">192.168.1.1</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+                <!-- Pagination -->
+                <div class="bg-white border-t px-5 py-2.5 flex items-center justify-between">
+                  <span class="text-xs text-gray-400">מציג 1–10 מתוך 342</span>
+                  <div class="flex gap-1">
+                    <button class="text-xs px-3 py-1.5 rounded border text-gray-500" style="min-height:32px">הקודם</button>
+                    <button class="text-xs px-3 py-1.5 rounded bg-[#1e3a5f] text-white" style="min-height:32px">1</button>
+                    <button class="text-xs px-3 py-1.5 rounded border text-gray-500" style="min-height:32px">2</button>
+                    <button class="text-xs px-3 py-1.5 rounded border text-gray-500" style="min-height:32px">הבא</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════ -->
+    <!--  OPTION B — Bold & Structured                      -->
+    <!-- ═══════════════════════════════════════════════════ -->
+    <div id="tab-b" class="tab-content space-y-8">
+      <div class="bg-indigo-50 border border-indigo-200 rounded-xl p-4 text-sm text-indigo-800">
+        <strong>Option B — "Bold &amp; Structured"</strong> — כותרת navy כהה מלאה, KPIs גדולים עם רקע צבעוני, טבלת audit log עם שורות נבדלות. מתאים לוועדה שרוצה ריכוז ויזואלי חד.
+      </div>
+
+      <!-- StatsPage Desktop -->
+      <div>
+        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">📊 StatsPage — Desktop (Option B)</h3>
+        <div class="border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+          <div class="flex h-[680px]">
+            <!-- Sidebar -->
+            <div class="flex flex-col border-l border-gray-100" style="width:220px; background:#1e3a5f;">
+              <div class="p-4 border-b border-white/10 flex items-center gap-2">
+                <div class="w-7 h-7 rounded bg-white/20 flex items-center justify-center text-white text-xs font-bold">E</div>
+                <div>
+                  <p class="text-xs font-bold text-white">EthicFlow</p>
+                  <p class="text-xs text-blue-300">מוסד לוינסקי</p>
+                </div>
+              </div>
+              <nav class="flex-1 p-3 space-y-0.5 overflow-y-auto">
+                <div class="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm text-white/70 cursor-pointer hover:bg-white/10" style="min-height:44px">🏠 <span>דשבורד</span></div>
+                <div class="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm text-white/70 cursor-pointer hover:bg-white/10" style="min-height:44px">📋 <span>הגשות</span></div>
+                <div class="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm text-white/70 cursor-pointer hover:bg-white/10" style="min-height:44px">📅 <span>ישיבות</span></div>
+                <div class="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm bg-white/20 text-white font-semibold cursor-pointer" style="min-height:44px">📊 <span>דוחות</span></div>
+                <div class="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm text-white/70 cursor-pointer hover:bg-white/10" style="min-height:44px">👥 <span>משתמשים</span></div>
+              </nav>
+              <div class="p-3 border-t border-white/10">
+                <div class="flex items-center gap-2 p-2">
+                  <div class="w-8 h-8 rounded-full bg-white/20 text-white flex items-center justify-center text-xs font-bold">מ</div>
+                  <div class="flex-1">
+                    <p class="text-xs font-semibold text-white">מרים לוי</p>
+                    <p class="text-xs text-blue-300">מנהל</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Main -->
+            <div class="flex-1 flex flex-col overflow-hidden bg-gray-50">
+              <!-- Bold Header Band -->
+              <div class="px-6 py-5" style="background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);">
+                <div class="flex items-center justify-between">
+                  <div>
+                    <h1 class="text-xl font-bold text-white">סטטיסטיקות ודוחות</h1>
+                    <p class="text-sm text-blue-200 mt-0.5">נכון לתאריך 14/04/2026</p>
+                  </div>
+                  <button class="flex items-center gap-2 text-sm font-bold bg-white text-[#1e3a5f] px-5 py-2.5 rounded-xl shadow" style="min-height:44px">
+                    ⬇ ייצוא Excel
+                  </button>
+                </div>
+
+                <!-- KPI Cards IN the header -->
+                <div class="grid grid-cols-4 gap-3 mt-4">
+                  <div class="bg-white/15 backdrop-blur rounded-xl p-3 text-white text-center border border-white/20">
+                    <div class="text-3xl font-bold">127</div>
+                    <div class="text-xs text-blue-200 mt-0.5">סה״כ הגשות</div>
+                  </div>
+                  <div class="bg-white/15 backdrop-blur rounded-xl p-3 text-white text-center border border-white/20">
+                    <div class="text-3xl font-bold text-green-300">78%</div>
+                    <div class="text-xs text-blue-200 mt-0.5">שיעור אישור</div>
+                  </div>
+                  <div class="bg-white/15 backdrop-blur rounded-xl p-3 text-white text-center border border-white/20">
+                    <div class="text-3xl font-bold">14.2</div>
+                    <div class="text-xs text-blue-200 mt-0.5">ממוצע ימי טיפול</div>
+                  </div>
+                  <div class="bg-white/15 backdrop-blur rounded-xl p-3 text-white text-center border border-white/20">
+                    <div class="text-3xl font-bold text-green-300">94</div>
+                    <div class="text-xs text-blue-200 mt-0.5">אושרו השנה</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Charts -->
+              <div class="flex-1 overflow-auto p-5">
+                <div class="grid grid-cols-3 gap-4">
+                  <!-- Bar chart -->
+                  <div class="col-span-2 bg-white rounded-xl border-2 border-gray-100 p-4">
+                    <div class="flex items-center justify-between mb-3">
+                      <h2 class="text-sm font-bold text-[#1e3a5f]">הגשות לפי סטטוס</h2>
+                      <span class="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-semibold">127 סה״כ</span>
+                    </div>
+                    <div class="flex items-end gap-3 h-28">
+                      <div class="flex flex-col items-center gap-1 flex-1">
+                        <span class="text-xs font-bold text-yellow-700">18</span>
+                        <div class="bar w-full" style="height:40px;background:#fbbf24;border-radius:6px 6px 0 0"></div>
+                        <span class="text-xs text-gray-400">הוגש</span>
+                      </div>
+                      <div class="flex flex-col items-center gap-1 flex-1">
+                        <span class="text-xs font-bold text-blue-500">12</span>
+                        <div class="bar w-full" style="height:27px;background:#93c5fd;border-radius:6px 6px 0 0"></div>
+                        <span class="text-xs text-gray-400">טריאז׳</span>
+                      </div>
+                      <div class="flex flex-col items-center gap-1 flex-1">
+                        <span class="text-xs font-bold text-blue-700">23</span>
+                        <div class="bar w-full" style="height:51px;background:#3b82f6;border-radius:6px 6px 0 0"></div>
+                        <span class="text-xs text-gray-400">ביקורת</span>
+                      </div>
+                      <div class="flex flex-col items-center gap-1 flex-1">
+                        <span class="text-xs font-bold text-green-700">57</span>
+                        <div class="bar w-full" style="height:112px;background:#10b981;border-radius:6px 6px 0 0"></div>
+                        <span class="text-xs text-gray-400">מאושר</span>
+                      </div>
+                      <div class="flex flex-col items-center gap-1 flex-1">
+                        <span class="text-xs font-bold text-red-600">9</span>
+                        <div class="bar w-full" style="height:20px;background:#f87171;border-radius:6px 6px 0 0"></div>
+                        <span class="text-xs text-gray-400">נדחה</span>
+                      </div>
+                      <div class="flex flex-col items-center gap-1 flex-1">
+                        <span class="text-xs font-bold text-orange-600">8</span>
+                        <div class="bar w-full" style="height:18px;background:#fb923c;border-radius:6px 6px 0 0"></div>
+                        <span class="text-xs text-gray-400">תיקון</span>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- Track breakdown -->
+                  <div class="bg-white rounded-xl border-2 border-gray-100 p-4">
+                    <h2 class="text-sm font-bold text-[#1e3a5f] mb-3">פירוט מסלולים</h2>
+                    <div class="space-y-3">
+                      <div>
+                        <div class="flex justify-between text-xs mb-1"><span class="font-semibold">מסלול מלא</span><span class="text-gray-500">50%</span></div>
+                        <div class="w-full bg-gray-100 rounded-full h-2.5"><div class="h-2.5 rounded-full bg-blue-500" style="width:50%"></div></div>
+                      </div>
+                      <div>
+                        <div class="flex justify-between text-xs mb-1"><span class="font-semibold">מסלול מואץ</span><span class="text-gray-500">30%</span></div>
+                        <div class="w-full bg-gray-100 rounded-full h-2.5"><div class="h-2.5 rounded-full bg-green-500" style="width:30%"></div></div>
+                      </div>
+                      <div>
+                        <div class="flex justify-between text-xs mb-1"><span class="font-semibold">מסלול פטור</span><span class="text-gray-500">20%</span></div>
+                        <div class="w-full bg-gray-100 rounded-full h-2.5"><div class="h-2.5 rounded-full bg-amber-400" style="width:20%"></div></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Monthly trend full-width -->
+                  <div class="col-span-3 bg-white rounded-xl border-2 border-gray-100 p-4">
+                    <div class="flex items-center justify-between mb-3">
+                      <h2 class="text-sm font-bold text-[#1e3a5f]">מגמה חודשית — 12 חודשים אחרונים</h2>
+                    </div>
+                    <svg viewBox="0 0 400 70" class="w-full h-20" preserveAspectRatio="none">
+                      <defs><linearGradient id="grad2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#2563eb" stop-opacity="0.15"/><stop offset="100%" stop-color="#2563eb" stop-opacity="0"/></linearGradient></defs>
+                      <polygon points="0,70 0,55 33,48 66,42 99,50 132,35 165,28 198,32 231,20 264,15 297,10 330,18 400,8 400,70" fill="url(#grad2)"/>
+                      <polyline points="0,55 33,48 66,42 99,50 132,35 165,28 198,32 231,20 264,15 297,10 330,18 400,8" fill="none" stroke="#2563eb" stroke-width="2.5"/>
+                    </svg>
+                    <div class="flex justify-between text-xs text-gray-400 mt-1">
+                      <span>מאי</span><span>יוני</span><span>יולי</span><span>אוג׳</span>
+                      <span>ספט׳</span><span>אוק׳</span><span>נוב׳</span><span>דצמ׳</span>
+                      <span>ינו׳</span><span>פבר׳</span><span>מרץ</span><span>אפר׳</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════ -->
+    <!--  OPTION C — Compact & Tabbed                       -->
+    <!-- ═══════════════════════════════════════════════════ -->
+    <div id="tab-c" class="tab-content space-y-8">
+      <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-sm text-emerald-800">
+        <strong>Option C — "Compact &amp; Tabbed"</strong> — כל התוכן בטאב יחיד, KPIs בשורה צפופה, גרפים ויומן ביקורת בטאבים נפרדים. מתאים לכוח משתמש שרוצה כל המידע ללא גלילה.
+      </div>
+
+      <!-- StatsPage Desktop — Compact -->
+      <div>
+        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">📊 Stats + Audit — Desktop (Option C, Single Screen)</h3>
+        <div class="border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+          <div class="flex h-[680px]">
+            <!-- Sidebar — compact dark -->
+            <div class="flex flex-col border-l border-gray-800" style="width:52px; background:#111827;">
+              <div class="p-2 border-b border-gray-700 flex items-center justify-center">
+                <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white text-xs font-bold">E</div>
+              </div>
+              <nav class="flex-1 p-1.5 space-y-1 flex flex-col items-center">
+                <div class="w-9 h-9 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-700 cursor-pointer" title="דשבורד">🏠</div>
+                <div class="w-9 h-9 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-700 cursor-pointer" title="הגשות">📋</div>
+                <div class="w-9 h-9 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-700 cursor-pointer" title="ישיבות">📅</div>
+                <div class="w-9 h-9 rounded-lg flex items-center justify-center bg-blue-600 text-white cursor-pointer" title="דוחות">📊</div>
+                <div class="w-9 h-9 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-700 cursor-pointer" title="משתמשים">👥</div>
+              </nav>
+              <div class="p-2 border-t border-gray-700 flex justify-center">
+                <div class="w-8 h-8 rounded-full bg-gray-600 text-white flex items-center justify-center text-xs font-bold">מ</div>
+              </div>
+            </div>
+
+            <!-- Main -->
+            <div class="flex-1 flex flex-col overflow-hidden bg-gray-900">
+              <!-- Header -->
+              <div class="px-4 py-3 border-b border-gray-700 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <h1 class="text-base font-bold text-white">דוחות וסטטיסטיקות</h1>
+                  <!-- Sub-tabs -->
+                  <div class="flex gap-1 bg-gray-800 rounded-lg p-0.5">
+                    <button class="text-xs px-3 py-1.5 rounded-md bg-blue-600 text-white font-semibold">📊 סטטיסטיקות</button>
+                    <button class="text-xs px-3 py-1.5 rounded-md text-gray-400 hover:text-white">🔍 יומן ביקורת</button>
+                  </div>
+                </div>
+                <button class="text-xs font-bold bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-1.5" style="min-height:36px">⬇ Excel</button>
+              </div>
+
+              <!-- KPI Strip -->
+              <div class="bg-gray-800 border-b border-gray-700 px-4 py-3 flex gap-4">
+                <div class="flex items-center gap-3 flex-1">
+                  <div class="text-center">
+                    <div class="text-xl font-bold text-white">127</div>
+                    <div class="text-xs text-gray-400">הגשות</div>
+                  </div>
+                  <div class="w-px bg-gray-600 h-8"></div>
+                  <div class="text-center">
+                    <div class="text-xl font-bold text-green-400">78%</div>
+                    <div class="text-xs text-gray-400">אישור</div>
+                  </div>
+                  <div class="w-px bg-gray-600 h-8"></div>
+                  <div class="text-center">
+                    <div class="text-xl font-bold text-blue-400">14.2</div>
+                    <div class="text-xs text-gray-400">יום טיפול</div>
+                  </div>
+                  <div class="w-px bg-gray-600 h-8"></div>
+                  <div class="text-center">
+                    <div class="text-xl font-bold text-green-400">94</div>
+                    <div class="text-xs text-gray-400">אושרו</div>
+                  </div>
+                  <div class="w-px bg-gray-600 h-8"></div>
+                  <div class="text-center">
+                    <div class="text-xl font-bold text-red-400">9</div>
+                    <div class="text-xs text-gray-400">נדחו</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Charts — 2 columns in dark mode -->
+              <div class="flex-1 overflow-auto p-4 grid grid-cols-2 gap-4">
+                <!-- Status bars -->
+                <div class="bg-gray-800 rounded-xl p-4">
+                  <h2 class="text-xs font-semibold text-gray-300 mb-3">הגשות לפי סטטוס</h2>
+                  <div class="flex items-end gap-2 h-28">
+                    <div class="flex flex-col items-center gap-1 flex-1">
+                      <span class="text-xs text-yellow-400">18</span>
+                      <div class="bar bg-yellow-400 w-full rounded-t" style="height:40px"></div>
+                      <span class="text-gray-500" style="font-size:9px">הוגש</span>
+                    </div>
+                    <div class="flex flex-col items-center gap-1 flex-1">
+                      <span class="text-xs text-blue-300">12</span>
+                      <div class="bar bg-blue-300 w-full rounded-t" style="height:27px"></div>
+                      <span class="text-gray-500" style="font-size:9px">טריאז׳</span>
+                    </div>
+                    <div class="flex flex-col items-center gap-1 flex-1">
+                      <span class="text-xs text-blue-400">23</span>
+                      <div class="bar bg-blue-500 w-full rounded-t" style="height:51px"></div>
+                      <span class="text-gray-500" style="font-size:9px">ביקורת</span>
+                    </div>
+                    <div class="flex flex-col items-center gap-1 flex-1">
+                      <span class="text-xs text-green-400">57</span>
+                      <div class="bar bg-green-500 w-full rounded-t" style="height:112px"></div>
+                      <span class="text-gray-500" style="font-size:9px">מאושר</span>
+                    </div>
+                    <div class="flex flex-col items-center gap-1 flex-1">
+                      <span class="text-xs text-red-400">9</span>
+                      <div class="bar bg-red-500 w-full rounded-t" style="height:20px"></div>
+                      <span class="text-gray-500" style="font-size:9px">נדחה</span>
+                    </div>
+                    <div class="flex flex-col items-center gap-1 flex-1">
+                      <span class="text-xs text-orange-400">8</span>
+                      <div class="bar bg-orange-500 w-full rounded-t" style="height:18px"></div>
+                      <span class="text-gray-500" style="font-size:9px">תיקון</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Monthly trend -->
+                <div class="bg-gray-800 rounded-xl p-4">
+                  <h2 class="text-xs font-semibold text-gray-300 mb-3">מגמה — 12 חודשים</h2>
+                  <svg viewBox="0 0 300 80" class="w-full h-24" preserveAspectRatio="none">
+                    <defs><linearGradient id="grad3" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3b82f6" stop-opacity="0.3"/><stop offset="100%" stop-color="#3b82f6" stop-opacity="0"/></linearGradient></defs>
+                    <polygon points="0,80 0,65 25,58 50,52 75,60 100,45 125,38 150,42 175,30 200,25 225,20 250,28 300,18 300,80" fill="url(#grad3)"/>
+                    <polyline points="0,65 25,58 50,52 75,60 100,45 125,38 150,42 175,30 200,25 225,20 250,28 300,18" fill="none" stroke="#3b82f6" stroke-width="2"/>
+                  </svg>
+                  <div class="flex justify-between text-gray-600 mt-1" style="font-size:9px">
+                    <span>מאי</span><span>יולי</span><span>ספט׳</span><span>נוב׳</span><span>ינו׳</span><span>מרץ</span>
+                  </div>
+                </div>
+
+                <!-- Track + combined -->
+                <div class="bg-gray-800 rounded-xl p-4 col-span-2">
+                  <h2 class="text-xs font-semibold text-gray-300 mb-3">פירוט מסלולים</h2>
+                  <div class="flex gap-8">
+                    <div class="flex-1 space-y-2.5">
+                      <div>
+                        <div class="flex justify-between text-xs text-gray-300 mb-1"><span>מסלול מלא</span><span>64 הגשות (50%)</span></div>
+                        <div class="w-full bg-gray-700 rounded-full h-2"><div class="h-2 rounded-full bg-blue-500" style="width:50%"></div></div>
+                      </div>
+                      <div>
+                        <div class="flex justify-between text-xs text-gray-300 mb-1"><span>מסלול מואץ</span><span>38 הגשות (30%)</span></div>
+                        <div class="w-full bg-gray-700 rounded-full h-2"><div class="h-2 rounded-full bg-green-500" style="width:30%"></div></div>
+                      </div>
+                      <div>
+                        <div class="flex justify-between text-xs text-gray-300 mb-1"><span>מסלול פטור</span><span>25 הגשות (20%)</span></div>
+                        <div class="w-full bg-gray-700 rounded-full h-2"><div class="h-2 rounded-full bg-amber-400" style="width:20%"></div></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AuditLog Mobile — Card Layout -->
+      <div>
+        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wide mb-3">📱 AuditLog Mobile — Card Collapse (Option C)</h3>
+        <div class="border border-gray-200 rounded-2xl overflow-hidden shadow-sm max-w-[375px] mx-auto">
+          <div class="flex flex-col h-[580px] bg-gray-900">
+            <div class="px-4 py-3 border-b border-gray-700 flex items-center justify-between">
+              <h1 class="text-sm font-bold text-white">יומן ביקורת</h1>
+              <div class="flex gap-1 bg-gray-800 rounded-lg p-0.5">
+                <button class="text-xs px-2 py-1 rounded text-gray-400">📊 סטטיסטיקות</button>
+                <button class="text-xs px-2 py-1 rounded bg-blue-600 text-white">🔍 יומן</button>
+              </div>
+            </div>
+            <!-- Filter strip -->
+            <div class="bg-gray-800 border-b border-gray-700 px-3 py-2 flex gap-2">
+              <input placeholder="חיפוש..." class="flex-1 text-xs bg-gray-700 text-white rounded-lg px-2 py-1.5 outline-none border border-gray-600"/>
+              <select class="text-xs bg-gray-700 text-white rounded-lg px-2 py-1.5 border border-gray-600">
+                <option>הכל</option>
+              </select>
+            </div>
+            <!-- Cards -->
+            <div class="flex-1 overflow-auto p-3 space-y-2">
+              <div class="bg-gray-800 rounded-xl p-3 border border-gray-700">
+                <div class="flex items-start justify-between mb-1">
+                  <span class="text-xs bg-green-900 text-green-400 px-2 py-0.5 rounded font-mono">SUBMISSION_APPROVED</span>
+                  <span class="text-xs text-gray-500">09:12</span>
+                </div>
+                <p class="text-xs text-white font-medium">שרה כהן</p>
+                <p class="text-xs text-gray-500">SUBMISSION • 192.168.1.5 • 14/04/2026</p>
+              </div>
+              <div class="bg-gray-800 rounded-xl p-3 border border-gray-700">
+                <div class="flex items-start justify-between mb-1">
+                  <span class="text-xs bg-blue-900 text-blue-400 px-2 py-0.5 rounded font-mono">REVIEW_SUBMITTED</span>
+                  <span class="text-xs text-gray-500">08:47</span>
+                </div>
+                <p class="text-xs text-white font-medium">אבי לוי</p>
+                <p class="text-xs text-gray-500">SUBMISSION • 10.0.0.2 • 14/04/2026</p>
+              </div>
+              <div class="bg-gray-800 rounded-xl p-3 border border-gray-700">
+                <div class="flex items-start justify-between mb-1">
+                  <span class="text-xs bg-amber-900 text-amber-400 px-2 py-0.5 rounded font-mono">USER_CREATED</span>
+                  <span class="text-xs text-gray-500">16:30</span>
+                </div>
+                <p class="text-xs text-white font-medium">מרים לוי</p>
+                <p class="text-xs text-gray-500">USER • 192.168.1.1 • 13/04/2026</p>
+              </div>
+              <div class="bg-gray-800 rounded-xl p-3 border border-gray-700">
+                <div class="flex items-start justify-between mb-1">
+                  <span class="text-xs bg-purple-900 text-purple-400 px-2 py-0.5 rounded font-mono">FORM_PUBLISHED</span>
+                  <span class="text-xs text-gray-500">14:15</span>
+                </div>
+                <p class="text-xs text-white font-medium">יוסי דוד</p>
+                <p class="text-xs text-gray-500">FORM • 10.0.0.5 • 13/04/2026</p>
+              </div>
+            </div>
+            <!-- Pagination -->
+            <div class="border-t border-gray-700 px-3 py-2.5 flex items-center justify-between">
+              <span class="text-xs text-gray-500">1–10 מתוך 342</span>
+              <div class="flex gap-1">
+                <button class="text-xs px-3 py-1.5 rounded border border-gray-600 text-gray-400" style="min-height:36px">הקודם</button>
+                <button class="text-xs px-3 py-1.5 rounded bg-blue-600 text-white" style="min-height:36px">הבא</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    function showTab(id, event) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => {
+        b.classList.remove('active');
+        b.classList.add('text-gray-500');
+      });
+      document.getElementById('tab-' + id).classList.add('active');
+      event.target.classList.add('active');
+      event.target.classList.remove('text-gray-500');
+    }
+  </script>
+</body>
+</html>
