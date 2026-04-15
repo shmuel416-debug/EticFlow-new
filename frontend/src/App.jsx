@@ -36,6 +36,7 @@ import ProtocolDetailPage         from './pages/protocols/ProtocolDetailPage'
 import ProtocolSignPage           from './pages/protocols/ProtocolSignPage'
 import StatsPage                  from './pages/reports/StatsPage'
 import AuditLogPage               from './pages/reports/AuditLogPage'
+import SettingsPage               from './pages/admin/SettingsPage'
 
 export default function App() {
   return (
@@ -57,7 +58,7 @@ export default function App() {
               <Route path="/submissions"     element={<PlaceholderPage pageKey="submissions" />} />
               <Route path="/meetings/:id"     element={<MeetingDetailPage />} />
               <Route path="/meetings"        element={<MeetingsPage />} />
-              <Route path="/settings"        element={<PlaceholderPage pageKey="settings" />} />
+              <Route path="/settings"        element={<SettingsPage />} />
               <Route path="/notifications"   element={<NotificationsPage />} />
 
               {/* Protocols — SECRETARY, CHAIRMAN, ADMIN */}

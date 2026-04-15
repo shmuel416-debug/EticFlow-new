@@ -156,26 +156,26 @@ export default function AuditLogPage() {
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-gray-500 font-medium">מתאריך</label>
+          <label className="text-xs text-gray-500 font-medium">{t('auditLog.dateFrom')}</label>
           <input
             type="date"
             value={dateFromFilter}
             onChange={handleFilterChange(setDateFromFilter)}
             className={inputClass}
             style={inputStyle}
-            aria-label="מתאריך"
+            aria-label={t('auditLog.dateFrom')}
           />
         </div>
 
         <div className="flex flex-col gap-1">
-          <label className="text-xs text-gray-500 font-medium">עד תאריך</label>
+          <label className="text-xs text-gray-500 font-medium">{t('auditLog.dateTo')}</label>
           <input
             type="date"
             value={dateToFilter}
             onChange={handleFilterChange(setDateToFilter)}
             className={inputClass}
             style={inputStyle}
-            aria-label="עד תאריך"
+            aria-label={t('auditLog.dateTo')}
           />
         </div>
 
@@ -184,7 +184,7 @@ export default function AuditLogPage() {
             onClick={() => { setActionFilter(''); setEntityTypeFilter(''); setDateFromFilter(''); setDateToFilter(''); setPage(1) }}
             className="text-xs text-gray-500 hover:text-red-600 transition-colors self-end pb-2"
           >
-            נקה סינון
+            {t('auditLog.clearFilter')}
           </button>
         )}
       </div>

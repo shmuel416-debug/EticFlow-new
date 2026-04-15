@@ -13,12 +13,12 @@ import api from '../../services/api'
 
 /** Submission status colours for the bar chart */
 const STATUS_BARS = [
-  { key: 'SUBMITTED',        labelKey: 'submissions.status.SUBMITTED',        color: '#f59e0b' },
-  { key: 'IN_TRIAGE',        labelKey: 'submissions.status.IN_TRIAGE',        color: '#93c5fd' },
-  { key: 'IN_REVIEW',        labelKey: 'submissions.status.IN_REVIEW',        color: '#3b82f6' },
-  { key: 'APPROVED',         labelKey: 'submissions.status.APPROVED',         color: '#10b981' },
-  { key: 'REJECTED',         labelKey: 'submissions.status.REJECTED',         color: '#f87171' },
-  { key: 'PENDING_REVISION', labelKey: 'submissions.status.PENDING_REVISION', color: '#fb923c' },
+  { key: 'SUBMITTED',        labelKey: 'submission.status.SUBMITTED',        color: '#f59e0b' },
+  { key: 'IN_TRIAGE',        labelKey: 'submission.status.IN_TRIAGE',        color: '#93c5fd' },
+  { key: 'IN_REVIEW',        labelKey: 'submission.status.IN_REVIEW',        color: '#3b82f6' },
+  { key: 'APPROVED',         labelKey: 'submission.status.APPROVED',         color: '#10b981' },
+  { key: 'REJECTED',         labelKey: 'submission.status.REJECTED',         color: '#f87171' },
+  { key: 'PENDING_REVISION', labelKey: 'submission.status.PENDING_REVISION', color: '#fb923c' },
 ]
 
 /** Track colours */
@@ -28,11 +28,11 @@ const TRACK_COLORS = {
   EXEMPT:    '#f59e0b',
 }
 
-/** Track display labels */
-const TRACK_LABELS = {
-  FULL:      'מסלול מלא',
-  EXPEDITED: 'מסלול מואץ',
-  EXEMPT:    'מסלול פטור',
+/** Track i18n keys */
+const TRACK_LABEL_KEYS = {
+  FULL:      'submission.tracks.FULL',
+  EXPEDITED: 'submission.tracks.EXPEDITED',
+  EXEMPT:    'submission.tracks.EXEMPT',
 }
 
 /**
@@ -90,15 +90,16 @@ function StatusBarChart({ byStatus }) {
  * @param {{ byTrack: object, total: number }} props
  */
 function TrackBreakdown({ byTrack, total }) {
+  const { t } = useTranslation()
   return (
     <div className="space-y-3">
-      {Object.entries(TRACK_LABELS).map(([key, label]) => {
+      {Object.entries(TRACK_LABEL_KEYS).map(([key, labelKey]) => {
         const count = byTrack[key] ?? 0
         const pct   = total > 0 ? Math.round((count / total) * 100) : 0
         return (
           <div key={key}>
             <div className="flex justify-between text-xs mb-1">
-              <span className="font-semibold text-gray-700">{label}</span>
+              <span className="font-semibold text-gray-700">{t(labelKey)}</span>
               <span className="text-gray-500">{count} ({pct}%)</span>
             </div>
             <div
@@ -227,12 +228,16 @@ export default function StatsPage() {
     }
   }
 
-  // ── Derived values ───────────────────────────────
+  // ── Derived values — convert API arrays to keyed maps ───────────────
 
-  const byStatus  = stats?.byStatus  ?? {}
-  const byTrack   = stats?.byTrack   ?? {}
-  const monthly   = stats?.monthly   ?? []
-  const total     = Object.values(byStatus).reduce((s, v) => s + v, 0)
+  const byStatus = Object.fromEntries(
+    (stats?.byStatus ?? []).map(r => [r.status, r.count])
+  )
+  const byTrack = Object.fromEntries(
+    (stats?.byTrack ?? []).map(r => [r.track, r.count])
+  )
+  const monthly = stats?.monthlyTrend ?? []
+  const total   = Object.values(byStatus).reduce((s, v) => s + v, 0)
 
   const approvalRate = stats
     ? (stats.approvalRate ?? 0).toFixed(0) + '%'

@@ -149,6 +149,11 @@
       "WITHDRAWN":        "Withdrawn",
       "CONTINUED":        "Continued"
     },
+    "tracks": {
+      "FULL":      "Full Track",
+      "EXPEDITED": "Expedited Track",
+      "EXEMPT":    "Exempt Track"
+    },
     "list": {
       "pageTitle":         "Submission Management",
       "searchPlaceholder": "Search by title or ID...",
@@ -652,6 +657,9 @@
     "time":          "Time",
     "filterAction":  "Filter by action",
     "filterEntity":  "Filter by entity",
+    "dateFrom":      "From date",
+    "dateTo":        "To date",
+    "clearFilter":   "Clear filters",
     "noLogs":        "No log entries found",
     "loading":       "Loading audit log...",
     "system":        "System"

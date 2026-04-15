@@ -14,6 +14,7 @@
 | 2026-04-15 | Phase 4 Frontend — StatsPage | ✅ Done | Option B: navy gradient header, KPI cards, bar chart, track breakdown, line chart, XLSX export |
 | 2026-04-15 | Phase 4 Frontend — AuditLogPage | ✅ Done | Paginated table + mobile cards, filters: action/entityType/dateRange, ADMIN only |
 | 2026-04-15 | Phase 4 Frontend — routing + sidebar | ✅ Done | /reports → StatsPage, /reports/audit-log → AuditLogPage, auditLog sub-link in sidebar |
+| 2026-04-15 | Phase 5 Frontend — SettingsPage | ✅ Done | 4 groups (Institution/SLA/Files/Email), inline-edit + per-section Save, Lev navy header, non-admin lock screen |
 
 ## Sprint 5 — Secretary Dashboard + Meetings + Admin Users + Impersonation
 

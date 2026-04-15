@@ -149,6 +149,11 @@
       "WITHDRAWN":        "בוטל",
       "CONTINUED":        "המשך"
     },
+    "tracks": {
+      "FULL":      "מסלול מלא",
+      "EXPEDITED": "מסלול מואץ",
+      "EXEMPT":    "מסלול פטור"
+    },
     "list": {
       "pageTitle":         "ניהול הגשות",
       "searchPlaceholder": "חיפוש לפי כותרת או מספר...",
@@ -652,6 +657,9 @@
     "time":          "זמן",
     "filterAction":  "סנן לפי פעולה",
     "filterEntity":  "סנן לפי סוג",
+    "dateFrom":      "מתאריך",
+    "dateTo":        "עד תאריך",
+    "clearFilter":   "נקה סינון",
     "noLogs":        "לא נמצאו רשומות",
     "loading":       "טוען יומן...",
     "system":        "מערכת"

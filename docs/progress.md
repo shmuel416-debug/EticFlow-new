@@ -161,3 +161,53 @@
 ### Phase 6 — i18n + Sprint End
 - [x] `he.json` + `en.json` — admin.* and meetings.* namespaces + lowercase role aliases
 - [x] Sprint-end pipeline → tag v0.5.0
+
+---
+
+## Current Sprint: Sprint 6 — Protocols + Statistics + Settings + v1.0
+**Status:** 🔄 In Progress | **Tag:** —
+
+### Phase 1 — Protocol System Backend (S6.1)
+- [x] `protocols.controller.js` — 8 endpoints: list, create, getById, update, finalize, requestSignatures, signByToken (public), getSignInfo, getPdf
+- [x] `protocols.routes.js` — authenticated router + public `publicSignRouter`
+- [x] `pdf.service.js` — added `generateProtocolPdf()` with A4 layout, sections, signature page
+- [x] `index.js` — registered `/api/protocols` + `/api/protocol` (public)
+
+### Phase 2 — Protocol Pages Frontend (S6.1)
+- [x] `ProtocolsListPage.jsx` — filter tabs (ALL/DRAFT/PENDING_SIGNATURES/SIGNED/ARCHIVED), signature progress bar per row
+- [x] `ProtocolDetailPage.jsx` — sections editor, finalize dialog, signature request modal, PDF download
+- [x] `ProtocolSignPage.jsx` — public token page (no auth), Sign/Decline buttons, error states
+- [x] `App.jsx` — added protocol routes + public /protocol/sign/:token
+- [x] `Sidebar.jsx` — Protocols nav item (SECRETARY, CHAIRMAN, ADMIN)
+- [x] `he.json` + `en.json` — full `protocols.*` namespace (40+ keys)
+
+### Phase 3 — Statistics + Export Backend (S6.3)
+- [x] `reports.controller.js` — getStats (byStatus, byTrack, monthly trend, rates), exportSubmissions (ExcelJS XLSX streaming), getAuditLogs (paginated + filterable)
+- [x] `reports.routes.js` — /api/reports/stats, /api/reports/export/submissions, /api/audit-logs
+
+### Phase 4 — Statistics Frontend (S6.3)
+- [x] UI/UX design — Option B + Lev palette chosen — `docs/designs/stats-reports-design.html`
+- [x] `StatsPage.jsx` — navy gradient header, 4 KPI cards, CSS bar chart, track bars, SVG line chart, XLSX export
+- [x] `AuditLogPage.jsx` — filter bar (action/entity/date), desktop table + mobile cards, pagination
+- [x] `App.jsx` — /reports → StatsPage, /reports/audit-log → AuditLogPage
+- [x] `Sidebar.jsx` — auditLog indented sub-link (ADMIN only)
+
+### Phase 5 — Institution Settings (S6.4)
+- [x] `settings.controller.js` — list + update, ALLOWED_KEYS allowlist
+- [x] `settings.routes.js` — ADMIN-only GET/PUT /api/settings/:key
+- [x] `SettingsPage.jsx` — 4 grouped sections, inline-edit + per-section Save, dirty-check, toast feedback
+- [x] `App.jsx` — /settings → SettingsPage (non-admins see lock screen)
+
+### Phase 6 — Production Readiness (S6.5)
+- [x] `setup.sh` — interactive wizard (institution, DB, JWT, email, admin user)
+- [x] `docs/DEPLOYMENT.md` — step-by-step deployment guide
+- [x] `docs/NEW_INSTITUTION.md` — onboarding guide for new customers
+- [x] `npm audit` — 0 vulnerabilities (backend + frontend)
+- [x] `docker-compose.prod.yml` — verified structure
+
+### Phase 7 — Sprint End Pipeline (S6.9)
+- [ ] `/code-review` — all new Sprint 6 files
+- [ ] `/qa-senior` — full regression
+- [ ] `/accessibility-expert` — ProtocolSignPage, StatsPage, SettingsPage
+- [ ] `/security-audit` — protocol tokens, public sign endpoint, XLSX export
+- [ ] Tag `v1.0.0`

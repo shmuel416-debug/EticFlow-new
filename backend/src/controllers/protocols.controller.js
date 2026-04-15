@@ -283,14 +283,18 @@ export async function requestSignatures(req, res, next) {
     })
 
     const frontendUrl = process.env.FRONTEND_URL ?? 'http://localhost:5173'
+
+    // Fetch all existing signature records in one query — avoids N+1
+    const existingSigs = await prisma.protocolSignature.findMany({
+      where:  { protocolId: id, userId: { in: signers.map(s => s.id) } },
+      select: { userId: true },
+    })
+    const alreadySigned = new Set(existingSigs.map(s => s.userId))
+
     const created = []
 
     for (const signer of signers) {
-      // Skip if already has an active record
-      const existing = await prisma.protocolSignature.findUnique({
-        where: { protocolId_userId: { protocolId: id, userId: signer.id } },
-      })
-      if (existing) continue
+      if (alreadySigned.has(signer.id)) continue
 
       const token      = crypto.randomBytes(32).toString('hex')
       const tokenExpiry = new Date(Date.now() + TOKEN_TTL_HOURS * 60 * 60 * 1000)
