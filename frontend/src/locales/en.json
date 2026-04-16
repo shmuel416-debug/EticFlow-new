@@ -46,9 +46,10 @@
       "orDivider": "or"
     },
     "loginWithMicrosoft": "Sign in with Microsoft",
+    "loginWithGoogle": "Sign in with Google",
     "ssoLoading": "Verifying identity, please wait...",
-    "ssoCancelled": "Microsoft sign-in was cancelled.",
-    "ssoFailed": "An error occurred signing in with Microsoft. Please try again.",
+    "ssoCancelled": "Sign-in was cancelled.",
+    "ssoFailed": "An error occurred during sign-in. Please try again.",
     "ssoEmailConflict": "An account with this email already exists. Please sign in with email and password.",
     "accountInactive": "This account is inactive. Please contact your administrator.",
     "forgotPassword": {

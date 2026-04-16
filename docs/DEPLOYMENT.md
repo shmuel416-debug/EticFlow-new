@@ -201,3 +201,102 @@ MICROSOFT_AUTH_REDIRECT_URI=https://yourdomain.com/api/auth/microsoft/callback
 **First-time SSO users:** Created automatically as `RESEARCHER` role. Admin can promote via Users page.
 
 **Email conflict:** If the email already exists with local password auth, the user sees a Hebrew error and is asked to use email/password instead.
+
+---
+
+## Google Integration Setup
+
+All three Google integrations are **opt-in** and independent. The system works without any Google credentials.
+
+### Prerequisites: Google Cloud Project
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project (e.g. "EthicFlow")
+3. Enable the APIs you need (Calendar API, Gmail API, Google+ API)
+
+---
+
+### Google Calendar Sync
+
+**When to use:** Create meetings in EthicFlow → they automatically appear in Google Calendar with attendee invites.
+
+**Setup:**
+1. Google Cloud Console → IAM & Admin → Service Accounts → Create Service Account
+2. Grant role: "Service Account Token Creator"
+3. Keys tab → Add Key → JSON → download file
+4. Share your Google Calendar with the service account email (give "Make changes to events" permission)
+5. For Google Workspace + domain-wide delegation: enable it in the service account + authorize `https://www.googleapis.com/auth/calendar` scope
+
+```env
+CALENDAR_PROVIDER=google
+GOOGLE_SERVICE_ACCOUNT_JSON={"type":"service_account","project_id":"..."}   # inline JSON
+# OR
+GOOGLE_CALENDAR_CREDENTIALS=/secrets/google-calendar.json                   # file path
+GOOGLE_CALENDAR_ID=ethics@institution.ac.il                                  # or 'primary'
+GOOGLE_CALENDAR_IMPERSONATE=ethics@institution.ac.il                         # Workspace only
+```
+
+---
+
+### Gmail API (Organizational Email)
+
+**When to use:** Send system emails (password reset, notifications) from your institution's Gmail address.
+
+**Setup:**
+1. Google Cloud Console → Enable Gmail API
+2. APIs & Services → Credentials → Create OAuth 2.0 Client ID → Desktop app
+3. Download the `credentials.json` file
+4. Generate a refresh token (one-time, offline):
+   ```bash
+   # From backend directory:
+   node -e "
+   const { google } = require('googleapis');
+   const c = new google.auth.OAuth2(process.env.GMAIL_CLIENT_ID, process.env.GMAIL_CLIENT_SECRET, 'urn:ietf:wg:oauth:2.0:oob');
+   console.log(c.generateAuthUrl({ access_type: 'offline', scope: ['https://www.googleapis.com/auth/gmail.send'] }));
+   "
+   # Open the URL → authorize → copy the code → run:
+   node -e "
+   const { google } = require('googleapis');
+   const c = new google.auth.OAuth2(process.env.GMAIL_CLIENT_ID, process.env.GMAIL_CLIENT_SECRET, 'urn:ietf:wg:oauth:2.0:oob');
+   c.getToken('PASTE_CODE_HERE').then(r => console.log(r.tokens.refresh_token));
+   "
+   ```
+
+```env
+EMAIL_PROVIDER=gmail
+GMAIL_CLIENT_ID=<OAuth2 Client ID>
+GMAIL_CLIENT_SECRET=<OAuth2 Client Secret>
+GMAIL_REFRESH_TOKEN=<Refresh Token from above>
+SMTP_FROM=ethics@institution.ac.il
+SMTP_FROM_NAME=ועדת אתיקה
+```
+
+---
+
+### Google SSO (Login with Google)
+
+**When to use:** Let users sign in with their Google / Google Workspace account. Useful for institutions using Google Workspace for Education.
+
+**Setup:**
+1. Google Cloud Console → APIs & Services → Credentials → Create OAuth 2.0 Client ID → **Web application**
+2. Authorized redirect URIs:
+   - Dev: `http://localhost:5000/api/auth/google/callback`
+   - Prod: `https://yourdomain.com/api/auth/google/callback`
+3. (Optional) Restrict to your Google Workspace domain via `GOOGLE_AUTH_ALLOWED_DOMAIN`
+
+```env
+GOOGLE_AUTH_CLIENT_ID=<Web Client ID>
+GOOGLE_AUTH_CLIENT_SECRET=<Web Client Secret>
+GOOGLE_AUTH_REDIRECT_URI=https://yourdomain.com/api/auth/google/callback
+GOOGLE_AUTH_ALLOWED_DOMAIN=lev.ac.il    # leave empty for any Google account
+```
+
+**How it works:**
+1. User clicks "כניסה עם Google" on the login page
+2. Redirected to `GET /api/auth/google` → redirects to Google OAuth consent screen
+3. Google redirects to `/api/auth/google/callback?code=...`
+4. Backend exchanges code → gets user profile → creates/finds user → returns JWT
+5. User redirected to `/sso-callback?token=...` → stored in memory → to dashboard
+
+**First-time SSO users:** Created automatically as `RESEARCHER` role. Admin can promote via Users page.
+
+**Email conflict:** If the email already exists (local or Microsoft SSO), the user sees a Hebrew error and is asked to use the original login method.

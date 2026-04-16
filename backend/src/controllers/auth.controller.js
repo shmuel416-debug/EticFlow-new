@@ -12,6 +12,7 @@ import authConfig from '../config/auth.js'
 import { AppError } from '../utils/errors.js'
 import { sendEmail } from '../services/email/email.service.js'
 import * as microsoftAuth from '../services/auth/microsoft.provider.js'
+import * as googleAuth    from '../services/auth/google.provider.js'
 
 // ─────────────────────────────────────────────
 // CONSTANTS
@@ -244,6 +245,109 @@ async function findOrCreateMicrosoftUser({ externalId, email, fullName }) {
 // ─────────────────────────────────────────────
 // MICROSOFT SSO
 // ─────────────────────────────────────────────
+
+// ─────────────────────────────────────────────
+// GOOGLE SSO HELPERS
+// ─────────────────────────────────────────────
+
+/**
+ * Finds an existing user by Google externalId or email, or creates a new one.
+ * Returns null if there is an email conflict with a LOCAL or MICROSOFT account.
+ * @param {{ externalId: string, email: string, fullName: string }} profile - Google profile
+ * @returns {Promise<{ user: object|null, conflict: boolean }>}
+ */
+async function findOrCreateGoogleUser({ externalId, email, fullName }) {
+  const existing = await prisma.user.findFirst({
+    where: { OR: [{ externalId }, { email }] },
+  })
+
+  if (existing) {
+    if (existing.authProvider !== 'GOOGLE') return { user: null, conflict: true }
+    const user = existing.fullName !== fullName
+      ? await prisma.user.update({ where: { id: existing.id }, data: { fullName, externalId } })
+      : existing
+    return { user, conflict: false }
+  }
+
+  const user = await prisma.user.create({
+    data: { email, fullName, externalId, authProvider: 'GOOGLE', role: 'RESEARCHER', isActive: true, passwordHash: null },
+  })
+  return { user, conflict: false }
+}
+
+// ─────────────────────────────────────────────
+// GOOGLE SSO
+// ─────────────────────────────────────────────
+
+/**
+ * GET /api/auth/google
+ * Generates a Google OAuth2 login URL and redirects the user.
+ * Stores a CSRF-prevention state token in a short-lived httpOnly cookie.
+ * @param {import('express').Request}  req
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
+export async function googleRedirect(req, res, next) {
+  try {
+    const state   = crypto.randomBytes(16).toString('hex')
+    const authUrl = googleAuth.getAuthUrl(state)
+
+    res.cookie('g_oauth_state', state, {
+      httpOnly: true,
+      secure:   process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge:   60 * 1000,
+    })
+
+    res.redirect(authUrl)
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
+ * GET /api/auth/google/callback
+ * Handles the Google OAuth2 callback, exchanges the code for a profile,
+ * creates or retrieves the user, then redirects to frontend with a JWT.
+ * @param {import('express').Request}  req - query: { code, state, error? }
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
+export async function googleCallback(req, res, next) {
+  const frontendUrl = process.env.FRONTEND_URL ?? 'http://localhost:5173'
+
+  try {
+    const { code, state, error } = req.query
+
+    if (error) {
+      return res.redirect(`${frontendUrl}/login?error=sso_cancelled`)
+    }
+
+    const savedState = req.cookies?.g_oauth_state
+    res.clearCookie('g_oauth_state')
+
+    if (!savedState || savedState !== state) {
+      return res.redirect(`${frontendUrl}/login?error=sso_state_mismatch`)
+    }
+
+    const profile = await googleAuth.exchangeCode(code)
+    if (!profile.email) {
+      return res.redirect(`${frontendUrl}/login?error=sso_no_email`)
+    }
+
+    const { user, conflict } = await findOrCreateGoogleUser(profile)
+    if (conflict) return res.redirect(`${frontendUrl}/login?error=sso_email_conflict`)
+    if (!user || !user.isActive) return res.redirect(`${frontendUrl}/login?error=account_inactive`)
+
+    res.locals.entityId = user.id
+    const token = signToken(user)
+
+    res.redirect(`${frontendUrl}/sso-callback?token=${token}`)
+  } catch (err) {
+    console.error('[Auth/Google] callback error:', err.message)
+    res.redirect(`${frontendUrl}/login?error=sso_failed`)
+  }
+}
 
 /**
  * GET /api/auth/microsoft

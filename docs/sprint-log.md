@@ -1,5 +1,21 @@
 # EthicFlow — Sprint Log
 
+## Sprint 8 — Google Integration (Calendar + Gmail + SSO)
+
+| Date | Task | Status | Notes |
+|------|------|--------|-------|
+| 2026-04-16 | Install googleapis package | ✅ Done | `npm install googleapis` — 0 vulnerabilities |
+| 2026-04-16 | P2.2.1 — Google Calendar Provider | ✅ Done | google.provider.js (Calendar API v3, service account auth, createEvent/updateEvent/deleteEvent, attendee invites, domain-wide delegation support), registered in calendar.service.js factory |
+| 2026-04-16 | P2.2.2 — Gmail Email Provider | ✅ Done | gmail.provider.js (Gmail API, OAuth2 refresh-token flow, RFC-2822 base64url, UTF-8 Hebrew support), registered in email.service.js factory |
+| 2026-04-16 | P2.2.3 — Google SSO provider | ✅ Done | google.provider.js (googleapis OAuth2, getAuthUrl + exchangeCode + userinfo.get, optional domain restriction) |
+| 2026-04-16 | P2.2.3 — auth.controller.js Google SSO | ✅ Done | googleRedirect (state cookie g_oauth_state), googleCallback (validate state, findOrCreateGoogleUser, JWT redirect), findOrCreateGoogleUser helper |
+| 2026-04-16 | P2.2.3 — auth.routes.js | ✅ Done | GET /api/auth/google + GET /api/auth/google/callback + auditLog |
+| 2026-04-16 — LoginPage.jsx Google button | ✅ Done | Google SVG logo (brand 4-color), "כניסה עם Google", 44px touch target, below Microsoft button |
+| 2026-04-16 | i18n keys | ✅ Done | auth.loginWithGoogle (he+en), SSO error keys made provider-agnostic |
+| 2026-04-16 | Phase 4 — Docs | ✅ Done | .env.example fully documented, DEPLOYMENT.md Google Integration Setup section (Calendar, Gmail, SSO) |
+| 2026-04-16 | Build check | ✅ Done | Frontend build passes (166 modules, 0 errors) |
+| 2026-04-16 | Tag v0.8.0 | ✅ Done | All 3 Google integrations opt-in, graceful degradation, backward-compatible |
+
 ## Sprint 7 — Microsoft Integration (Email + Calendar + SSO)
 
 | Date | Task | Status | Notes |

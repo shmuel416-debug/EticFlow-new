@@ -7,6 +7,8 @@
  * POST /api/auth/reset-password        — apply new password via token
  * GET  /api/auth/microsoft             — redirect to Microsoft login (SSO)
  * GET  /api/auth/microsoft/callback    — handle Microsoft OAuth2 callback
+ * GET  /api/auth/google                — redirect to Google login (SSO)
+ * GET  /api/auth/google/callback       — handle Google OAuth2 callback
  */
 
 import { Router } from 'express'
@@ -76,5 +78,9 @@ router.post(
 // Microsoft SSO — no body validation needed (query params handled in controller)
 router.get('/microsoft',          controller.microsoftRedirect)
 router.get('/microsoft/callback', controller.microsoftCallback, auditLog('auth.sso.microsoft', 'User'))
+
+// Google SSO — no body validation needed (query params handled in controller)
+router.get('/google',          controller.googleRedirect)
+router.get('/google/callback', controller.googleCallback, auditLog('auth.sso.google', 'User'))
 
 export default router

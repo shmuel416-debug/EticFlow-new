@@ -214,6 +214,36 @@
 
 ---
 
+## Current Sprint: Sprint 8 — Google Integration
+**Status:** ✅ Complete | **Tag:** v0.8.0
+
+### Phase 1 — Google Calendar Provider
+- [x] `backend/src/services/calendar/google.provider.js` — Google Calendar API v3 (service account, createEvent/updateEvent/deleteEvent, attendee invites)
+- [x] `backend/src/services/calendar/calendar.service.js` — registered `google` provider in factory map
+
+### Phase 2 — Gmail Email Provider
+- [x] `backend/src/services/email/gmail.provider.js` — Gmail API OAuth2 refresh-token flow, RFC-2822 base64url encoding, UTF-8 Hebrew subject/from support
+- [x] `backend/src/services/email/email.service.js` — registered `gmail` provider in factory map
+
+### Phase 3 — Google SSO
+- [x] `backend/src/services/auth/google.provider.js` — Google OAuth2 getAuthUrl + exchangeCode + userinfo, optional domain restriction
+- [x] `backend/src/controllers/auth.controller.js` — googleRedirect (state cookie), googleCallback (validate state, find/create user, JWT redirect), findOrCreateGoogleUser helper
+- [x] `backend/src/routes/auth.routes.js` — GET /api/auth/google + GET /api/auth/google/callback + auditLog
+- [x] `frontend/src/pages/LoginPage.jsx` — Google SSO button (brand colors SVG logo, 44px), below Microsoft button
+- [x] `frontend/src/locales/he.json` + `en.json` — auth.loginWithGoogle + updated SSO error keys (provider-agnostic)
+
+### Phase 4 — Docs Update
+- [x] `.env.example` — documented all GOOGLE_CALENDAR_*, GMAIL_*, GOOGLE_AUTH_* vars
+- [x] `docs/DEPLOYMENT.md` — "Google Integration Setup" section (Calendar, Gmail, SSO subsections)
+
+🔍 **Preview targets:**
+- Calendar: `CALENDAR_PROVIDER=google` → create meeting → event in Google Calendar with attendees
+- Email: `EMAIL_PROVIDER=gmail` → trigger password reset → email arrives via Gmail
+- SSO: click "כניסה עם Google" → Google OAuth → return to EthicFlow dashboard
+- Conflict: Google SSO with LOCAL/Microsoft-account email → Hebrew error on LoginPage
+
+---
+
 ## Current Sprint: Sprint 7 — Microsoft Integration
 **Status:** ✅ Complete | **Tag:** v0.7.0
 

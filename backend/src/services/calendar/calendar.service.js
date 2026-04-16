@@ -15,11 +15,13 @@
 import { getCalendarProvider } from '../../config/services.js'
 import * as internalProvider  from './internal.provider.js'
 import * as microsoftProvider from './microsoft.provider.js'
+import * as googleProvider    from './google.provider.js'
 
 /** @type {Record<string, object>} */
 const providers = {
   internal:  internalProvider,
   microsoft: microsoftProvider,
+  google:    googleProvider,
 }
 
 /**

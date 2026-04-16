@@ -46,9 +46,10 @@
       "orDivider": "או"
     },
     "loginWithMicrosoft": "כניסה עם Microsoft",
+    "loginWithGoogle": "כניסה עם Google",
     "ssoLoading": "מאמת זהות, אנא המתן...",
-    "ssoCancelled": "הכניסה עם Microsoft בוטלה.",
-    "ssoFailed": "אירעה שגיאה בכניסה עם Microsoft. נסה שוב.",
+    "ssoCancelled": "הכניסה בוטלה.",
+    "ssoFailed": "אירעה שגיאה בכניסה. נסה שוב.",
     "ssoEmailConflict": "קיים חשבון עם כתובת מייל זו. התחבר עם שם משתמש וסיסמה.",
     "accountInactive": "החשבון אינו פעיל. צור קשר עם מנהל המערכת.",
     "forgotPassword": {
