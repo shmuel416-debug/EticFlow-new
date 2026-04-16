@@ -1,5 +1,26 @@
 # EthicFlow — Sprint Log
 
+## Sprint 7 — Microsoft Integration (Email + Calendar + SSO)
+
+| Date | Task | Status | Notes |
+|------|------|--------|-------|
+| 2026-04-16 | Phase 1 — Microsoft Email Provider | ✅ Done | microsoft.provider.js (Graph API, ClientSecretCredential, cached client), registered in email.service.js factory |
+| 2026-04-16 | Phase 2 — Calendar Service factory | ✅ Done | calendar.service.js (createEvent/updateEvent/deleteEvent), internal.provider.js (no-op default) |
+| 2026-04-16 | Phase 2 — Microsoft Calendar Provider | ✅ Done | microsoft.provider.js (Graph API Outlook events), graceful degradation on failure |
+| 2026-04-16 | Phase 2 — Prisma schema migration | ✅ Done | externalCalendarId added to Meeting model; migrate when Docker available |
+| 2026-04-16 | Phase 2 — meetings.controller.js wiring | ✅ Done | syncCreate/Update/Delete helpers extracted (≤30 lines), wired into create/update/cancel |
+| 2026-04-16 | Phase 3 — Microsoft SSO provider | ✅ Done | @azure/msal-node ConfidentialClientApplication, getAuthUrl + exchangeCode + Graph /me |
+| 2026-04-16 | Phase 3 — auth.controller.js SSO | ✅ Done | microsoftRedirect (state cookie), microsoftCallback (validate state, find/create user, JWT redirect), findOrCreateMicrosoftUser helper |
+| 2026-04-16 | Phase 3 — auth.routes.js | ✅ Done | GET /api/auth/microsoft + GET /api/auth/microsoft/callback + auditLog |
+| 2026-04-16 | Phase 3 — cookie-parser | ✅ Done | installed + wired in index.js for httpOnly state cookie |
+| 2026-04-16 | Phase 3 — SsoCallbackPage.jsx | ✅ Done | loginWithToken from AuthContext, error→i18n mapping, loading spinner (WCAG aria-live) |
+| 2026-04-16 | Phase 3 — LoginPage.jsx | ✅ Done | Microsoft SSO button (brand #0078D4, SVG logo, 44px), OR divider, ssoError query param display |
+| 2026-04-16 | Phase 3 — AuthContext.jsx | ✅ Done | loginWithToken + decodePayload (no external dependency), exposed in context value |
+| 2026-04-16 | Phase 3 — App.jsx + i18n | ✅ Done | /sso-callback public route, auth.loginWithMicrosoft + SSO error keys (he + en) |
+| 2026-04-16 | Phase 4 — Docs | ✅ Done | .env.example fully documented, DEPLOYMENT.md Microsoft Integration Setup section |
+| 2026-04-16 | Sprint 7 pipeline — build check | ✅ Done | Frontend build passes (166 modules, 0 errors). Fixed: useAuth import path, loginWithToken method name |
+| 2026-04-16 | Tag v0.7.0 | ✅ Done | All 3 Microsoft integrations opt-in, graceful degradation, backward-compatible |
+
 ## Sprint 6 — Protocol System + Statistics + Settings + v1.0
 
 | Date | Task | Status | Notes |

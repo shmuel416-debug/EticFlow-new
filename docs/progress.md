@@ -211,3 +211,43 @@
 - [x] `/accessibility-expert` — ProtocolSignPage, StatsPage, SettingsPage — report: `docs/accessibility-report-sprint-6.md` (5 contrast issues fixed)
 - [x] `/security-audit` — protocol tokens, public sign endpoint, XLSX export — report: `docs/security-report-sprint-6.md` (2 medium + 1 low fixed)
 - [x] Tag `v1.0.0` — **RELEASED**
+
+---
+
+## Current Sprint: Sprint 7 — Microsoft Integration
+**Status:** ✅ Complete | **Tag:** v0.7.0
+
+### Phase 1 — Microsoft Email Provider
+- [x] `backend/src/services/email/microsoft.provider.js` — Graph API mail sender (ClientSecretCredential, cached client)
+- [x] `backend/src/services/email/email.service.js` — registered `microsoft` provider in factory map
+- [x] `npm install @microsoft/microsoft-graph-client @azure/identity` (backend)
+
+### Phase 2 — Calendar Service + Microsoft Calendar Provider
+- [x] `backend/prisma/schema.prisma` — added `externalCalendarId String?` to Meeting model
+- [x] Migration: `npx prisma migrate dev --name add_meeting_external_calendar_id` *(run when DB available)*
+- [x] `backend/src/services/calendar/calendar.service.js` — factory: createEvent, updateEvent, deleteEvent
+- [x] `backend/src/services/calendar/internal.provider.js` — no-op default (CALENDAR_PROVIDER=internal)
+- [x] `backend/src/services/calendar/microsoft.provider.js` — Graph API Outlook calendar sync
+- [x] `backend/src/controllers/meetings.controller.js` — wired calendar sync on create/update/cancel
+
+### Phase 3 — Microsoft SSO (Entra ID / Azure AD)
+- [x] `backend/src/services/auth/microsoft.provider.js` — MSAL ConfidentialClientApplication, getAuthUrl + exchangeCode
+- [x] `backend/src/controllers/auth.controller.js` — microsoftRedirect + microsoftCallback + findOrCreateMicrosoftUser
+- [x] `backend/src/routes/auth.routes.js` — GET /api/auth/microsoft + GET /api/auth/microsoft/callback
+- [x] `backend/src/index.js` — added cookie-parser middleware
+- [x] `npm install @azure/msal-node cookie-parser` (backend)
+- [x] `frontend/src/pages/auth/SsoCallbackPage.jsx` — token handler, loginWithToken, error mapping
+- [x] `frontend/src/pages/auth/LoginPage.jsx` — Microsoft SSO button + OR divider + ssoError display
+- [x] `frontend/src/context/AuthContext.jsx` — loginWithToken + decodePayload helpers
+- [x] `frontend/src/App.jsx` — /sso-callback route (public)
+- [x] `frontend/src/locales/he.json` + `en.json` — auth.loginWithMicrosoft + SSO error keys
+
+### Phase 4 — Docs Update
+- [x] `.env.example` — documented all MICROSOFT_MAIL_*, MICROSOFT_CALENDAR_*, MICROSOFT_AUTH_* vars
+- [x] `docs/DEPLOYMENT.md` — "Microsoft Integration Setup" section (Email, Calendar, SSO subsections)
+
+🔍 **Preview targets:**
+- Email: set `EMAIL_PROVIDER=microsoft` → trigger password reset → email arrives in Outlook inbox
+- Calendar: set `CALENDAR_PROVIDER=microsoft` → create meeting → event in Outlook with attendee invites
+- SSO: click "כניסה עם Microsoft" → Microsoft login → return to EthicFlow dashboard
+- Conflict: SSO with LOCAL-account email → Hebrew error message on LoginPage

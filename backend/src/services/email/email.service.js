@@ -9,11 +9,13 @@
 
 import { getEmailProvider } from '../../config/services.js'
 import { send as consoleSend } from './console.provider.js'
+import { send as microsoftSend } from './microsoft.provider.js'
 
 /** @type {Record<string, Function>} */
 const providers = {
-  console: consoleSend,
-  // smtp, microsoft, gmail — added in Phase 2
+  console:   consoleSend,
+  microsoft: microsoftSend,
+  // smtp, gmail — added in Phase 2
 }
 
 /**

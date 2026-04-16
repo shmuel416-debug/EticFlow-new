@@ -331,9 +331,10 @@ model Meeting {
   status       MeetingStatus @default(SCHEDULED)
   agendaNote   String?       @map("agenda_note")
   minutesNote  String?       @map("minutes_note")
-  isActive     Boolean       @default(true) @map("is_active")
-  createdAt    DateTime      @default(now()) @map("created_at")
-  updatedAt    DateTime      @updatedAt @map("updated_at")
+  isActive           Boolean       @default(true) @map("is_active")
+  externalCalendarId String?       @map("external_calendar_id")
+  createdAt          DateTime      @default(now()) @map("created_at")
+  updatedAt          DateTime      @updatedAt @map("updated_at")
 
   // Relations
   agendaItems MeetingAgendaItem[]

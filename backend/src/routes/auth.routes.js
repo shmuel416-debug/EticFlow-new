@@ -1,10 +1,12 @@
 /**
  * EthicFlow — Auth Routes
- * POST /api/auth/register        — create account
- * POST /api/auth/login           — authenticate + get JWT
- * GET  /api/auth/me              — get current user (protected)
- * POST /api/auth/forgot-password — send reset email
- * POST /api/auth/reset-password  — apply new password via token
+ * POST /api/auth/register              — create account
+ * POST /api/auth/login                 — authenticate + get JWT
+ * GET  /api/auth/me                    — get current user (protected)
+ * POST /api/auth/forgot-password       — send reset email
+ * POST /api/auth/reset-password        — apply new password via token
+ * GET  /api/auth/microsoft             — redirect to Microsoft login (SSO)
+ * GET  /api/auth/microsoft/callback    — handle Microsoft OAuth2 callback
  */
 
 import { Router } from 'express'
@@ -70,5 +72,9 @@ router.post(
   controller.resetPassword,
   auditLog('auth.reset-password', 'User')
 )
+
+// Microsoft SSO — no body validation needed (query params handled in controller)
+router.get('/microsoft',          controller.microsoftRedirect)
+router.get('/microsoft/callback', controller.microsoftCallback, auditLog('auth.sso.microsoft', 'User'))
 
 export default router

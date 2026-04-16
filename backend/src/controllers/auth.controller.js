@@ -1,6 +1,6 @@
 /**
  * EthicFlow — Auth Controller
- * Handles registration, login, and current-user retrieval.
+ * Handles registration, login, Microsoft SSO, and current-user retrieval.
  * Never returns passwordHash in any response.
  */
 
@@ -11,6 +11,7 @@ import prisma from '../config/database.js'
 import authConfig from '../config/auth.js'
 import { AppError } from '../utils/errors.js'
 import { sendEmail } from '../services/email/email.service.js'
+import * as microsoftAuth from '../services/auth/microsoft.provider.js'
 
 // ─────────────────────────────────────────────
 // CONSTANTS
@@ -206,5 +207,116 @@ export async function resetPassword(req, res, next) {
     res.json({ message: 'Password reset successful' })
   } catch (err) {
     next(err)
+  }
+}
+
+// ─────────────────────────────────────────────
+// MICROSOFT SSO HELPERS
+// ─────────────────────────────────────────────
+
+/**
+ * Finds an existing user by Microsoft externalId or email, or creates a new one.
+ * Returns null if there is an email conflict with a LOCAL account.
+ * @param {{ externalId: string, email: string, fullName: string }} profile - Microsoft profile
+ * @returns {Promise<{ user: object|null, conflict: boolean }>}
+ */
+async function findOrCreateMicrosoftUser({ externalId, email, fullName }) {
+  const existing = await prisma.user.findFirst({
+    where: { OR: [{ externalId }, { email }] },
+  })
+
+  if (existing) {
+    if (existing.authProvider === 'LOCAL') return { user: null, conflict: true }
+    // Update display name if it changed
+    const user = existing.fullName !== fullName
+      ? await prisma.user.update({ where: { id: existing.id }, data: { fullName, externalId } })
+      : existing
+    return { user, conflict: false }
+  }
+
+  // First-time SSO — create as RESEARCHER
+  const user = await prisma.user.create({
+    data: { email, fullName, externalId, authProvider: 'MICROSOFT', role: 'RESEARCHER', isActive: true, passwordHash: null },
+  })
+  return { user, conflict: false }
+}
+
+// ─────────────────────────────────────────────
+// MICROSOFT SSO
+// ─────────────────────────────────────────────
+
+/**
+ * GET /api/auth/microsoft
+ * Generates a Microsoft OAuth2 login URL and redirects the user.
+ * Stores a CSRF-prevention state token in a short-lived signed cookie.
+ * @param {import('express').Request}  req
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
+export async function microsoftRedirect(req, res, next) {
+  try {
+    const state   = crypto.randomBytes(16).toString('hex')
+    const authUrl = await microsoftAuth.getAuthUrl(state)
+
+    // Store state in signed httpOnly cookie (1 min TTL)
+    res.cookie('ms_oauth_state', state, {
+      httpOnly: true,
+      secure:   process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge:   60 * 1000,
+    })
+
+    res.redirect(authUrl)
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
+ * GET /api/auth/microsoft/callback
+ * Handles the Microsoft OAuth2 callback, exchanges the code for a profile,
+ * and creates or retrieves the user, then redirects to frontend with a JWT.
+ * @param {import('express').Request}  req - query: { code, state, error? }
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
+export async function microsoftCallback(req, res, next) {
+  const frontendUrl = process.env.FRONTEND_URL ?? 'http://localhost:5173'
+
+  try {
+    const { code, state, error } = req.query
+
+    // Microsoft returned an error (e.g. user cancelled)
+    if (error) {
+      return res.redirect(`${frontendUrl}/login?error=sso_cancelled`)
+    }
+
+    // Validate CSRF state
+    const savedState = req.cookies?.ms_oauth_state
+    res.clearCookie('ms_oauth_state')
+
+    if (!savedState || savedState !== state) {
+      return res.redirect(`${frontendUrl}/login?error=sso_state_mismatch`)
+    }
+
+    // Exchange code for profile
+    const profile = await microsoftAuth.exchangeCode(code, state)
+    if (!profile.email) {
+      return res.redirect(`${frontendUrl}/login?error=sso_no_email`)
+    }
+
+    // Find or create user
+    const { user, conflict } = await findOrCreateMicrosoftUser(profile)
+    if (conflict) return res.redirect(`${frontendUrl}/login?error=sso_email_conflict`)
+    if (!user || !user.isActive) return res.redirect(`${frontendUrl}/login?error=account_inactive`)
+
+    res.locals.entityId = user.id
+    const token = signToken(user)
+
+    // Redirect to frontend SSO callback page with token in query param
+    res.redirect(`${frontendUrl}/sso-callback?token=${token}`)
+  } catch (err) {
+    console.error('[Auth/Microsoft] callback error:', err.message)
+    res.redirect(`${frontendUrl}/login?error=sso_failed`)
   }
 }

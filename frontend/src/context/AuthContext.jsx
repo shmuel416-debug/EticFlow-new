@@ -67,6 +67,29 @@ export function AuthProvider({ children }) {
   }
 
   /**
+   * Decodes the payload section of a JWT without verifying the signature.
+   * Safe because the server already validated and issued this token.
+   * @param {string} token - Signed JWT
+   * @returns {{ id: string, email: string, role: string }}
+   */
+  function decodePayload(token) {
+    const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
+    return JSON.parse(atob(base64))
+  }
+
+  /**
+   * Stores a pre-issued JWT (e.g. from SSO callback) and decodes the user payload.
+   * Used by SsoCallbackPage after the backend redirects with a token query param.
+   * @param {string} token - Signed JWT from backend
+   * @returns {void}
+   */
+  function loginWithToken(token) {
+    setToken(token)
+    const payload = decodePayload(token)
+    setUser({ id: payload.id, email: payload.email, role: payload.role })
+  }
+
+  /**
    * Clears auth state and removes JWT from memory.
    */
   function logout() {
@@ -120,6 +143,7 @@ export function AuthProvider({ children }) {
       user,
       loading,
       login,
+      loginWithToken,
       logout,
       changeLanguage,
       impersonation,
@@ -134,9 +158,9 @@ export function AuthProvider({ children }) {
 
 /**
  * Hook to access auth context.
- * @returns {{ user: object|null, loading: boolean, login: Function, logout: Function,
- *   changeLanguage: Function, impersonation: object|null, isImpersonating: boolean,
- *   startImpersonation: Function, stopImpersonation: Function }}
+ * @returns {{ user: object|null, loading: boolean, login: Function, loginWithToken: Function,
+ *   logout: Function, changeLanguage: Function, impersonation: object|null,
+ *   isImpersonating: boolean, startImpersonation: Function, stopImpersonation: Function }}
  */
 export function useAuth() {
   const ctx = useContext(AuthContext)

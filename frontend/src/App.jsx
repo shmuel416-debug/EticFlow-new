@@ -1,6 +1,6 @@
 /**
  * EthicFlow — App Router
- * Public routes: /login, /forgot-password, /reset-password
+ * Public routes: /login, /forgot-password, /reset-password, /sso-callback
  * Protected routes: /dashboard, /submissions, /meetings, /users, /reports, /settings
  * Role-based access enforced by ProtectedRoute.
  */
@@ -15,6 +15,7 @@ import ProtectedRoute    from './components/layout/ProtectedRoute'
 import LoginPage                  from './pages/LoginPage'
 import ForgotPasswordPage         from './pages/ForgotPasswordPage'
 import ResetPasswordPage          from './pages/ResetPasswordPage'
+import SsoCallbackPage            from './pages/auth/SsoCallbackPage'
 import DashboardPage              from './pages/DashboardPage'
 import NotificationsPage          from './pages/NotificationsPage'
 import FormBuilderPage            from './pages/secretary/FormBuilderPage'
@@ -47,6 +48,7 @@ export default function App() {
           <Route path="/login"                 element={<LoginPage />} />
           <Route path="/forgot-password"       element={<ForgotPasswordPage />} />
           <Route path="/reset-password"        element={<ResetPasswordPage />} />
+          <Route path="/sso-callback"          element={<SsoCallbackPage />} />
           <Route path="/protocol/sign/:token"  element={<ProtocolSignPage />} />
 
           {/* ── Protected (all authenticated roles) ── */}

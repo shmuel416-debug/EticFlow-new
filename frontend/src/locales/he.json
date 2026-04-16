@@ -42,8 +42,15 @@
       "institutionLabel": "המרכז האקדמי לב — ועדת האתיקה",
       "feature1": "הגשת בקשות מחקר דיגיטלית",
       "feature2": "מעקב SLA אוטומטי",
-      "feature3": "חתימות דיגיטליות מאובטחות"
+      "feature3": "חתימות דיגיטליות מאובטחות",
+      "orDivider": "או"
     },
+    "loginWithMicrosoft": "כניסה עם Microsoft",
+    "ssoLoading": "מאמת זהות, אנא המתן...",
+    "ssoCancelled": "הכניסה עם Microsoft בוטלה.",
+    "ssoFailed": "אירעה שגיאה בכניסה עם Microsoft. נסה שוב.",
+    "ssoEmailConflict": "קיים חשבון עם כתובת מייל זו. התחבר עם שם משתמש וסיסמה.",
+    "accountInactive": "החשבון אינו פעיל. צור קשר עם מנהל המערכת.",
     "forgotPassword": {
       "title": "איפוס סיסמה",
       "subtitle": "הזן את כתובת האימייל שלך ונשלח לך קישור לאיפוס",

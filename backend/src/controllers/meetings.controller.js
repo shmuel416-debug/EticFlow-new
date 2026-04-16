@@ -1,6 +1,7 @@
 /**
  * EthicFlow — Meetings Controller
  * Handles committee meeting lifecycle: create, list, agenda, attendance.
+ * Integrates with the pluggable Calendar Service for optional Outlook sync.
  *
  * Endpoints:
  *   GET    /api/meetings                          — list meetings
@@ -15,6 +16,77 @@
 
 import prisma from '../config/database.js'
 import { AppError } from '../utils/errors.js'
+import * as calendarService from '../services/calendar/calendar.service.js'
+
+// ─────────────────────────────────────────────
+// CALENDAR SYNC HELPERS (non-fatal wrappers)
+// ─────────────────────────────────────────────
+
+/**
+ * Syncs a newly created meeting to the external calendar provider.
+ * On failure, logs a warning and returns null (never throws).
+ * @param {{ id: string, title: string }} meeting - Saved meeting record
+ * @param {Date|string} scheduledAt - Meeting start time
+ * @param {string|undefined} location - Optional location string
+ * @param {Array<{email: string, fullName: string}>} attendeeUsers - Users to invite
+ * @returns {Promise<string|null>} External calendar event ID, or null
+ */
+async function syncCreateToCalendar(meeting, scheduledAt, location, attendeeUsers) {
+  try {
+    const startTime = new Date(scheduledAt)
+    const endTime   = new Date(startTime.getTime() + 60 * 60 * 1000) // default 1h
+    return await calendarService.createEvent({
+      title:       meeting.title,
+      description: `ישיבת ועדת אתיקה — ${meeting.title}`,
+      startTime,
+      endTime,
+      location,
+      attendees:   attendeeUsers.map(u => ({ email: u.email, name: u.fullName })),
+    })
+  } catch (err) {
+    console.warn('[Meetings] Calendar create failed (non-fatal):', err.message)
+    return null
+  }
+}
+
+/**
+ * Syncs an updated meeting to the external calendar provider.
+ * On failure, logs a warning and continues (never throws).
+ * @param {string} externalId - External calendar event ID
+ * @param {{ title: string, scheduledAt?: Date|string, location?: string }} updates - Changed fields
+ * @param {{ title: string, scheduledAt: Date, location?: string }} existing - Current meeting record
+ * @returns {Promise<void>}
+ */
+async function syncUpdateToCalendar(externalId, updates, existing) {
+  try {
+    const startTime = updates.scheduledAt ? new Date(updates.scheduledAt) : existing.scheduledAt
+    const endTime   = new Date(startTime.getTime() + 60 * 60 * 1000)
+    const title     = updates.title ?? existing.title
+    await calendarService.updateEvent(externalId, {
+      title,
+      description: `ישיבת ועדת אתיקה — ${title}`,
+      startTime,
+      endTime,
+      location:    updates.location ?? existing.location,
+    })
+  } catch (err) {
+    console.warn('[Meetings] Calendar update failed (non-fatal):', err.message)
+  }
+}
+
+/**
+ * Removes a meeting from the external calendar provider.
+ * On failure, logs a warning and continues (never throws).
+ * @param {string} externalId - External calendar event ID
+ * @returns {Promise<void>}
+ */
+async function syncDeleteToCalendar(externalId) {
+  try {
+    await calendarService.deleteEvent(externalId)
+  } catch (err) {
+    console.warn('[Meetings] Calendar delete failed (non-fatal):', err.message)
+  }
+}
 
 // ─────────────────────────────────────────────
 // LIST
@@ -76,6 +148,14 @@ export async function create(req, res, next) {
   try {
     const { title, scheduledAt, location, meetingLink, attendeeIds = [] } = req.body
 
+    // Fetch attendee emails for calendar invite
+    const attendeeUsers = attendeeIds.length > 0
+      ? await prisma.user.findMany({
+          where:  { id: { in: attendeeIds } },
+          select: { id: true, fullName: true, email: true },
+        })
+      : []
+
     const meeting = await prisma.meeting.create({
       data: {
         title,
@@ -91,6 +171,13 @@ export async function create(req, res, next) {
         attendees: { include: { user: { select: { id: true, fullName: true, role: true } } } },
       },
     })
+
+    // Sync to external calendar (non-blocking — failures don't break creation)
+    const externalId = await syncCreateToCalendar(meeting, scheduledAt, location, attendeeUsers)
+    if (externalId) {
+      await prisma.meeting.update({ where: { id: meeting.id }, data: { externalCalendarId: externalId } })
+      meeting.externalCalendarId = externalId
+    }
 
     res.locals.entityId = meeting.id
     res.status(201).json({ data: meeting })
@@ -178,6 +265,11 @@ export async function update(req, res, next) {
       },
     })
 
+    // Sync update to external calendar (non-blocking)
+    if (meeting.externalCalendarId) {
+      await syncUpdateToCalendar(meeting.externalCalendarId, { title, scheduledAt, location }, meeting)
+    }
+
     res.locals.entityId = id
     res.json({ data: updated })
   } catch (err) {
@@ -209,6 +301,11 @@ export async function cancel(req, res, next) {
       where: { id },
       data:  { status: 'CANCELLED', isActive: false },
     })
+
+    // Remove from external calendar (non-blocking)
+    if (meeting.externalCalendarId) {
+      await syncDeleteToCalendar(meeting.externalCalendarId)
+    }
 
     res.locals.entityId = id
     res.json({ success: true })

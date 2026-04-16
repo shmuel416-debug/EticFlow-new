@@ -42,8 +42,15 @@
       "institutionLabel": "Lev Academic Center — Ethics Committee",
       "feature1": "Digital research submission",
       "feature2": "Automatic SLA tracking",
-      "feature3": "Secure digital signatures"
+      "feature3": "Secure digital signatures",
+      "orDivider": "or"
     },
+    "loginWithMicrosoft": "Sign in with Microsoft",
+    "ssoLoading": "Verifying identity, please wait...",
+    "ssoCancelled": "Microsoft sign-in was cancelled.",
+    "ssoFailed": "An error occurred signing in with Microsoft. Please try again.",
+    "ssoEmailConflict": "An account with this email already exists. Please sign in with email and password.",
+    "accountInactive": "This account is inactive. Please contact your administrator.",
     "forgotPassword": {
       "title": "Reset Password",
       "subtitle": "Enter your email address and we'll send you a reset link",

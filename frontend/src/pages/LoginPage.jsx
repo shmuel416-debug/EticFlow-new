@@ -6,24 +6,46 @@
  */
 
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import LanguageSwitcher from '../components/ui/LanguageSwitcher'
 import levLogo from '../assets/LOGO.jpg'
 
 /**
+ * Microsoft logo SVG (brand colors, aria-hidden since button has text label).
+ * @returns {JSX.Element}
+ */
+function MicrosoftLogo() {
+  return (
+    <svg aria-hidden="true" width="20" height="20" viewBox="0 0 23 23" fill="none"
+      xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0">
+      <rect x="1"  y="1"  width="10" height="10" fill="#F25022"/>
+      <rect x="12" y="1"  width="10" height="10" fill="#7FBA00"/>
+      <rect x="1"  y="12" width="10" height="10" fill="#00A4EF"/>
+      <rect x="12" y="12" width="10" height="10" fill="#FFB900"/>
+    </svg>
+  )
+}
+
+/**
  * Login page — POST /api/auth/login → JWT stored in AuthContext memory.
+ * Supports Microsoft SSO via /api/auth/microsoft redirect.
  */
 export default function LoginPage() {
-  const { t } = useTranslation()
-  const { login }   = useAuth()
-  const navigate    = useNavigate()
+  const { t }            = useTranslation()
+  const { login }        = useAuth()
+  const navigate         = useNavigate()
+  const [searchParams]   = useSearchParams()
 
   const [email,    setEmail]    = useState('')
   const [password, setPassword] = useState('')
-  const [error,    setError]    = useState('')
   const [loading,  setLoading]  = useState(false)
+
+  // Error can come from form submit OR from SSO callback redirect
+  const [error, setError] = useState(
+    searchParams.get('ssoError') ?? ''
+  )
 
   /**
    * Handles form submission — calls login() and redirects on success.
@@ -175,6 +197,28 @@ export default function LoginPage() {
                 </Link>
                 <LanguageSwitcher />
               </div>
+
+              {/* SSO divider */}
+              <div className="flex items-center gap-3 my-6" aria-hidden="true">
+                <div className="flex-1 h-px bg-gray-200" />
+                <span className="text-xs text-gray-400">{t('auth.login.orDivider')}</span>
+                <div className="flex-1 h-px bg-gray-200" />
+              </div>
+
+              {/* Microsoft SSO button */}
+              <a
+                href="/api/auth/microsoft"
+                role="button"
+                style={{ minHeight: '44px', borderColor: '#D1D5DB' }}
+                className="w-full flex items-center justify-center gap-3 border rounded-xl
+                  px-4 py-3 text-sm font-medium text-gray-700 bg-white
+                  hover:bg-gray-50 transition-colors focus-visible:outline-none
+                  focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-blue-500"
+                aria-label={t('auth.loginWithMicrosoft')}
+              >
+                <MicrosoftLogo />
+                <span>{t('auth.loginWithMicrosoft')}</span>
+              </a>
             </form>
           </div>
         </main>
