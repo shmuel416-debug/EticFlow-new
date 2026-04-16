@@ -210,4 +210,4 @@
 - [x] `/qa-senior` — full regression — report: `docs/qa-report-sprint-6.md` (3 minor fixed)
 - [x] `/accessibility-expert` — ProtocolSignPage, StatsPage, SettingsPage — report: `docs/accessibility-report-sprint-6.md` (5 contrast issues fixed)
 - [x] `/security-audit` — protocol tokens, public sign endpoint, XLSX export — report: `docs/security-report-sprint-6.md` (2 medium + 1 low fixed)
-- [ ] Tag `v1.0.0`
+- [x] Tag `v1.0.0` — **RELEASED**
