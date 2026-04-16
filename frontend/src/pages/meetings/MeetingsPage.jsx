@@ -1,7 +1,8 @@
 /**
  * EthicFlow — Meetings List Page
  * Shows all committee meetings with filter tabs (upcoming/past/all).
- * Secretary/Admin can create meetings. All authenticated users can view.
+ * Secretary/Admin can create meetings and invite attendees.
+ * Displays calendar sync status (Microsoft / Google).
  * IS 5568 / WCAG 2.2 AA: 44px targets, aria, responsive cards.
  */
 
@@ -19,86 +20,235 @@ function formatDate(dateStr) {
   })
 }
 
-/** Meeting status badge */
+/**
+ * Meeting status badge.
+ * @param {{ status: string, t: Function }} props
+ */
 function StatusBadge({ status, t }) {
+  if (!status) return null
   const map = {
     SCHEDULED: 'bg-blue-100 text-blue-800',
     COMPLETED: 'bg-green-100 text-green-700',
     CANCELLED: 'bg-red-100 text-red-700',
   }
+  const label = t(`meetings.status${status.charAt(0) + status.slice(1).toLowerCase()}`, status)
   return (
     <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${map[status] ?? 'bg-gray-100 text-gray-700'}`}>
-      {t(`meetings.status${status.charAt(0) + status.slice(1).toLowerCase()}`)}
+      {label}
     </span>
   )
 }
 
-/** Create meeting modal */
-function CreateMeetingModal({ onClose, onCreated, t }) {
-  const [form, setForm]   = useState({ title: '', scheduledAt: '', location: '', meetingLink: '' })
-  const [error, setError] = useState(null)
-  const [saving, setSaving] = useState(false)
+/**
+ * Calendar sync indicator — shows which external calendar this meeting is synced to.
+ * @param {{ externalCalendarId: string|null, calendarProvider: string, t: Function }} props
+ */
+function CalendarSyncBadge({ externalCalendarId, t }) {
+  if (!externalCalendarId) return null
+  return (
+    <span
+      title={t('meetings.calendarSynced')}
+      className="inline-flex items-center gap-1 text-xs text-green-700 bg-green-50 px-2 py-0.5 rounded-full border border-green-200"
+      aria-label={t('meetings.calendarSynced')}
+    >
+      <span aria-hidden="true">📆</span>
+      {t('meetings.calendarSynced')}
+    </span>
+  )
+}
 
-  /* Close on Escape */
+/**
+ * Multi-select attendee picker — shows a scrollable checkbox list of committee users.
+ * @param {{ users: Array, selected: string[], onChange: Function, t: Function }} props
+ */
+function AttendeePicker({ users, selected, onChange, t }) {
+  /**
+   * Toggles a user in/out of the selected list.
+   * @param {string} userId
+   */
+  function toggleUser(userId) {
+    onChange(
+      selected.includes(userId)
+        ? selected.filter(id => id !== userId)
+        : [...selected, userId]
+    )
+  }
+
+  if (users.length === 0) {
+    return <p className="text-xs text-gray-500 py-2">{t('meetings.noUsersToInvite')}</p>
+  }
+
+  return (
+    <div
+      className="border border-gray-200 rounded-lg overflow-y-auto"
+      style={{ maxHeight: '180px' }}
+      role="group"
+      aria-label={t('meetings.inviteAttendees')}
+    >
+      {users.map(u => (
+        <label
+          key={u.id}
+          className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 cursor-pointer text-sm border-b border-gray-100 last:border-0"
+        >
+          <input
+            type="checkbox"
+            checked={selected.includes(u.id)}
+            onChange={() => toggleUser(u.id)}
+            className="accent-blue-600 w-4 h-4"
+          />
+          <span className="flex-1 truncate">{u.fullName}</span>
+          <span className="text-xs text-gray-400 flex-shrink-0">{t(`roles.${u.role.toLowerCase()}`, u.role)}</span>
+        </label>
+      ))}
+    </div>
+  )
+}
+
+/**
+ * Create meeting modal — title, date, location, link, duration, attendees.
+ * @param {{ onClose: Function, onCreated: Function, t: Function }} props
+ */
+function CreateMeetingModal({ onClose, onCreated, t }) {
+  const [form, setForm]         = useState({
+    title: '', scheduledAt: '', location: '', meetingLink: '', durationMinutes: '60',
+  })
+  const [attendeeIds, setAttendeeIds] = useState([])
+  const [users, setUsers]       = useState([])
+  const [error, setError]       = useState(null)
+  const [saving, setSaving]     = useState(false)
+
+  /** Close on Escape key */
   useEffect(() => {
     const handler = (e) => { if (e.key === 'Escape') onClose() }
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
   }, [onClose])
 
+  /** Fetch committee users (everyone except RESEARCHER) */
+  useEffect(() => {
+    api.get('/admin/users?limit=200&role=SECRETARY,REVIEWER,CHAIRMAN,ADMIN')
+      .then(({ data }) => setUsers(data.data ?? []))
+      .catch(() => {
+        // Fallback: fetch all and filter client-side
+        api.get('/admin/users?limit=200')
+          .then(({ data }) => setUsers(
+            (data.data ?? []).filter(u => u.role !== 'RESEARCHER' && u.isActive)
+          ))
+          .catch(() => {})
+      })
+  }, [])
+
   /**
-   * Submits the create meeting form.
+   * Validates the form and submits it to POST /api/meetings.
    */
   async function handleSubmit() {
+    if (!form.title.trim()) return setError(t('meetings.errorTitleRequired'))
+    if (!form.scheduledAt)  return setError(t('meetings.errorDateRequired'))
+
     setSaving(true)
     setError(null)
     try {
-      const payload = {
-        title:       form.title,
-        scheduledAt: form.scheduledAt ? new Date(form.scheduledAt).toISOString() : '',
-        ...(form.location    && { location:    form.location }),
-        ...(form.meetingLink && { meetingLink: form.meetingLink }),
-      }
-      await api.post('/meetings', payload)
+      await api.post('/meetings', {
+        title:           form.title.trim(),
+        scheduledAt:     new Date(form.scheduledAt).toISOString(),
+        ...(form.location    && { location:        form.location }),
+        ...(form.meetingLink && { meetingLink:      form.meetingLink }),
+        ...(form.durationMinutes && { durationMinutes: parseInt(form.durationMinutes, 10) }),
+        ...(attendeeIds.length > 0 && { attendeeIds }),
+      })
       onCreated()
       onClose()
     } catch (err) {
-      setError(err.message)
+      setError(err.message || t('errors.SERVER_ERROR'))
     } finally {
       setSaving(false)
     }
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
-         role="dialog" aria-modal="true" aria-label={t('meetings.create')}>
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
-        <h2 className="text-lg font-bold mb-4" style={{ color: 'var(--lev-navy)' }}>{t('meetings.create')}</h2>
+    <div
+      className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+      role="dialog" aria-modal="true" aria-labelledby="create-meeting-title"
+    >
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
+        <h2 id="create-meeting-title" className="text-lg font-bold mb-4" style={{ color: 'var(--lev-navy)' }}>
+          {t('meetings.create')}
+        </h2>
 
-        {error && <div role="alert" className="bg-red-50 text-red-700 rounded-lg p-3 mb-4 text-sm">{error}</div>}
+        {error && (
+          <div role="alert" className="bg-red-50 text-red-700 rounded-lg p-3 mb-4 text-sm">{error}</div>
+        )}
 
         <div className="space-y-3">
-          {[
-            { key: 'title',       label: t('common.title'),                    type: 'text',     required: true },
-            { key: 'scheduledAt', label: t('meetings.date'),                     type: 'datetime-local', required: true },
-            { key: 'location',    label: t('meetings.location'),                 type: 'text' },
-            { key: 'meetingLink', label: t('meetings.meetingLink'),              type: 'url' },
-          ].map(({ key, label, type, required }) => (
-            <div key={key}>
-              <label htmlFor={`cm-${key}`} className="block text-xs font-semibold text-gray-600 mb-1">
-                {label}{required && <span className="text-red-500 ms-0.5" aria-hidden="true">*</span>}
-              </label>
-              <input
-                id={`cm-${key}`}
-                type={type}
-                value={form[key]}
-                onChange={e => setForm(f => ({ ...f, [key]: e.target.value }))}
-                aria-required={required}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm min-h-[44px]
-                           focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          ))}
+          {/* Title */}
+          <div>
+            <label htmlFor="cm-title" className="block text-xs font-semibold text-gray-600 mb-1">
+              {t('common.title')} <span className="text-red-500" aria-hidden="true">*</span>
+            </label>
+            <input id="cm-title" type="text" value={form.title} aria-required="true"
+              onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm min-h-[44px]
+                         focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </div>
+
+          {/* Date & time */}
+          <div>
+            <label htmlFor="cm-date" className="block text-xs font-semibold text-gray-600 mb-1">
+              {t('meetings.date')} <span className="text-red-500" aria-hidden="true">*</span>
+            </label>
+            <input id="cm-date" type="datetime-local" value={form.scheduledAt} aria-required="true"
+              onChange={e => setForm(f => ({ ...f, scheduledAt: e.target.value }))}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm min-h-[44px]
+                         focus:outline-none focus:ring-2 focus:ring-blue-500" dir="ltr" />
+          </div>
+
+          {/* Duration */}
+          <div>
+            <label htmlFor="cm-duration" className="block text-xs font-semibold text-gray-600 mb-1">
+              {t('meetings.durationMinutes')}
+            </label>
+            <input id="cm-duration" type="number" min="15" max="480" step="15"
+              value={form.durationMinutes}
+              onChange={e => setForm(f => ({ ...f, durationMinutes: e.target.value }))}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm min-h-[44px]
+                         focus:outline-none focus:ring-2 focus:ring-blue-500" dir="ltr" />
+          </div>
+
+          {/* Location */}
+          <div>
+            <label htmlFor="cm-location" className="block text-xs font-semibold text-gray-600 mb-1">
+              {t('meetings.location')}
+            </label>
+            <input id="cm-location" type="text" value={form.location}
+              onChange={e => setForm(f => ({ ...f, location: e.target.value }))}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm min-h-[44px]
+                         focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </div>
+
+          {/* Meeting link */}
+          <div>
+            <label htmlFor="cm-link" className="block text-xs font-semibold text-gray-600 mb-1">
+              {t('meetings.meetingLink')}
+            </label>
+            <input id="cm-link" type="url" value={form.meetingLink} dir="ltr"
+              placeholder="https://..."
+              onChange={e => setForm(f => ({ ...f, meetingLink: e.target.value }))}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm min-h-[44px]
+                         focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </div>
+
+          {/* Attendees */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 mb-1">
+              {t('meetings.inviteAttendees')}
+              {attendeeIds.length > 0 && (
+                <span className="ms-1.5 bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded-full text-xs">
+                  {attendeeIds.length}
+                </span>
+              )}
+            </label>
+            <AttendeePicker users={users} selected={attendeeIds} onChange={setAttendeeIds} t={t} />
+          </div>
         </div>
 
         <div className="flex gap-3 mt-6 justify-end">
@@ -106,7 +256,7 @@ function CreateMeetingModal({ onClose, onCreated, t }) {
             className="px-4 py-2 rounded-lg border border-gray-200 text-sm min-h-[44px] hover:bg-gray-50">
             {t('common.cancel')}
           </button>
-          <button onClick={handleSubmit} disabled={saving}
+          <button onClick={handleSubmit} disabled={saving || !form.title.trim() || !form.scheduledAt}
             className="px-4 py-2 rounded-lg text-white text-sm font-semibold min-h-[44px] disabled:opacity-60"
             style={{ background: 'var(--lev-navy)' }}>
             {saving ? t('common.loading') : t('common.save')}
@@ -134,16 +284,18 @@ export default function MeetingsPage() {
   const canManage = user?.role === 'SECRETARY' || user?.role === 'ADMIN'
 
   /**
-   * Fetches meetings list.
+   * Fetches meetings list from API.
    */
   const fetchMeetings = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
       const { data } = await api.get(`/meetings?filter=${filter}&limit=50`)
-      setMeetings(data.data)
+      // Defensive guard: ensure we always have an array
+      setMeetings(Array.isArray(data.data) ? data.data : [])
     } catch (err) {
       setError(err.message || t('errors.SERVER_ERROR'))
+      setMeetings([])
     } finally {
       setLoading(false)
     }
@@ -192,7 +344,11 @@ export default function MeetingsPage() {
       </div>
 
       {/* Error */}
-      {error && <div role="alert" className="bg-red-50 text-red-700 rounded-lg p-4 mb-4 text-sm">{error}</div>}
+      {error && (
+        <div role="alert" className="bg-red-50 text-red-700 rounded-lg p-4 mb-4 text-sm">
+          {error}
+        </div>
+      )}
 
       {/* Loading */}
       {loading && (
@@ -207,6 +363,15 @@ export default function MeetingsPage() {
         <div className="text-center py-16 text-gray-500">
           <span aria-hidden="true" className="text-4xl block mb-3">📅</span>
           <p>{t('meetings.noMeetings')}</p>
+          {canManage && (
+            <button
+              onClick={() => setShowCreate(true)}
+              className="mt-4 px-4 py-2 rounded-lg text-white text-sm font-semibold min-h-[44px]"
+              style={{ background: 'var(--lev-navy)' }}
+            >
+              {t('meetings.create')}
+            </button>
+          )}
         </div>
       )}
 
@@ -223,19 +388,30 @@ export default function MeetingsPage() {
             >
               <div className="flex items-start justify-between gap-3 flex-wrap">
                 <div className="flex-1 min-w-0">
+                  {/* Title + status badges */}
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <h2 className="font-semibold text-gray-900 truncate">{meeting.title}</h2>
                     <StatusBadge status={meeting.status} t={t} />
+                    <CalendarSyncBadge externalCalendarId={meeting.externalCalendarId} t={t} />
                   </div>
+                  {/* Date */}
                   <p className="text-sm text-gray-500">
                     <span aria-hidden="true">📅</span> {formatDate(meeting.scheduledAt)}
                   </p>
+                  {/* Location */}
                   {meeting.location && (
                     <p className="text-sm text-gray-500">
                       <span aria-hidden="true">📍</span> {meeting.location}
                     </p>
                   )}
+                  {/* Online meeting link */}
+                  {meeting.meetingLink && (
+                    <span className="inline-flex items-center gap-1 text-xs text-blue-600 mt-0.5">
+                      <span aria-hidden="true">🔗</span> {t('meetings.onlineMeeting')}
+                    </span>
+                  )}
                 </div>
+                {/* Stats */}
                 <div className="text-sm text-gray-500 flex gap-4 flex-shrink-0">
                   <span title={t('meetings.agendaItems')}>
                     <span aria-hidden="true">📋</span> {meeting._count?.agendaItems ?? 0}

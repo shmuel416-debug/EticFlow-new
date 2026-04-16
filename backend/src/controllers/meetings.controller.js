@@ -391,6 +391,80 @@ export async function removeAgendaItem(req, res, next) {
 }
 
 // ─────────────────────────────────────────────
+// ATTENDEES — ADD
+// ─────────────────────────────────────────────
+
+/**
+ * POST /api/meetings/:id/attendees
+ * Invites a user to a meeting (creates or reactivates MeetingAttendee record).
+ * @param {import('express').Request}  req - params: { id }, body: { userId }
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
+export async function addAttendee(req, res, next) {
+  try {
+    const { id: meetingId } = req.params
+    const { userId }        = req.body
+
+    const [meeting, user] = await Promise.all([
+      prisma.meeting.findUnique({ where: { id: meetingId } }),
+      prisma.user.findUnique({ where: { id: userId }, select: { id: true, fullName: true, role: true, email: true } }),
+    ])
+
+    if (!meeting || !meeting.isActive) throw new AppError('Meeting not found', 'NOT_FOUND', 404)
+    if (!user)                         throw new AppError('User not found', 'NOT_FOUND', 404)
+
+    // Upsert: reactivate if previously removed
+    const attendee = await prisma.meetingAttendee.upsert({
+      where:  { meetingId_userId: { meetingId, userId } },
+      create: { meetingId, userId },
+      update: { isActive: true },
+      include: { user: { select: { id: true, fullName: true, role: true, email: true } } },
+    })
+
+    res.locals.entityId = meetingId
+    res.status(201).json({ data: attendee })
+  } catch (err) {
+    next(err)
+  }
+}
+
+// ─────────────────────────────────────────────
+// ATTENDEES — REMOVE
+// ─────────────────────────────────────────────
+
+/**
+ * DELETE /api/meetings/:id/attendees/:userId
+ * Removes a user from a meeting (soft-delete: isActive=false).
+ * @param {import('express').Request}  req - params: { id, userId }
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
+export async function removeAttendee(req, res, next) {
+  try {
+    const { id: meetingId, userId } = req.params
+
+    const attendee = await prisma.meetingAttendee.findUnique({
+      where: { meetingId_userId: { meetingId, userId } },
+    })
+
+    if (!attendee || !attendee.isActive) {
+      throw new AppError('Attendee not found', 'NOT_FOUND', 404)
+    }
+
+    await prisma.meetingAttendee.update({
+      where: { meetingId_userId: { meetingId, userId } },
+      data:  { isActive: false },
+    })
+
+    res.locals.entityId = meetingId
+    res.json({ success: true })
+  } catch (err) {
+    next(err)
+  }
+}
+
+// ─────────────────────────────────────────────
 // ATTENDANCE
 // ─────────────────────────────────────────────
 

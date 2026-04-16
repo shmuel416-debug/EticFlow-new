@@ -9,6 +9,8 @@
  * POST   /api/meetings/:id/agenda               — add agenda item (SECRETARY, ADMIN)
  * DELETE /api/meetings/:id/agenda/:itemId       — remove agenda item (SECRETARY, ADMIN)
  * PATCH  /api/meetings/:id/attendance           — record attendance (SECRETARY, ADMIN)
+ * POST   /api/meetings/:id/attendees            — invite user to meeting (SECRETARY, ADMIN)
+ * DELETE /api/meetings/:id/attendees/:userId    — remove user from meeting (SECRETARY, ADMIN)
  */
 
 import { Router } from 'express'
@@ -63,6 +65,10 @@ const attendanceSchema = z.object({
     userId:   z.string().uuid(),
     attended: z.boolean(),
   })).min(1),
+})
+
+const addAttendeeSchema = z.object({
+  userId: z.string().uuid(),
 })
 
 // ─────────────────────────────────────────────
@@ -132,6 +138,23 @@ router.patch(
   validate(attendanceSchema),
   controller.recordAttendance,
   auditLog('meeting.attendance_recorded', 'Meeting')
+)
+
+router.post(
+  '/:id/attendees',
+  authenticate,
+  authorize('SECRETARY', 'ADMIN'),
+  validate(addAttendeeSchema),
+  controller.addAttendee,
+  auditLog('meeting.attendee_added', 'Meeting')
+)
+
+router.delete(
+  '/:id/attendees/:userId',
+  authenticate,
+  authorize('SECRETARY', 'ADMIN'),
+  controller.removeAttendee,
+  auditLog('meeting.attendee_removed', 'Meeting')
 )
 
 export default router

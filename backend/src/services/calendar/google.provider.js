@@ -20,10 +20,10 @@ let _calendarClient = null
 
 /**
  * Parses service account credentials from env (file path or inline JSON).
- * @returns {object} Parsed credentials object
+ * @returns {Promise<object>} Parsed credentials object
  * @throws {Error} If neither env var is set
  */
-function parseCredentials() {
+async function parseCredentials() {
   const credsJson = process.env.GOOGLE_SERVICE_ACCOUNT_JSON
   const credsFile = process.env.GOOGLE_CALENDAR_CREDENTIALS
 
@@ -48,7 +48,7 @@ function parseCredentials() {
 async function getCalendarClient() {
   if (_calendarClient) return _calendarClient
 
-  const credentials = parseCredentials()
+  const credentials = await parseCredentials()
   const impersonate  = process.env.GOOGLE_CALENDAR_IMPERSONATE
 
   const auth = new google.auth.GoogleAuth({
