@@ -4,6 +4,7 @@
     "institution": "Lev Academic Center",
     "loading": "Loading...",
     "save": "Save",
+    "saving": "Saving...",
     "cancel": "Cancel",
     "back": "Back",
     "logout": "Logout",
@@ -21,6 +22,8 @@
     "viewAll": "View All",
     "prevPage": "Previous page",
     "nextPage": "Next page",
+    "prev": "Previous",
+    "next": "Next",
     "showing": "Showing",
     "of": "of"
   },
@@ -645,7 +648,8 @@
     "totalApproved":       "Approved",
     "totalDecided":        "Decided",
     "noData":              "No data available",
-    "submissions":         "Submissions"
+    "submissions":         "Submissions",
+    "last12Months":        "Last 12 months"
   },
   "auditLog": {
     "title":         "Audit Log",

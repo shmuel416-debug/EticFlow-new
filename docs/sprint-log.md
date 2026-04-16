@@ -15,6 +15,10 @@
 | 2026-04-15 | Phase 4 Frontend — AuditLogPage | ✅ Done | Paginated table + mobile cards, filters: action/entityType/dateRange, ADMIN only |
 | 2026-04-15 | Phase 4 Frontend — routing + sidebar | ✅ Done | /reports → StatsPage, /reports/audit-log → AuditLogPage, auditLog sub-link in sidebar |
 | 2026-04-15 | Phase 5 Frontend — SettingsPage | ✅ Done | 4 groups (Institution/SLA/Files/Email), inline-edit + per-section Save, Lev navy header, non-admin lock screen |
+| 2026-04-16 | Phase 7 — Code Review | ✅ Done | 2 critical (StatsPage shape + field name), 3 warnings (i18n, N+1, hardcoded Hebrew). Report: docs/code-review-sprint-6.md |
+| 2026-04-16 | Phase 7 — QA Senior | ✅ Done | 3 minor bugs fixed (MonthlyTrendChart division-by-zero, 2 i18n strings). 0 critical. Report: docs/qa-report-sprint-6.md |
+| 2026-04-16 | Phase 7 — Accessibility Audit | ✅ Done | 5 contrast fixes (gray-400→gray-500, opacity 0.6→0.8, 0.7→0.85), aria-busy on Save button. WCAG 2.2 AA. Report: docs/accessibility-report-sprint-6.md |
+| 2026-04-16 | Phase 7 — Security Audit | ✅ Done | 2 medium fixed (token hashing, settings min(1)), 1 low fixed (limit cap). 0 critical/high. Report: docs/security-report-sprint-6.md |
 
 ## Sprint 5 — Secretary Dashboard + Meetings + Admin Users + Impersonation
 

@@ -20,7 +20,7 @@ const router = Router()
 // ─────────────────────────────────────────────
 
 const updateSchema = z.object({
-  value: z.string().min(0).max(2000),
+  value: z.string().min(1).max(2000),
 })
 
 // ─────────────────────────────────────────────

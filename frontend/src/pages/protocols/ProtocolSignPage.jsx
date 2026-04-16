@@ -150,19 +150,19 @@ export default function ProtocolSignPage() {
             {/* Protocol info card */}
             <div className="bg-gray-50 rounded-xl border border-gray-100 p-4 mb-6 space-y-3 text-right">
               <div>
-                <p className="text-xs text-gray-400">{t('protocols.sign.protocolLabel')}</p>
+                <p className="text-xs text-gray-500">{t('protocols.sign.protocolLabel')}</p>
                 <p className="font-semibold text-sm mt-0.5" style={{ color: 'var(--lev-navy)' }}>
                   {info.protocolTitle}
                 </p>
               </div>
               {info.finalizedAt && (
                 <div>
-                  <p className="text-xs text-gray-400">{t('protocols.sign.dateLabel')}</p>
+                  <p className="text-xs text-gray-500">{t('protocols.sign.dateLabel')}</p>
                   <p className="text-sm text-gray-700 mt-0.5">{fmtDate(info.finalizedAt)}</p>
                 </div>
               )}
               <div className="border-t pt-3">
-                <p className="text-xs text-gray-400">{t('protocols.sign.signerLabel')}</p>
+                <p className="text-xs text-gray-500">{t('protocols.sign.signerLabel')}</p>
                 <p className="font-bold mt-0.5" style={{ color: 'var(--lev-navy)' }}>
                   {info.signerName}
                 </p>

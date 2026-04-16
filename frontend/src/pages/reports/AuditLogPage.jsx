@@ -282,9 +282,9 @@ export default function AuditLogPage() {
               disabled={page === 1}
               className="text-xs px-3 py-1.5 rounded-lg border text-gray-600 disabled:opacity-40 hover:bg-gray-50 transition-colors"
               style={{ minHeight: '36px' }}
-              aria-label="עמוד קודם"
+              aria-label={t('common.prevPage')}
             >
-              הקודם
+              {t('common.prev')}
             </button>
             {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
               const pg = Math.max(1, Math.min(page - 2, totalPages - 4)) + i
@@ -309,9 +309,9 @@ export default function AuditLogPage() {
               disabled={page === totalPages}
               className="text-xs px-3 py-1.5 rounded-lg border text-gray-600 disabled:opacity-40 hover:bg-gray-50 transition-colors"
               style={{ minHeight: '36px' }}
-              aria-label="עמוד הבא"
+              aria-label={t('common.nextPage')}
             >
-              הבא
+              {t('common.next')}
             </button>
           </div>
         </div>

@@ -4,6 +4,7 @@
     "institution": "המרכז האקדמי לב",
     "loading": "טוען...",
     "save": "שמור",
+    "saving": "שומר...",
     "cancel": "ביטול",
     "back": "חזרה",
     "logout": "יציאה",
@@ -21,6 +22,8 @@
     "viewAll": "הצג הכל",
     "prevPage": "עמוד קודם",
     "nextPage": "עמוד הבא",
+    "prev": "הקודם",
+    "next": "הבא",
     "showing": "מציג",
     "of": "מתוך"
   },
@@ -645,7 +648,8 @@
     "totalApproved":       "אושרו",
     "totalDecided":        "הוחלט",
     "noData":              "אין נתונים להצגה",
-    "submissions":         "הגשות"
+    "submissions":         "הגשות",
+    "last12Months":        "12 חודשים אחרונים"
   },
   "auditLog": {
     "title":         "יומן ביקורת",

@@ -22,6 +22,16 @@ import { generateProtocolPdf } from '../services/pdf.service.js'
 /** Token validity window in hours. */
 const TOKEN_TTL_HOURS = 72
 
+/**
+ * Hashes a raw token with SHA-256 for safe DB storage.
+ * Matches the pattern used in auth.controller.js for reset tokens.
+ * @param {string} rawToken
+ * @returns {string} hex-encoded SHA-256 hash
+ */
+function hashToken(rawToken) {
+  return crypto.createHash('sha256').update(rawToken).digest('hex')
+}
+
 // ─────────────────────────────────────────────
 // LIST
 // ─────────────────────────────────────────────
@@ -296,14 +306,14 @@ export async function requestSignatures(req, res, next) {
     for (const signer of signers) {
       if (alreadySigned.has(signer.id)) continue
 
-      const token      = crypto.randomBytes(32).toString('hex')
+      const rawToken    = crypto.randomBytes(32).toString('hex')
       const tokenExpiry = new Date(Date.now() + TOKEN_TTL_HOURS * 60 * 60 * 1000)
 
       const sig = await prisma.protocolSignature.create({
-        data: { protocolId: id, userId: signer.id, token, tokenExpiry, status: 'PENDING' },
+        data: { protocolId: id, userId: signer.id, token: hashToken(rawToken), tokenExpiry, status: 'PENDING' },
       })
 
-      const signUrl = `${frontendUrl}/protocol/sign/${token}`
+      const signUrl = `${frontendUrl}/protocol/sign/${rawToken}`
       await sendEmail({
         to:      signer.email,
         subject: `בקשה לחתימה על פרוטוקול: ${protocol.title}`,
@@ -346,7 +356,7 @@ export async function requestSignatures(req, res, next) {
  */
 export async function signByToken(req, res, next) {
   try {
-    const { token }  = req.params
+    const { token: rawToken } = req.params
     const { action } = req.body   // 'sign' | 'decline'
 
     if (!['sign', 'decline'].includes(action)) {
@@ -354,7 +364,7 @@ export async function signByToken(req, res, next) {
     }
 
     const sig = await prisma.protocolSignature.findUnique({
-      where:   { token },
+      where:   { token: hashToken(rawToken) },
       include: { protocol: true, user: { select: { id: true, fullName: true } } },
     })
 
@@ -420,10 +430,10 @@ export async function signByToken(req, res, next) {
  */
 export async function getSignInfo(req, res, next) {
   try {
-    const { token } = req.params
+    const { token: rawToken } = req.params
 
     const sig = await prisma.protocolSignature.findUnique({
-      where:   { token },
+      where:   { token: hashToken(rawToken) },
       include: {
         protocol: { select: { id: true, title: true, status: true, finalizedAt: true } },
         user:     { select: { id: true, fullName: true } },

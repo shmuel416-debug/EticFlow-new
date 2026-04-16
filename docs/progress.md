@@ -206,8 +206,8 @@
 - [x] `docker-compose.prod.yml` — verified structure
 
 ### Phase 7 — Sprint End Pipeline (S6.9)
-- [ ] `/code-review` — all new Sprint 6 files
-- [ ] `/qa-senior` — full regression
-- [ ] `/accessibility-expert` — ProtocolSignPage, StatsPage, SettingsPage
-- [ ] `/security-audit` — protocol tokens, public sign endpoint, XLSX export
+- [x] `/code-review` — all new Sprint 6 files — report: `docs/code-review-sprint-6.md`
+- [x] `/qa-senior` — full regression — report: `docs/qa-report-sprint-6.md` (3 minor fixed)
+- [x] `/accessibility-expert` — ProtocolSignPage, StatsPage, SettingsPage — report: `docs/accessibility-report-sprint-6.md` (5 contrast issues fixed)
+- [x] `/security-audit` — protocol tokens, public sign endpoint, XLSX export — report: `docs/security-report-sprint-6.md` (2 medium + 1 low fixed)
 - [ ] Tag `v1.0.0`

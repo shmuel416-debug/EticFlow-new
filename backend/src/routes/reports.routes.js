@@ -33,7 +33,7 @@ const auditQuerySchema = z.object({
   from:       z.string().datetime().optional(),
   to:         z.string().datetime().optional(),
   page:       z.string().regex(/^\d+$/).optional(),
-  limit:      z.string().regex(/^\d+$/).optional(),
+  limit:      z.string().regex(/^\d+$/).refine(v => !v || parseInt(v) <= 100, { message: 'limit must be ≤ 100' }).optional(),
 })
 
 // ─────────────────────────────────────────────

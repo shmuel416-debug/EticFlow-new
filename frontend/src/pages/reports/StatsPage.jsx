@@ -49,7 +49,7 @@ function KpiCard({ label, value, accent }) {
       >
         {value}
       </div>
-      <div className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.7)' }}>{label}</div>
+      <div className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.85)' }}>{label}</div>
     </div>
   )
 }
@@ -75,7 +75,7 @@ function StatusBarChart({ byStatus }) {
               style={{ height: `${Math.max(heightPct * 1.2, count > 0 ? 4 : 0)}px`, background: color, maxHeight: '120px' }}
               role="presentation"
             />
-            <span className="text-xs text-gray-400 text-center leading-tight" style={{ fontSize: '11px' }}>
+            <span className="text-xs text-gray-500 text-center leading-tight" style={{ fontSize: '11px' }}>
               {t(labelKey)}
             </span>
           </div>
@@ -108,7 +108,7 @@ function TrackBreakdown({ byTrack, total }) {
               aria-valuenow={count}
               aria-valuemin={0}
               aria-valuemax={total}
-              aria-label={label}
+              aria-label={t(labelKey)}
             >
               <div
                 className="h-2.5 rounded-full transition-all duration-500"
@@ -135,9 +135,10 @@ function MonthlyTrendChart({ monthly }) {
   const W      = 400
   const H      = 80
   const pad    = 10
+  const span   = Math.max(monthly.length - 1, 1)  // guard against single-point array
 
   const points = monthly.map((m, i) => {
-    const x = pad + (i / (monthly.length - 1)) * (W - 2 * pad)
+    const x = pad + (i / span) * (W - 2 * pad)
     const y = H - pad - ((m.count / max) * (H - 2 * pad))
     return `${x},${y}`
   }).join(' ')
@@ -164,7 +165,7 @@ function MonthlyTrendChart({ monthly }) {
         <polyline points={points} fill="none" stroke="var(--lev-navy)" strokeWidth="2.5" strokeLinejoin="round"/>
         {/* Endpoint dots */}
         {monthly.map((m, i) => {
-          const x = pad + (i / (monthly.length - 1)) * (W - 2 * pad)
+          const x = pad + (i / span) * (W - 2 * pad)
           const y = H - pad - ((m.count / max) * (H - 2 * pad))
           return i === monthly.length - 1
             ? <circle key={i} cx={x} cy={y} r="4" fill="var(--lev-navy)" aria-label={`${m.month}: ${m.count}`}/>
@@ -172,7 +173,7 @@ function MonthlyTrendChart({ monthly }) {
         })}
       </svg>
       {/* Month labels */}
-      <div className="flex justify-between text-xs text-gray-400 mt-1 px-1">
+      <div className="flex justify-between text-xs text-gray-500 mt-1 px-1">
         {monthly.map((m, i) => (
           <span key={i} className="text-center" style={{ fontSize: '10px' }}>
             {m.month.slice(5)}
@@ -258,7 +259,7 @@ export default function StatsPage() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
           <div>
             <h1 className="text-xl font-bold text-white">{t('stats.title')}</h1>
-            <p className="text-sm mt-0.5" style={{ color: 'rgba(255,255,255,0.6)' }}>
+            <p className="text-sm mt-0.5" style={{ color: 'rgba(255,255,255,0.8)' }}>
               {new Date().toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric' })}
             </p>
           </div>
@@ -326,7 +327,7 @@ export default function StatsPage() {
                 </h2>
                 {total > 0
                   ? <TrackBreakdown byTrack={byTrack} total={total} />
-                  : <p className="text-xs text-gray-400">{t('stats.noData')}</p>}
+                  : <p className="text-xs text-gray-500">{t('stats.noData')}</p>}
               </div>
             </div>
 
@@ -336,18 +337,18 @@ export default function StatsPage() {
                 <h2 className="text-sm font-bold" style={{ color: 'var(--lev-navy)' }}>
                   {t('stats.monthlyTrend')}
                 </h2>
-                <span className="text-xs text-gray-400">12 חודשים אחרונים</span>
+                <span className="text-xs text-gray-500">{t('stats.last12Months')}</span>
               </div>
               {monthly.length > 0
                 ? <MonthlyTrendChart monthly={monthly} />
-                : <p className="text-xs text-gray-400">{t('stats.noData')}</p>}
+                : <p className="text-xs text-gray-500">{t('stats.noData')}</p>}
             </div>
 
           </div>
         )}
 
         {loading && (
-          <div className="flex justify-center py-20 text-gray-400 text-sm" role="status" aria-live="polite">
+          <div className="flex justify-center py-20 text-gray-500 text-sm" role="status" aria-live="polite">
             {t('common.loading')}
           </div>
         )}

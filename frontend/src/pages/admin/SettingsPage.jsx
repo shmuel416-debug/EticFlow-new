@@ -183,9 +183,10 @@ function SettingsGroup({ group, values, onSave }) {
         <button
           onClick={handleSave}
           disabled={!isDirty || saving}
+          aria-busy={saving}
           className="text-sm font-bold text-white px-5 py-2 rounded-lg disabled:opacity-40 transition-opacity"
           style={{ background: 'var(--lev-navy)', minHeight: '40px' }}
-          aria-label={t('settings.save')}
+          aria-label={saving ? t('common.saving') : t('settings.save')}
         >
           {saving ? '…' : t('settings.save')}
         </button>
@@ -202,22 +203,12 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true)
   const [error,   setError]   = useState(null)
 
-  // Non-admin users see an access-denied placeholder
-  if (user && user.role !== 'ADMIN') {
-    return (
-      <div className="flex flex-col items-center justify-center py-24 text-center">
-        <p className="text-4xl mb-4" aria-hidden="true">🔒</p>
-        <h1 className="text-lg font-bold mb-2" style={{ color: 'var(--lev-navy)' }}>
-          {t('settings.title')}
-        </h1>
-        <p className="text-sm text-gray-600">{t('errors.FORBIDDEN')}</p>
-      </div>
-    )
-  }
+  const isAdmin = user?.role === 'ADMIN'
 
-  // ── Fetch all settings ───────────────────────
+  // ── Fetch all settings (ADMIN only) ─────────
 
   useEffect(() => {
+    if (!isAdmin) return
     async function fetchSettings() {
       setLoading(true)
       setError(null)
@@ -233,7 +224,7 @@ export default function SettingsPage() {
       }
     }
     fetchSettings()
-  }, [])
+  }, [isAdmin])
 
   // ── Save a group — PUT each changed key ──────
 
@@ -253,6 +244,19 @@ export default function SettingsPage() {
     setValues(prev => ({ ...prev, ...Object.fromEntries(updates) }))
   }
 
+  // Non-admin users see an access-denied placeholder (after all hooks)
+  if (user && !isAdmin) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 text-center">
+        <p className="text-4xl mb-4" aria-hidden="true">🔒</p>
+        <h1 className="text-lg font-bold mb-2" style={{ color: 'var(--lev-navy)' }}>
+          {t('settings.title')}
+        </h1>
+        <p className="text-sm text-gray-600">{t('errors.FORBIDDEN')}</p>
+      </div>
+    )
+  }
+
   return (
     <div className="flex flex-col h-full">
 
@@ -262,7 +266,7 @@ export default function SettingsPage() {
         style={{ background: 'linear-gradient(135deg, var(--lev-navy) 0%, #2d4db5 100%)' }}
       >
         <h1 className="text-xl font-bold text-white">{t('settings.title')}</h1>
-        <p className="text-sm mt-0.5" style={{ color: 'rgba(255,255,255,0.6)' }}>
+        <p className="text-sm mt-0.5" style={{ color: 'rgba(255,255,255,0.8)' }}>
           {t('settings.subtitle')}
         </p>
       </div>
@@ -270,7 +274,7 @@ export default function SettingsPage() {
       {/* ── Content ── */}
       <div className="flex-1 overflow-auto bg-gray-50 p-4 md:p-6">
         {loading && (
-          <div className="flex justify-center py-20 text-gray-400 text-sm" role="status" aria-live="polite">
+          <div className="flex justify-center py-20 text-gray-500 text-sm" role="status" aria-live="polite">
             {t('common.loading')}
           </div>
         )}
