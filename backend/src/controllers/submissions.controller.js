@@ -345,6 +345,40 @@ export async function continueSubmission(req, res, next) {
 }
 
 // ─────────────────────────────────────────────
+// RESEARCHER SUBMIT
+// ─────────────────────────────────────────────
+
+/**
+ * POST /api/submissions/:id/submit
+ * Transitions a RESEARCHER's own DRAFT submission to SUBMITTED status.
+ * Only the submission owner (RESEARCHER) may call this endpoint.
+ * @param {import('express').Request}  req - params: { id }
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
+export async function researcherSubmit(req, res, next) {
+  try {
+    const sub = await prisma.submission.findFirst({
+      where: { id: req.params.id, authorId: req.user.id, isActive: true },
+    })
+    if (!sub) return next(AppError.notFound('Submission'))
+    if (sub.status !== 'DRAFT') {
+      return next(new AppError('Only draft submissions can be submitted', 'INVALID_STATUS', 400))
+    }
+
+    const updated = await prisma.submission.update({
+      where: { id: sub.id },
+      data:  { status: 'SUBMITTED', submittedAt: new Date() },
+    })
+
+    res.locals.entityId = updated.id
+    res.json({ submission: updated })
+  } catch (err) {
+    next(err)
+  }
+}
+
+// ─────────────────────────────────────────────
 // SECRETARY DASHBOARD
 // ─────────────────────────────────────────────
 

@@ -211,8 +211,9 @@ export default function SubmitPage() {
       }
       setDraftSaved(true)
       setTimeout(() => setDraftSaved(false), 3000)
-    } catch {
-      setSubmitError(t('errors.SERVER_ERROR'))
+    } catch (err) {
+      const key = `errors.${err.code}`
+      setSubmitError(t(key) !== key ? t(key) : (err.message || t('errors.SERVER_ERROR')))
     } finally {
       setSavingDraft(false)
     }
@@ -224,22 +225,31 @@ export default function SubmitPage() {
     setSubmitting(true)
     setSubmitError('')
     try {
+      let targetId = submissionId
       let applicationId
-      if (submissionId) {
-        // Update existing draft then mark as submitted
-        const { data } = await api.put(`/submissions/${submissionId}`, { dataJson: values })
+
+      if (targetId) {
+        // Update the existing draft data
+        const { data } = await api.put(`/submissions/${targetId}`, { dataJson: values })
         applicationId = data.submission?.applicationId
       } else {
+        // Create a new draft
         const { data } = await api.post('/submissions', {
           formConfigId: formMeta.id,
           title:        values[fields[0]?.id] || t('submission.submit.pageTitle'),
           dataJson:     values,
         })
+        targetId      = data.submission?.id
         applicationId = data.submission?.applicationId
       }
+
+      // Transition DRAFT → SUBMITTED
+      await api.post(`/submissions/${targetId}/submit`)
       setSuccessId(applicationId ?? '')
     } catch (err) {
-      setSubmitError(t(`errors.${err.response?.data?.code}`) || t('errors.SERVER_ERROR'))
+      // api.js interceptor normalises errors to { message, code, status }
+      const key = `errors.${err.code}`
+      setSubmitError(t(key) !== key ? t(key) : (err.message || t('errors.SERVER_ERROR')))
     } finally {
       setSubmitting(false)
     }
