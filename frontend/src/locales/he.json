@@ -178,7 +178,9 @@
       "colDate":           "תאריך הגשה",
       "colReviewer":       "סוקר",
       "colAuthor":         "חוקר",
-      "viewDetail":        "צפה בפרטים"
+      "viewDetail":        "צפה בפרטים",
+      "title":             "הגשות אחרונות",
+      "empty":             "אין הגשות להצגה"
     },
     "detail": {
       "pageTitle":          "פרטי הגשה",

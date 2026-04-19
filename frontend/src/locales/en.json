@@ -178,7 +178,9 @@
       "colDate":           "Submitted",
       "colReviewer":       "Reviewer",
       "colAuthor":         "Researcher",
-      "viewDetail":        "View details"
+      "viewDetail":        "View details",
+      "title":             "Recent Submissions",
+      "empty":             "No submissions to display"
     },
     "detail": {
       "pageTitle":          "Submission Details",
