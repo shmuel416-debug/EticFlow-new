@@ -36,37 +36,14 @@ const PORT = process.env.PORT ?? process.env.API_PORT ?? 5000
 
 app.use(helmet())
 
-/**
- * CORS configuration — handles Railway deployment edge case.
- * In production, allows:
- * 1. Explicitly configured FRONTEND_URL
- * 2. Railway internal domain (frontend-eticflow.railway.internal)
- * 3. Corresponding public Railway domain (frontend-eticflow-dev.up.railway.app)
- */
-const corsOrigin = process.env.NODE_ENV === 'production'
-  ? (origin) => {
-      const allowedOrigins = [
-        process.env.FRONTEND_URL,
-        'frontend-eticflow.railway.internal',  // Railway internal network
-        'https://frontend-eticflow-dev.up.railway.app',  // Railway public domain
-      ].filter(Boolean)
-
-      if (allowedOrigins.includes(origin)) {
-        return true
-      }
-
-      // Also allow requests without Origin header (same-origin requests)
-      if (!origin) {
-        return true
-      }
-
-      console.warn(`[CORS] Rejected origin: ${origin}`)
-      return false
-    }
-  : true  // Allow all in development
-
 app.use(cors({
-  origin: corsOrigin,
+  origin: process.env.NODE_ENV === 'production'
+    ? [
+        process.env.FRONTEND_URL,
+        'frontend-eticflow.railway.internal',
+        'https://frontend-eticflow-dev.up.railway.app',
+      ].filter(Boolean)
+    : 'http://localhost:5173',
   credentials: true,
 }))
 
