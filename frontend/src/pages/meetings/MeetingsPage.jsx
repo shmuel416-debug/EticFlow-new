@@ -126,11 +126,11 @@ function CreateMeetingModal({ onClose, onCreated, t }) {
 
   /** Fetch committee users (everyone except RESEARCHER) */
   useEffect(() => {
-    api.get('/admin/users?limit=200&role=SECRETARY,REVIEWER,CHAIRMAN,ADMIN')
+    api.get('/users/admin/users?limit=200&role=SECRETARY,REVIEWER,CHAIRMAN,ADMIN')
       .then(({ data }) => setUsers(data.data ?? []))
       .catch(() => {
         // Fallback: fetch all and filter client-side
-        api.get('/admin/users?limit=200')
+        api.get('/users/admin/users?limit=200')
           .then(({ data }) => setUsers(
             (data.data ?? []).filter(u => u.role !== 'RESEARCHER' && u.isActive)
           ))

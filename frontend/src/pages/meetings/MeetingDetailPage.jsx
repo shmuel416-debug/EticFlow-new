@@ -108,7 +108,7 @@ export default function MeetingDetailPage() {
   /** Fetch all committee users for attendee invite */
   useEffect(() => {
     if (!canManage) return
-    api.get('/admin/users?limit=200')
+    api.get('/users/admin/users?limit=200')
       .then(({ data }) => {
         setAllUsers((data.data ?? []).filter(u => u.role !== 'RESEARCHER' && u.isActive))
       })
