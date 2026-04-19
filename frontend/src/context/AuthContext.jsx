@@ -9,6 +9,20 @@ import { createContext, useContext, useState, useEffect, useCallback, useRef } f
 import { useTranslation } from 'react-i18next'
 import api, { setToken, getToken } from '../services/api'
 
+/**
+ * Decodes JWT payload without verifying signature.
+ * @param {string} token
+ * @returns {object|null}
+ */
+function decodeJwt(token) {
+  try {
+    const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
+    return JSON.parse(atob(base64))
+  } catch {
+    return null
+  }
+}
+
 /** @type {React.Context} */
 const AuthContext = createContext(null)
 
@@ -45,13 +59,23 @@ export function AuthProvider({ children }) {
   }, [applyDirection])
 
   /**
-   * Attempt silent session restore via GET /api/auth/me.
-   * Token is stored in memory via setToken() after login.
-   * On page refresh the token is gone — user must log in again.
+   * On mount: attempt silent session restore from sessionStorage.
+   * If a valid non-expired token exists, restore user state without re-login.
+   * sessionStorage clears when the browser tab closes (safer than localStorage).
    */
   useEffect(() => {
-    const id = setTimeout(() => setLoading(false), 0)
-    return () => clearTimeout(id)
+    const stored = getToken()
+    if (stored) {
+      const payload = decodeJwt(stored)
+      const isExpired = payload && payload.exp && payload.exp * 1000 < Date.now()
+      if (payload && !isExpired) {
+        setUser({ id: payload.id, email: payload.email, role: payload.role })
+      } else {
+        // Token expired — clear it
+        setToken(null)
+      }
+    }
+    setLoading(false)
   }, [])
 
   /**
