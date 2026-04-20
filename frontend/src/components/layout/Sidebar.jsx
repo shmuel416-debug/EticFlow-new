@@ -34,9 +34,10 @@ const NAV_ITEMS = [
  * @param {{ isOpen: boolean, onClose: () => void }} props
  */
 export default function Sidebar({ isOpen, onClose }) {
-  const { t }    = useTranslation()
+  const { t, i18n } = useTranslation()
   const { user, logout, isImpersonating, impersonation } = useAuth()
   const navigate = useNavigate()
+  const isRtl = i18n.dir() === 'rtl'
 
   const visibleItems = NAV_ITEMS.filter(
     (item) => user && item.roles.includes(user.role)
@@ -49,6 +50,20 @@ export default function Sidebar({ isOpen, onClose }) {
   function handleLogout() {
     logout()
     navigate('/login')
+  }
+
+  /**
+   * Close drawer from any user interaction surface (button/overlay).
+   * Handles mobile touch environments where click can be unreliable.
+   * @param {import('react').SyntheticEvent} [event]
+   * @returns {void}
+   */
+  function handleCloseDrawer(event) {
+    if (event) {
+      event.preventDefault()
+      event.stopPropagation()
+    }
+    onClose()
   }
 
   const initials = user?.fullName?.charAt(0) ?? '?'
@@ -72,10 +87,8 @@ export default function Sidebar({ isOpen, onClose }) {
       {isOpen && (
         <div
           className="fixed inset-0 bg-black/40 z-30 md:hidden"
-          onClick={(event) => {
-            event.stopPropagation()
-            onClose()
-          }}
+          onPointerDown={handleCloseDrawer}
+          onClick={handleCloseDrawer}
           aria-hidden="true"
         />
       )}
@@ -86,9 +99,13 @@ export default function Sidebar({ isOpen, onClose }) {
           fixed top-0 bottom-0 z-40 flex flex-col bg-white border-gray-100
           transition-transform duration-200
           md:static md:translate-x-0 md:border-s
-          ${isOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}
+          ${isOpen
+            ? 'translate-x-0'
+            : isRtl
+              ? '-translate-x-full md:translate-x-0'
+              : 'translate-x-full md:translate-x-0'}
         `}
-        style={{ width: '220px', insetInlineEnd: 0 }}
+        style={isRtl ? { width: '220px', left: 0 } : { width: '220px', right: 0 }}
         aria-label={t('nav.mainNavigation')}
       >
         {/* Logo */}
@@ -101,10 +118,8 @@ export default function Sidebar({ isOpen, onClose }) {
           {/* Mobile close button */}
           <button
             type="button"
-            onClick={(event) => {
-              event.stopPropagation()
-              onClose()
-            }}
+            onPointerDown={handleCloseDrawer}
+            onClick={handleCloseDrawer}
             className="md:hidden ms-auto text-gray-500 hover:text-gray-800"
             aria-label={t('pages.closeMenu')}
             style={{ minWidth: '44px', minHeight: '44px' }}
