@@ -18,6 +18,13 @@ export default function AppLayout() {
   const { t } = useTranslation()
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
+  /**
+   * Toggle mobile drawer state from header button.
+   */
+  function handleToggleSidebar() {
+    setSidebarOpen((prev) => !prev)
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
 
@@ -42,7 +49,8 @@ export default function AppLayout() {
           {/* Mobile: hamburger */}
           <button
             className="md:hidden text-gray-700 hover:text-gray-900"
-            onClick={() => setSidebarOpen(true)}
+            type="button"
+            onClick={handleToggleSidebar}
             aria-label={t('pages.openMenu')}
             aria-expanded={sidebarOpen}
             style={{ minWidth: '44px', minHeight: '44px' }}

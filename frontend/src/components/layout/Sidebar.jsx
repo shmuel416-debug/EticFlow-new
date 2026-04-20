@@ -58,7 +58,10 @@ export default function Sidebar({ isOpen, onClose }) {
       {isOpen && (
         <div
           className="fixed inset-0 bg-black/40 z-30 md:hidden"
-          onClick={onClose}
+          onClick={(event) => {
+            event.stopPropagation()
+            onClose()
+          }}
           aria-hidden="true"
         />
       )}
@@ -83,7 +86,11 @@ export default function Sidebar({ isOpen, onClose }) {
           </div>
           {/* Mobile close button */}
           <button
-            onClick={onClose}
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation()
+              onClose()
+            }}
             className="md:hidden ms-auto text-gray-500 hover:text-gray-800"
             aria-label={t('pages.closeMenu')}
             style={{ minWidth: '44px', minHeight: '44px' }}
