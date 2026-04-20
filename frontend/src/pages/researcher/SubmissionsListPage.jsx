@@ -4,17 +4,15 @@
  * Filters by status, search, pagination. Lev palette, mobile-first, IS 5568.
  */
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
 import api from '../../services/api'
-import { useAuth } from '../../context/AuthContext'
 import StatusBadge from '../../components/submissions/StatusBadge'
 
 export default function ResearcherSubmissionsListPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { user } = useAuth()
 
   const [submissions, setSubmissions] = useState([])
   const [loading, setLoading] = useState(true)
@@ -32,20 +30,18 @@ export default function ResearcherSubmissionsListPage() {
         setLoading(true)
         setError('')
 
-        const params = new URLSearchParams({
-          page: page.toString(),
-          limit: '10',
-          ...(searchTerm && { search: searchTerm }),
-          ...(statusFilter !== 'ALL' && { status: statusFilter }),
-        })
+        const params = new URLSearchParams({ page: page.toString(), limit: '10' })
+        if (searchTerm) params.set('search', searchTerm)
+        if (statusFilter !== 'ALL') params.set('status', statusFilter)
 
         const { data } = await api.get(`/submissions?${params}`)
         if (!cancelled) {
-          setSubmissions(data.submissions || [])
-          setTotalPages(Math.ceil((data.total || 0) / 10))
+          setSubmissions(data.submissions || data.data || [])
+          const total = data.total ?? data.pagination?.total ?? 0
+          setTotalPages(Math.max(1, Math.ceil(total / 10)))
         }
-      } catch (err) {
-        if (!cancelled) setError(t('common.loadError'))
+      } catch {
+        if (!cancelled) setError(t('submission.list.loadError'))
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -57,38 +53,39 @@ export default function ResearcherSubmissionsListPage() {
 
   const statuses = ['ALL', 'DRAFT', 'SUBMITTED', 'IN_TRIAGE', 'ASSIGNED', 'IN_REVIEW', 'APPROVED', 'REJECTED', 'PENDING_REVISION']
 
-  if (loading && !submissions.length) {
-    return (
-      <div className="flex flex-1 items-center justify-center py-24" role="status" aria-live="polite">
-        <p className="text-sm" style={{ color: 'var(--lev-teal-text)' }}>{t('common.loading')}</p>
-      </div>
-    )
-  }
-
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <h1 className="text-2xl font-bold" style={{ color: 'var(--lev-navy)' }}>
-          {t('submission.list.title', 'My Submissions')}
+          {t('dashboard.researcher.recentSubmissions')}
         </h1>
         <button type="button" onClick={() => navigate('/submissions/new')}
           className="px-5 py-2.5 text-sm font-semibold text-white rounded-xl hover:opacity-90"
           style={{ background: 'var(--lev-navy)', minHeight: '44px' }}>
-          {t('submission.new.btn', 'New Submission')}
+          + {t('sidebar.newSubmission')}
         </button>
       </div>
 
       {/* Search + Filter */}
-      <div className="space-y-3 md:flex md:gap-3 md:space-y-0">
-        <input type="text" placeholder={t('common.search', 'Search...')}
-          value={searchTerm} onChange={e => { setSearchTerm(e.target.value); setPage(1) }}
-          className="flex-1 px-3 py-2 text-sm border rounded-lg" style={{ borderColor: '#e5e7eb' }}
+      <div className="flex flex-col gap-3 md:flex-row">
+        <input
+          type="text"
+          placeholder={t('submission.list.searchPlaceholder')}
+          value={searchTerm}
+          onChange={e => { setSearchTerm(e.target.value); setPage(1) }}
+          className="flex-1 px-3 py-2 text-sm border rounded-lg"
+          style={{ borderColor: '#e5e7eb', minHeight: '44px' }}
         />
-        <select value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(1) }}
-          className="px-3 py-2 text-sm border rounded-lg" style={{ borderColor: '#e5e7eb' }}>
-          {statuses.map(s => (
-            <option key={s} value={s}>{t(`submission.status.${s.toLowerCase()}`, s)}</option>
+        <select
+          value={statusFilter}
+          onChange={e => { setStatusFilter(e.target.value); setPage(1) }}
+          className="px-3 py-2 text-sm border rounded-lg"
+          style={{ borderColor: '#e5e7eb', minHeight: '44px' }}
+        >
+          <option value="ALL">{t('submission.list.filterAll')}</option>
+          {statuses.slice(1).map(s => (
+            <option key={s} value={s}>{t(`submission.status.${s}`)}</option>
           ))}
         </select>
       </div>
@@ -100,27 +97,44 @@ export default function ResearcherSubmissionsListPage() {
         </div>
       )}
 
+      {/* Loading */}
+      {loading && (
+        <div className="text-center py-12" role="status" aria-live="polite">
+          <p className="text-sm text-gray-500">{t('common.loading')}</p>
+        </div>
+      )}
+
       {/* Empty */}
-      {!loading && !submissions.length && (
-        <div className="text-center py-12">
-          <p className="text-gray-500 text-sm">{t('submission.list.empty', 'No submissions found')}</p>
+      {!loading && !error && submissions.length === 0 && (
+        <div className="text-center py-16">
+          <p className="text-4xl mb-3" aria-hidden="true">📋</p>
+          <p className="text-gray-500 text-sm">{t('submission.list.noResults')}</p>
+          <button type="button" onClick={() => navigate('/submissions/new')}
+            className="mt-4 px-5 py-2.5 text-sm font-semibold text-white rounded-xl hover:opacity-90"
+            style={{ background: 'var(--lev-navy)', minHeight: '44px' }}>
+            + {t('sidebar.newSubmission')}
+          </button>
         </div>
       )}
 
       {/* List */}
-      {submissions.length > 0 && (
+      {!loading && submissions.length > 0 && (
         <div className="space-y-3">
           {submissions.map(sub => (
-            <Link key={sub.id} to={`/submissions/${sub.id}`}
-              className="block p-4 border rounded-xl hover:shadow-md transition-shadow"
-              style={{ borderColor: '#e5e7eb' }}>
-              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+            <Link
+              key={sub.id}
+              to={`/submissions/${sub.id}`}
+              className="block p-4 border rounded-xl hover:shadow-md transition-shadow bg-white"
+              style={{ borderColor: '#e5e7eb' }}
+            >
+              <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-sm" style={{ color: 'var(--lev-navy)' }}>
+                  <h3 className="font-semibold text-sm truncate" style={{ color: 'var(--lev-navy)' }}>
                     {sub.title}
                   </h3>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {sub.applicationId} · {new Date(sub.submittedAt).toLocaleDateString()}
+                  <p className="text-xs text-gray-400 mt-0.5 font-mono">
+                    {sub.applicationId}
+                    {sub.submittedAt && ` · ${new Date(sub.submittedAt).toLocaleDateString('he-IL')}`}
                   </p>
                 </div>
                 <StatusBadge status={sub.status} />
@@ -132,15 +146,17 @@ export default function ResearcherSubmissionsListPage() {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex justify-center gap-2">
-          <button type="button" onClick={() => setPage(Math.max(1, page - 1))} disabled={page === 1}
-            className="px-3 py-2 text-sm border rounded-lg disabled:opacity-50" style={{ borderColor: '#e5e7eb' }}>
-            {t('common.prev', 'Previous')}
+        <div className="flex justify-center items-center gap-3 pt-2">
+          <button type="button" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
+            className="px-4 py-2 text-sm border rounded-lg disabled:opacity-40 hover:bg-gray-50"
+            style={{ borderColor: '#e5e7eb', minHeight: '44px' }}>
+            {t('common.prev')}
           </button>
-          <span className="px-3 py-2 text-sm">{page} / {totalPages}</span>
-          <button type="button" onClick={() => setPage(Math.min(totalPages, page + 1))} disabled={page === totalPages}
-            className="px-3 py-2 text-sm border rounded-lg disabled:opacity-50" style={{ borderColor: '#e5e7eb' }}>
-            {t('common.next', 'Next')}
+          <span className="text-sm text-gray-600">{page} / {totalPages}</span>
+          <button type="button" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+            className="px-4 py-2 text-sm border rounded-lg disabled:opacity-40 hover:bg-gray-50"
+            style={{ borderColor: '#e5e7eb', minHeight: '44px' }}>
+            {t('common.next')}
           </button>
         </div>
       )}
