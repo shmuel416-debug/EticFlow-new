@@ -597,6 +597,7 @@
     "noAttendees":           "No attendees yet",
     "noAttendeesForAttendance": "No attendees registered for this meeting",
     "noUsersToInvite":       "All users have already been invited",
+    "usersLoadError":        "Unable to load user list",
     "removeAttendee":        "Remove Attendee",
     "joinOnline":            "Join Meeting",
     "onlineMeeting":         "Online Meeting",

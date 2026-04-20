@@ -15,6 +15,7 @@ import { authenticate } from '../middleware/auth.js'
 import { authorize } from '../middleware/role.js'
 import { auditLog } from '../middleware/audit.js'
 import * as controller from '../controllers/submissions.controller.js'
+
 import * as statusController from '../controllers/submissions.status.controller.js'
 import { generateApprovalLetter } from '../services/pdf.service.js'
 import { resolvePath } from '../services/storage.service.js'
@@ -120,6 +121,14 @@ router.put(
   validate(updateSchema),
   controller.update,
   auditLog('submission.update', 'Submission')
+)
+
+router.post(
+  '/:id/submit',
+  authenticate,
+  authorize('RESEARCHER'),
+  controller.researcherSubmit,
+  auditLog('submission.submitted', 'Submission')
 )
 
 router.post(

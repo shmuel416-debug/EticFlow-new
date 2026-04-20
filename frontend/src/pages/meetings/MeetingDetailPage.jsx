@@ -62,11 +62,12 @@ export default function MeetingDetailPage() {
   const [addError, setAddError]         = useState(null)
 
   // ── Attendees management ─────────────────────
-  const [allUsers, setAllUsers]         = useState([])
-  const [selectedUser, setSelectedUser] = useState('')
-  const [addingUser, setAddingUser]     = useState(false)
-  const [addUserError, setAddUserError] = useState(null)
-  const [removingId, setRemovingId]     = useState(null)
+  const [allUsers, setAllUsers]           = useState([])
+  const [usersLoadError, setUsersLoadError] = useState(false)
+  const [selectedUser, setSelectedUser]   = useState('')
+  const [addingUser, setAddingUser]       = useState(false)
+  const [addUserError, setAddUserError]   = useState(null)
+  const [removingId, setRemovingId]       = useState(null)
 
   // ── Attendance ───────────────────────────────
   const [attendance, setAttendance]       = useState({})
@@ -112,7 +113,7 @@ export default function MeetingDetailPage() {
       .then(({ data }) => {
         setAllUsers((data.data ?? []).filter(u => u.role !== 'RESEARCHER' && u.isActive))
       })
-      .catch(() => {})
+      .catch(() => setUsersLoadError(true))
   }, [canManage])
 
   // ── Agenda handlers ──────────────────────────
@@ -410,13 +411,19 @@ export default function MeetingDetailPage() {
             <div className="mb-4 p-3 bg-gray-50 rounded-lg">
               <p className="text-xs font-semibold text-gray-600 mb-2">{t('meetings.addAttendee')}</p>
               {addUserError && <div role="alert" className="text-red-600 text-xs mb-2">{addUserError}</div>}
+              {usersLoadError && (
+                <p className="text-xs text-red-500 mb-2" role="alert">
+                  {t('meetings.usersLoadError')}
+                </p>
+              )}
               <div className="flex gap-2 flex-wrap">
                 <select
                   value={selectedUser}
                   onChange={e => setSelectedUser(e.target.value)}
                   aria-label={t('meetings.selectUser')}
+                  disabled={usersLoadError}
                   className="flex-1 min-w-[200px] border border-gray-200 rounded-lg px-3 py-2 text-sm min-h-[44px]
-                             focus:outline-none focus:ring-2 focus:ring-blue-500"
+                             focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
                 >
                   <option value="">{t('meetings.selectUser')}</option>
                   {uninvitedUsers.map(u => (

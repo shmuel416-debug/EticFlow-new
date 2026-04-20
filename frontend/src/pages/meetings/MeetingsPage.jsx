@@ -59,9 +59,9 @@ function CalendarSyncBadge({ externalCalendarId, t }) {
 
 /**
  * Multi-select attendee picker — shows a scrollable checkbox list of committee users.
- * @param {{ users: Array, selected: string[], onChange: Function, t: Function }} props
+ * @param {{ users: Array, selected: string[], onChange: Function, loadError: boolean, t: Function }} props
  */
-function AttendeePicker({ users, selected, onChange, t }) {
+function AttendeePicker({ users, selected, onChange, loadError, t }) {
   /**
    * Toggles a user in/out of the selected list.
    * @param {string} userId
@@ -71,6 +71,14 @@ function AttendeePicker({ users, selected, onChange, t }) {
       selected.includes(userId)
         ? selected.filter(id => id !== userId)
         : [...selected, userId]
+    )
+  }
+
+  if (loadError) {
+    return (
+      <p className="text-xs text-red-500 py-2" role="alert">
+        {t('meetings.usersLoadError')}
+      </p>
     )
   }
 
@@ -112,10 +120,11 @@ function CreateMeetingModal({ onClose, onCreated, t }) {
   const [form, setForm]         = useState({
     title: '', scheduledAt: '', location: '', meetingLink: '', durationMinutes: '60',
   })
-  const [attendeeIds, setAttendeeIds] = useState([])
-  const [users, setUsers]       = useState([])
-  const [error, setError]       = useState(null)
-  const [saving, setSaving]     = useState(false)
+  const [attendeeIds, setAttendeeIds]     = useState([])
+  const [users, setUsers]                 = useState([])
+  const [usersLoadError, setUsersLoadError] = useState(false)
+  const [error, setError]                 = useState(null)
+  const [saving, setSaving]               = useState(false)
 
   /** Close on Escape key */
   useEffect(() => {
@@ -134,7 +143,7 @@ function CreateMeetingModal({ onClose, onCreated, t }) {
           .then(({ data }) => setUsers(
             (data.data ?? []).filter(u => u.role !== 'RESEARCHER' && u.isActive)
           ))
-          .catch(() => {})
+          .catch(() => setUsersLoadError(true))
       })
   }, [])
 
@@ -247,7 +256,7 @@ function CreateMeetingModal({ onClose, onCreated, t }) {
                 </span>
               )}
             </label>
-            <AttendeePicker users={users} selected={attendeeIds} onChange={setAttendeeIds} t={t} />
+            <AttendeePicker users={users} selected={attendeeIds} onChange={setAttendeeIds} loadError={usersLoadError} t={t} />
           </div>
         </div>
 
