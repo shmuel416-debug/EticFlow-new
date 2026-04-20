@@ -157,7 +157,8 @@ export default function SubmitPage() {
           const { data: subData } = await api.get(`/submissions/${editId}`)
           if (!cancelled) {
             const existing = subData.submission ?? subData
-            const latest   = existing.versions?.[0]?.dataJson ?? {}
+            const vers     = existing.versions ?? []
+            const latest   = (vers[vers.length - 1] ?? vers[0])?.dataJson ?? {}
             setValues(latest)
             setSubmissionId(editId)
           }
