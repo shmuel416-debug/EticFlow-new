@@ -112,6 +112,9 @@ export function FormField({ field, value, error, lang, onChange }) {
   }
 
   if (field.type === 'select') {
+    const opts = field.options || [t('submission.submit.sampleOption', { n: 1 }), t('submission.submit.sampleOption', { n: 2 })]
+    const optValue = (opt) => typeof opt === 'string' ? opt : opt.value
+    const optLabel = (opt) => typeof opt === 'string' ? opt : (lang === 'en' && opt.labelEn ? opt.labelEn : opt.labelHe)
     return (
       <div>
         <FieldLabel id={id} label={label} required={field.required} />
@@ -120,8 +123,8 @@ export function FormField({ field, value, error, lang, onChange }) {
           onChange={e => onChange(field.id, e.target.value)}
           onFocus={onFocus} onBlur={onBlur}>
           <option value="" disabled>{t('submission.submit.selectPlaceholder')}</option>
-          {(field.options || [t('submission.submit.sampleOption', { n: 1 }), t('submission.submit.sampleOption', { n: 2 })]).map((opt, i) => (
-            <option key={i} value={opt}>{opt}</option>
+          {opts.map((opt, i) => (
+            <option key={i} value={optValue(opt)}>{optLabel(opt)}</option>
           ))}
         </select>
         <FieldFeedback id={`${id}-err`} error={error} valid={isValid} />
@@ -131,18 +134,23 @@ export function FormField({ field, value, error, lang, onChange }) {
 
   if (field.type === 'radio') {
     const opts = field.options || [t('submission.submit.sampleOption', { n: 1 }), t('submission.submit.sampleOption', { n: 2 })]
+    const optValue = (opt) => typeof opt === 'string' ? opt : opt.value
+    const optLabel = (opt) => typeof opt === 'string' ? opt : (lang === 'en' && opt.labelEn ? opt.labelEn : opt.labelHe)
     return (
       <fieldset aria-required={field.required}>
         <legend className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--lev-navy)' }}>
           {label}{field.required && <span aria-label={t('common.requiredField')} className="ms-0.5" style={{ color: 'var(--lev-purple)' }}>*</span>}
         </legend>
-        {opts.map((opt, i) => (
-          <label key={i} className="flex items-center gap-2 text-sm cursor-pointer mb-1" style={{ minHeight: '44px' }}>
-            <input type="radio" name={id} value={opt} checked={value === opt}
-              onChange={() => onChange(field.id, opt)} className="accent-[#1E2A72]" />
-            {opt}
-          </label>
-        ))}
+        {opts.map((opt, i) => {
+          const val = optValue(opt)
+          return (
+            <label key={i} className="flex items-center gap-2 text-sm cursor-pointer mb-1" style={{ minHeight: '44px' }}>
+              <input type="radio" name={id} value={val} checked={value === val}
+                onChange={() => onChange(field.id, val)} className="accent-[#1E2A72]" />
+              {optLabel(opt)}
+            </label>
+          )
+        })}
         <FieldFeedback id={`${id}-err`} error={error} valid={false} />
       </fieldset>
     )
@@ -150,20 +158,25 @@ export function FormField({ field, value, error, lang, onChange }) {
 
   if (field.type === 'checkbox') {
     const opts = field.options || [t('submission.submit.sampleOption', { n: 1 }), t('submission.submit.sampleOption', { n: 2 })]
+    const optValue = (opt) => typeof opt === 'string' ? opt : opt.value
+    const optLabel = (opt) => typeof opt === 'string' ? opt : (lang === 'en' && opt.labelEn ? opt.labelEn : opt.labelHe)
     const checked = Array.isArray(value) ? value : []
     return (
       <fieldset aria-required={field.required}>
         <legend className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--lev-navy)' }}>
           {label}{field.required && <span aria-label={t('common.requiredField')} className="ms-0.5" style={{ color: 'var(--lev-purple)' }}>*</span>}
         </legend>
-        {opts.map((opt, i) => (
-          <label key={i} className="flex items-center gap-2 text-sm cursor-pointer mb-1" style={{ minHeight: '44px' }}>
-            <input type="checkbox" value={opt} checked={checked.includes(opt)}
-              onChange={e => onChange(field.id, e.target.checked ? [...checked, opt] : checked.filter(v => v !== opt))}
-              className="accent-[#1E2A72]" />
-            {opt}
-          </label>
-        ))}
+        {opts.map((opt, i) => {
+          const val = optValue(opt)
+          return (
+            <label key={i} className="flex items-center gap-2 text-sm cursor-pointer mb-1" style={{ minHeight: '44px' }}>
+              <input type="checkbox" value={val} checked={checked.includes(val)}
+                onChange={e => onChange(field.id, e.target.checked ? [...checked, val] : checked.filter(v => v !== val))}
+                className="accent-[#1E2A72]" />
+              {optLabel(opt)}
+            </label>
+          )
+        })}
         <FieldFeedback id={`${id}-err`} error={error} valid={false} />
       </fieldset>
     )
