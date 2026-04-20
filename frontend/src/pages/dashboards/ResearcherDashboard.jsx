@@ -12,6 +12,14 @@ import { Link } from 'react-router-dom'
 import api from '../../services/api'
 import StatusBadge from '../../components/submissions/StatusBadge'
 
+/** Returns the correct route for a submission based on its status */
+function submissionRoute(sub) {
+  if (sub.status === 'DRAFT' || sub.status === 'PENDING_REVISION') {
+    return `/submissions/${sub.id}/edit`
+  }
+  return `/submissions/${sub.id}`
+}
+
 /** Status → workflow step index (0-based, max 4) */
 const STATUS_STEP = {
   DRAFT: 0, SUBMITTED: 1, IN_TRIAGE: 1, ASSIGNED: 2,
@@ -43,7 +51,7 @@ function SubCard({ sub, selected, onClick }) {
 
   return (
     <Link
-      to={`/submissions/${sub.id}`}
+      to={submissionRoute(sub)}
       onClick={onClick}
       className={`w-full text-right rounded-xl p-3 transition-all border text-sm block ${
         selected

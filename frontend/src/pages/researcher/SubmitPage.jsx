@@ -7,7 +7,7 @@
  */
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { useNavigate }                               from 'react-router-dom'
+import { useNavigate, useParams }                    from 'react-router-dom'
 import { useTranslation }                            from 'react-i18next'
 import api                                           from '../../services/api'
 import FormRenderer                                  from '../../components/formRenderer/FormRenderer'
@@ -126,6 +126,7 @@ function SuccessScreen({ applicationId }) {
 export default function SubmitPage() {
   const { t, i18n } = useTranslation()
   const navigate    = useNavigate()
+  const { id: editId } = useParams()          // present on /submissions/:id/edit
   const lang        = i18n.language === 'en' ? 'en' : 'he'
 
   const [formMeta,    setFormMeta]    = useState(null)
@@ -137,19 +138,30 @@ export default function SubmitPage() {
   const [savingDraft,  setSavingDraft]  = useState(false)
   const [submitError,  setSubmitError]  = useState('')
   const [draftSaved,   setDraftSaved]   = useState(false)
-  const [submissionId, setSubmissionId] = useState(null)
+  const [submissionId, setSubmissionId] = useState(editId ?? null)
   const [successId,    setSuccessId]    = useState('')
   const [previewLang,  setPreviewLang]  = useState(lang)
 
   const fields = formMeta?.schemaJson?.fields ?? []
 
-  /* Load active form */
+  /* Load active form, then load existing submission data if editing */
   useEffect(() => {
     let cancelled = false
     async function load() {
       try {
-        const { data } = await api.get('/forms/active')
-        if (!cancelled) setFormMeta(data.form ?? null)
+        const { data: formData } = await api.get('/forms/active')
+        if (cancelled) return
+        setFormMeta(formData.form ?? null)
+
+        if (editId) {
+          const { data: subData } = await api.get(`/submissions/${editId}`)
+          if (!cancelled) {
+            const existing = subData.submission ?? subData
+            const latest   = existing.versions?.[0]?.dataJson ?? {}
+            setValues(latest)
+            setSubmissionId(editId)
+          }
+        }
       } catch {
         if (!cancelled) setLoadError(t('submission.submit.formLoadError'))
       } finally {
@@ -158,7 +170,7 @@ export default function SubmitPage() {
     }
     load()
     return () => { cancelled = true }
-  }, [t])
+  }, [t, editId])
 
   const handleChange = useCallback((id, val) => {
     setValues(prev => ({ ...prev, [id]: val }))

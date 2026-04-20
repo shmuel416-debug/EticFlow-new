@@ -56,8 +56,9 @@ export default function App() {
           <Route element={<ProtectedRoute />}>
             <Route element={<AppLayout />}>
               <Route path="/dashboard"       element={<DashboardPage />} />
-              <Route path="/submissions/new" element={<SubmitPage />} />
-              <Route path="/submissions/:id" element={<SubmissionStatusPage />} />
+              <Route path="/submissions/new"      element={<SubmitPage />} />
+              <Route path="/submissions/:id/edit" element={<SubmitPage />} />
+              <Route path="/submissions/:id"      element={<SubmissionStatusPage />} />
               <Route path="/submissions"     element={<SubmissionsListPage />} />
               <Route path="/meetings/:id"     element={<MeetingDetailPage />} />
               <Route path="/meetings"        element={<MeetingsPage />} />

@@ -10,6 +10,13 @@ import { Link, useNavigate } from 'react-router-dom'
 import api from '../../services/api'
 import StatusBadge from '../../components/submissions/StatusBadge'
 
+function submissionRoute(sub) {
+  if (sub.status === 'DRAFT' || sub.status === 'PENDING_REVISION') {
+    return `/submissions/${sub.id}/edit`
+  }
+  return `/submissions/${sub.id}`
+}
+
 export default function ResearcherSubmissionsListPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -123,7 +130,7 @@ export default function ResearcherSubmissionsListPage() {
           {submissions.map(sub => (
             <Link
               key={sub.id}
-              to={`/submissions/${sub.id}`}
+              to={submissionRoute(sub)}
               className="block p-4 border rounded-xl hover:shadow-md transition-shadow bg-white"
               style={{ borderColor: '#e5e7eb' }}
             >
