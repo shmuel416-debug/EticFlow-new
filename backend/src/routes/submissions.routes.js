@@ -211,16 +211,18 @@ router.post(
         }
       }
 
-      const { docId, storagePath } = await generateApprovalLetter(id)
+      const lang = req.query.lang === 'en' ? 'en' : 'he'
+      const { docId, storagePath } = await generateApprovalLetter(id, lang)
 
       const absPath = resolvePath(storagePath)
       if (!fs.existsSync(absPath)) {
         throw new AppError('Generated file not found', 500, 'PDF_MISSING')
       }
 
-      const stat = fs.statSync(absPath)
+      const stat     = fs.statSync(absPath)
+      const filename = `approval-letter-${lang}.pdf`
       res.setHeader('Content-Type',        'application/pdf')
-      res.setHeader('Content-Disposition', 'attachment; filename="approval-letter.pdf"')
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)
       res.setHeader('Content-Length',      stat.size)
       res.setHeader('X-Document-Id',       docId)
 

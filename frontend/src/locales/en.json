@@ -247,7 +247,8 @@
     "documents": "Documents",
     "progressLabel": "Step {{current}} of {{total}}",
     "fixAndResubmit": "Fix & Resubmit",
-    "downloadPdf": "Download Approval Letter PDF",
+    "downloadPdf": "Download (Hebrew)",
+    "downloadPdfEn": "Download (English)",
     "steps": {
       "DRAFT":            "Draft saved",
       "SUBMITTED":        "Submitted",

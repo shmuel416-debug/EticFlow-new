@@ -247,7 +247,8 @@
     "documents": "מסמכים",
     "progressLabel": "שלב {{current}} מתוך {{total}}",
     "fixAndResubmit": "תקן ושלח מחדש",
-    "downloadPdf": "הורד מכתב אישור PDF",
+    "downloadPdf": "הורד אישור (עברית)",
+    "downloadPdfEn": "Download (English)",
     "steps": {
       "DRAFT":            "טיוטה נשמרה",
       "SUBMITTED":        "הוגש בהצלחה",

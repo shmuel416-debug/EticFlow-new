@@ -54,7 +54,7 @@ export default function SubmissionStatusPage() {
   const [error,      setError]      = useState('')
   const LOCKED = ['SUBMITTED','IN_TRIAGE','ASSIGNED','IN_REVIEW','APPROVED','REJECTED','WITHDRAWN']
   const [activeTab,  setActiveTab]  = useState('answers')
-  const [pdfLoading, setPdfLoading] = useState(false)
+  const [pdfLoading, setPdfLoading] = useState(null) // 'he' | 'en' | null
 
   /** Loads submission from API. */
   const load = useCallback(async () => {
@@ -71,25 +71,29 @@ export default function SubmissionStatusPage() {
   useEffect(() => { load() }, [load])
 
   /**
-   * Requests the approval letter PDF and triggers browser download.
+   * Requests the approval letter PDF in the given language and triggers browser download.
+   * @param {'he'|'en'} lang
    */
-  async function handleDownloadPdf() {
-    setPdfLoading(true)
+  async function handleDownloadPdf(lang) {
+    setPdfLoading(lang)
     try {
-      const response = await api.post(`/submissions/${id}/approval-letter`, {}, { responseType: 'blob' })
+      const response = await api.post(
+        `/submissions/${id}/approval-letter?lang=${lang}`,
+        {},
+        { responseType: 'blob' }
+      )
       const url  = URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }))
       const link = document.createElement('a')
       link.href     = url
-      link.download = `approval-letter-${submission.applicationId}.pdf`
+      link.download = `approval-letter-${lang}-${submission.applicationId}.pdf`
       document.body.appendChild(link)
       link.click()
       link.remove()
       URL.revokeObjectURL(url)
     } catch {
-      // Error feedback via existing error state
       setError(t('statusPage.pdfError'))
     } finally {
-      setPdfLoading(false)
+      setPdfLoading(null)
     }
   }
 
@@ -143,13 +147,22 @@ export default function SubmissionStatusPage() {
           </Link>
         )}
         {submission.status === 'APPROVED' && user?.role !== 'REVIEWER' && (
-          <button
-            onClick={handleDownloadPdf}
-            disabled={pdfLoading}
-            className="mt-4 w-full py-2.5 text-sm font-bold text-white rounded-xl hover:opacity-90 transition disabled:opacity-60"
-            style={{ background: 'var(--lev-teal-text)', minHeight: '44px' }}>
-            {pdfLoading ? t('common.loading') : `⬇ ${t('statusPage.downloadPdf')}`}
-          </button>
+          <div className="mt-4 flex gap-2">
+            <button
+              onClick={() => handleDownloadPdf('he')}
+              disabled={pdfLoading !== null}
+              className="flex-1 py-2.5 text-sm font-bold text-white rounded-xl hover:opacity-90 transition disabled:opacity-60"
+              style={{ background: 'var(--lev-teal-text)', minHeight: '44px' }}>
+              {pdfLoading === 'he' ? t('common.loading') : `⬇ ${t('statusPage.downloadPdf')}`}
+            </button>
+            <button
+              onClick={() => handleDownloadPdf('en')}
+              disabled={pdfLoading !== null}
+              className="flex-1 py-2.5 text-sm font-bold text-white rounded-xl hover:opacity-90 transition disabled:opacity-60"
+              style={{ background: '#374151', minHeight: '44px' }}>
+              {pdfLoading === 'en' ? t('common.loading') : `⬇ ${t('statusPage.downloadPdfEn')}`}
+            </button>
+          </div>
         )}
       </div>
 

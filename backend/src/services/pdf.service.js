@@ -1,23 +1,24 @@
 /**
  * EthicFlow — PDF Service
- * Generates bilingual (Hebrew + English) approval letter and protocol PDFs.
- * Uses pdfkit with Arial font (Unicode — supports Hebrew + Latin characters).
+ * Generates approval letter PDFs (Hebrew + English) via Puppeteer (HTML→PDF)
+ * and protocol PDFs via PDFKit.
  *
- * Generated files are saved under:
- *   Approval letters : uploads/generated/approval/{submissionId}/approval-letter.pdf
+ * Generated files:
+ *   Approval letters : uploads/generated/approval/{submissionId}/approval-letter-{lang}.pdf
  *   Protocols        : uploads/generated/protocols/{protocolId}/protocol.pdf
  */
 
-import PDFDocument from 'pdfkit'
-import path        from 'path'
-import fs          from 'fs/promises'
+import puppeteer    from 'puppeteer'
+import PDFDocument  from 'pdfkit'
+import path         from 'path'
+import fs           from 'fs/promises'
 import { createWriteStream } from 'fs'
 import { fileURLToPath }     from 'url'
 import prisma                from '../config/database.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-/** Path to Unicode fonts bundled with this service. */
+/** Path to Unicode fonts bundled with this service (used by PDFKit for protocols). */
 const FONTS_DIR = path.join(__dirname, 'fonts')
 
 /** Output directories for generated PDFs. */
@@ -25,12 +26,425 @@ const GENERATED_DIR          = path.resolve('uploads', 'generated', 'approval')
 const PROTOCOL_GENERATED_DIR = path.resolve('uploads', 'generated', 'protocols')
 
 // ─────────────────────────────────────────────
-// FONT + DOCUMENT HELPERS
+// SHARED HELPERS
+// ─────────────────────────────────────────────
+
+/**
+ * Formats a date as dd/MM/yyyy (Israeli locale).
+ * @param {Date|string} date
+ * @returns {string}
+ */
+function fmtDate(date) {
+  const d = new Date(date)
+  return d.toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric' })
+}
+
+/**
+ * Formats a date in long English form (e.g. "01 April 2025").
+ * @param {Date|string} date
+ * @returns {string}
+ */
+function fmtDateEn(date) {
+  return new Date(date).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })
+}
+
+/**
+ * Returns human-readable track labels in both languages.
+ * @param {string} track
+ * @returns {{ he: string, en: string }}
+ */
+function trackLabel(track) {
+  const map = {
+    FULL:      { he: 'מסלול מלא',    en: 'Full Review' },
+    EXPEDITED: { he: 'מסלול מקוצר', en: 'Expedited Review' },
+    EXEMPT:    { he: 'פטור',         en: 'Exempt' },
+  }
+  return map[track] ?? { he: track, en: track }
+}
+
+/**
+ * Returns the approval expiry date string (1 year after approvedAt).
+ * @param {Date|string} approvedAt
+ * @param {'he'|'en'} lang
+ * @returns {string}
+ */
+function validUntil(approvedAt, lang = 'he') {
+  const d = new Date(approvedAt)
+  d.setFullYear(d.getFullYear() + 1)
+  return lang === 'he' ? fmtDate(d) : fmtDateEn(d)
+}
+
+/**
+ * Escapes HTML special characters to prevent injection in PDF templates.
+ * @param {string|null|undefined} str
+ * @returns {string}
+ */
+function escapeHtml(str) {
+  return String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}
+
+// ─────────────────────────────────────────────
+// HTML TEMPLATES
+// ─────────────────────────────────────────────
+
+/** Shared CSS for both letter variants. */
+const BASE_CSS = `
+* { margin: 0; padding: 0; box-sizing: border-box; }
+@page { size: A4; margin: 0; }
+body {
+  font-size: 11pt;
+  line-height: 1.65;
+  color: #1e293b;
+  background: white;
+}
+.page { width: 210mm; min-height: 297mm; }
+.header {
+  background: #1e3a5f;
+  color: white;
+  padding: 20px 40px;
+  text-align: center;
+}
+.header h1 { font-size: 20pt; font-weight: bold; letter-spacing: 1px; }
+.header .subtitle { font-size: 10pt; color: #93c5fd; margin-top: 4px; }
+.header .doc-type { font-size: 8pt; color: #cbd5e1; margin-top: 2px; }
+.content { padding: 28px 40px; }
+.doc-title { text-align: center; margin-bottom: 14px; }
+.doc-title h2 { font-size: 16pt; font-weight: bold; color: #1e3a5f; }
+.date-row { text-align: center; color: #64748b; font-size: 9.5pt; margin-bottom: 12px; }
+hr.strong { border: none; border-top: 1.5px solid #1e3a5f; margin: 12px 0; }
+hr.light  { border: none; border-top: 1px solid #e2e8f0; margin: 12px 0; }
+.addressee { margin-bottom: 12px; font-size: 11pt; }
+.addressee .to-label { font-weight: bold; color: #1e3a5f; }
+.addressee .email { color: #64748b; font-size: 9.5pt; margin-top: 2px; }
+.subject { font-weight: bold; color: #1e3a5f; font-size: 11pt; margin-bottom: 8px; }
+.body-text { font-size: 10.5pt; margin-bottom: 14px; line-height: 1.7; color: #374151; }
+.details-box {
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  border-radius: 6px;
+  padding: 0 16px;
+  margin: 14px 0;
+}
+.details-row {
+  display: flex;
+  align-items: baseline;
+  padding: 9px 0;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 10pt;
+  gap: 12px;
+}
+.details-row:last-child { border-bottom: none; }
+.details-row .label { color: #64748b; font-weight: bold; font-size: 8.5pt; white-space: nowrap; }
+.details-row .value { color: #1e293b; font-weight: bold; flex: 1; }
+.conditions-title { font-weight: bold; color: #1e3a5f; font-size: 11pt; margin-bottom: 8px; }
+.conditions-list { list-style: none; padding: 0; }
+.conditions-list li {
+  padding: 5px 0;
+  font-size: 10.5pt;
+  color: #374151;
+  line-height: 1.5;
+  position: relative;
+}
+.signature-section { text-align: center; margin-top: 36px; }
+.sig-line { border-top: 1px solid #94a3b8; width: 280px; margin: 0 auto 8px; }
+.sig-label { color: #1e293b; font-weight: bold; font-size: 10pt; }
+.footer {
+  margin-top: 30px;
+  padding-top: 10px;
+  border-top: 1px solid #e2e8f0;
+  text-align: center;
+  font-size: 7.5pt;
+  color: #94a3b8;
+}
+`
+
+/**
+ * Builds the Hebrew (RTL) approval letter HTML.
+ * @param {object} submission
+ * @returns {string}
+ */
+function buildHeHtml(submission) {
+  const today       = fmtDate(new Date())
+  const approvedDate = fmtDate(submission.updatedAt)
+  const expiryDate  = validUntil(submission.updatedAt, 'he')
+  const track       = trackLabel(submission.track)
+  const titleDisplay = submission.title.length > 80 ? submission.title.slice(0, 80) + '…' : submission.title
+
+  return `<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+<meta charset="utf-8">
+<style>
+${BASE_CSS}
+body { font-family: Arial, 'Noto Sans Hebrew', sans-serif; direction: rtl; }
+.conditions-list li { padding-right: 18px; }
+.conditions-list li::before { content: '•'; position: absolute; right: 0; color: #1e3a5f; font-weight: bold; }
+.details-row { flex-direction: row-reverse; }
+.details-row .label { text-align: left; }
+.details-row .value { text-align: right; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="header">
+    <h1>EthicFlow</h1>
+    <div class="subtitle">מערכת ניהול ועדת אתיקה</div>
+    <div class="doc-type">מכתב אישור ועדת אתיקה</div>
+  </div>
+  <div class="content">
+    <div class="doc-title"><h2>אישור ועדת אתיקה</h2></div>
+    <div class="date-row">תאריך הנפקה: ${today}</div>
+    <hr class="strong">
+    <div class="addressee">
+      <div class="to-label">לכבוד,</div>
+      <div>${escapeHtml(submission.author.fullName)}</div>
+      <div class="email">${escapeHtml(submission.author.email)}</div>
+    </div>
+    <div class="subject">הנדון: אישור ועדת אתיקה למחקר</div>
+    <div class="body-text">
+      ועדת האתיקה בדקה את בקשתך ושמחה לאשר את ביצוע המחקר המפורט להלן,
+      בכפוף לתנאים הנקובים בהחלטה.
+    </div>
+    <div class="details-box">
+      <div class="details-row">
+        <span class="value">${escapeHtml(submission.applicationId)}</span>
+        <span class="label">:מספר בקשה</span>
+      </div>
+      <div class="details-row">
+        <span class="value">${escapeHtml(titleDisplay)}</span>
+        <span class="label">:כותרת המחקר</span>
+      </div>
+      <div class="details-row">
+        <span class="value">${escapeHtml(track.he)}</span>
+        <span class="label">:סוג מסלול</span>
+      </div>
+      <div class="details-row">
+        <span class="value">${approvedDate}</span>
+        <span class="label">:תאריך אישור</span>
+      </div>
+      <div class="details-row">
+        <span class="value">${expiryDate}</span>
+        <span class="label">:תוקף האישור עד</span>
+      </div>
+    </div>
+    <hr class="light">
+    <div class="conditions-title">תנאי האישור:</div>
+    <ul class="conditions-list">
+      <li>המחקר יתנהל בהתאם לפרוטוקול שהוגש ואושר.</li>
+      <li>כל שינוי מהותי בפרוטוקול יוגש לאישור ועדה מחדש.</li>
+      <li>יש לקבל הסכמה מדעת של כל משתתף לפני תחילת המחקר.</li>
+      <li>הממצאים יועברו לוועדה בתום המחקר.</li>
+    </ul>
+    <div class="signature-section">
+      <div class="sig-line"></div>
+      <div class="sig-label">יו"ר ועדת האתיקה</div>
+    </div>
+    <div class="footer">
+      מסמך זה הופק אוטומטית על ידי מערכת EthicFlow &bull; ${today} &bull; מס' בקשה: ${escapeHtml(submission.applicationId)}
+    </div>
+  </div>
+</div>
+</body>
+</html>`
+}
+
+/**
+ * Builds the English (LTR) approval letter HTML.
+ * @param {object} submission
+ * @returns {string}
+ */
+function buildEnHtml(submission) {
+  const today        = fmtDateEn(new Date())
+  const approvedDate = fmtDateEn(submission.updatedAt)
+  const expiryDate   = validUntil(submission.updatedAt, 'en')
+  const track        = trackLabel(submission.track)
+  const titleDisplay = submission.title.length > 80 ? submission.title.slice(0, 80) + '…' : submission.title
+
+  return `<!DOCTYPE html>
+<html dir="ltr" lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+${BASE_CSS}
+body { font-family: Arial, Helvetica, sans-serif; direction: ltr; }
+.conditions-list li { padding-left: 18px; }
+.conditions-list li::before { content: '•'; position: absolute; left: 0; color: #1e3a5f; font-weight: bold; }
+.details-row .label { min-width: 130px; }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="header">
+    <h1>EthicFlow</h1>
+    <div class="subtitle">Ethics Committee Management System</div>
+    <div class="doc-type">Ethics Committee Approval Letter</div>
+  </div>
+  <div class="content">
+    <div class="doc-title"><h2>Ethics Committee Approval</h2></div>
+    <div class="date-row">Issue Date: ${today}</div>
+    <hr class="strong">
+    <div class="addressee">
+      <div class="to-label">Dear,</div>
+      <div>${escapeHtml(submission.author.fullName)}</div>
+      <div class="email">${escapeHtml(submission.author.email)}</div>
+    </div>
+    <div class="subject">Re: Ethics Committee Research Approval</div>
+    <div class="body-text">
+      The Ethics Committee has reviewed your application and is pleased to approve
+      the conduct of the research described below, subject to the conditions stated in this decision.
+    </div>
+    <div class="details-box">
+      <div class="details-row">
+        <span class="label">Application No.:</span>
+        <span class="value">${escapeHtml(submission.applicationId)}</span>
+      </div>
+      <div class="details-row">
+        <span class="label">Research Title:</span>
+        <span class="value">${escapeHtml(titleDisplay)}</span>
+      </div>
+      <div class="details-row">
+        <span class="label">Review Track:</span>
+        <span class="value">${escapeHtml(track.en)}</span>
+      </div>
+      <div class="details-row">
+        <span class="label">Approval Date:</span>
+        <span class="value">${approvedDate}</span>
+      </div>
+      <div class="details-row">
+        <span class="label">Valid Until:</span>
+        <span class="value">${expiryDate}</span>
+      </div>
+    </div>
+    <hr class="light">
+    <div class="conditions-title">Approval Conditions:</div>
+    <ul class="conditions-list">
+      <li>The research shall be conducted in accordance with the approved protocol.</li>
+      <li>Any substantive protocol amendments require re-submission for committee approval.</li>
+      <li>Informed consent must be obtained from each participant prior to commencement.</li>
+      <li>Research findings shall be submitted to the committee upon completion.</li>
+    </ul>
+    <div class="signature-section">
+      <div class="sig-line"></div>
+      <div class="sig-label">Chairperson, Ethics Committee</div>
+    </div>
+    <div class="footer">
+      Auto-generated by EthicFlow &bull; ${today} &bull; Ref: ${escapeHtml(submission.applicationId)}
+    </div>
+  </div>
+</div>
+</body>
+</html>`
+}
+
+// ─────────────────────────────────────────────
+// PUPPETEER RENDERER
+// ─────────────────────────────────────────────
+
+/**
+ * Renders an HTML string to a PDF file using Puppeteer (headless Chrome).
+ * Handles sandbox flags required for Docker/container environments.
+ * @param {string} html       - Full HTML document string
+ * @param {string} outputPath - Absolute path to write the PDF
+ * @returns {Promise<void>}
+ */
+async function renderHtmlToPdf(html, outputPath) {
+  const browser = await puppeteer.launch({
+    headless: true,
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-gpu',
+    ],
+  })
+  try {
+    const page = await browser.newPage()
+    await page.setContent(html, { waitUntil: 'networkidle2', timeout: 30000 })
+    await page.pdf({
+      path:            outputPath,
+      format:          'A4',
+      printBackground: true,
+      margin:          { top: '0', right: '0', bottom: '0', left: '0' },
+    })
+  } finally {
+    await browser.close()
+  }
+}
+
+// ─────────────────────────────────────────────
+// APPROVAL LETTER
+// ─────────────────────────────────────────────
+
+/**
+ * Generates a single-language approval letter PDF for an approved submission.
+ * Uses Puppeteer (HTML→PDF) for proper Hebrew RTL and English LTR rendering.
+ * Creates / overwrites the file and upserts the Document DB record.
+ *
+ * @param {string}      submissionId - UUID of the submission (must be APPROVED)
+ * @param {'he'|'en'}   lang         - Language of the letter (default: 'he')
+ * @returns {Promise<{ docId: string, storagePath: string }>}
+ */
+export async function generateApprovalLetter(submissionId, lang = 'he') {
+  const safeLang = lang === 'en' ? 'en' : 'he'
+
+  const submission = await prisma.submission.findUnique({
+    where:   { id: submissionId },
+    include: {
+      author:      { select: { fullName: true, email: true } },
+      formConfig:  { select: { name: true } },
+      slaTracking: true,
+    },
+  })
+
+  if (!submission) throw new Error('Submission not found')
+  if (submission.status !== 'APPROVED') throw new Error('Submission is not approved')
+
+  const filename    = `approval-letter-${safeLang}.pdf`
+  const dir         = path.join(GENERATED_DIR, submissionId)
+  await fs.mkdir(dir, { recursive: true })
+  const absPath     = path.join(dir, filename)
+  const storagePath = path.join('generated', 'approval', submissionId, filename)
+
+  const html = safeLang === 'he' ? buildHeHtml(submission) : buildEnHtml(submission)
+  await renderHtmlToPdf(html, absPath)
+
+  const stat     = await fs.stat(absPath)
+  const existing = await prisma.document.findFirst({ where: { submissionId, storagePath } })
+
+  let dbDoc
+  if (existing) {
+    dbDoc = await prisma.document.update({
+      where: { id: existing.id },
+      data:  { sizeBytes: stat.size, isActive: true },
+    })
+  } else {
+    dbDoc = await prisma.document.create({
+      data: {
+        filename,
+        originalName: `approval-letter-${safeLang}-${submission.applicationId}.pdf`,
+        mimeType:     'application/pdf',
+        sizeBytes:    stat.size,
+        storagePath,
+        source:       'GENERATED',
+        submissionId,
+        uploadedById: null,
+      },
+    })
+  }
+
+  return { docId: dbDoc.id, storagePath }
+}
+
+// ─────────────────────────────────────────────
+// PDFKit HELPERS (used by protocol PDF only)
 // ─────────────────────────────────────────────
 
 /**
  * Creates a new PDFDocument with Arial (Unicode) font registered.
- * Arial supports both Hebrew and Latin characters.
  * @param {object} [options] - PDFKit options
  * @returns {PDFDocument}
  */
@@ -62,46 +476,6 @@ function streamToFile(doc, filePath) {
   })
 }
 
-// ─────────────────────────────────────────────
-// FORMATTING HELPERS
-// ─────────────────────────────────────────────
-
-/**
- * Formats a Date as dd/MM/yyyy (Israeli locale) / MM/dd/yyyy for English side.
- * We use one format for the bilingual doc: dd/MM/yyyy.
- * @param {Date|string} date
- * @returns {string}
- */
-function fmtDate(date) {
-  const d = new Date(date)
-  return d.toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric' })
-}
-
-/**
- * Returns a human-readable track label in both languages.
- * @param {string} track
- * @returns {{ he: string, en: string }}
- */
-function trackLabel(track) {
-  const map = {
-    FULL:      { he: 'מסלול מלא',    en: 'Full Review' },
-    EXPEDITED: { he: 'מסלול מקוצר', en: 'Expedited Review' },
-    EXEMPT:    { he: 'פטור',         en: 'Exempt' },
-  }
-  return map[track] ?? { he: track, en: track }
-}
-
-/**
- * Returns the approval expiry date (1 year from approval).
- * @param {Date|string} approvedAt
- * @returns {string}
- */
-function validUntil(approvedAt) {
-  const d = new Date(approvedAt)
-  d.setFullYear(d.getFullYear() + 1)
-  return fmtDate(d)
-}
-
 /**
  * Draws a horizontal rule at the current Y position.
  * @param {PDFDocument} doc
@@ -113,226 +487,8 @@ function hRule(doc, color = '#1e3a5f', width = 1.5) {
   doc.moveDown(0.6)
 }
 
-/**
- * Renders a bilingual label+value row inside the details box.
- * Hebrew label (right) + English label (left) on one line, value below.
- * @param {PDFDocument} doc
- * @param {string}      labelHe
- * @param {string}      labelEn
- * @param {string}      value
- * @param {number}      y
- */
-function biRow(doc, labelHe, labelEn, value, y) {
-  doc.font('Arial-Bold').fontSize(9).fillColor('#64748b')
-     .text(labelHe, 72 + 16, y, { width: 200, align: 'right' })
-  doc.font('Arial').fontSize(9).fillColor('#64748b')
-     .text(labelEn, 72 + 230, y, { width: 200, align: 'left' })
-  doc.font('Arial').fontSize(10).fillColor('#1e293b')
-     .text(value, 72 + 16, y + 13, { width: 414, align: 'center' })
-}
-
 // ─────────────────────────────────────────────
-// APPROVAL LETTER
-// ─────────────────────────────────────────────
-
-/**
- * Generates a bilingual (Hebrew + English) approval letter PDF for an approved submission.
- * Creates / overwrites the file and upserts the Document DB record.
- *
- * @param {string} submissionId - UUID of the submission (must be APPROVED)
- * @returns {Promise<{ docId: string, storagePath: string }>}
- */
-export async function generateApprovalLetter(submissionId) {
-  // ── Fetch submission ──────────────────────────────
-  const submission = await prisma.submission.findUnique({
-    where:   { id: submissionId },
-    include: {
-      author:     { select: { fullName: true, email: true } },
-      formConfig: { select: { name: true } },
-      slaTracking: true,
-    },
-  })
-
-  if (!submission) throw new Error('Submission not found')
-  if (submission.status !== 'APPROVED') throw new Error('Submission is not approved')
-
-  // ── Prepare output path ──────────────────────────
-  const dir         = path.join(GENERATED_DIR, submissionId)
-  await fs.mkdir(dir, { recursive: true })
-  const filename    = 'approval-letter.pdf'
-  const absPath     = path.join(dir, filename)
-  const storagePath = path.join('generated', 'approval', submissionId, filename)
-
-  const doc          = createDoc()
-  const approvedDate = fmtDate(submission.updatedAt)
-  const today        = fmtDate(new Date())
-  const track        = trackLabel(submission.track)
-  const titleShort   = submission.title.length > 60
-    ? submission.title.slice(0, 60) + '…'
-    : submission.title
-
-  // ── Header band ──────────────────────────────────
-  doc.rect(0, 0, 595, 110).fill('#1e3a5f')
-
-  doc.font('Arial-Bold').fontSize(22).fillColor('#ffffff')
-     .text('EthicFlow', 72, 22, { align: 'center', width: 451 })
-
-  doc.font('Arial').fontSize(11).fillColor('#93c5fd')
-     .text('מערכת ניהול ועדת אתיקה  |  Ethics Committee Management System',
-           72, 52, { align: 'center', width: 451 })
-
-  doc.font('Arial').fontSize(9).fillColor('#cbd5e1')
-     .text('אישור ועדת אתיקה  •  Ethics Committee Approval Letter',
-           72, 74, { align: 'center', width: 451 })
-
-  // ── Bilingual title ───────────────────────────────
-  doc.moveDown(4)
-  doc.font('Arial-Bold').fontSize(18).fillColor('#1e3a5f')
-     .text('אישור ועדת אתיקה', { align: 'center' })
-  doc.font('Arial').fontSize(13).fillColor('#64748b')
-     .text('Ethics Committee Approval', { align: 'center' })
-
-  doc.moveDown(0.8)
-  hRule(doc)
-
-  // ── Issue date (bilingual) ────────────────────────
-  doc.font('Arial').fontSize(10).fillColor('#374151')
-     .text(`תאריך הנפקה: ${today}  |  Issue Date: ${today}`,
-           { align: 'center' })
-  doc.moveDown(1)
-
-  // ── Addressee ─────────────────────────────────────
-  doc.font('Arial-Bold').fontSize(11).fillColor('#1e3a5f')
-     .text('לכבוד,', { align: 'right' })
-  doc.font('Arial').fontSize(11).fillColor('#1e293b')
-     .text(submission.author.fullName, { align: 'right' })
-     .text(submission.author.email,    { align: 'right' })
-  doc.moveDown(0.4)
-  doc.font('Arial').fontSize(10).fillColor('#64748b')
-     .text(`Dear ${submission.author.fullName},`, { align: 'left' })
-  doc.moveDown(1)
-
-  // ── Hebrew body paragraph ─────────────────────────
-  doc.font('Arial-Bold').fontSize(11).fillColor('#1e3a5f')
-     .text('הנדון: אישור ועדת אתיקה למחקר', { align: 'right' })
-  doc.font('Arial').fontSize(10.5).fillColor('#374151')
-     .text(
-       'ועדת האתיקה בדקה את בקשתך ושמחה לאשר את ביצוע המחקר המפורט להלן, ' +
-       'בכפוף לתנאים הנקובים בהחלטה.',
-       { align: 'right', lineGap: 3 }
-     )
-  doc.moveDown(0.6)
-
-  // ── English body paragraph ────────────────────────
-  doc.font('Arial-Bold').fontSize(11).fillColor('#1e3a5f')
-     .text('Re: Ethics Committee Research Approval', { align: 'left' })
-  doc.font('Arial').fontSize(10.5).fillColor('#374151')
-     .text(
-       'The Ethics Committee has reviewed your application and is pleased to approve ' +
-       'the conduct of the research described below, subject to the conditions stated.',
-       { align: 'left', lineGap: 3 }
-     )
-  doc.moveDown(1)
-
-  // ── Details box ───────────────────────────────────
-  const boxY = doc.y
-  const ROW  = 30
-  doc.rect(72, boxY, 451, ROW * 5 + 20)
-     .lineWidth(1).strokeColor('#e2e8f0').fillAndStroke('#f8fafc', '#e2e8f0')
-
-  biRow(doc, 'מספר בקשה:', 'Application No.:',  submission.applicationId,                           boxY + 8)
-  biRow(doc, 'כותרת המחקר:', 'Research Title:',  titleShort,                                        boxY + 8 + ROW)
-  biRow(doc, 'סוג מסלול:', 'Review Track:',     `${track.he} / ${track.en}`,                        boxY + 8 + ROW * 2)
-  biRow(doc, 'תאריך אישור:', 'Approval Date:',   approvedDate,                                       boxY + 8 + ROW * 3)
-  biRow(doc, 'תוקף האישור:', 'Valid Until:',     validUntil(submission.updatedAt),                   boxY + 8 + ROW * 4)
-
-  doc.y = boxY + ROW * 5 + 24
-  doc.moveDown(1)
-
-  // ── Conditions — Hebrew ───────────────────────────
-  hRule(doc, '#e2e8f0', 1)
-  doc.font('Arial-Bold').fontSize(11).fillColor('#1e3a5f')
-     .text('תנאי האישור:', { align: 'right' })
-  doc.moveDown(0.3)
-
-  const conditions = [
-    {
-      he: 'המחקר יתנהל בהתאם לפרוטוקול שהוגש ואושר.',
-      en: 'The research shall be conducted in accordance with the approved protocol.',
-    },
-    {
-      he: 'כל שינוי מהותי בפרוטוקול יוגש לאישור ועדה מחדש.',
-      en: 'Any substantive protocol amendments require re-submission for committee approval.',
-    },
-    {
-      he: 'יש לקבל הסכמה מדעת של כל משתתף לפני תחילת המחקר.',
-      en: 'Informed consent must be obtained from each participant prior to commencement.',
-    },
-    {
-      he: 'הממצאים יועברו לוועדה בתום המחקר.',
-      en: 'Research findings shall be submitted to the committee upon completion.',
-    },
-  ]
-
-  for (const c of conditions) {
-    doc.font('Arial').fontSize(10).fillColor('#374151')
-       .text(`• ${c.he}`, { align: 'right', lineGap: 2 })
-    doc.font('Arial').fontSize(10).fillColor('#64748b')
-       .text(`  ${c.en}`, { align: 'left', lineGap: 4 })
-  }
-
-  doc.moveDown(1.5)
-
-  // ── Signature ─────────────────────────────────────
-  hRule(doc, '#cbd5e1', 0.5)
-  doc.font('Arial').fontSize(10).fillColor('#64748b')
-     .text('____________________________________________',
-           { align: 'center' })
-  doc.moveDown(0.3)
-  doc.font('Arial-Bold').fontSize(10).fillColor('#1e293b')
-     .text('יו"ר ועדת האתיקה  /  Chairperson, Ethics Committee',
-           { align: 'center' })
-
-  // ── Footer ────────────────────────────────────────
-  const pageH = doc.page.height
-  doc.font('Arial').fontSize(8).fillColor('#94a3b8')
-     .text(
-       `מסמך זה הופק אוטומטית על ידי מערכת EthicFlow  •  Auto-generated by EthicFlow  •  ${today}  •  Ref: ${submission.applicationId}`,
-       72, pageH - 48, { align: 'center', width: 451 }
-     )
-
-  // ── Persist ───────────────────────────────────────
-  await streamToFile(doc, absPath)
-
-  const stat     = await fs.stat(absPath)
-  const existing = await prisma.document.findFirst({ where: { submissionId, storagePath } })
-
-  let dbDoc
-  if (existing) {
-    dbDoc = await prisma.document.update({
-      where: { id: existing.id },
-      data:  { sizeBytes: stat.size, isActive: true },
-    })
-  } else {
-    dbDoc = await prisma.document.create({
-      data: {
-        filename:     filename,
-        originalName: `approval-letter-${submission.applicationId}.pdf`,
-        mimeType:     'application/pdf',
-        sizeBytes:    stat.size,
-        storagePath,
-        source:       'GENERATED',
-        submissionId,
-        uploadedById: null,
-      },
-    })
-  }
-
-  return { docId: dbDoc.id, storagePath }
-}
-
-// ─────────────────────────────────────────────
-// PROTOCOL PDF
+// PROTOCOL PDF  (unchanged — uses PDFKit)
 // ─────────────────────────────────────────────
 
 /**
@@ -413,7 +569,7 @@ export async function generateProtocolPdf(protocol) {
     hRule(doc)
 
     for (const sig of protocol.signatures) {
-      const name   = sig.user?.fullName ?? sig.userId
+      const name     = sig.user?.fullName ?? sig.userId
       const heStatus = sig.status === 'SIGNED'   ? `חתם ב-${fmtDate(sig.signedAt)}`
                      : sig.status === 'DECLINED' ? 'סירב לחתום'
                      : 'ממתין לחתימה'
@@ -450,7 +606,7 @@ export async function generateProtocolPdf(protocol) {
   } else {
     dbDoc = await prisma.document.create({
       data: {
-        filename:     filename,
+        filename,
         originalName: `protocol-${protocol.id}.pdf`,
         mimeType:     'application/pdf',
         sizeBytes:    stat.size,
