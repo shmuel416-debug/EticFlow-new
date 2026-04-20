@@ -63,7 +63,7 @@ export default function ResearcherSubmissionsListPage() {
         <button type="button" onClick={() => navigate('/submissions/new')}
           className="px-5 py-2.5 text-sm font-semibold text-white rounded-xl hover:opacity-90"
           style={{ background: 'var(--lev-navy)', minHeight: '44px' }}>
-          + {t('sidebar.newSubmission')}
+          + {t('nav.newSubmission')}
         </button>
       </div>
 
@@ -112,7 +112,7 @@ export default function ResearcherSubmissionsListPage() {
           <button type="button" onClick={() => navigate('/submissions/new')}
             className="mt-4 px-5 py-2.5 text-sm font-semibold text-white rounded-xl hover:opacity-90"
             style={{ background: 'var(--lev-navy)', minHeight: '44px' }}>
-            + {t('sidebar.newSubmission')}
+            + {t('nav.newSubmission')}
           </button>
         </div>
       )}
