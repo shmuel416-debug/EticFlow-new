@@ -42,9 +42,10 @@ function SubCard({ sub, selected, onClick }) {
   const urgent = sub.status === 'PENDING_REVISION'
 
   return (
-    <button
+    <Link
+      to={`/submissions/${sub.id}`}
       onClick={onClick}
-      className={`w-full text-right rounded-xl p-3 transition-all border text-sm ${
+      className={`w-full text-right rounded-xl p-3 transition-all border text-sm block ${
         selected
           ? 'text-white border-transparent shadow-md'
           : urgent
@@ -71,7 +72,7 @@ function SubCard({ sub, selected, onClick }) {
           </span>
         </div>
       )}
-    </button>
+    </Link>
   )
 }
 
