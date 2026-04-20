@@ -597,6 +597,7 @@
     "noAttendees":           "אין משתתפים עדיין",
     "noAttendeesForAttendance": "אין משתתפים רשומים לפגישה זו",
     "noUsersToInvite":       "כל המשתמשים כבר הוזמנו",
+    "usersLoadError":        "לא ניתן לטעון רשימת משתמשים",
     "removeAttendee":        "הסר משתתף",
     "joinOnline":            "הצטרף לפגישה",
     "onlineMeeting":         "פגישה מקוונת",
