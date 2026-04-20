@@ -52,7 +52,8 @@ export default function SubmissionStatusPage() {
   const [submission, setSubmission] = useState(null)
   const [loading,    setLoading]    = useState(true)
   const [error,      setError]      = useState('')
-  const [activeTab,  setActiveTab]  = useState('timeline')
+  const LOCKED = ['SUBMITTED','IN_TRIAGE','ASSIGNED','IN_REVIEW','APPROVED','REJECTED','WITHDRAWN']
+  const [activeTab,  setActiveTab]  = useState('answers')
   const [pdfLoading, setPdfLoading] = useState(false)
 
   /** Loads submission from API. */
@@ -156,10 +157,10 @@ export default function SubmissionStatusPage() {
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div role="tablist" className="flex border-b border-gray-100">
           {[
-            { key: 'timeline',   label: t('statusPage.timeline') },
-            { key: 'comments',   label: t('statusPage.comments') },
-            { key: 'answers',    label: t('submission.detail.sectionAnswers') },
-            { key: 'documents',  label: t('documents.tabLabel') },
+            { key: 'answers',   label: t('submission.detail.sectionAnswers') },
+            { key: 'timeline',  label: t('statusPage.timeline') },
+            { key: 'comments',  label: t('statusPage.comments') },
+            { key: 'documents', label: t('documents.tabLabel') },
           ].map(tab => (
             <button key={tab.key} role="tab"
               aria-selected={activeTab === tab.key}

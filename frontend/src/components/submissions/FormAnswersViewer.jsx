@@ -13,7 +13,8 @@ import { useTranslation } from 'react-i18next'
 function FieldAnswer({ field, value }) {
   const { i18n, t } = useTranslation()
   const lang  = i18n.language === 'he' ? 'He' : 'En'
-  const label = field[`label${lang}`] ?? field.labelHe ?? field.key
+  const fieldId = field.id || field.key
+  const label = field[`label${lang}`] ?? field.labelHe ?? fieldId
 
   const displayValue = () => {
     if (value === undefined || value === null || value === '') {
@@ -45,9 +46,10 @@ export default function FormAnswersViewer({ formConfig, dataJson = {} }) {
 
   return (
     <dl className="divide-y divide-gray-100">
-      {formConfig.schemaJson.fields.map((field) => (
-        <FieldAnswer key={field.key} field={field} value={dataJson[field.key]} />
-      ))}
+      {formConfig.schemaJson.fields.map((field) => {
+        const fid = field.id || field.key
+        return <FieldAnswer key={fid} field={field} value={dataJson[fid]} />
+      })}
     </dl>
   )
 }
