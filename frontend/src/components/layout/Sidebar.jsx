@@ -5,6 +5,7 @@
  * IS 5568: nav landmark, aria-current, min 44px targets, aria-hidden on icons.
  */
 
+import { useEffect } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
@@ -51,6 +52,19 @@ export default function Sidebar({ isOpen, onClose }) {
   }
 
   const initials = user?.fullName?.charAt(0) ?? '?'
+
+  useEffect(() => {
+    if (!isOpen) return undefined
+
+    function handleEscapeKey(event) {
+      if (event.key === 'Escape') {
+        onClose()
+      }
+    }
+
+    window.addEventListener('keydown', handleEscapeKey)
+    return () => window.removeEventListener('keydown', handleEscapeKey)
+  }, [isOpen, onClose])
 
   return (
     <>
