@@ -164,28 +164,40 @@ hr.light  { border: none; border-top: 1px solid #e2e8f0; margin: 12px 0; }
 
 /**
  * Builds the Hebrew (RTL) approval letter HTML.
+ * Key RTL rules applied:
+ *  - `dir="rtl"` on <html> — browser BiDi algorithm handles all text direction
+ *  - Heebo font loaded via <link> (Google Fonts); Noto Sans Hebrew as fallback
+ *  - Labels written as "מספר בקשה:" (colon at end = LEFT side in RTL display)
+ *  - LTR values (IDs, dates) wrapped in <bdi> to isolate from RTL context
+ *  - No `flex-direction: row-reverse` — RTL flex already arranges right-to-left
  * @param {object} submission
  * @returns {string}
  */
 function buildHeHtml(submission) {
-  const today       = fmtDate(new Date())
+  const today        = fmtDate(new Date())
   const approvedDate = fmtDate(submission.updatedAt)
-  const expiryDate  = validUntil(submission.updatedAt, 'he')
-  const track       = trackLabel(submission.track)
+  const expiryDate   = validUntil(submission.updatedAt, 'he')
+  const track        = trackLabel(submission.track)
   const titleDisplay = submission.title.length > 80 ? submission.title.slice(0, 80) + '…' : submission.title
 
   return `<!DOCTYPE html>
 <html dir="rtl" lang="he">
 <head>
 <meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
 ${BASE_CSS}
-body { font-family: Arial, 'Noto Sans Hebrew', sans-serif; direction: rtl; }
-.conditions-list li { padding-right: 18px; }
+body {
+  font-family: 'Heebo', 'Noto Sans Hebrew', Arial, sans-serif;
+  direction: rtl;
+}
+/* Details rows: in RTL flex, first child is on the RIGHT (label), second on LEFT (value) */
+.details-row .label { white-space: nowrap; }
+.details-row .value { flex: 1; text-align: start; }
+/* Bullet is on the right in RTL */
+.conditions-list li { padding-right: 20px; }
 .conditions-list li::before { content: '•'; position: absolute; right: 0; color: #1e3a5f; font-weight: bold; }
-.details-row { flex-direction: row-reverse; }
-.details-row .label { text-align: left; }
-.details-row .value { text-align: right; }
 </style>
 </head>
 <body>
@@ -197,12 +209,12 @@ body { font-family: Arial, 'Noto Sans Hebrew', sans-serif; direction: rtl; }
   </div>
   <div class="content">
     <div class="doc-title"><h2>אישור ועדת אתיקה</h2></div>
-    <div class="date-row">תאריך הנפקה: ${today}</div>
+    <div class="date-row">תאריך הנפקה: <bdi>${today}</bdi></div>
     <hr class="strong">
     <div class="addressee">
       <div class="to-label">לכבוד,</div>
       <div>${escapeHtml(submission.author.fullName)}</div>
-      <div class="email">${escapeHtml(submission.author.email)}</div>
+      <div class="email"><bdi>${escapeHtml(submission.author.email)}</bdi></div>
     </div>
     <div class="subject">הנדון: אישור ועדת אתיקה למחקר</div>
     <div class="body-text">
@@ -211,24 +223,24 @@ body { font-family: Arial, 'Noto Sans Hebrew', sans-serif; direction: rtl; }
     </div>
     <div class="details-box">
       <div class="details-row">
-        <span class="value">${escapeHtml(submission.applicationId)}</span>
-        <span class="label">:מספר בקשה</span>
+        <span class="label">מספר בקשה:</span>
+        <span class="value"><bdi>${escapeHtml(submission.applicationId)}</bdi></span>
       </div>
       <div class="details-row">
+        <span class="label">כותרת המחקר:</span>
         <span class="value">${escapeHtml(titleDisplay)}</span>
-        <span class="label">:כותרת המחקר</span>
       </div>
       <div class="details-row">
+        <span class="label">סוג מסלול:</span>
         <span class="value">${escapeHtml(track.he)}</span>
-        <span class="label">:סוג מסלול</span>
       </div>
       <div class="details-row">
-        <span class="value">${approvedDate}</span>
-        <span class="label">:תאריך אישור</span>
+        <span class="label">תאריך אישור:</span>
+        <span class="value"><bdi>${approvedDate}</bdi></span>
       </div>
       <div class="details-row">
-        <span class="value">${expiryDate}</span>
-        <span class="label">:תוקף האישור עד</span>
+        <span class="label">תוקף האישור עד:</span>
+        <span class="value"><bdi>${expiryDate}</bdi></span>
       </div>
     </div>
     <hr class="light">
@@ -244,7 +256,7 @@ body { font-family: Arial, 'Noto Sans Hebrew', sans-serif; direction: rtl; }
       <div class="sig-label">יו"ר ועדת האתיקה</div>
     </div>
     <div class="footer">
-      מסמך זה הופק אוטומטית על ידי מערכת EthicFlow &bull; ${today} &bull; מס' בקשה: ${escapeHtml(submission.applicationId)}
+      מסמך זה הופק אוטומטית על ידי מערכת EthicFlow &bull; <bdi>${today}</bdi> &bull; מס׳ בקשה: <bdi>${escapeHtml(submission.applicationId)}</bdi>
     </div>
   </div>
 </div>
