@@ -21,7 +21,7 @@ function SummarySidebar({ fields, values, errors }) {
   const { t } = useTranslation()
   const required = fields.filter(f => f.required)
   const filled   = required.filter(f => {
-    const v = values[f.id]
+    const v = values[f.id || f.key]
     return v !== undefined && v !== '' && v !== false && !(Array.isArray(v) && v.length === 0)
   })
   const hasErrors = Object.values(errors).some(Boolean)
@@ -61,7 +61,7 @@ function SummarySidebar({ fields, values, errors }) {
           <p className="font-semibold text-red-700 mb-1">{t('submission.submit.errorsTitle')}</p>
           <ul className="space-y-0.5 text-red-600 list-disc list-inside">
             {Object.entries(errors).filter(([, v]) => v).slice(0, 4).map(([k]) => {
-              const field = fields.find(f => f.id === k)
+              const field = fields.find(f => (f.id || f.key) === k)
               return field ? <li key={k}>{field.labelHe || field.labelEn}</li> : null
             })}
           </ul>
@@ -170,9 +170,10 @@ export default function SubmitPage() {
     const errs = {}
     fields.forEach(f => {
       if (!f.required) return
-      const v = values[f.id]
+      const fid = f.id || f.key
+      const v = values[fid]
       const empty = v === undefined || v === '' || v === false || (Array.isArray(v) && v.length === 0)
-      if (empty) errs[f.id] = t('submission.submit.fieldRequired')
+      if (empty) errs[fid] = t('submission.submit.fieldRequired')
     })
     return errs
   }, [fields, values, t])
@@ -204,7 +205,7 @@ export default function SubmitPage() {
       } else {
         const { data } = await api.post('/submissions', {
           formConfigId: formMeta.id,
-          title:        values[fields[0]?.id] || t('submission.submit.pageTitle'),
+          title:        values[fields[0]?.id || fields[0]?.key] || t('submission.submit.pageTitle'),
           dataJson:     values,
         })
         setSubmissionId(data.submission?.id ?? null)
@@ -236,7 +237,7 @@ export default function SubmitPage() {
         // Create a new draft
         const { data } = await api.post('/submissions', {
           formConfigId: formMeta.id,
-          title:        values[fields[0]?.id] || t('submission.submit.pageTitle'),
+          title:        values[fields[0]?.id || fields[0]?.key] || t('submission.submit.pageTitle'),
           dataJson:     values,
         })
         targetId      = data.submission?.id
