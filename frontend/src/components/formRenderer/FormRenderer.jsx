@@ -56,7 +56,8 @@ function FieldFeedback({ id, error, valid }) {
  */
 export function FormField({ field, value, error, lang, onChange }) {
   const { t }  = useTranslation()
-  const id     = `field-${field.id}`
+  const fieldId = field.id || field.key
+  const id     = `field-${fieldId}`
   const label  = (lang === 'en' && field.labelEn) ? field.labelEn : (field.labelHe || t(`secretary.fieldTypes.${field.type}`))
   const ph     = field.placeholderHe || ''
   const hasErr = Boolean(error)
@@ -72,7 +73,7 @@ export function FormField({ field, value, error, lang, onChange }) {
           aria-describedby={hasErr ? `${id}-err` : undefined}
           data-error={hasErr || undefined}
           className={INPUT_BASE} style={inputStyle(hasErr)}
-          onChange={e => onChange(field.id, e.target.value)}
+          onChange={e => onChange(fieldId, e.target.value)}
           onFocus={onFocus} onBlur={onBlur}
         />
         <FieldFeedback id={`${id}-err`} error={error} valid={isValid} />
@@ -88,7 +89,7 @@ export function FormField({ field, value, error, lang, onChange }) {
           aria-required={field.required} aria-invalid={hasErr}
           data-error={hasErr || undefined}
           className={`${INPUT_BASE} resize-none`} style={{ borderColor: hasErr ? '#dc2626' : '#e5e7eb' }}
-          onChange={e => onChange(field.id, e.target.value)}
+          onChange={e => onChange(fieldId, e.target.value)}
           onFocus={onFocus} onBlur={onBlur}
         />
         <FieldFeedback id={`${id}-err`} error={error} valid={isValid} />
@@ -103,7 +104,7 @@ export function FormField({ field, value, error, lang, onChange }) {
         <input id={id} type="date" value={value || ''}
           aria-required={field.required} aria-invalid={hasErr}
           className={INPUT_BASE} style={inputStyle(hasErr)}
-          onChange={e => onChange(field.id, e.target.value)}
+          onChange={e => onChange(fieldId, e.target.value)}
           onFocus={onFocus} onBlur={onBlur}
         />
         <FieldFeedback id={`${id}-err`} error={error} valid={isValid} />
@@ -120,7 +121,7 @@ export function FormField({ field, value, error, lang, onChange }) {
         <FieldLabel id={id} label={label} required={field.required} />
         <select id={id} value={value || ''} aria-required={field.required} aria-invalid={hasErr}
           className={INPUT_BASE} style={inputStyle(hasErr)}
-          onChange={e => onChange(field.id, e.target.value)}
+          onChange={e => onChange(fieldId, e.target.value)}
           onFocus={onFocus} onBlur={onBlur}>
           <option value="" disabled>{t('submission.submit.selectPlaceholder')}</option>
           {opts.map((opt, i) => (
@@ -146,7 +147,7 @@ export function FormField({ field, value, error, lang, onChange }) {
           return (
             <label key={i} className="flex items-center gap-2 text-sm cursor-pointer mb-1" style={{ minHeight: '44px' }}>
               <input type="radio" name={id} value={val} checked={value === val}
-                onChange={() => onChange(field.id, val)} className="accent-[#1E2A72]" />
+                onChange={() => onChange(fieldId, val)} className="accent-[#1E2A72]" />
               {optLabel(opt)}
             </label>
           )
@@ -171,7 +172,7 @@ export function FormField({ field, value, error, lang, onChange }) {
           return (
             <label key={i} className="flex items-center gap-2 text-sm cursor-pointer mb-1" style={{ minHeight: '44px' }}>
               <input type="checkbox" value={val} checked={checked.includes(val)}
-                onChange={e => onChange(field.id, e.target.checked ? [...checked, val] : checked.filter(v => v !== val))}
+                onChange={e => onChange(fieldId, e.target.checked ? [...checked, val] : checked.filter(v => v !== val))}
                 className="accent-[#1E2A72]" />
               {optLabel(opt)}
             </label>
@@ -195,7 +196,7 @@ export function FormField({ field, value, error, lang, onChange }) {
           </span>
           <span className="text-xs text-gray-400">{t('submission.submit.fileHint')}</span>
           <input id={id} type="file" className="sr-only" aria-required={field.required}
-            onChange={e => onChange(field.id, e.target.files?.[0]?.name || '')} />
+            onChange={e => onChange(fieldId, e.target.files?.[0]?.name || '')} />
         </label>
         <FieldFeedback id={`${id}-err`} error={error} valid={false} />
       </div>
@@ -209,7 +210,7 @@ export function FormField({ field, value, error, lang, onChange }) {
         <p className="text-xs text-gray-600">{t('submission.submit.declarationText')}</p>
         <label className="flex items-start gap-2 cursor-pointer" style={{ minHeight: '44px' }}>
           <input type="checkbox" id={id} checked={Boolean(value)} aria-required={field.required}
-            onChange={e => onChange(field.id, e.target.checked)} className="accent-[#1E2A72] mt-0.5" />
+            onChange={e => onChange(fieldId, e.target.checked)} className="accent-[#1E2A72] mt-0.5" />
           <span className="text-xs">
             {t('submission.submit.declarationAccept')}
             {field.required && <span aria-label={t('common.requiredField')} className="ms-0.5" style={{ color: 'var(--lev-purple)' }}>*</span>}
@@ -243,16 +244,19 @@ export function FormField({ field, value, error, lang, onChange }) {
 export default function FormRenderer({ fields, values, errors, lang, onChange }) {
   return (
     <div className="space-y-5">
-      {fields.map(field => (
-        <FormField
-          key={field.id}
-          field={field}
-          value={values[field.id]}
-          error={errors[field.id]}
-          lang={lang}
-          onChange={onChange}
-        />
-      ))}
+      {fields.map(field => {
+        const fieldId = field.id || field.key
+        return (
+          <FormField
+            key={fieldId}
+            field={field}
+            value={values[fieldId]}
+            error={errors[fieldId]}
+            lang={lang}
+            onChange={onChange}
+          />
+        )
+      })}
     </div>
   )
 }

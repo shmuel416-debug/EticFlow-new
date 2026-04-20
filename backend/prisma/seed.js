@@ -117,7 +117,7 @@ async function seedFormConfig() {
     version: 1,
     fields: [
       {
-        key:      'researchTitle',
+        id:       'researchTitle',
         type:     'text',
         labelHe:  'כותרת המחקר',
         labelEn:  'Research Title',
@@ -125,7 +125,7 @@ async function seedFormConfig() {
         validation: { maxLength: 200 },
       },
       {
-        key:      'researchType',
+        id:       'researchType',
         type:     'select',
         labelHe:  'סוג המחקר',
         labelEn:  'Research Type',
@@ -137,14 +137,14 @@ async function seedFormConfig() {
         ],
       },
       {
-        key:      'startDate',
+        id:       'startDate',
         type:     'date',
         labelHe:  'תאריך תחילת המחקר',
         labelEn:  'Research Start Date',
         required: true,
       },
       {
-        key:      'description',
+        id:       'description',
         type:     'textarea',
         labelHe:  'תיאור המחקר',
         labelEn:  'Research Description',
@@ -152,7 +152,7 @@ async function seedFormConfig() {
         validation: { minLength: 50, maxLength: 5000 },
       },
       {
-        key:      'gcpCertificate',
+        id:       'gcpCertificate',
         type:     'file',
         labelHe:  'תעודת GCP',
         labelEn:  'GCP Certificate',
@@ -164,7 +164,7 @@ async function seedFormConfig() {
 
   const form = await prisma.formConfig.upsert({
     where:  { id: 'seed-form-v1' },
-    update: {},
+    update: { schemaJson },
     create: {
       id:          'seed-form-v1',
       name:        'טופס בקשה לאישור מחקר',
