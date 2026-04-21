@@ -16,8 +16,6 @@
 
 import { ConfidentialClientApplication } from '@azure/msal-node'
 import { Client } from '@microsoft/microsoft-graph-client'
-import { TokenCredentialAuthenticationProvider } from
-  '@microsoft/microsoft-graph-client/authProviders/azureTokenCredentials/index.js'
 
 /** Scopes requested from Microsoft */
 const SCOPES = ['openid', 'profile', 'email', 'User.Read']
@@ -75,14 +73,18 @@ function getRedirectUri() {
 export async function getAuthUrl(state) {
   const client = getMsalClient()
 
-  const { authCodeUrl } = await client.getAuthCodeUrl({
+  const authUrl = await client.getAuthCodeUrl({
     scopes:      SCOPES,
     redirectUri: getRedirectUri(),
     state,
     prompt:      'select_account',
   })
 
-  return authCodeUrl
+  if (!authUrl || typeof authUrl !== 'string') {
+    throw new Error('Microsoft SSO failed to generate authorization URL')
+  }
+
+  return authUrl
 }
 
 /**
