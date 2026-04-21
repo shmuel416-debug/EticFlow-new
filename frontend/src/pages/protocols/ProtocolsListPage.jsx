@@ -48,6 +48,12 @@ export default function ProtocolsListPage() {
   const [filter,    setFilter]    = useState('ALL')
   const [loading,   setLoading]   = useState(true)
   const [error,     setError]     = useState(null)
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [meetings, setMeetings] = useState([])
+  const [selectedMeetingId, setSelectedMeetingId] = useState('')
+  const [loadingMeetings, setLoadingMeetings] = useState(false)
+  const [creating, setCreating] = useState(false)
+  const [createError, setCreateError] = useState('')
 
   // ── Fetch ────────────────────────────────────
 
@@ -93,6 +99,52 @@ export default function ProtocolsListPage() {
     return { signed, total: sigs.length }
   }
 
+  /**
+   * Loads available meetings and opens the create dialog.
+   * Excludes meetings that already have a protocol.
+   * @returns {Promise<void>}
+   */
+  async function handleOpenCreateModal() {
+    setShowCreateModal(true)
+    setLoadingMeetings(true)
+    setCreateError('')
+    setSelectedMeetingId('')
+    try {
+      const [meetingsRes, protocolsRes] = await Promise.all([
+        api.get('/meetings', { params: { filter: 'upcoming', limit: 100 } }),
+        api.get('/protocols', { params: { limit: 500 } }),
+      ])
+
+      const existingMeetingIds = new Set(
+        (protocolsRes.data.data ?? []).map((protocol) => protocol.meetingId)
+      )
+
+      const availableMeetings = (meetingsRes.data.data ?? []).filter(
+        (meeting) => !existingMeetingIds.has(meeting.id)
+      )
+
+      setMeetings(availableMeetings)
+      if (availableMeetings.length > 0) {
+        setSelectedMeetingId(availableMeetings[0].id)
+      }
+    } catch {
+      setCreateError(t('protocols.createLoadMeetingsError'))
+      setMeetings([])
+    } finally {
+      setLoadingMeetings(false)
+    }
+  }
+
+  /**
+   * Navigates to protocol creation with selected meeting context.
+   * @returns {void}
+   */
+  function handleStartCreateProtocol() {
+    if (!selectedMeetingId) return
+    setCreating(true)
+    navigate(`/protocols/new?meetingId=${selectedMeetingId}`)
+  }
+
   // ── Status label helper ───────────────────────
 
   const STATUS_LABEL = {
@@ -114,7 +166,7 @@ export default function ProtocolsListPage() {
         </div>
         {canCreate && (
           <button
-            onClick={() => navigate('/protocols/new')}
+            onClick={handleOpenCreateModal}
             className="flex items-center gap-2 text-sm font-semibold text-white px-4 py-2 rounded-lg"
             style={{ background: 'var(--lev-navy)', minHeight: '44px' }}
             aria-label={t('protocols.new')}
@@ -124,6 +176,77 @@ export default function ProtocolsListPage() {
           </button>
         )}
       </div>
+
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label={t('protocols.new')}>
+          <div className="w-full max-w-md bg-white rounded-xl border border-gray-200 shadow-xl p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-bold" style={{ color: 'var(--lev-navy)' }}>
+                {t('protocols.selectMeetingTitle')}
+              </h2>
+              <button
+                type="button"
+                onClick={() => setShowCreateModal(false)}
+                className="text-gray-500 hover:text-gray-800"
+                style={{ minWidth: '44px', minHeight: '44px' }}
+                aria-label={t('common.cancel')}
+              >
+                ✕
+              </button>
+            </div>
+
+            {loadingMeetings && (
+              <p className="text-sm text-gray-500">{t('common.loading')}</p>
+            )}
+
+            {!loadingMeetings && createError && (
+              <p className="text-sm text-red-600 mb-3" role="alert">{createError}</p>
+            )}
+
+            {!loadingMeetings && !createError && meetings.length === 0 && (
+              <p className="text-sm text-gray-600 mb-3">{t('protocols.noMeetingsForCreate')}</p>
+            )}
+
+            {!loadingMeetings && !createError && meetings.length > 0 && (
+              <div className="mb-4">
+                <label className="block text-xs text-gray-500 mb-1">{t('protocols.selectMeetingLabel')}</label>
+                <select
+                  value={selectedMeetingId}
+                  onChange={(event) => setSelectedMeetingId(event.target.value)}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"
+                  style={{ minHeight: '44px' }}
+                >
+                  {meetings.map((meeting) => (
+                    <option key={meeting.id} value={meeting.id}>
+                      {meeting.title} — {fmtDate(meeting.scheduledAt)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setShowCreateModal(false)}
+                className="flex-1 border border-gray-200 text-gray-600 rounded-lg text-sm"
+                style={{ minHeight: '44px' }}
+              >
+                {t('common.cancel')}
+              </button>
+              <button
+                type="button"
+                onClick={handleStartCreateProtocol}
+                disabled={loadingMeetings || meetings.length === 0 || !selectedMeetingId || creating}
+                className="flex-1 text-white rounded-lg text-sm font-semibold disabled:opacity-60"
+                style={{ background: 'var(--lev-navy)', minHeight: '44px' }}
+              >
+                {t('protocols.new')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Filter tabs ── */}
       <div className="bg-white border-b overflow-x-auto">
