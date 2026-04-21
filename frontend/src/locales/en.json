@@ -449,7 +449,15 @@
         "added": "Added",
         "removed": "Removed",
         "updated": "Updated"
-      }
+      },
+      "filterByType": "Filter by change type",
+      "allTypes": "All change types",
+      "filterByGroup": "Filter by group",
+      "allGroups": "All groups",
+      "search": "Search changes",
+      "searchPlaceholder": "Search by path/value...",
+      "hideNoise": "Hide noisy changes ({{count}})",
+      "groupPrefix": "Group:"
     }
   },
   "chairman": {
@@ -641,7 +649,16 @@
     "weekdaySat": "Sat",
     "meetingsCount": "{{count}} meetings",
     "dayMeetings": "Meetings for day",
-    "noMeetingsForDay": "No meetings for this day"
+    "noMeetingsForDay": "No meetings for this day",
+    "filterByStatus": "Filter by status",
+    "filterByRange": "Filter by date range",
+    "filterAllStatuses": "All statuses",
+    "rangeAll": "All ranges",
+    "rangeNext30": "Next 30 days",
+    "rangePast30": "Past 30 days",
+    "selectedDayCount": "{{count}} meetings on selected day",
+    "crowdedDays": "Crowded days",
+    "dayMeetingsList": "Meetings list for day"
   },
   "protocols": {
     "title": "Protocols",

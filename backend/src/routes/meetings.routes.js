@@ -1,9 +1,9 @@
 /**
  * EthicFlow — Meetings Routes
  *
- * GET    /api/meetings                          — list meetings (all authenticated)
+ * GET    /api/meetings                          — list meetings (SECRETARY, CHAIRMAN, ADMIN)
  * POST   /api/meetings                          — create meeting (SECRETARY, ADMIN)
- * GET    /api/meetings/:id                      — meeting detail (all authenticated)
+ * GET    /api/meetings/:id                      — meeting detail (SECRETARY, CHAIRMAN, ADMIN)
  * PUT    /api/meetings/:id                      — update meeting (SECRETARY, ADMIN)
  * DELETE /api/meetings/:id                      — cancel meeting (SECRETARY, ADMIN)
  * POST   /api/meetings/:id/agenda               — add agenda item (SECRETARY, ADMIN)
@@ -78,6 +78,7 @@ const addAttendeeSchema = z.object({
 router.get(
   '/',
   authenticate,
+  authorize('SECRETARY', 'CHAIRMAN', 'ADMIN'),
   validateQuery(listQuerySchema),
   controller.list
 )
@@ -94,6 +95,7 @@ router.post(
 router.get(
   '/:id',
   authenticate,
+  authorize('SECRETARY', 'CHAIRMAN', 'ADMIN'),
   controller.getById
 )
 

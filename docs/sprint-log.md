@@ -1,5 +1,17 @@
 # EthicFlow — Sprint Log
 
+## Sprint 10 — Ops Hardening + Product Completion
+
+| Date | Task | Status | Notes |
+|------|------|--------|-------|
+| 2026-04-21 | Stream A — Runtime rollback drill | ✅ Done | `docs/ops/drills/sprint-10-runtime-rollback-drill.md` with measured RTO (13.98s) |
+| 2026-04-21 | Stream A — Backup/restore drill | ✅ Done | `docs/ops/drills/sprint-10-backup-restore-drill.md` with measured RPO (0.38s) |
+| 2026-04-21 | Stream A — Runbook Go/No-Go closure | ✅ Done | Updated `docs/DEPLOYMENT.md` + `docs/ops-production-stability-playbook.md` |
+| 2026-04-21 | Stream B — Calendar V2 | ✅ Done | Added status/range filters, crowded-day highlighting, mobile-focused day summary |
+| 2026-04-21 | Stream B — Diff V2 | ✅ Done | Added grouping, filters, search, noisy-change suppression, long-text highlighting |
+| 2026-04-21 | Stream B — RBAC consistency | ✅ Done | Meetings routes restricted in frontend and backend to `SECRETARY/CHAIRMAN/ADMIN` |
+| 2026-04-21 | Stream C — Regression + signoff | ✅ Done | lint/build/e2e/backend tests/prisma validate all PASS; report published |
+
 ## Sprint 9 — Stabilization & Growth
 
 | Date | Task | Status | Notes |

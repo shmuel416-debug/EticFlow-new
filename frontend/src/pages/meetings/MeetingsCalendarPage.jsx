@@ -70,6 +70,30 @@ function formatDateTime(value) {
 }
 
 /**
+ * Formats date key as localized date label.
+ * @param {string} key
+ * @returns {string}
+ */
+function formatDateKeyLabel(key) {
+  return new Date(`${key}T00:00:00`).toLocaleDateString('he-IL', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  })
+}
+
+/**
+ * Determines day density class by meetings count.
+ * @param {number} count
+ * @returns {string}
+ */
+function getDensityClass(count) {
+  if (count >= 3) return 'bg-amber-100 text-amber-800'
+  if (count > 0) return 'bg-blue-100 text-blue-800'
+  return 'bg-gray-100 text-gray-600'
+}
+
+/**
  * Meetings calendar page with month navigation and day details.
  * @returns {JSX.Element}
  */
@@ -80,6 +104,8 @@ export default function MeetingsCalendarPage() {
   const [meetings, setMeetings] = useState([])
   const [visibleMonth, setVisibleMonth] = useState(() => monthStart(new Date()))
   const [selectedDay, setSelectedDay] = useState(() => dateKey(new Date()))
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [rangeFilter, setRangeFilter] = useState('all')
 
   /**
    * Loads all meetings for calendar rendering.
@@ -103,17 +129,54 @@ export default function MeetingsCalendarPage() {
 
   const byDay = useMemo(() => {
     const map = new Map()
+    const now = new Date()
+    const rangeStart = new Date(now)
+    const rangeEnd = new Date(now)
+    if (rangeFilter === 'next30') {
+      rangeEnd.setDate(rangeEnd.getDate() + 30)
+    }
+    if (rangeFilter === 'past30') {
+      rangeStart.setDate(rangeStart.getDate() - 30)
+    }
+
     for (const meeting of meetings) {
+      if (statusFilter !== 'all' && meeting.status !== statusFilter) continue
+      const meetingDate = new Date(meeting.scheduledAt)
+      if (rangeFilter === 'next30' && (meetingDate < now || meetingDate > rangeEnd)) continue
+      if (rangeFilter === 'past30' && (meetingDate > now || meetingDate < rangeStart)) continue
       const key = dateKey(meeting.scheduledAt)
       const arr = map.get(key) || []
       arr.push(meeting)
       map.set(key, arr)
     }
+    for (const [key, rows] of map.entries()) {
+      map.set(key, rows.sort((a, b) => new Date(a.scheduledAt) - new Date(b.scheduledAt)))
+    }
     return map
-  }, [meetings])
+  }, [meetings, statusFilter, rangeFilter])
 
   const gridDays = useMemo(() => buildCalendarGrid(visibleMonth), [visibleMonth])
   const selectedMeetings = useMemo(() => byDay.get(selectedDay) || [], [byDay, selectedDay])
+  const crowdedDays = useMemo(() => {
+    return [...byDay.entries()]
+      .map(([key, rows]) => ({ key, count: rows.length }))
+      .filter((item) => item.count >= 3)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5)
+  }, [byDay])
+
+  const filterOptions = [
+    { key: 'all', label: t('meetings.filterAllStatuses') },
+    { key: 'SCHEDULED', label: t('meetings.statusScheduled') },
+    { key: 'COMPLETED', label: t('meetings.statusCompleted') },
+    { key: 'CANCELLED', label: t('meetings.statusCancelled') },
+  ]
+
+  const rangeOptions = [
+    { key: 'all', label: t('meetings.rangeAll') },
+    { key: 'next30', label: t('meetings.rangeNext30') },
+    { key: 'past30', label: t('meetings.rangePast30') },
+  ]
 
   return (
     <main id="main-content" className="max-w-6xl mx-auto p-4 md:p-6">
@@ -127,6 +190,34 @@ export default function MeetingsCalendarPage() {
       </div>
 
       <section className="bg-white border border-gray-200 rounded-xl p-4 md:p-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-4">
+          <label className="text-sm">
+            <span className="text-xs text-gray-600 block mb-1">{t('meetings.filterByStatus')}</span>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 min-h-[44px]"
+            >
+              {filterOptions.map((option) => (
+                <option key={option.key} value={option.key}>{option.label}</option>
+              ))}
+            </select>
+          </label>
+
+          <label className="text-sm">
+            <span className="text-xs text-gray-600 block mb-1">{t('meetings.filterByRange')}</span>
+            <select
+              value={rangeFilter}
+              onChange={(e) => setRangeFilter(e.target.value)}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 min-h-[44px]"
+            >
+              {rangeOptions.map((option) => (
+                <option key={option.key} value={option.key}>{option.label}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+
         <div className="flex items-center justify-between gap-2 mb-4">
           <button
             type="button"
@@ -172,6 +263,7 @@ export default function MeetingsCalendarPage() {
                 const dayMeetings = byDay.get(key) || []
                 const inMonth = day.getMonth() === visibleMonth.getMonth()
                 const isSelected = key === selectedDay
+                const densityClass = getDensityClass(dayMeetings.length)
                 return (
                   <button
                     key={key}
@@ -187,7 +279,7 @@ export default function MeetingsCalendarPage() {
                   >
                     <div className="text-sm font-semibold">{day.getDate()}</div>
                     {dayMeetings.length > 0 && (
-                      <div className="text-[11px] text-blue-700 mt-1">
+                      <div className={`text-[11px] mt-1 inline-flex px-1.5 py-0.5 rounded-full ${densityClass}`}>
                         {t('meetings.meetingsCount', { count: dayMeetings.length })}
                       </div>
                     )}
@@ -200,8 +292,35 @@ export default function MeetingsCalendarPage() {
       </section>
 
       <section className="bg-white border border-gray-200 rounded-xl p-4 md:p-5 mt-4">
+        <div className="flex items-center justify-between gap-2 flex-wrap mb-2">
+          <h3 className="font-semibold" style={{ color: 'var(--lev-navy)' }}>
+            {t('meetings.dayMeetings')} ({formatDateKeyLabel(selectedDay)})
+          </h3>
+          <span className="text-xs text-gray-500">
+            {t('meetings.selectedDayCount', { count: selectedMeetings.length })}
+          </span>
+        </div>
+
+        {crowdedDays.length > 0 && (
+          <div className="mb-3">
+            <p className="text-xs text-gray-600 mb-1">{t('meetings.crowdedDays')}</p>
+            <div className="flex flex-wrap gap-1.5">
+              {crowdedDays.map((item) => (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => setSelectedDay(item.key)}
+                  className="text-xs px-2 py-1 rounded-full bg-amber-100 text-amber-800"
+                >
+                  {formatDateKeyLabel(item.key)} · {item.count}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         <h3 className="font-semibold mb-3" style={{ color: 'var(--lev-navy)' }}>
-          {t('meetings.dayMeetings')} ({selectedDay})
+          {t('meetings.dayMeetingsList')}
         </h3>
         {selectedMeetings.length === 0 && (
           <p className="text-sm text-gray-500">{t('meetings.noMeetingsForDay')}</p>

@@ -27,10 +27,47 @@ function flatten(value, prefix = '') {
 }
 
 /**
+ * Normalizes value to noise-friendly string.
+ * @param {string|undefined} value
+ * @returns {string}
+ */
+function normalizeValue(value) {
+  if (value === undefined || value === null) return ''
+  const trimmed = String(value).trim().toLowerCase()
+  if (trimmed === 'null' || trimmed === 'undefined' || trimmed === '—') return ''
+  return trimmed
+}
+
+/**
+ * Returns whether the change is low-signal noise.
+ * @param {{from:string,to:string}} row
+ * @returns {boolean}
+ */
+function isNoisyChange(row) {
+  const from = normalizeValue(row.from)
+  const to = normalizeValue(row.to)
+  if (from === to) return true
+  if (!from && !to) return true
+  if ((from === '[]' && !to) || (to === '[]' && !from)) return true
+  if ((from === '{}' && !to) || (to === '{}' && !from)) return true
+  return false
+}
+
+/**
+ * Returns logical group key from path.
+ * @param {string} path
+ * @returns {string}
+ */
+function groupFromPath(path) {
+  const first = path.split(/[.[\]]/).filter(Boolean)[0]
+  return first || 'root'
+}
+
+/**
  * Builds comparison rows between versions.
  * @param {Record<string,string>} fromMap
  * @param {Record<string,string>} toMap
- * @returns {Array<{path:string, from:string, to:string, type:string}>}
+ * @returns {Array<{path:string, from:string, to:string, type:string, group:string, noisy:boolean}>}
  */
 function buildDiffRows(fromMap, toMap) {
   const keys = new Set([...Object.keys(fromMap), ...Object.keys(toMap)])
@@ -42,9 +79,46 @@ function buildDiffRows(fromMap, toMap) {
     let type = 'updated'
     if (before === undefined) type = 'added'
     if (after === undefined) type = 'removed'
-    rows.push({ path: key, from: before ?? '—', to: after ?? '—', type })
+    const row = { path: key, from: before ?? '—', to: after ?? '—', type, group: groupFromPath(key) }
+    rows.push({ ...row, noisy: isNoisyChange(row) })
   }
   return rows.sort((a, b) => a.path.localeCompare(b.path))
+}
+
+/**
+ * Highlights token-level changes for long text values.
+ * @param {string} value
+ * @param {string} other
+ * @param {'from'|'to'} side
+ * @returns {import('react').ReactNode}
+ */
+function highlightLongText(value, other, side) {
+  const valueTokens = String(value).split(/\s+/)
+  const otherSet = new Set(String(other).split(/\s+/))
+  return valueTokens.map((token, index) => {
+    const changed = side === 'from' ? !otherSet.has(token) : !otherSet.has(token)
+    return (
+      <span
+        key={`${side}-${token}-${index}`}
+        className={changed ? (side === 'from' ? 'bg-red-100 px-0.5 rounded' : 'bg-green-100 px-0.5 rounded') : ''}
+      >
+        {token}
+        {' '}
+      </span>
+    )
+  })
+}
+
+/**
+ * Renders value cell with long-text diff highlighting.
+ * @param {string} value
+ * @param {string} other
+ * @param {'from'|'to'} side
+ * @returns {import('react').ReactNode}
+ */
+function renderValueCell(value, other, side) {
+  if (String(value).length < 90 && String(other).length < 90) return value
+  return highlightLongText(value, other, side)
 }
 
 /**
@@ -59,6 +133,10 @@ export default function ReviewDiffPage() {
   const [submission, setSubmission] = useState(null)
   const [fromVersion, setFromVersion] = useState('')
   const [toVersion, setToVersion] = useState('')
+  const [changeTypeFilter, setChangeTypeFilter] = useState('all')
+  const [activeGroup, setActiveGroup] = useState('all')
+  const [hideNoise, setHideNoise] = useState(true)
+  const [searchText, setSearchText] = useState('')
 
   useEffect(() => {
     /**
@@ -99,11 +177,34 @@ export default function ReviewDiffPage() {
     return flatten(v?.dataJson || {})
   }, [versions, toVersion])
   const rows = useMemo(() => buildDiffRows(fromData, toData), [fromData, toData])
+  const filteredRows = useMemo(() => {
+    const search = searchText.trim().toLowerCase()
+    return rows.filter((row) => {
+      if (hideNoise && row.noisy) return false
+      if (changeTypeFilter !== 'all' && row.type !== changeTypeFilter) return false
+      if (activeGroup !== 'all' && row.group !== activeGroup) return false
+      if (!search) return true
+      return `${row.path} ${row.from} ${row.to}`.toLowerCase().includes(search)
+    })
+  }, [rows, hideNoise, changeTypeFilter, activeGroup, searchText])
+
+  const groupedRows = useMemo(() => {
+    return filteredRows.reduce((acc, row) => {
+      const arr = acc[row.group] || []
+      arr.push(row)
+      acc[row.group] = arr
+      return acc
+    }, {})
+  }, [filteredRows])
+
+  const groupKeys = useMemo(() => Object.keys(groupedRows).sort(), [groupedRows])
+
   const stats = useMemo(() => ({
-    added: rows.filter((r) => r.type === 'added').length,
-    removed: rows.filter((r) => r.type === 'removed').length,
-    updated: rows.filter((r) => r.type === 'updated').length,
-  }), [rows])
+    added: filteredRows.filter((r) => r.type === 'added').length,
+    removed: filteredRows.filter((r) => r.type === 'removed').length,
+    updated: filteredRows.filter((r) => r.type === 'updated').length,
+    noisy: rows.filter((r) => r.noisy).length,
+  }), [filteredRows, rows])
 
   return (
     <main id="main-content" className="max-w-6xl mx-auto p-4 md:p-6">
@@ -142,49 +243,104 @@ export default function ReviewDiffPage() {
                 </label>
               </div>
 
+              <div className="grid md:grid-cols-3 gap-2 mb-3">
+                <label className="text-sm">
+                  <span className="block text-xs text-gray-600 mb-1">{t('reviewer.diff.filterByType')}</span>
+                  <select
+                    value={changeTypeFilter}
+                    onChange={(e) => setChangeTypeFilter(e.target.value)}
+                    className="w-full border rounded-lg px-3 py-2 min-h-[44px]"
+                  >
+                    <option value="all">{t('reviewer.diff.allTypes')}</option>
+                    <option value="updated">{t('reviewer.diff.type.updated')}</option>
+                    <option value="added">{t('reviewer.diff.type.added')}</option>
+                    <option value="removed">{t('reviewer.diff.type.removed')}</option>
+                  </select>
+                </label>
+
+                <label className="text-sm">
+                  <span className="block text-xs text-gray-600 mb-1">{t('reviewer.diff.filterByGroup')}</span>
+                  <select
+                    value={activeGroup}
+                    onChange={(e) => setActiveGroup(e.target.value)}
+                    className="w-full border rounded-lg px-3 py-2 min-h-[44px]"
+                  >
+                    <option value="all">{t('reviewer.diff.allGroups')}</option>
+                    {groupKeys.map((group) => (
+                      <option key={group} value={group}>{group}</option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="text-sm">
+                  <span className="block text-xs text-gray-600 mb-1">{t('reviewer.diff.search')}</span>
+                  <input
+                    type="text"
+                    value={searchText}
+                    onChange={(e) => setSearchText(e.target.value)}
+                    className="w-full border rounded-lg px-3 py-2 min-h-[44px]"
+                    placeholder={t('reviewer.diff.searchPlaceholder')}
+                  />
+                </label>
+              </div>
+
+              <label className="inline-flex items-center gap-2 text-sm mb-3">
+                <input type="checkbox" checked={hideNoise} onChange={(e) => setHideNoise(e.target.checked)} />
+                <span>{t('reviewer.diff.hideNoise', { count: stats.noisy })}</span>
+              </label>
+
               <div className="flex flex-wrap gap-2 mb-4 text-xs">
                 <span className="px-2 py-1 rounded-full bg-blue-100 text-blue-800">{t('reviewer.diff.updatedCount', { count: stats.updated })}</span>
                 <span className="px-2 py-1 rounded-full bg-green-100 text-green-800">{t('reviewer.diff.addedCount', { count: stats.added })}</span>
                 <span className="px-2 py-1 rounded-full bg-red-100 text-red-800">{t('reviewer.diff.removedCount', { count: stats.removed })}</span>
               </div>
 
-              {rows.length === 0 && (
+              {filteredRows.length === 0 && (
                 <p className="text-sm text-gray-500">{t('reviewer.diff.noChanges')}</p>
               )}
 
-              {rows.length > 0 && (
-                <div className="overflow-x-auto border border-gray-200 rounded-lg">
-                  <table className="w-full text-sm">
-                    <thead className="bg-gray-50 text-gray-600 text-xs">
-                      <tr>
-                        <th className="px-3 py-2 text-start">{t('reviewer.diff.fieldPath')}</th>
-                        <th className="px-3 py-2 text-start">{t('reviewer.diff.fromValue')}</th>
-                        <th className="px-3 py-2 text-start">{t('reviewer.diff.toValue')}</th>
-                        <th className="px-3 py-2 text-start">{t('reviewer.diff.changeType')}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {rows.map((row) => (
-                        <tr key={row.path} className="border-t">
-                          <td className="px-3 py-2 font-mono text-xs">{row.path}</td>
-                          <td className="px-3 py-2 whitespace-pre-wrap break-words">{row.from}</td>
-                          <td className="px-3 py-2 whitespace-pre-wrap break-words">{row.to}</td>
-                          <td className="px-3 py-2">
-                            <span className={`px-2 py-0.5 rounded-full text-xs ${
-                              row.type === 'added'
-                                ? 'bg-green-100 text-green-700'
-                                : row.type === 'removed'
-                                  ? 'bg-red-100 text-red-700'
-                                  : 'bg-blue-100 text-blue-700'
-                            }`}
-                            >
-                              {t(`reviewer.diff.type.${row.type}`)}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+              {filteredRows.length > 0 && (
+                <div className="space-y-4">
+                  {groupKeys.map((group) => (
+                    <section key={group} className="border border-gray-200 rounded-lg overflow-hidden">
+                      <header className="bg-gray-50 px-3 py-2 text-xs font-semibold text-gray-700">
+                        {t('reviewer.diff.groupPrefix')} {group} ({groupedRows[group].length})
+                      </header>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead className="bg-white text-gray-600 text-xs">
+                            <tr>
+                              <th className="px-3 py-2 text-start">{t('reviewer.diff.fieldPath')}</th>
+                              <th className="px-3 py-2 text-start">{t('reviewer.diff.fromValue')}</th>
+                              <th className="px-3 py-2 text-start">{t('reviewer.diff.toValue')}</th>
+                              <th className="px-3 py-2 text-start">{t('reviewer.diff.changeType')}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {groupedRows[group].map((row) => (
+                              <tr key={row.path} className="border-t">
+                                <td className="px-3 py-2 font-mono text-xs">{row.path}</td>
+                                <td className="px-3 py-2 whitespace-pre-wrap break-words">{renderValueCell(row.from, row.to, 'from')}</td>
+                                <td className="px-3 py-2 whitespace-pre-wrap break-words">{renderValueCell(row.to, row.from, 'to')}</td>
+                                <td className="px-3 py-2">
+                                  <span className={`px-2 py-0.5 rounded-full text-xs ${
+                                    row.type === 'added'
+                                      ? 'bg-green-100 text-green-700'
+                                      : row.type === 'removed'
+                                        ? 'bg-red-100 text-red-700'
+                                        : 'bg-blue-100 text-blue-700'
+                                  }`}
+                                  >
+                                    {t(`reviewer.diff.type.${row.type}`)}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </section>
+                  ))}
                 </div>
               )}
             </>

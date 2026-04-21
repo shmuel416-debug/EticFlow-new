@@ -136,6 +136,22 @@ Evidence must be captured in:
 - `docs/ops/drills/` (drill report)
 - `docs/ops/smoke-history/` (smoke output)
 
+## Operational Go/No-Go Criteria (Sprint 10)
+
+Approve production release only when all checks pass:
+
+- Runtime rollback drill completed in staging/clone with measured RTO and successful post-rollback smoke.
+- Backup/restore drill completed in clean clone DB with data validation and measured RPO.
+- Daily smoke has no High/Critical open failures in the last 7 consecutive runs.
+- Quality gates pass on release candidate (`lint`, `build`, `tests`, `e2e`).
+
+No-Go triggers (must stop release):
+
+- Rollback drill failed or recovery exceeds agreed RTO threshold.
+- Restore validation failed (missing/incorrect critical data) or RPO above target.
+- Health endpoint instability or repeated 5xx spikes on core endpoints.
+- Any unresolved Critical incident in the last release window.
+
 ## Update Procedure
 
 ```bash

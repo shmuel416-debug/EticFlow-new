@@ -63,3 +63,11 @@ Operational playbook for post-production stability: daily smoke, SLO tracking, i
 - Daily smoke output archive: `docs/ops/smoke-history/`
 - Incident records: `docs/ops/incidents/`
 - Drill reports: `docs/ops/drills/`
+
+## Release Gate (Go/No-Go)
+- Go only if all are true:
+  1) Latest rollback drill = PASS with measured RTO
+  2) Latest backup/restore drill = PASS with measured RPO
+  3) Last 7 daily smoke runs have no High/Critical open failures
+  4) CI quality gates are green (`lint`, `build`, `tests`, `e2e`)
+- No-Go if any item above fails.

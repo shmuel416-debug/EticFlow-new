@@ -1,15 +1,15 @@
 # EthicFlow — Progress Tracker
 
-## Latest Update: Sprint 9 — Stabilization & Growth
-**Status:** ✅ Complete | **Date:** 2026-04-21 | **Report:** `docs/sprint-9-report-hebrew.md`
+## Latest Update: Sprint 10 — Ops Hardening + Product Completion
+**Status:** ✅ Complete | **Date:** 2026-04-21 | **Report:** `docs/sprint-10-report-hebrew.md`
 
-- [x] Production stability playbook + daily smoke automation
-- [x] Meetings Calendar page implemented (replaced placeholder)
-- [x] Reviewer Diff page implemented (replaced placeholder)
-- [x] Playwright core E2E suite (4 critical scenarios)
-- [x] E2E integrated into CI quality gates
-- [x] Rollback/backup drill documented + runbook updated
-- [x] Sprint 9 regression run and signoff report published
+- [x] Runtime rollback drill completed with measured RTO (`docs/ops/drills/sprint-10-runtime-rollback-drill.md`)
+- [x] Backup/restore drill completed with measured RPO (`docs/ops/drills/sprint-10-backup-restore-drill.md`)
+- [x] Operational Go/No-Go criteria finalized in runbook/playbook
+- [x] Meetings Calendar upgraded to V2 (filters, density, mobile UX)
+- [x] Reviewer Diff upgraded to V2 (grouping, filtering, search, noise reduction)
+- [x] Meetings RBAC aligned in frontend and backend routes
+- [x] Full regression gates passed and Sprint 10 report published
 
 ---
 
