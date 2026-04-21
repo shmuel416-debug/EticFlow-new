@@ -31,13 +31,17 @@ const SCOPES = [
  * @throws {Error} If required env vars are missing
  */
 function getOAuth2Client() {
-  const clientId     = process.env.GOOGLE_AUTH_CLIENT_ID
+  const clientId = process.env.GOOGLE_AUTH_CLIENT_ID
+    || process.env.GOOGLE_CLIENT_ID
   const clientSecret = process.env.GOOGLE_AUTH_CLIENT_SECRET
-  const redirectUri  = process.env.GOOGLE_AUTH_REDIRECT_URI
+    || process.env.GOOGLE_CLIENT_SECRET
+  const redirectUri = process.env.GOOGLE_AUTH_REDIRECT_URI
+    || process.env.GOOGLE_REDIRECT_URI
+    || (process.env.FRONTEND_URL ? `${process.env.FRONTEND_URL}/api/auth/google/callback` : '')
 
   if (!clientId || !clientSecret || !redirectUri) {
     throw new Error(
-      'Google SSO requires GOOGLE_AUTH_CLIENT_ID, GOOGLE_AUTH_CLIENT_SECRET, and GOOGLE_AUTH_REDIRECT_URI'
+      'Google SSO requires GOOGLE_AUTH_CLIENT_ID/GOOGLE_CLIENT_ID, GOOGLE_AUTH_CLIENT_SECRET/GOOGLE_CLIENT_SECRET, and GOOGLE_AUTH_REDIRECT_URI/GOOGLE_REDIRECT_URI or FRONTEND_URL'
     )
   }
 

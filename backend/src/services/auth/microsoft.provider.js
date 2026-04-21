@@ -31,13 +31,20 @@ let _msalClient = null
 function getMsalClient() {
   if (_msalClient) return _msalClient
 
-  const clientId     = process.env.MICROSOFT_AUTH_CLIENT_ID
+  const clientId = process.env.MICROSOFT_AUTH_CLIENT_ID
+    || process.env.MICROSOFT_CLIENT_ID
+    || process.env.AZURE_CLIENT_ID
   const clientSecret = process.env.MICROSOFT_AUTH_CLIENT_SECRET
-  const tenantId     = process.env.MICROSOFT_AUTH_TENANT_ID || 'common'
+    || process.env.MICROSOFT_CLIENT_SECRET
+    || process.env.AZURE_CLIENT_SECRET
+  const tenantId = process.env.MICROSOFT_AUTH_TENANT_ID
+    || process.env.MICROSOFT_TENANT_ID
+    || process.env.AZURE_TENANT_ID
+    || 'common'
 
   if (!clientId || !clientSecret) {
     throw new Error(
-      'Microsoft SSO requires MICROSOFT_AUTH_CLIENT_ID and MICROSOFT_AUTH_CLIENT_SECRET'
+      'Microsoft SSO requires MICROSOFT_AUTH_CLIENT_ID/MICROSOFT_CLIENT_ID and MICROSOFT_AUTH_CLIENT_SECRET/MICROSOFT_CLIENT_SECRET'
     )
   }
 
@@ -59,8 +66,10 @@ function getMsalClient() {
  */
 function getRedirectUri() {
   const uri = process.env.MICROSOFT_AUTH_REDIRECT_URI
+    || process.env.MICROSOFT_REDIRECT_URI
+    || (process.env.FRONTEND_URL ? `${process.env.FRONTEND_URL}/api/auth/microsoft/callback` : '')
   if (!uri) {
-    throw new Error('Microsoft SSO requires MICROSOFT_AUTH_REDIRECT_URI')
+    throw new Error('Microsoft SSO requires MICROSOFT_AUTH_REDIRECT_URI/MICROSOFT_REDIRECT_URI or FRONTEND_URL')
   }
   return uri
 }
