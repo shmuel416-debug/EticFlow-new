@@ -405,17 +405,19 @@ async function renderApprovalFallbackPdf(submission, lang, outputPath) {
   const validHe    = validUntil(submission.updatedAt, 'he')
   const validEn    = validUntil(submission.updatedAt, 'en')
 
+  let hasArial = false
   try {
     const arialRegular = path.join(FONTS_DIR, 'Arial.ttf')
     const arialBold    = path.join(FONTS_DIR, 'Arial-Bold.ttf')
     doc.registerFont('Arial', arialRegular)
     doc.registerFont('Arial-Bold', arialBold)
+    hasArial = true
   } catch {
     // Continue with built-in fonts if custom fonts are unavailable.
   }
 
-  const baseFont = safeLang === 'he' ? 'Arial' : 'Helvetica'
-  const boldFont = safeLang === 'he' ? 'Arial-Bold' : 'Helvetica-Bold'
+  const baseFont = safeLang === 'he' && hasArial ? 'Arial' : 'Helvetica'
+  const boldFont = safeLang === 'he' && hasArial ? 'Arial-Bold' : 'Helvetica-Bold'
 
   doc.font(boldFont).fontSize(18).fillColor('#1e3a5f')
   if (safeLang === 'he') {
