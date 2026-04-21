@@ -1,5 +1,19 @@
 # EthicFlow — Progress Tracker
 
+## Latest Update: Sprint 11 — UI E2E Expansion
+**Status:** ✅ Complete (CI full validation pending secrets) | **Date:** 2026-04-21 | **Report:** `docs/sprint-11-report-hebrew.md`
+
+- [x] UI E2E coverage matrix published (`docs/e2e-ui-coverage-matrix-sprint-11-hebrew.md`)
+- [x] Playwright suites reorganized by domain with shared fixtures/helpers
+- [x] Stable `data-testid` hooks added on critical UI surfaces
+- [x] Core UI flows implemented: submit/review/decision + meetings + diff
+- [x] RBAC negative UI scenarios implemented
+- [x] he/en + RTL/LTR smoke scenarios implemented
+- [x] CI hardening completed (webServer, retries, junit, artifacts)
+- [x] Sprint 11 final report published (`docs/sprint-11-report-hebrew.md`)
+
+---
+
 ## Latest Update: Sprint 10 — Ops Hardening + Product Completion
 **Status:** ✅ Complete | **Date:** 2026-04-21 | **Report:** `docs/sprint-10-report-hebrew.md`
 

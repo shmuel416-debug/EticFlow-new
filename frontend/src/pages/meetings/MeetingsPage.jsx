@@ -194,7 +194,7 @@ function CreateMeetingModal({ onClose, onCreated, t }) {
             <label htmlFor="cm-title" className="block text-xs font-semibold text-gray-600 mb-1">
               {t('common.title')} <span className="text-red-500" aria-hidden="true">*</span>
             </label>
-            <input id="cm-title" type="text" value={form.title} aria-required="true"
+            <input id="cm-title" type="text" value={form.title} aria-required="true" data-testid="meeting-create-title"
               onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
               className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm min-h-[44px]
                          focus:outline-none focus:ring-2 focus:ring-blue-500" />
@@ -205,7 +205,7 @@ function CreateMeetingModal({ onClose, onCreated, t }) {
             <label htmlFor="cm-date" className="block text-xs font-semibold text-gray-600 mb-1">
               {t('meetings.date')} <span className="text-red-500" aria-hidden="true">*</span>
             </label>
-            <input id="cm-date" type="datetime-local" value={form.scheduledAt} aria-required="true"
+            <input id="cm-date" type="datetime-local" value={form.scheduledAt} aria-required="true" data-testid="meeting-create-datetime"
               onChange={e => setForm(f => ({ ...f, scheduledAt: e.target.value }))}
               className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm min-h-[44px]
                          focus:outline-none focus:ring-2 focus:ring-blue-500" dir="ltr" />
@@ -216,7 +216,7 @@ function CreateMeetingModal({ onClose, onCreated, t }) {
             <label htmlFor="cm-duration" className="block text-xs font-semibold text-gray-600 mb-1">
               {t('meetings.durationMinutes')}
             </label>
-            <input id="cm-duration" type="number" min="15" max="480" step="15"
+            <input id="cm-duration" type="number" min="15" max="480" step="15" data-testid="meeting-create-duration"
               value={form.durationMinutes}
               onChange={e => setForm(f => ({ ...f, durationMinutes: e.target.value }))}
               className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm min-h-[44px]
@@ -228,7 +228,7 @@ function CreateMeetingModal({ onClose, onCreated, t }) {
             <label htmlFor="cm-location" className="block text-xs font-semibold text-gray-600 mb-1">
               {t('meetings.location')}
             </label>
-            <input id="cm-location" type="text" value={form.location}
+            <input id="cm-location" type="text" value={form.location} data-testid="meeting-create-location"
               onChange={e => setForm(f => ({ ...f, location: e.target.value }))}
               className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm min-h-[44px]
                          focus:outline-none focus:ring-2 focus:ring-blue-500" />
@@ -239,7 +239,7 @@ function CreateMeetingModal({ onClose, onCreated, t }) {
             <label htmlFor="cm-link" className="block text-xs font-semibold text-gray-600 mb-1">
               {t('meetings.meetingLink')}
             </label>
-            <input id="cm-link" type="url" value={form.meetingLink} dir="ltr"
+            <input id="cm-link" type="url" value={form.meetingLink} dir="ltr" data-testid="meeting-create-link"
               placeholder="https://..."
               onChange={e => setForm(f => ({ ...f, meetingLink: e.target.value }))}
               className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm min-h-[44px]
@@ -261,11 +261,11 @@ function CreateMeetingModal({ onClose, onCreated, t }) {
         </div>
 
         <div className="flex gap-3 mt-6 justify-end">
-          <button onClick={onClose} disabled={saving}
+          <button onClick={onClose} disabled={saving} data-testid="meeting-create-cancel"
             className="px-4 py-2 rounded-lg border border-gray-200 text-sm min-h-[44px] hover:bg-gray-50">
             {t('common.cancel')}
           </button>
-          <button onClick={handleSubmit} disabled={saving || !form.title.trim() || !form.scheduledAt}
+          <button onClick={handleSubmit} disabled={saving || !form.title.trim() || !form.scheduledAt} data-testid="meeting-create-submit"
             className="px-4 py-2 rounded-lg text-white text-sm font-semibold min-h-[44px] disabled:opacity-60"
             style={{ background: 'var(--lev-navy)' }}>
             {saving ? t('common.loading') : t('common.save')}
@@ -326,6 +326,7 @@ export default function MeetingsPage() {
         <div className="flex items-center gap-2">
           <Link
             to="/meetings/calendar"
+            data-testid="meetings-open-calendar"
             className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-semibold min-h-[44px] inline-flex items-center"
           >
             {t('meetings.openCalendar')}
@@ -333,6 +334,7 @@ export default function MeetingsPage() {
           {canManage && (
             <button
               onClick={() => setShowCreate(true)}
+              data-testid="meetings-open-create-modal"
               className="flex items-center gap-2 px-4 py-2 rounded-lg text-white text-sm font-semibold min-h-[44px]"
               style={{ background: 'var(--lev-navy)' }}
               aria-label={t('meetings.create')}
@@ -349,6 +351,7 @@ export default function MeetingsPage() {
         {tabs.map(tab => (
           <button
             key={tab.key}
+            data-testid={`meetings-filter-${tab.key}`}
             role="tab"
             aria-selected={filter === tab.key}
             onClick={() => setFilter(tab.key)}
@@ -399,6 +402,7 @@ export default function MeetingsPage() {
             <Link
               key={meeting.id}
               to={`/meetings/${meeting.id}`}
+              data-testid={`meetings-row-${meeting.id}`}
               className="block bg-white rounded-xl border border-gray-100 p-4 hover:shadow-md
                          transition-shadow focus-visible:ring-2 focus-visible:ring-blue-500"
               aria-label={`${meeting.title} — ${formatDate(meeting.scheduledAt)}`}

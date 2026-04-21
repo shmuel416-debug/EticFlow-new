@@ -231,13 +231,13 @@ export default function ReviewDiffPage() {
               <div className="grid md:grid-cols-2 gap-3 mb-4">
                 <label className="text-sm">
                   <span className="block text-xs text-gray-600 mb-1">{t('reviewer.diff.fromVersion')}</span>
-                  <select value={fromVersion} onChange={(e) => setFromVersion(e.target.value)} className="w-full border rounded-lg px-3 py-2 min-h-[44px]">
+                  <select value={fromVersion} onChange={(e) => setFromVersion(e.target.value)} data-testid="diff-from-version" className="w-full border rounded-lg px-3 py-2 min-h-[44px]">
                     {versions.map((v) => <option key={`from-${v.id}`} value={String(v.versionNum)}>v{v.versionNum}</option>)}
                   </select>
                 </label>
                 <label className="text-sm">
                   <span className="block text-xs text-gray-600 mb-1">{t('reviewer.diff.toVersion')}</span>
-                  <select value={toVersion} onChange={(e) => setToVersion(e.target.value)} className="w-full border rounded-lg px-3 py-2 min-h-[44px]">
+                  <select value={toVersion} onChange={(e) => setToVersion(e.target.value)} data-testid="diff-to-version" className="w-full border rounded-lg px-3 py-2 min-h-[44px]">
                     {versions.map((v) => <option key={`to-${v.id}`} value={String(v.versionNum)}>v{v.versionNum}</option>)}
                   </select>
                 </label>
@@ -248,6 +248,7 @@ export default function ReviewDiffPage() {
                   <span className="block text-xs text-gray-600 mb-1">{t('reviewer.diff.filterByType')}</span>
                   <select
                     value={changeTypeFilter}
+                    data-testid="diff-type-filter"
                     onChange={(e) => setChangeTypeFilter(e.target.value)}
                     className="w-full border rounded-lg px-3 py-2 min-h-[44px]"
                   >
@@ -262,6 +263,7 @@ export default function ReviewDiffPage() {
                   <span className="block text-xs text-gray-600 mb-1">{t('reviewer.diff.filterByGroup')}</span>
                   <select
                     value={activeGroup}
+                    data-testid="diff-group-filter"
                     onChange={(e) => setActiveGroup(e.target.value)}
                     className="w-full border rounded-lg px-3 py-2 min-h-[44px]"
                   >
@@ -277,6 +279,7 @@ export default function ReviewDiffPage() {
                   <input
                     type="text"
                     value={searchText}
+                    data-testid="diff-search"
                     onChange={(e) => setSearchText(e.target.value)}
                     className="w-full border rounded-lg px-3 py-2 min-h-[44px]"
                     placeholder={t('reviewer.diff.searchPlaceholder')}
@@ -285,7 +288,7 @@ export default function ReviewDiffPage() {
               </div>
 
               <label className="inline-flex items-center gap-2 text-sm mb-3">
-                <input type="checkbox" checked={hideNoise} onChange={(e) => setHideNoise(e.target.checked)} />
+                <input type="checkbox" data-testid="diff-hide-noise" checked={hideNoise} onChange={(e) => setHideNoise(e.target.checked)} />
                 <span>{t('reviewer.diff.hideNoise', { count: stats.noisy })}</span>
               </label>
 

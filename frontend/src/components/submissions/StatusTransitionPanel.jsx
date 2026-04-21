@@ -50,6 +50,7 @@ export default function StatusTransitionPanel({ currentStatus, userRole, onTrans
         {rule.next.map((nextStatus) => (
           <button
             key={nextStatus}
+            data-testid={`status-transition-${nextStatus}`}
             onClick={() => onTransition(nextStatus)}
             disabled={loading}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 ${STATUS_BUTTON_STYLE[nextStatus] ?? 'bg-gray-500 text-white'}`}

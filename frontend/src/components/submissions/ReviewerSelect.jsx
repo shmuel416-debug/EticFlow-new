@@ -42,6 +42,7 @@ export default function ReviewerSelect({ value, onChange, disabled = false }) {
       </label>
       <select
         id="reviewer-select"
+        data-testid="reviewer-select"
         value={value ?? ''}
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled || loading}

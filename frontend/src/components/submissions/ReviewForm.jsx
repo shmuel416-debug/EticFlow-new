@@ -57,6 +57,7 @@ export default function ReviewForm({ submissionId, onSuccess }) {
           <input
             id="review-score"
             type="range"
+            data-testid="review-score"
             min={1} max={5}
             value={score}
             onChange={(e) => setScore(e.target.value)}
@@ -79,6 +80,7 @@ export default function ReviewForm({ submissionId, onSuccess }) {
                 type="radio"
                 name="recommendation"
                 value={rec}
+                data-testid={`review-recommendation-${rec}`}
                 checked={recommendation === rec}
                 onChange={() => setRecommendation(rec)}
                 className="w-4 h-4"
@@ -97,6 +99,7 @@ export default function ReviewForm({ submissionId, onSuccess }) {
         </label>
         <textarea
           id="review-comments"
+          data-testid="review-comments"
           value={comments}
           onChange={(e) => setComments(e.target.value)}
           placeholder={t('reviewer.review.commentsHint')}
@@ -112,6 +115,7 @@ export default function ReviewForm({ submissionId, onSuccess }) {
 
       <button
         type="submit"
+        data-testid="review-submit"
         disabled={saving}
         className="w-full py-3 rounded-lg text-white font-medium disabled:opacity-50"
         style={{ background: 'var(--lev-navy)', minHeight: '44px' }}

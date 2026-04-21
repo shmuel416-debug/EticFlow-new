@@ -195,6 +195,7 @@ export default function MeetingsCalendarPage() {
             <span className="text-xs text-gray-600 block mb-1">{t('meetings.filterByStatus')}</span>
             <select
               value={statusFilter}
+              data-testid="calendar-status-filter"
               onChange={(e) => setStatusFilter(e.target.value)}
               className="w-full border border-gray-200 rounded-lg px-3 py-2 min-h-[44px]"
             >
@@ -208,6 +209,7 @@ export default function MeetingsCalendarPage() {
             <span className="text-xs text-gray-600 block mb-1">{t('meetings.filterByRange')}</span>
             <select
               value={rangeFilter}
+              data-testid="calendar-range-filter"
               onChange={(e) => setRangeFilter(e.target.value)}
               className="w-full border border-gray-200 rounded-lg px-3 py-2 min-h-[44px]"
             >
@@ -221,6 +223,7 @@ export default function MeetingsCalendarPage() {
         <div className="flex items-center justify-between gap-2 mb-4">
           <button
             type="button"
+            data-testid="calendar-prev-month"
             onClick={() => setVisibleMonth((m) => new Date(m.getFullYear(), m.getMonth() - 1, 1))}
             className="px-3 py-2 rounded-lg border text-sm min-h-[44px]"
           >
@@ -231,6 +234,7 @@ export default function MeetingsCalendarPage() {
           </h2>
           <button
             type="button"
+            data-testid="calendar-next-month"
             onClick={() => setVisibleMonth((m) => new Date(m.getFullYear(), m.getMonth() + 1, 1))}
             className="px-3 py-2 rounded-lg border text-sm min-h-[44px]"
           >
@@ -268,6 +272,7 @@ export default function MeetingsCalendarPage() {
                   <button
                     key={key}
                     type="button"
+                    data-testid={`calendar-day-${key}`}
                     onClick={() => setSelectedDay(key)}
                     className={`rounded-lg border p-2 text-start min-h-[64px] transition ${
                       isSelected
@@ -309,6 +314,7 @@ export default function MeetingsCalendarPage() {
                 <button
                   key={item.key}
                   type="button"
+                  data-testid={`calendar-crowded-day-${item.key}`}
                   onClick={() => setSelectedDay(item.key)}
                   className="text-xs px-2 py-1 rounded-full bg-amber-100 text-amber-800"
                 >
@@ -330,6 +336,7 @@ export default function MeetingsCalendarPage() {
             <Link
               key={meeting.id}
               to={`/meetings/${meeting.id}`}
+              data-testid={`calendar-day-meeting-${meeting.id}`}
               className="block rounded-lg border border-gray-200 p-3 hover:bg-gray-50"
             >
               <p className="font-medium">{meeting.title}</p>

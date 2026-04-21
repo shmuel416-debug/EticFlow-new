@@ -213,6 +213,7 @@ export default function SubmissionDetailPage() {
               />
               <button
                 onClick={handleAssign}
+                data-testid="assign-reviewer-submit"
                 disabled={transitioning || !assigningId}
                 className="mt-3 w-full py-2 text-sm rounded-lg text-white disabled:opacity-50"
                 style={{ background: 'var(--lev-navy)', minHeight: '44px' }}

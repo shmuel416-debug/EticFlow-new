@@ -59,7 +59,7 @@ export default function ReviewDetailPage() {
           ← {t('submission.detail.backToList')}
         </Link>
         <div>
-          <Link to={`/reviewer/assignments/${id}/diff`} className="text-sm hover:underline inline-flex items-center gap-1"
+          <Link to={`/reviewer/assignments/${id}/diff`} data-testid="open-review-diff" className="text-sm hover:underline inline-flex items-center gap-1"
             style={{ color: 'var(--lev-teal-text)' }}>
             {t('reviewer.diff.openDiff')}
           </Link>

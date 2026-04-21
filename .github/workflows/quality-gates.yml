@@ -80,7 +80,8 @@ jobs:
 
       - name: Run Playwright core E2E
         env:
-          E2E_BASE_URL: ${{ secrets.E2E_BASE_URL || 'https://frontend-eticflow-dev.up.railway.app' }}
+          E2E_BASE_URL: ${{ secrets.E2E_BASE_URL || 'http://127.0.0.1:4173' }}
+          E2E_API_URL: ${{ secrets.E2E_API_URL || 'https://frontend-eticflow-dev.up.railway.app/api' }}
           E2E_RESEARCHER_EMAIL: ${{ secrets.E2E_RESEARCHER_EMAIL }}
           E2E_RESEARCHER_PASSWORD: ${{ secrets.E2E_RESEARCHER_PASSWORD }}
           E2E_SECRETARY_EMAIL: ${{ secrets.E2E_SECRETARY_EMAIL }}
@@ -91,7 +92,7 @@ jobs:
           E2E_CHAIRMAN_PASSWORD: ${{ secrets.E2E_CHAIRMAN_PASSWORD }}
           E2E_ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}
           E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
-        run: npm run e2e
+        run: npm run e2e:ci
 
       - name: Upload Playwright report
         if: always()
@@ -99,4 +100,12 @@ jobs:
         with:
           name: playwright-report
           path: frontend/playwright-report
+          if-no-files-found: ignore
+
+      - name: Upload Playwright test-results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-test-results
+          path: frontend/test-results
           if-no-files-found: ignore

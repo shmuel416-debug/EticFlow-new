@@ -102,7 +102,7 @@ function SuccessScreen({ applicationId }) {
   const { t }    = useTranslation()
   const navigate = useNavigate()
   return (
-    <div className="flex flex-col items-center justify-center py-20 text-center px-4">
+    <div className="flex flex-col items-center justify-center py-20 text-center px-4" data-testid="submit-success-screen">
       <span className="text-5xl mb-4" aria-hidden="true">✅</span>
       <h2 className="text-lg font-bold mb-2" style={{ color: 'var(--lev-navy)' }}>
         {t('submission.submit.submitSuccess')}
@@ -110,7 +110,7 @@ function SuccessScreen({ applicationId }) {
       <p className="text-sm text-gray-600 mb-6 max-w-sm">
         {t('submission.submit.submitSuccessBody', { id: applicationId })}
       </p>
-      <button type="button" onClick={() => navigate('/dashboard')}
+      <button type="button" onClick={() => navigate('/dashboard')} data-testid="submit-success-dashboard"
         className="px-6 py-3 text-sm font-semibold text-white rounded-xl hover:opacity-90"
         style={{ background: 'var(--lev-navy)', minHeight: '44px' }}>
         {t('submission.submit.backToDashboard')}
@@ -311,7 +311,7 @@ export default function SubmitPage() {
       </a>
 
       {/* Navy header band */}
-      <header className="px-5 py-5 shrink-0" style={{ background: 'var(--lev-navy)' }}>
+      <header className="px-5 py-5 shrink-0" style={{ background: 'var(--lev-navy)' }} data-testid="submit-header">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-base font-bold text-white">{t('submission.submit.pageTitle')}</h1>
@@ -321,6 +321,7 @@ export default function SubmitPage() {
           <div role="group" aria-label={t('secretary.formBuilder.previewLanguage')} className="flex gap-1 shrink-0">
             {['he', 'en'].map(l => (
               <button key={l} type="button"
+                data-testid={`submit-lang-${l}`}
                 aria-pressed={previewLang === l}
                 onClick={() => setPreviewLang(l)}
                 className="text-xs px-3 py-1.5 rounded-lg font-semibold transition-colors"
@@ -368,12 +369,14 @@ export default function SubmitPage() {
           {/* Action buttons */}
           <div className="flex gap-3 mt-6 max-w-xl">
             <button type="button" onClick={handleSaveDraft} disabled={submitting || savingDraft}
+              data-testid="submit-save-draft"
               className="px-5 py-2.5 text-sm font-semibold border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-40 transition-colors"
               style={{ color: draftSaved ? '#16a34a' : 'var(--lev-navy)', minHeight: '44px',
                 borderColor: draftSaved ? '#86efac' : '' }}>
               {draftSaved ? t('submission.submit.draftSaved') : savingDraft ? t('common.loading') : t('submission.submit.saveDraft')}
             </button>
             <button type="button" onClick={handleSubmit} disabled={submitting}
+              data-testid="submit-final-submit"
               className="flex-1 py-2.5 text-sm font-semibold text-white rounded-xl hover:opacity-90 disabled:opacity-50 transition-opacity"
               style={{ background: 'var(--lev-navy)', minHeight: '44px' }}>
               {submitting ? t('submission.submit.submitting') : t('submission.submit.submitBtn')}

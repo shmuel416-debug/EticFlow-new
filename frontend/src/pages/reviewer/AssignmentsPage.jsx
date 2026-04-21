@@ -79,6 +79,7 @@ export default function AssignmentsPage() {
                 <td className="px-4 py-3 text-gray-500">{formatDate(sub.submittedAt)}</td>
                 <td className="px-4 py-3">
                   <Link to={`/reviewer/assignments/${sub.id}`}
+                    data-testid={`reviewer-open-assignment-${sub.id}`}
                     className="text-xs font-medium hover:underline"
                     style={{ color: 'var(--lev-navy)', minHeight: '44px', display: 'inline-flex', alignItems: 'center' }}>
                     {t('submission.list.viewDetail')}

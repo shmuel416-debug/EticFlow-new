@@ -1,5 +1,19 @@
 # EthicFlow — Sprint Log
 
+## Sprint 11 — UI E2E Expansion
+
+| Date | Task | Status | Notes |
+|------|------|--------|-------|
+| 2026-04-21 | Coverage matrix | ✅ Done | Added `docs/e2e-ui-coverage-matrix-sprint-11-hebrew.md` |
+| 2026-04-21 | E2E suite restructuring + fixtures | ✅ Done | Reorganized `frontend/e2e/*`, added shared support layer |
+| 2026-04-21 | Stable selectors (`data-testid`) | ✅ Done | Added hooks in login/submit/meetings/diff/review/chairman pages and components |
+| 2026-04-21 | UI core flows (Playwright) | ✅ Done | Added UI specs for submit→assign→review→decision, meetings calendar/list, reviewer diff |
+| 2026-04-21 | RBAC negative UI flows | ✅ Done | Added direct-route negative scenarios in `frontend/e2e/rbac/rbac-negative-ui.spec.js` |
+| 2026-04-21 | i18n + RTL/LTR smoke | ✅ Done | Added smoke coverage for login + key protected routes in `frontend/e2e/i18n/i18n-rtl-smoke.spec.js` |
+| 2026-04-21 | CI hardening | ✅ Done | Updated `playwright.config.js`, `frontend/package.json`, `.github/workflows/quality-gates.yml` |
+| 2026-04-21 | Flaky triage baseline | ✅ Done | Repeat-each run passed on available smoke tests; role-based flows require secrets in CI |
+| 2026-04-21 | Sprint 11 report & tracker updates | ✅ Done | Published `docs/sprint-11-report-hebrew.md`, updated `docs/progress.md` |
+
 ## Sprint 10 — Ops Hardening + Product Completion
 
 | Date | Task | Status | Notes |

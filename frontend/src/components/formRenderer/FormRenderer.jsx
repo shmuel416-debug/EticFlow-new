@@ -69,6 +69,7 @@ export function FormField({ field, value, error, lang, onChange }) {
       <div>
         <FieldLabel id={id} label={label} required={field.required} />
         <input id={id} type={typeMap[field.type]} value={value || ''} placeholder={ph}
+          data-testid={`field-input-${fieldId}`}
           aria-required={field.required} aria-invalid={hasErr}
           aria-describedby={hasErr ? `${id}-err` : undefined}
           data-error={hasErr || undefined}
@@ -86,6 +87,7 @@ export function FormField({ field, value, error, lang, onChange }) {
       <div>
         <FieldLabel id={id} label={label} required={field.required} />
         <textarea id={id} value={value || ''} placeholder={ph} rows={3}
+          data-testid={`field-input-${fieldId}`}
           aria-required={field.required} aria-invalid={hasErr}
           data-error={hasErr || undefined}
           className={`${INPUT_BASE} resize-none`} style={{ borderColor: hasErr ? '#dc2626' : '#e5e7eb' }}
@@ -102,6 +104,7 @@ export function FormField({ field, value, error, lang, onChange }) {
       <div>
         <FieldLabel id={id} label={label} required={field.required} />
         <input id={id} type="date" value={value || ''}
+          data-testid={`field-input-${fieldId}`}
           aria-required={field.required} aria-invalid={hasErr}
           className={INPUT_BASE} style={inputStyle(hasErr)}
           onChange={e => onChange(fieldId, e.target.value)}
@@ -120,6 +123,7 @@ export function FormField({ field, value, error, lang, onChange }) {
       <div>
         <FieldLabel id={id} label={label} required={field.required} />
         <select id={id} value={value || ''} aria-required={field.required} aria-invalid={hasErr}
+          data-testid={`field-input-${fieldId}`}
           className={INPUT_BASE} style={inputStyle(hasErr)}
           onChange={e => onChange(fieldId, e.target.value)}
           onFocus={onFocus} onBlur={onBlur}>
@@ -147,6 +151,7 @@ export function FormField({ field, value, error, lang, onChange }) {
           return (
             <label key={i} className="flex items-center gap-2 text-sm cursor-pointer mb-1" style={{ minHeight: '44px' }}>
               <input type="radio" name={id} value={val} checked={value === val}
+                data-testid={`field-input-${fieldId}-${String(val)}`}
                 onChange={() => onChange(fieldId, val)} className="accent-[#1E2A72]" />
               {optLabel(opt)}
             </label>
@@ -172,6 +177,7 @@ export function FormField({ field, value, error, lang, onChange }) {
           return (
             <label key={i} className="flex items-center gap-2 text-sm cursor-pointer mb-1" style={{ minHeight: '44px' }}>
               <input type="checkbox" value={val} checked={checked.includes(val)}
+                data-testid={`field-input-${fieldId}-${String(val)}`}
                 onChange={e => onChange(fieldId, e.target.checked ? [...checked, val] : checked.filter(v => v !== val))}
                 className="accent-[#1E2A72]" />
               {optLabel(opt)}
@@ -196,6 +202,7 @@ export function FormField({ field, value, error, lang, onChange }) {
           </span>
           <span className="text-xs text-gray-400">{t('submission.submit.fileHint')}</span>
           <input id={id} type="file" className="sr-only" aria-required={field.required}
+            data-testid={`field-input-${fieldId}`}
             onChange={e => onChange(fieldId, e.target.files?.[0]?.name || '')} />
         </label>
         <FieldFeedback id={`${id}-err`} error={error} valid={false} />
@@ -210,6 +217,7 @@ export function FormField({ field, value, error, lang, onChange }) {
         <p className="text-xs text-gray-600">{t('submission.submit.declarationText')}</p>
         <label className="flex items-start gap-2 cursor-pointer" style={{ minHeight: '44px' }}>
           <input type="checkbox" id={id} checked={Boolean(value)} aria-required={field.required}
+            data-testid={`field-input-${fieldId}`}
             onChange={e => onChange(fieldId, e.target.checked)} className="accent-[#1E2A72] mt-0.5" />
           <span className="text-xs">
             {t('submission.submit.declarationAccept')}

@@ -78,6 +78,7 @@ export default function SubmissionsListPage() {
       <div className="flex flex-col sm:flex-row gap-3 mb-4">
         <input
           type="search"
+          data-testid="secretary-submissions-search"
           value={search}
           onChange={(e) => handleFilterChange(setSearch)(e.target.value)}
           placeholder={t('submission.list.searchPlaceholder')}
@@ -87,6 +88,7 @@ export default function SubmissionsListPage() {
         />
         <select
           value={statusFilter}
+          data-testid="secretary-submissions-status-filter"
           onChange={(e) => handleFilterChange(setStatusFilter)(e.target.value)}
           className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2"
           style={{ minHeight: '44px' }}
@@ -135,6 +137,7 @@ export default function SubmissionsListPage() {
                 <td className="px-4 py-3">
                   <Link
                     to={`/secretary/submissions/${sub.id}`}
+                    data-testid={`secretary-open-submission-${sub.id}`}
                     className="text-xs font-medium hover:underline"
                     style={{ color: 'var(--lev-navy)', minHeight: '44px', display: 'inline-flex', alignItems: 'center' }}
                   >

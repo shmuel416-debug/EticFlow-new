@@ -113,6 +113,7 @@ export default function SubmissionDecisionPage() {
                   </label>
                   <textarea
                     id="decision-note"
+                    data-testid="chairman-decision-note"
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
                     placeholder={t('chairman.decision.notePlaceholder')}
@@ -125,6 +126,7 @@ export default function SubmissionDecisionPage() {
                   {DECISIONS.map(({ key, style, confirm }) => (
                     <button
                       key={key}
+                      data-testid={`chairman-decision-${key}`}
                       onClick={() => handleDecision(key, confirm)}
                       disabled={deciding}
                       className={`w-full py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 ${style}`}

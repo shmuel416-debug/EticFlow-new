@@ -83,6 +83,7 @@ export default function ChairmanQueuePage() {
                 <td className="px-4 py-3 text-gray-500">{formatDate(sub.submittedAt)}</td>
                 <td className="px-4 py-3">
                   <Link to={`/chairman/queue/${sub.id}`}
+                    data-testid={`chairman-open-submission-${sub.id}`}
                     className="text-xs font-medium hover:underline"
                     style={{ color: 'var(--lev-navy)', minHeight: '44px', display: 'inline-flex', alignItems: 'center' }}>
                     {t('submission.list.viewDetail')}
