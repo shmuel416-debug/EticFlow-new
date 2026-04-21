@@ -797,7 +797,9 @@
       "noApprovedSubmissions": "No approved submissions available",
       "historyTitle": "Version history",
       "noHistory": "No history available",
-      "restoreVersion": "Restore this version"
+      "restoreVersion": "Restore this version",
+      "previewPdf": "Preview PDF",
+      "previewPdfError": "Unable to generate PDF preview right now"
     },
     "templateFields": {
       "docTitle": "Document title",

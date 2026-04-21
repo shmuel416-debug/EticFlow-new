@@ -22,6 +22,11 @@ const router = Router()
 const updateSchema = z.object({
   value: z.unknown(),
 })
+const previewSchema = z.object({
+  submissionId: z.string().uuid(),
+  lang: z.enum(['he', 'en']).optional(),
+  template: z.unknown(),
+})
 
 // ─────────────────────────────────────────────
 // ROUTES
@@ -32,6 +37,15 @@ router.get(
   authenticate,
   authorize('ADMIN', 'SECRETARY'),
   controller.list
+)
+
+router.post(
+  '/approval-template/preview',
+  authenticate,
+  authorize('ADMIN', 'SECRETARY'),
+  validate(previewSchema),
+  controller.previewApprovalTemplate,
+  auditLog('settings.template_previewed', 'Submission')
 )
 
 router.put(

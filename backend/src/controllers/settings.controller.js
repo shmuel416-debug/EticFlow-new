@@ -9,6 +9,7 @@
 
 import prisma from '../config/database.js'
 import { AppError } from '../utils/errors.js'
+import { generateApprovalLetterPreview } from '../services/pdf.service.js'
 import {
   APPROVAL_TEMPLATE_KEYS,
   APPROVAL_TEMPLATE_HISTORY_KEYS,
@@ -206,6 +207,33 @@ export async function update(req, res, next) {
 
     res.locals.entityId = updated.id
     res.json({ data: updated })
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
+ * POST /api/settings/approval-template/preview
+ * Generates a PDF preview using a draft template without saving it.
+ * @param {import('express').Request} req - body: { submissionId, lang, template }
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
+export async function previewApprovalTemplate(req, res, next) {
+  try {
+    const role = req.user?.role
+    if (!['ADMIN', 'SECRETARY'].includes(role)) {
+      throw new AppError('Forbidden', 'FORBIDDEN', 403)
+    }
+    const safeLang = req.body?.lang === 'en' ? 'en' : 'he'
+    const { submissionId, template } = req.body
+    const { buffer, filename } = await generateApprovalLetterPreview(submissionId, safeLang, template)
+
+    res.locals.entityId = submissionId
+    res.setHeader('Content-Type', 'application/pdf')
+    res.setHeader('Content-Disposition', `inline; filename="${filename}"`)
+    res.setHeader('Content-Length', buffer.length)
+    res.send(buffer)
   } catch (err) {
     next(err)
   }

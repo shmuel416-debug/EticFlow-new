@@ -11,11 +11,16 @@
 import puppeteer    from 'puppeteer'
 import PDFDocument  from 'pdfkit'
 import path         from 'path'
+import os           from 'os'
 import fs           from 'fs/promises'
 import { createWriteStream, existsSync, readFileSync } from 'fs'
 import { fileURLToPath }     from 'url'
 import prisma                from '../config/database.js'
-import { getDefaultApprovalTemplate, normalizeApprovalTemplate } from '../constants/approvalTemplate.js'
+import {
+  getDefaultApprovalTemplate,
+  normalizeApprovalTemplate,
+  validateApprovalTemplatePayload,
+} from '../constants/approvalTemplate.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -152,6 +157,46 @@ async function getStoredApprovalTemplate(lang) {
     return normalizeApprovalTemplate(parsed, lang)
   } catch {
     return getDefaultApprovalTemplate(lang)
+  }
+}
+
+/**
+ * Loads a submission required for approval-letter generation.
+ * @param {string} submissionId
+ * @returns {Promise<object>}
+ */
+async function getApprovalSubmission(submissionId) {
+  const submission = await prisma.submission.findUnique({
+    where:   { id: submissionId },
+    include: {
+      author:      { select: { fullName: true, email: true } },
+      formConfig:  { select: { name: true } },
+      slaTracking: true,
+    },
+  })
+  if (!submission) throw new Error('Submission not found')
+  if (submission.status !== 'APPROVED') throw new Error('Submission is not approved')
+  return submission
+}
+
+/**
+ * Builds placeholder context from submission for template interpolation.
+ * @param {'he'|'en'} safeLang
+ * @param {object} submission
+ * @returns {Record<string, string>}
+ */
+function buildApprovalTemplateContext(safeLang, submission) {
+  const track = trackLabel(submission.track)
+  return {
+    applicationId: String(submission.applicationId ?? ''),
+    researchTitle: String(submission.title ?? ''),
+    trackLabel: safeLang === 'he' ? String(track.he) : String(track.en),
+    issueDate: safeLang === 'he' ? fmtDate(new Date()) : fmtDateEn(new Date()),
+    approvedDate: safeLang === 'he' ? fmtDate(submission.updatedAt) : fmtDateEn(submission.updatedAt),
+    validUntil: validUntil(submission.updatedAt, safeLang),
+    researcherName: String(submission.author?.fullName ?? ''),
+    researcherEmail: String(submission.author?.email ?? ''),
+    institutionName: safeLang === 'he' ? INSTITUTION_NAME_HE : INSTITUTION_NAME_EN,
   }
 }
 
@@ -722,18 +767,7 @@ async function renderApprovalFallbackPdf(submission, lang, outputPath, template,
  */
 export async function generateApprovalLetter(submissionId, lang = 'he') {
   const safeLang = lang === 'en' ? 'en' : 'he'
-
-  const submission = await prisma.submission.findUnique({
-    where:   { id: submissionId },
-    include: {
-      author:      { select: { fullName: true, email: true } },
-      formConfig:  { select: { name: true } },
-      slaTracking: true,
-    },
-  })
-
-  if (!submission) throw new Error('Submission not found')
-  if (submission.status !== 'APPROVED') throw new Error('Submission is not approved')
+  const submission = await getApprovalSubmission(submissionId)
 
   const filename    = `approval-letter-${safeLang}.pdf`
   const dir         = path.join(GENERATED_DIR, submissionId)
@@ -741,19 +775,8 @@ export async function generateApprovalLetter(submissionId, lang = 'he') {
   const absPath     = path.join(dir, filename)
   const storagePath = path.join('generated', 'approval', submissionId, filename)
 
-  const track = trackLabel(submission.track)
   const template = await getStoredApprovalTemplate(safeLang)
-  const templateContext = {
-    applicationId: String(submission.applicationId ?? ''),
-    researchTitle: String(submission.title ?? ''),
-    trackLabel: safeLang === 'he' ? String(track.he) : String(track.en),
-    issueDate: safeLang === 'he' ? fmtDate(new Date()) : fmtDateEn(new Date()),
-    approvedDate: safeLang === 'he' ? fmtDate(submission.updatedAt) : fmtDateEn(submission.updatedAt),
-    validUntil: validUntil(submission.updatedAt, safeLang),
-    researcherName: String(submission.author?.fullName ?? ''),
-    researcherEmail: String(submission.author?.email ?? ''),
-    institutionName: safeLang === 'he' ? INSTITUTION_NAME_HE : INSTITUTION_NAME_EN,
-  }
+  const templateContext = buildApprovalTemplateContext(safeLang, submission)
   const html = safeLang === 'he'
     ? buildHeHtml(submission, template, templateContext)
     : buildEnHtml(submission, template, templateContext)
@@ -791,6 +814,39 @@ export async function generateApprovalLetter(submissionId, lang = 'he') {
   }
 
   return { docId: dbDoc.id, storagePath }
+}
+
+/**
+ * Generates an approval-letter preview PDF from a provided template without persisting Document records.
+ * @param {string} submissionId
+ * @param {'he'|'en'} lang
+ * @param {unknown} templateInput
+ * @returns {Promise<{ buffer: Buffer, filename: string }>}
+ */
+export async function generateApprovalLetterPreview(submissionId, lang = 'he', templateInput) {
+  const safeLang = lang === 'en' ? 'en' : 'he'
+  const submission = await getApprovalSubmission(submissionId)
+  const template = validateApprovalTemplatePayload(templateInput, safeLang)
+  const templateContext = buildApprovalTemplateContext(safeLang, submission)
+  const html = safeLang === 'he'
+    ? buildHeHtml(submission, template, templateContext)
+    : buildEnHtml(submission, template, templateContext)
+
+  const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'ef-approval-preview-'))
+  const filename = `approval-template-preview-${safeLang}.pdf`
+  const outputPath = path.join(tmpDir, filename)
+  try {
+    try {
+      await renderHtmlToPdf(html, outputPath)
+    } catch (err) {
+      console.warn(`[PDF] Preview Puppeteer render failed (${safeLang}), using fallback: ${err?.message ?? err}`)
+      await renderApprovalFallbackPdf(submission, safeLang, outputPath, template, templateContext)
+    }
+    const buffer = await fs.readFile(outputPath)
+    return { buffer, filename }
+  } finally {
+    await fs.rm(tmpDir, { recursive: true, force: true }).catch(() => {})
+  }
 }
 
 // ─────────────────────────────────────────────

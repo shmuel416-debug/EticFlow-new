@@ -366,6 +366,7 @@ function ApprovalTemplateEditor({
   const [previewSource, setPreviewSource] = useState('sample')
   const [draft, setDraft] = useState(DEFAULT_APPROVAL_TEMPLATES.he)
   const [saving, setSaving] = useState(false)
+  const [previewingPdf, setPreviewingPdf] = useState(false)
   const [toast, setToast] = useState(null)
 
   const savedTemplate = useMemo(
@@ -424,6 +425,41 @@ function ApprovalTemplateEditor({
     } finally {
       setSaving(false)
       setTimeout(() => setToast(null), 3000)
+    }
+  }
+
+  async function handlePreviewPdf() {
+    const selectedSubmissionId = previewSubmissionId || previewSubmissions[0]?.id || ''
+    if (!selectedSubmissionId) {
+      setToast({ type: 'err', msg: t('settings.template.noApprovedSubmissions') })
+      setTimeout(() => setToast(null), 3000)
+      return
+    }
+    setPreviewingPdf(true)
+    setToast(null)
+    try {
+      const res = await api.post(
+        '/settings/approval-template/preview',
+        { submissionId: selectedSubmissionId, lang, template: draft },
+        { responseType: 'blob' }
+      )
+      const pdfBlob = new Blob([res.data], { type: 'application/pdf' })
+      const blobUrl = URL.createObjectURL(pdfBlob)
+      const previewWindow = window.open(blobUrl, '_blank', 'noopener,noreferrer')
+      if (!previewWindow) {
+        const link = document.createElement('a')
+        link.href = blobUrl
+        link.download = `approval-template-preview-${lang}.pdf`
+        document.body.appendChild(link)
+        link.click()
+        link.remove()
+      }
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000)
+    } catch {
+      setToast({ type: 'err', msg: t('settings.template.previewPdfError') })
+      setTimeout(() => setToast(null), 3000)
+    } finally {
+      setPreviewingPdf(false)
     }
   }
 
@@ -662,6 +698,14 @@ function ApprovalTemplateEditor({
           )}
         </div>
         <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={handlePreviewPdf}
+            disabled={previewingPdf}
+            className="text-sm font-semibold border border-gray-300 px-4 py-2 rounded-lg disabled:opacity-50"
+          >
+            {previewingPdf ? t('common.loading') : t('settings.template.previewPdf')}
+          </button>
           <button
             type="button"
             onClick={resetToDefault}
