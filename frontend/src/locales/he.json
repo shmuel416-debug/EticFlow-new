@@ -799,7 +799,12 @@
       "noHistory": "אין היסטוריה זמינה",
       "restoreVersion": "שחזר לגרסה זו",
       "previewPdf": "צפה ב‑PDF",
-      "previewPdfError": "לא ניתן להפיק תצוגת PDF כרגע"
+      "previewPdfError": "לא ניתן להפיק תצוגת PDF כרגע",
+      "signatureUpload": "חתימת יו״ר (תמונה)",
+      "signaturePreviewAlt": "תצוגת חתימת יו״ר",
+      "clearSignature": "נקה חתימה",
+      "signatureTypeError": "אפשר להעלות חתימה בפורמט PNG או JPG בלבד",
+      "signatureSizeError": "קובץ החתימה גדול מדי (מקסימום 1.5MB)"
     },
     "templateFields": {
       "docTitle": "כותרת מסמך",

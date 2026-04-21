@@ -799,7 +799,12 @@
       "noHistory": "No history available",
       "restoreVersion": "Restore this version",
       "previewPdf": "Preview PDF",
-      "previewPdfError": "Unable to generate PDF preview right now"
+      "previewPdfError": "Unable to generate PDF preview right now",
+      "signatureUpload": "Chairperson signature (image)",
+      "signaturePreviewAlt": "Chairperson signature preview",
+      "clearSignature": "Clear signature",
+      "signatureTypeError": "Only PNG or JPG signature files are supported",
+      "signatureSizeError": "Signature file is too large (max 1.5MB)"
     },
     "templateFields": {
       "docTitle": "Document title",

@@ -21,6 +21,7 @@ export const APPROVAL_TEMPLATE_KEYS = new Set([
   'approval_template_he',
   'approval_template_en',
 ])
+export const APPROVAL_SIGNATURE_KEY = 'approval_chairman_signature'
 
 export const APPROVAL_TEMPLATE_HISTORY_KEYS = new Set([
   'approval_template_history_he',

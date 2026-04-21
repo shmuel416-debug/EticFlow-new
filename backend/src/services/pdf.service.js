@@ -17,6 +17,7 @@ import { createWriteStream, existsSync, readFileSync } from 'fs'
 import { fileURLToPath }     from 'url'
 import prisma                from '../config/database.js'
 import {
+  APPROVAL_SIGNATURE_KEY,
   getDefaultApprovalTemplate,
   normalizeApprovalTemplate,
   validateApprovalTemplatePayload,
@@ -157,6 +158,34 @@ async function getStoredApprovalTemplate(lang) {
     return normalizeApprovalTemplate(parsed, lang)
   } catch {
     return getDefaultApprovalTemplate(lang)
+  }
+}
+
+/**
+ * Reads chairman signature image from settings as data URL.
+ * @returns {Promise<string>}
+ */
+async function getStoredChairmanSignature() {
+  const setting = await prisma.institutionSetting.findUnique({
+    where: { key: APPROVAL_SIGNATURE_KEY },
+    select: { value: true },
+  })
+  return String(setting?.value ?? '')
+}
+
+/**
+ * Converts data URL image to Buffer for PDFKit image rendering.
+ * Supports PNG/JPEG.
+ * @param {string} dataUrl
+ * @returns {Buffer|null}
+ */
+function imageBufferFromDataUrl(dataUrl) {
+  if (!/^data:image\/(png|jpe?g);base64,/i.test(dataUrl)) return null
+  const base64 = dataUrl.substring(dataUrl.indexOf(',') + 1)
+  try {
+    return Buffer.from(base64, 'base64')
+  } catch {
+    return null
   }
 }
 
@@ -312,6 +341,28 @@ hr.light  { border: none; border-top: 1px solid #e2e8f0; margin: 12px 0; }
 .signature-section { text-align: center; margin-top: 36px; }
 .sig-line { border-top: 1px solid #94a3b8; width: 280px; margin: 0 auto 8px; }
 .sig-label { color: #1e293b; font-weight: bold; font-size: 10pt; }
+.signature-grid {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+.signature-box {
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #ffffff;
+  padding: 10px;
+  min-height: 64px;
+  text-align: start;
+}
+.signature-box .box-label {
+  color: #475569;
+  font-size: 8.5pt;
+  margin-bottom: 16px;
+}
+.signature-box .box-line {
+  border-top: 1px solid #94a3b8;
+}
 .footer {
   margin-top: 30px;
   padding-top: 10px;
@@ -335,7 +386,7 @@ hr.light  { border: none; border-top: 1px solid #e2e8f0; margin: 12px 0; }
  * @param {Record<string, string>} templateContext
  * @returns {string}
  */
-function buildHeHtml(submission, template, templateContext) {
+function buildHeHtml(submission, template, templateContext, signatureDataUrl = '') {
   const today        = fmtDate(new Date())
   const approvedDate = fmtDate(submission.updatedAt)
   const expiryDate   = validUntil(submission.updatedAt, 'he')
@@ -359,8 +410,10 @@ function buildHeHtml(submission, template, templateContext) {
 <style>
 ${BASE_CSS}
 body {
-  font-family: 'Arial', 'Noto Sans Hebrew', sans-serif;
+  font-family: 'Rubik', 'Assistant', 'Arial', 'Noto Sans Hebrew', sans-serif;
   direction: rtl;
+  font-size: 12pt;
+  line-height: 1.85;
 }
 /* Details rows: in RTL flex, first child is on the RIGHT (label), second on LEFT (value) */
 .details-row .label { white-space: nowrap; }
@@ -368,6 +421,11 @@ body {
 /* Bullet is on the right in RTL */
 .conditions-list li { padding-right: 20px; }
 .conditions-list li::before { content: '•'; position: absolute; right: 0; color: #1e3a5f; font-weight: bold; }
+.doc-title h2 { font-size: 18pt; }
+.body-text { font-size: 11.5pt; line-height: 1.9; }
+.details-row { padding: 10px 0; font-size: 10.5pt; }
+.conditions-list li { font-size: 11pt; line-height: 1.75; }
+.sig-label { font-size: 11pt; }
 </style>
 </head>
 <body>
@@ -376,8 +434,8 @@ body {
     <div class="brand-row">
       ${PDF_LOGO_HTML_SRC
         ? `<img src="${PDF_LOGO_HTML_SRC}" alt="EthicFlow logo" class="logo-image">`
-        : '<span class="logo-badge" aria-hidden="true">EF</span>'}
-      <h1>EthicFlow</h1>
+        : '<span class="logo-badge" aria-hidden="true">וע</span>'}
+      <h1>מערכת ועדת אתיקה</h1>
     </div>
     <div class="subtitle">מערכת ניהול ועדת אתיקה</div>
     <div class="institution-line">
@@ -429,12 +487,23 @@ body {
       ${conditionLines.map((line) => `<li>${line}</li>`).join('')}
     </ul>
     <div class="signature-section">
+      ${signatureDataUrl ? `<img src="${signatureDataUrl}" alt="חתימת יו״ר ועדת האתיקה" style="max-height:70px;max-width:200px;object-fit:contain;margin:0 auto 10px;display:block;">` : ''}
       <div class="sig-line"></div>
       <div class="sig-label">${signatureLabel}</div>
+      <div class="signature-grid">
+        <div class="signature-box">
+          <div class="box-label">חתימה</div>
+          <div class="box-line"></div>
+        </div>
+        <div class="signature-box">
+          <div class="box-label">תאריך חתימה</div>
+          <div class="box-line"></div>
+        </div>
+      </div>
     </div>
     <div class="footer">
       ${legalFooter}<br>
-      מסמך זה הופק אוטומטית על ידי מערכת EthicFlow &bull; ${institution} &bull; <bdi>${today}</bdi> &bull; מס׳ בקשה: <bdi>${escapeHtml(submission.applicationId)}</bdi>
+      מסמך זה הופק אוטומטית על ידי מערכת ועדת אתיקה &bull; ${institution} &bull; <bdi>${today}</bdi> &bull; מס׳ בקשה: <bdi>${escapeHtml(submission.applicationId)}</bdi>
     </div>
   </div>
 </div>
@@ -449,7 +518,7 @@ body {
  * @param {Record<string, string>} templateContext
  * @returns {string}
  */
-function buildEnHtml(submission, template, templateContext) {
+function buildEnHtml(submission, template, templateContext, signatureDataUrl = '') {
   const today        = fmtDateEn(new Date())
   const approvedDate = fmtDateEn(submission.updatedAt)
   const expiryDate   = validUntil(submission.updatedAt, 'en')
@@ -537,6 +606,7 @@ body { font-family: Arial, Helvetica, sans-serif; direction: ltr; }
       ${conditionLines.map((line) => `<li>${line}</li>`).join('')}
     </ul>
     <div class="signature-section">
+      ${signatureDataUrl ? `<img src="${signatureDataUrl}" alt="Chairperson signature" style="max-height:70px;max-width:200px;object-fit:contain;margin:0 auto 10px;display:block;">` : ''}
       <div class="sig-line"></div>
       <div class="sig-label">${signatureLabel}</div>
     </div>
@@ -596,7 +666,7 @@ async function renderHtmlToPdf(html, outputPath) {
  * @param {Record<string, string>} templateContext
  * @returns {Promise<void>}
  */
-async function renderApprovalFallbackPdf(submission, lang, outputPath, template, templateContext) {
+async function renderApprovalFallbackPdf(submission, lang, outputPath, template, templateContext, signatureDataUrl = '') {
   const safeLang  = lang === 'en' ? 'en' : 'he'
   const doc       = new PDFDocument({ size: 'A4', margins: { top: 56, bottom: 56, left: 56, right: 56 } })
   const track     = trackLabel(submission.track)
@@ -648,7 +718,12 @@ async function renderApprovalFallbackPdf(submission, lang, outputPath, template,
   }
   if (!drewImageLogo) {
     doc.roundedRect(leftX, 24, 38, 38, 10).fill('#ffffff')
-    doc.font(boldFont).fontSize(14).fillColor(BRAND_PRIMARY).text('EF', leftX + 9, 35, { width: 20, align: 'center' })
+    doc.font(boldFont).fontSize(11).fillColor(BRAND_PRIMARY).text(
+      safeLang === 'he' ? 'וע' : 'EF',
+      leftX + 9,
+      35,
+      { width: 20, align: 'center' }
+    )
   }
   if (INSTITUTION_LOGO_IMAGE_PATH) {
     try {
@@ -657,7 +732,12 @@ async function renderApprovalFallbackPdf(submission, lang, outputPath, template,
       // Keep PDF generation resilient if institution logo is invalid.
     }
   }
-  doc.font(boldFont).fontSize(22).fillColor('#ffffff').text('EthicFlow', leftX + 48, 28, { width: 260, align: 'left' })
+  doc.font(boldFont).fontSize(22).fillColor('#ffffff').text(
+    safeLang === 'he' ? 'מערכת ועדת אתיקה' : 'EthicFlow',
+    leftX + 48,
+    28,
+    { width: 320, align: 'left' }
+  )
   doc.font(baseFont).fontSize(10).fillColor(BRAND_ACCENT).text(
     safeLang === 'he' ? 'מערכת ניהול ועדת אתיקה' : 'Ethics Committee Management System',
     leftX + 48,
@@ -705,7 +785,7 @@ async function renderApprovalFallbackPdf(submission, lang, outputPath, template,
   }
 
   doc.y = boxY + 132
-  doc.font(baseFont).fontSize(10.2).fillColor('#334155').text(
+  doc.font(baseFont).fontSize(10.5).fillColor('#334155').text(
     subject,
     { align: textAlign }
   )
@@ -720,7 +800,7 @@ async function renderApprovalFallbackPdf(submission, lang, outputPath, template,
     { align: textAlign }
   )
   doc.moveDown(0.25)
-  doc.font(baseFont).fontSize(9.9).fillColor('#334155')
+  doc.font(baseFont).fontSize(10.6).fillColor('#334155')
   for (const line of conditionLines) {
     doc.text(safeLang === 'he' ? `• ${line}` : `• ${line}`, { align: textAlign })
   }
@@ -734,13 +814,13 @@ async function renderApprovalFallbackPdf(submission, lang, outputPath, template,
   doc.moveDown(0.5)
   doc.text(
     safeLang === 'he'
-      ? 'המסמך הופק אוטומטית על ידי מערכת EthicFlow.'
+      ? 'המסמך הופק אוטומטית על ידי מערכת ועדת אתיקה.'
       : 'This document was generated automatically by EthicFlow.',
     { align: textAlign }
   )
   doc.moveDown(0.4)
   doc.fontSize(9.1).fillColor('#64748b').text(legalFooter, { align: textAlign })
-  doc.moveDown(2.2)
+  doc.moveDown(1.4)
 
   doc.strokeColor('#94a3b8').lineWidth(1).moveTo(leftX + 110, doc.y).lineTo(rightX - 110, doc.y).stroke()
   doc.moveDown(0.4)
@@ -748,6 +828,25 @@ async function renderApprovalFallbackPdf(submission, lang, outputPath, template,
     signatureLabel,
     { align: 'center' }
   )
+  const signatureBuffer = imageBufferFromDataUrl(signatureDataUrl)
+  if (signatureBuffer) {
+    try {
+      doc.moveDown(0.3)
+      doc.image(signatureBuffer, leftX + 170, doc.y, { fit: [180, 60], align: 'center', valign: 'center' })
+      doc.moveDown(3.4)
+    } catch {
+      // Keep resilient when signature image decode/render fails.
+    }
+  }
+  doc.moveDown(0.8)
+  doc.font(baseFont).fontSize(9.5).fillColor('#475569')
+  if (safeLang === 'he') {
+    doc.text('חתימה: ____________________', { align: 'center' })
+    doc.text('תאריך חתימה: ________________', { align: 'center' })
+  } else {
+    doc.text('Signature: ____________________', { align: 'center' })
+    doc.text('Date: _________________________', { align: 'center' })
+  }
 
   await streamToFile(doc, outputPath)
 }
@@ -776,17 +875,18 @@ export async function generateApprovalLetter(submissionId, lang = 'he') {
   const storagePath = path.join('generated', 'approval', submissionId, filename)
 
   const template = await getStoredApprovalTemplate(safeLang)
+  const signatureDataUrl = await getStoredChairmanSignature()
   const templateContext = buildApprovalTemplateContext(safeLang, submission)
   const html = safeLang === 'he'
-    ? buildHeHtml(submission, template, templateContext)
-    : buildEnHtml(submission, template, templateContext)
+    ? buildHeHtml(submission, template, templateContext, signatureDataUrl)
+    : buildEnHtml(submission, template, templateContext, signatureDataUrl)
   try {
     await renderHtmlToPdf(html, absPath)
   } catch (err) {
     console.warn(
       `[PDF] Puppeteer render failed for approval letter (${safeLang}), using fallback renderer: ${err?.message ?? err}`
     )
-    await renderApprovalFallbackPdf(submission, safeLang, absPath, template, templateContext)
+    await renderApprovalFallbackPdf(submission, safeLang, absPath, template, templateContext, signatureDataUrl)
   }
 
   const stat     = await fs.stat(absPath)
@@ -827,10 +927,11 @@ export async function generateApprovalLetterPreview(submissionId, lang = 'he', t
   const safeLang = lang === 'en' ? 'en' : 'he'
   const submission = await getApprovalSubmission(submissionId)
   const template = validateApprovalTemplatePayload(templateInput, safeLang)
+  const signatureDataUrl = await getStoredChairmanSignature()
   const templateContext = buildApprovalTemplateContext(safeLang, submission)
   const html = safeLang === 'he'
-    ? buildHeHtml(submission, template, templateContext)
-    : buildEnHtml(submission, template, templateContext)
+    ? buildHeHtml(submission, template, templateContext, signatureDataUrl)
+    : buildEnHtml(submission, template, templateContext, signatureDataUrl)
 
   const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'ef-approval-preview-'))
   const filename = `approval-template-preview-${safeLang}.pdf`
@@ -840,7 +941,7 @@ export async function generateApprovalLetterPreview(submissionId, lang = 'he', t
       await renderHtmlToPdf(html, outputPath)
     } catch (err) {
       console.warn(`[PDF] Preview Puppeteer render failed (${safeLang}), using fallback: ${err?.message ?? err}`)
-      await renderApprovalFallbackPdf(submission, safeLang, outputPath, template, templateContext)
+      await renderApprovalFallbackPdf(submission, safeLang, outputPath, template, templateContext, signatureDataUrl)
     }
     const buffer = await fs.readFile(outputPath)
     return { buffer, filename }

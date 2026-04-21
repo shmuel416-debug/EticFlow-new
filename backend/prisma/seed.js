@@ -112,6 +112,11 @@ async function seedInstitutionSettings() {
       value: '[]',
       valueType: 'json',
     },
+    {
+      key: 'approval_chairman_signature',
+      value: '',
+      valueType: 'string',
+    },
   ]
 
   await prisma.$transaction(

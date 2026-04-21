@@ -12,6 +12,7 @@ import { AppError } from '../utils/errors.js'
 import { generateApprovalLetterPreview } from '../services/pdf.service.js'
 import {
   APPROVAL_TEMPLATE_KEYS,
+  APPROVAL_SIGNATURE_KEY,
   APPROVAL_TEMPLATE_HISTORY_KEYS,
   getApprovalTemplateHistoryKey,
   getDefaultApprovalTemplate,
@@ -33,8 +34,9 @@ const ADMIN_ONLY_KEYS = new Set([
   'email_sender_name',
   'email_sender_address',
 ])
-const ALLOWED_UPDATE_KEYS = new Set([...ADMIN_ONLY_KEYS, ...APPROVAL_TEMPLATE_KEYS])
-const ALLOWED_READ_KEYS = new Set([...ADMIN_ONLY_KEYS, ...APPROVAL_TEMPLATE_KEYS, ...APPROVAL_TEMPLATE_HISTORY_KEYS])
+const TEMPLATE_MANAGED_KEYS = new Set([...APPROVAL_TEMPLATE_KEYS, APPROVAL_SIGNATURE_KEY])
+const ALLOWED_UPDATE_KEYS = new Set([...ADMIN_ONLY_KEYS, ...TEMPLATE_MANAGED_KEYS])
+const ALLOWED_READ_KEYS = new Set([...ADMIN_ONLY_KEYS, ...TEMPLATE_MANAGED_KEYS, ...APPROVAL_TEMPLATE_HISTORY_KEYS])
 
 /**
  * Resolves keys available for a role.
@@ -50,8 +52,8 @@ function allowedKeysForRole(role) {
   }
   if (role === 'SECRETARY') {
     return {
-      readKeys: new Set([...APPROVAL_TEMPLATE_KEYS, ...APPROVAL_TEMPLATE_HISTORY_KEYS]),
-      updateKeys: APPROVAL_TEMPLATE_KEYS,
+      readKeys: new Set([...TEMPLATE_MANAGED_KEYS, ...APPROVAL_TEMPLATE_HISTORY_KEYS]),
+      updateKeys: TEMPLATE_MANAGED_KEYS,
     }
   }
   return {
@@ -112,6 +114,18 @@ export async function list(req, res, next) {
       })
       map.set(historyKey, created)
     }
+    if (permissions.readKeys.has(APPROVAL_SIGNATURE_KEY) && !map.has(APPROVAL_SIGNATURE_KEY)) {
+      const created = await prisma.institutionSetting.upsert({
+        where: { key: APPROVAL_SIGNATURE_KEY },
+        update: {},
+        create: {
+          key: APPROVAL_SIGNATURE_KEY,
+          value: '',
+          valueType: 'string',
+        },
+      })
+      map.set(APPROVAL_SIGNATURE_KEY, created)
+    }
 
     res.json({ data: [...map.values()] })
   } catch (err) {
@@ -151,6 +165,14 @@ export async function update(req, res, next) {
 
     let nextValue = String(value ?? '')
     let nextType = setting.valueType || 'string'
+    if (key === APPROVAL_SIGNATURE_KEY) {
+      if (nextValue && !/^data:image\/(png|jpe?g);base64,[A-Za-z0-9+/=]+$/i.test(nextValue)) {
+        throw new AppError('Signature must be PNG/JPEG data URL', 'VALIDATION_ERROR', 400)
+      }
+      if (nextValue.length > 3_000_000) {
+        throw new AppError('Signature image is too large', 'VALIDATION_ERROR', 400)
+      }
+    }
     if (APPROVAL_TEMPLATE_KEYS.has(key)) {
       const lang = key.endsWith('_en') ? 'en' : 'he'
       try {

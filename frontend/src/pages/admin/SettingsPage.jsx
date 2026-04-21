@@ -107,6 +107,7 @@ function templateSettingKey(lang) {
 function templateHistoryKey(lang) {
   return lang === 'en' ? 'approval_template_history_en' : 'approval_template_history_he'
 }
+const SIGNATURE_SETTING_KEY = 'approval_chairman_signature'
 
 function parseTemplateValue(value, lang) {
   const fallback = DEFAULT_APPROVAL_TEMPLATES[lang]
@@ -365,6 +366,7 @@ function ApprovalTemplateEditor({
   const [lang, setLang] = useState('he')
   const [previewSource, setPreviewSource] = useState('sample')
   const [draft, setDraft] = useState(DEFAULT_APPROVAL_TEMPLATES.he)
+  const [signatureDataUrl, setSignatureDataUrl] = useState(values[SIGNATURE_SETTING_KEY] || '')
   const [saving, setSaving] = useState(false)
   const [previewingPdf, setPreviewingPdf] = useState(false)
   const [toast, setToast] = useState(null)
@@ -387,8 +389,12 @@ function ApprovalTemplateEditor({
   useEffect(() => {
     setDraft(savedTemplate)
   }, [savedTemplate])
+  useEffect(() => {
+    setSignatureDataUrl(values[SIGNATURE_SETTING_KEY] || '')
+  }, [values])
 
   const isDirty = JSON.stringify(draft) !== JSON.stringify(savedTemplate)
+    || signatureDataUrl !== (values[SIGNATURE_SETTING_KEY] || '')
 
   function updateField(field, nextValue) {
     setDraft((prev) => ({ ...prev, [field]: nextValue }))
@@ -418,7 +424,7 @@ function ApprovalTemplateEditor({
     setSaving(true)
     setToast(null)
     try {
-      await onSave(lang, draft)
+      await onSave(lang, draft, signatureDataUrl)
       setToast({ type: 'ok', msg: t('settings.saveSuccess') })
     } catch {
       setToast({ type: 'err', msg: t('settings.saveError') })
@@ -465,6 +471,31 @@ function ApprovalTemplateEditor({
 
   function resetToDefault() {
     setDraft(DEFAULT_APPROVAL_TEMPLATES[lang])
+  }
+
+  function clearSignature() {
+    setSignatureDataUrl('')
+  }
+
+  function handleSignatureFileChange(event) {
+    const file = event.target.files?.[0]
+    if (!file) return
+    if (!/^image\/(png|jpeg|jpg)$/i.test(file.type)) {
+      setToast({ type: 'err', msg: t('settings.template.signatureTypeError') })
+      setTimeout(() => setToast(null), 3000)
+      return
+    }
+    if (file.size > 1_500_000) {
+      setToast({ type: 'err', msg: t('settings.template.signatureSizeError') })
+      setTimeout(() => setToast(null), 3000)
+      return
+    }
+    const reader = new FileReader()
+    reader.onload = () => {
+      const result = typeof reader.result === 'string' ? reader.result : ''
+      setSignatureDataUrl(result)
+    }
+    reader.readAsDataURL(file)
   }
 
   return (
@@ -627,6 +658,32 @@ function ApprovalTemplateEditor({
             className="text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2"
             style={{ '--tw-ring-color': 'var(--lev-navy)' }}
           />
+
+          <label className="text-xs font-semibold text-gray-700">{t('settings.template.signatureUpload')}</label>
+          <div className="space-y-2">
+            <input
+              type="file"
+              accept="image/png,image/jpeg"
+              onChange={handleSignatureFileChange}
+              className="text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white"
+            />
+            {signatureDataUrl && (
+              <div className="border border-gray-200 rounded-md p-2 bg-white">
+                <img
+                  src={signatureDataUrl}
+                  alt={t('settings.template.signaturePreviewAlt')}
+                  className="max-h-16 object-contain"
+                />
+                <button
+                  type="button"
+                  onClick={clearSignature}
+                  className="mt-2 text-xs border border-gray-300 rounded px-2 py-1"
+                >
+                  {t('settings.template.clearSignature')}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="border border-slate-200 rounded-lg bg-slate-50 p-4" dir={lang === 'he' ? 'rtl' : 'ltr'}>
@@ -655,6 +712,13 @@ function ApprovalTemplateEditor({
             <p className="text-[12px] font-semibold text-slate-700 pt-1">
               {renderTemplatePreviewText(draft.signatureLabel, previewContext)}
             </p>
+            {signatureDataUrl && (
+              <img
+                src={signatureDataUrl}
+                alt={t('settings.template.signaturePreviewAlt')}
+                className="max-h-16 object-contain"
+              />
+            )}
             <p className="text-[11px] text-slate-500 border-t border-slate-200 pt-2">
               {renderTemplatePreviewText(draft.legalFooter, previewContext)}
             </p>
@@ -816,10 +880,18 @@ export default function SettingsPage() {
     setValues(prev => ({ ...prev, ...Object.fromEntries(updates) }))
   }
 
-  async function handleTemplateSave(lang, draftTemplate) {
+  async function handleTemplateSave(lang, draftTemplate, signatureDraft) {
     const key = templateSettingKey(lang)
-    await api.put(`/settings/${key}`, { value: draftTemplate })
-    setValues((prev) => ({ ...prev, [key]: JSON.stringify(draftTemplate) }))
+    const updates = [
+      api.put(`/settings/${key}`, { value: draftTemplate }),
+      api.put(`/settings/${SIGNATURE_SETTING_KEY}`, { value: signatureDraft || '' }),
+    ]
+    await Promise.all(updates)
+    setValues((prev) => ({
+      ...prev,
+      [key]: JSON.stringify(draftTemplate),
+      [SIGNATURE_SETTING_KEY]: signatureDraft || '',
+    }))
   }
 
   // Non-authorized users see access denied
