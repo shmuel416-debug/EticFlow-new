@@ -67,6 +67,13 @@ router.get(
   controller.listReviewers
 )
 
+router.get(
+  '/signers',
+  authenticate,
+  authorize('SECRETARY', 'CHAIRMAN', 'ADMIN'),
+  controller.listSigners
+)
+
 // ─────────────────────────────────────────────
 // ROUTES — ADMIN
 // ─────────────────────────────────────────────

@@ -47,8 +47,14 @@ export default function FormAnswersViewer({ formConfig, dataJson = {} }) {
   return (
     <dl className="divide-y divide-gray-100">
       {formConfig.schemaJson.fields.map((field) => {
-        const fid = field.id || field.key
-        return <FieldAnswer key={fid} field={field} value={dataJson[fid]} />
+        const keyById = field.id
+        const keyByLegacy = field.key
+        const value = keyById && Object.prototype.hasOwnProperty.call(dataJson, keyById)
+          ? dataJson[keyById]
+          : keyByLegacy && Object.prototype.hasOwnProperty.call(dataJson, keyByLegacy)
+            ? dataJson[keyByLegacy]
+            : undefined
+        return <FieldAnswer key={keyById || keyByLegacy} field={field} value={value} />
       })}
     </dl>
   )

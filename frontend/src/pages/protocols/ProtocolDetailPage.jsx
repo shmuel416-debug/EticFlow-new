@@ -132,10 +132,11 @@ export default function ProtocolDetailPage() {
 
   async function openSignModal() {
     try {
-      const res = await api.get('/users', { params: { limit: 100 } })
+      const res = await api.get('/users/signers')
       setAllUsers(res.data.data ?? [])
     } catch {
       setAllUsers([])
+      showToast(t('protocols.loadSignersError'), 'error')
     }
     // Pre-select meeting attendees if available
     setSelectedSigners(
@@ -508,7 +509,7 @@ export default function ProtocolDetailPage() {
               </button>
             </div>
             <ul className="space-y-1.5 max-h-60 overflow-auto mb-4" role="list">
-              {allUsers.filter(u => u.isActive).map(u => {
+              {allUsers.map(u => {
                 const checked = selectedSigners.includes(u.id)
                 return (
                   <li key={u.id}>
@@ -531,6 +532,11 @@ export default function ProtocolDetailPage() {
                   </li>
                 )
               })}
+              {allUsers.length === 0 && (
+                <li className="text-xs text-gray-400 text-center py-4">
+                  {t('protocols.noSignersAvailable')}
+                </li>
+              )}
             </ul>
             <div className="flex gap-2">
               <button

@@ -13,6 +13,26 @@ const api = axios.create({
 })
 
 /**
+ * Returns the configured API base URL without a trailing slash.
+ * @returns {string}
+ */
+export function getApiBaseUrl() {
+  const base = api.defaults.baseURL || '/api'
+  return String(base).replace(/\/$/, '')
+}
+
+/**
+ * Builds an absolute/relative API URL from a path segment.
+ * Works for both relative "/api" and absolute "https://host/api" base URLs.
+ * @param {string} path
+ * @returns {string}
+ */
+export function buildApiUrl(path) {
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`
+  return `${getApiBaseUrl()}${normalizedPath}`
+}
+
+/**
  * Request interceptor — attaches JWT from memory (AuthContext) if present.
  * Token is stored in the module-level variable set by setToken().
  */

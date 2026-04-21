@@ -56,6 +56,30 @@ export async function listReviewers(req, res, next) {
   }
 }
 
+/**
+ * GET /api/users/signers
+ * Returns active committee members that can be selected as protocol signers.
+ * @param {import('express').Request}  req
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
+export async function listSigners(req, res, next) {
+  try {
+    const signers = await prisma.user.findMany({
+      where: {
+        isActive: true,
+        role: { in: ['SECRETARY', 'CHAIRMAN', 'REVIEWER', 'ADMIN'] },
+      },
+      select: { id: true, fullName: true, email: true, role: true },
+      orderBy: { fullName: 'asc' },
+    })
+
+    res.json({ data: signers })
+  } catch (err) {
+    next(err)
+  }
+}
+
 // ─────────────────────────────────────────────
 // ADMIN — LIST ALL USERS
 // ─────────────────────────────────────────────

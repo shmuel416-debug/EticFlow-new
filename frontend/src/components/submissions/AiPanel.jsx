@@ -93,6 +93,7 @@ export default function AiPanel({ submissionId, canRun = false }) {
   }
 
   const result = analysis?.result
+  const coverage = result?.inputCoverage
   const cfg    = result ? (RISK_CONFIG[result.riskLevel] ?? RISK_CONFIG.LOW) : null
 
   return (
@@ -142,6 +143,17 @@ export default function AiPanel({ submissionId, canRun = false }) {
               <p className="text-xs font-semibold text-gray-500 mb-1">{t('ai.summary')}</p>
               <p className="text-sm text-gray-700 leading-relaxed">{result.summary}</p>
             </div>
+
+            {coverage && (
+              <div className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-900">
+                {t('ai.coverage', {
+                  answers: coverage.answerFieldCount ?? 0,
+                  documents: coverage.documentCount ?? 0,
+                })}
+                {' '}
+                {t(`ai.coverageMode.${coverage.documentCoverageMode ?? 'metadata_only'}`)}
+              </div>
+            )}
 
             {/* Flags */}
             {result.flags?.length > 0 && (

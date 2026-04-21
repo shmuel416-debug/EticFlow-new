@@ -147,7 +147,7 @@ export async function getById(req, res, next) {
       include: {
         author:     { select: { id: true, fullName: true, email: true } },
         reviewer:   { select: { id: true, fullName: true, email: true } },
-        formConfig: { select: { id: true, name: true, nameEn: true, version: true } },
+        formConfig: { select: { id: true, name: true, nameEn: true, version: true, schemaJson: true } },
         versions:   { orderBy: { versionNum: 'asc' } },
         comments: {
           where: {

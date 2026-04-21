@@ -30,6 +30,11 @@ export async function runAnalysis(req, res, next) {
       where:   { id: subId },
       include: {
         versions: { orderBy: { versionNum: 'desc' }, take: 1 },
+        documents: {
+          where: { isActive: true },
+          select: { id: true, originalName: true, mimeType: true, sizeBytes: true, createdAt: true },
+          orderBy: { createdAt: 'asc' },
+        },
       },
     })
 
@@ -47,12 +52,20 @@ export async function runAnalysis(req, res, next) {
     }
 
     const latestData = submission.versions[0]?.dataJson ?? {}
+    const documentContext = submission.documents.map((doc) => ({
+      id: doc.id,
+      name: doc.originalName,
+      mimeType: doc.mimeType,
+      sizeBytes: doc.sizeBytes,
+      uploadedAt: doc.createdAt,
+    }))
 
     // Run analysis (provider-agnostic)
     const resultJson = await analyzeSubmission({
       title:    submission.title,
       track:    submission.track,
       dataJson: latestData,
+      documents: documentContext,
     })
 
     // Persist result
@@ -61,7 +74,7 @@ export async function runAnalysis(req, res, next) {
         submissionId: subId,
         requestedBy:  userId,
         provider:     process.env.AI_PROVIDER ?? 'mock',
-        prompt:       `analyze:${submission.applicationId}`,
+        prompt:       `analyze:${submission.applicationId}:answers+documents(${documentContext.length})`,
         resultJson,
       },
     })

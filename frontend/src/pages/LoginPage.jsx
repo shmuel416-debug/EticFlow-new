@@ -9,6 +9,7 @@ import { useState } from 'react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
+import { buildApiUrl } from '../services/api'
 import LanguageSwitcher from '../components/ui/LanguageSwitcher'
 import levLogo from '../assets/LOGO.jpg'
 
@@ -45,6 +46,23 @@ function GoogleLogo() {
 }
 
 /**
+ * Maps backend SSO error codes to translation keys.
+ * @param {string|null} code
+ * @returns {string}
+ */
+function ssoErrorKey(code) {
+  const map = {
+    sso_email_conflict: 'auth.ssoEmailConflict',
+    sso_cancelled: 'auth.ssoCancelled',
+    sso_failed: 'auth.ssoFailed',
+    sso_no_email: 'auth.ssoFailed',
+    sso_state_mismatch: 'auth.ssoFailed',
+    account_inactive: 'auth.accountInactive',
+  }
+  return map[code] ?? 'auth.ssoFailed'
+}
+
+/**
  * Login page — POST /api/auth/login → JWT stored in AuthContext memory.
  * Supports Microsoft SSO via /api/auth/microsoft redirect.
  */
@@ -59,9 +77,9 @@ export default function LoginPage() {
   const [loading,  setLoading]  = useState(false)
 
   // Error can come from form submit OR from SSO callback redirect
-  const [error, setError] = useState(
-    searchParams.get('ssoError') ?? ''
-  )
+  const initialSsoError = searchParams.get('ssoError')
+    || (searchParams.get('error') ? t(ssoErrorKey(searchParams.get('error'))) : '')
+  const [error, setError] = useState(initialSsoError)
 
   /**
    * Handles form submission — calls login() and redirects on success.
@@ -146,7 +164,7 @@ export default function LoginPage() {
 
             {/* Error message — IS 5568: role="alert" + aria-live */}
             {error && (
-              <div role="alert" aria-live="assertive"
+              <div role="alert" aria-live="assertive" data-testid="login-error"
                 className="mb-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-red-700 text-sm">
                 {error}
               </div>
@@ -162,6 +180,7 @@ export default function LoginPage() {
                   <input
                     id="login-email"
                     type="email"
+                    data-testid="login-email"
                     autoComplete="email"
                     aria-required="true"
                     value={email}
@@ -182,6 +201,7 @@ export default function LoginPage() {
                   <input
                     id="login-password"
                     type="password"
+                    data-testid="login-password"
                     autoComplete="current-password"
                     aria-required="true"
                     value={password}
@@ -198,6 +218,7 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   disabled={loading}
+                  data-testid="login-submit"
                   style={{ background: 'var(--lev-navy)', minHeight: '44px' }}
                   className="w-full text-white rounded-xl py-3 font-semibold text-sm
                     hover:opacity-90 disabled:opacity-60 transition-opacity"
@@ -223,7 +244,7 @@ export default function LoginPage() {
 
               {/* Microsoft SSO button */}
               <a
-                href="/api/auth/microsoft"
+                href={buildApiUrl('/auth/microsoft')}
                 role="button"
                 style={{ minHeight: '44px', borderColor: '#D1D5DB' }}
                 className="w-full flex items-center justify-center gap-3 border rounded-xl
@@ -238,7 +259,7 @@ export default function LoginPage() {
 
               {/* Google SSO button */}
               <a
-                href="/api/auth/google"
+                href={buildApiUrl('/auth/google')}
                 role="button"
                 style={{ minHeight: '44px', borderColor: '#D1D5DB' }}
                 className="mt-3 w-full flex items-center justify-center gap-3 border rounded-xl

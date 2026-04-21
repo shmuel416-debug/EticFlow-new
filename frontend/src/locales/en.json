@@ -522,6 +522,10 @@
     "flags": "Areas of concern",
     "suggestions": "Improvement suggestions",
     "analysisDate": "Analysis date",
+    "coverage": "The analysis used {{answers}} form answers and {{documents}} attached documents.",
+    "coverageMode": {
+      "metadata_only": "Currently, documents are scanned by metadata only (file name/type)."
+    },
     "noAnalysis": "No AI analysis has been run yet",
     "run": "Run AI Analysis",
     "rerun": "Refresh Analysis",
@@ -706,6 +710,8 @@
     "finalizedSuccess": "Protocol finalized and sent for signing",
     "signaturesRequested": "Signature request sent to {{count}} signers",
     "loadError": "Failed to load protocol",
+    "loadSignersError": "Failed to load signers list",
+    "noSignersAvailable": "No available signers were found",
     "saveError": "Failed to save protocol",
     "sign": {
       "title": "Protocol Signature",

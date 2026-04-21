@@ -37,14 +37,17 @@ const MEDIUM_RISK_KEYWORDS = [
 
 /**
  * Analyses a submission's data and returns an advisory result.
- * @param {{ title: string, track: string, dataJson: object }} submissionData
+ * @param {{ title: string, track: string, dataJson: object, documents?: object[] }} submissionData
  * @returns {Promise<object>} Advisory result JSON
  */
 export async function analyze(submissionData) {
-  const { title = '', track = 'FULL', dataJson = {} } = submissionData
+  const { title = '', track = 'FULL', dataJson = {}, documents = [] } = submissionData
 
   // Combine all text for keyword scanning
-  const allText = [title, JSON.stringify(dataJson)].join(' ').toLowerCase()
+  const documentsText = documents
+    .map((doc) => `${doc.name ?? ''} ${doc.mimeType ?? ''}`)
+    .join(' ')
+  const allText = [title, JSON.stringify(dataJson), documentsText].join(' ').toLowerCase()
 
   // ── Detect flags ─────────────────────────────────
   const flags = []
@@ -79,10 +82,10 @@ export async function analyze(submissionData) {
   const score = Math.max(1, Math.min(10, 8 - highCount * 3 - mediumCount))
 
   // ── Generate suggestions ──────────────────────────
-  const suggestions = buildSuggestions(riskLevel, flags, track)
+  const suggestions = buildSuggestions(riskLevel, flags, track, documents)
 
   // ── Summary ───────────────────────────────────────
-  const summary = buildSummary(title, riskLevel, score, flags.length)
+  const summary = buildSummary(title, riskLevel, score, flags.length, documents.length)
 
   // Simulate realistic async delay
   await new Promise(r => setTimeout(r, 400))
@@ -94,6 +97,11 @@ export async function analyze(submissionData) {
     suggestions,
     summary,
     disclaimer: 'This is an AI-generated advisory analysis. It does not constitute a binding ethical decision and must be reviewed by a human committee member.',
+    inputCoverage: {
+      answerFieldCount: Object.keys(dataJson).length,
+      documentCount: documents.length,
+      documentCoverageMode: 'metadata_only',
+    },
   }
 }
 
@@ -106,9 +114,10 @@ export async function analyze(submissionData) {
  * @param {string}   riskLevel
  * @param {string[]} flags
  * @param {string}   track
+ * @param {object[]} documents
  * @returns {string[]}
  */
-function buildSuggestions(riskLevel, flags, track) {
+function buildSuggestions(riskLevel, flags, track, documents) {
   const suggestions = []
 
   if (riskLevel === 'HIGH') {
@@ -126,6 +135,10 @@ function buildSuggestions(riskLevel, flags, track) {
     suggestions.push('Verify eligibility criteria for the expedited track.')
   }
 
+  if (!documents.length) {
+    suggestions.push('Attach core protocol documents so the committee can review full context.')
+  }
+
   suggestions.push('Confirm all participant data will be stored in compliance with GDPR / Israeli Privacy Law.')
   suggestions.push('Attach an up-to-date GCP certificate if applicable.')
 
@@ -138,9 +151,10 @@ function buildSuggestions(riskLevel, flags, track) {
  * @param {string} riskLevel
  * @param {number} score
  * @param {number} flagCount
+ * @param {number} documentCount
  * @returns {string}
  */
-function buildSummary(title, riskLevel, score, flagCount) {
+function buildSummary(title, riskLevel, score, flagCount, documentCount) {
   const riskMap = { LOW: 'low', MEDIUM: 'moderate', HIGH: 'elevated' }
   const risk    = riskMap[riskLevel] ?? 'unknown'
 
@@ -150,6 +164,7 @@ function buildSummary(title, riskLevel, score, flagCount) {
     (flagCount > 0
       ? `${flagCount} area${flagCount > 1 ? 's' : ''} of concern were detected and require committee attention. `
       : 'No significant concern keywords were detected. ') +
+    `The analysis considered metadata from ${documentCount} uploaded document${documentCount === 1 ? '' : 's'}. ` +
     'This analysis is advisory only and does not replace human review.'
   )
 }

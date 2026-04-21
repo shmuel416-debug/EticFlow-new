@@ -522,6 +522,10 @@
     "flags": "תחומי תשומת לב",
     "suggestions": "המלצות לשיפור",
     "analysisDate": "תאריך ניתוח",
+    "coverage": "הניתוח התבסס על {{answers}} תשובות טופס ו-{{documents}} מסמכים מצורפים.",
+    "coverageMode": {
+      "metadata_only": "כרגע המסמכים נסרקים לפי מטא-דאטה בלבד (שם קובץ/סוג קובץ)."
+    },
     "noAnalysis": "לא בוצע ניתוח AI עדיין",
     "run": "הרץ ניתוח AI",
     "rerun": "עדכן ניתוח",
@@ -706,6 +710,8 @@
     "finalizedSuccess": "הפרוטוקול הוגמר ונשלח לחתימה",
     "signaturesRequested": "בקשת חתימה נשלחה ל-{{count}} חותמים",
     "loadError": "שגיאה בטעינת הפרוטוקול",
+    "loadSignersError": "שגיאה בטעינת רשימת חותמים",
+    "noSignersAvailable": "לא נמצאו חותמים זמינים",
     "saveError": "שגיאה בשמירת הפרוטוקול",
     "sign": {
       "title": "חתימה על פרוטוקול",
