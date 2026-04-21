@@ -61,6 +61,22 @@ function safeUser(user) {
   return safe
 }
 
+/**
+ * Resolves frontend base URL for auth redirects.
+ * Priority: FRONTEND_URL env → Origin header → localhost fallback.
+ * @param {import('express').Request} req
+ * @returns {string}
+ */
+function resolveFrontendUrl(req) {
+  const fromEnv = process.env.FRONTEND_URL
+  if (fromEnv) return fromEnv
+
+  const origin = req.get('origin')
+  if (origin) return origin
+
+  return 'http://localhost:5173'
+}
+
 // ─────────────────────────────────────────────
 // CONTROLLERS
 // ─────────────────────────────────────────────
@@ -301,7 +317,9 @@ export async function googleRedirect(req, res, next) {
 
     res.redirect(authUrl)
   } catch (err) {
-    next(err)
+    console.error('[Auth/Google] redirect error:', err.message)
+    const frontendUrl = resolveFrontendUrl(req)
+    res.redirect(`${frontendUrl}/login?error=sso_failed`)
   }
 }
 
@@ -314,7 +332,7 @@ export async function googleRedirect(req, res, next) {
  * @param {import('express').NextFunction} next
  */
 export async function googleCallback(req, res, next) {
-  const frontendUrl = process.env.FRONTEND_URL ?? 'http://localhost:5173'
+  const frontendUrl = resolveFrontendUrl(req)
 
   try {
     const { code, state, error } = req.query
@@ -372,7 +390,9 @@ export async function microsoftRedirect(req, res, next) {
 
     res.redirect(authUrl)
   } catch (err) {
-    next(err)
+    console.error('[Auth/Microsoft] redirect error:', err.message)
+    const frontendUrl = resolveFrontendUrl(req)
+    res.redirect(`${frontendUrl}/login?error=sso_failed`)
   }
 }
 
@@ -385,7 +405,7 @@ export async function microsoftRedirect(req, res, next) {
  * @param {import('express').NextFunction} next
  */
 export async function microsoftCallback(req, res, next) {
-  const frontendUrl = process.env.FRONTEND_URL ?? 'http://localhost:5173'
+  const frontendUrl = resolveFrontendUrl(req)
 
   try {
     const { code, state, error } = req.query
