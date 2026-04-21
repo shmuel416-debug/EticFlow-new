@@ -24,6 +24,7 @@ const exportQuerySchema = z.object({
   track:  z.string().optional(),
   from:   z.string().datetime().optional(),
   to:     z.string().datetime().optional(),
+  lang:   z.enum(['he', 'en']).optional(),
 })
 
 const auditQuerySchema = z.object({

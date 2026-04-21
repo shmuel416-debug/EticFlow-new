@@ -11,6 +11,25 @@
 import ExcelJS from 'exceljs'
 import prisma  from '../config/database.js'
 
+const STATUS_LABELS = {
+  SUBMITTED:        { he: 'הוגש',            en: 'Submitted' },
+  IN_TRIAGE:        { he: 'בבדיקה ראשונית', en: 'In Triage' },
+  ASSIGNED:         { he: 'הוקצה',           en: 'Assigned' },
+  IN_REVIEW:        { he: 'בביקורת',         en: 'In Review' },
+  PENDING_REVISION: { he: 'ממתין לתיקון',    en: 'Pending Revision' },
+  APPROVED:         { he: 'אושר',            en: 'Approved' },
+  REJECTED:         { he: 'נדחה',            en: 'Rejected' },
+  WITHDRAWN:        { he: 'בוטל',            en: 'Withdrawn' },
+  DRAFT:            { he: 'טיוטה',           en: 'Draft' },
+  CONTINUED:        { he: 'המשך',            en: 'Continued' },
+}
+
+const TRACK_LABELS = {
+  FULL:      { he: 'מסלול מלא',   en: 'Full' },
+  EXPEDITED: { he: 'מסלול מואץ',  en: 'Expedited' },
+  EXEMPT:    { he: 'פטור',        en: 'Exempt' },
+}
+
 // ─────────────────────────────────────────────
 // STATS
 // ─────────────────────────────────────────────
@@ -130,6 +149,7 @@ export async function getStats(req, res, next) {
 export async function exportSubmissions(req, res, next) {
   try {
     const { status, track, from, to } = req.query
+    const lang = req.query.lang === 'en' ? 'en' : 'he'
 
     const where = { isActive: true }
     if (status) where.status = status
@@ -158,19 +178,34 @@ export async function exportSubmissions(req, res, next) {
 
     const workbook  = new ExcelJS.Workbook()
     const worksheet = workbook.addWorksheet('Submissions')
+    worksheet.views = [{ rightToLeft: lang === 'he' }]
 
-    worksheet.columns = [
-      { header: 'Application ID', key: 'applicationId', width: 20 },
-      { header: 'Title',          key: 'title',         width: 40 },
-      { header: 'Status',         key: 'status',        width: 18 },
-      { header: 'Track',          key: 'track',         width: 14 },
-      { header: 'Author',         key: 'author',        width: 25 },
-      { header: 'Author Email',   key: 'email',         width: 30 },
-      { header: 'Reviewer',       key: 'reviewer',      width: 25 },
-      { header: 'SLA Breached',   key: 'slaBreach',     width: 14 },
-      { header: 'Created',        key: 'createdAt',     width: 20 },
-      { header: 'Updated',        key: 'updatedAt',     width: 20 },
-    ]
+    const columns = lang === 'he'
+      ? [
+          { header: 'מספר בקשה',      key: 'applicationId', width: 20 },
+          { header: 'כותרת',          key: 'title',         width: 40 },
+          { header: 'סטטוס',          key: 'status',        width: 18 },
+          { header: 'מסלול',          key: 'track',         width: 14 },
+          { header: 'חוקר',           key: 'author',        width: 25 },
+          { header: 'אימייל חוקר',    key: 'email',         width: 30 },
+          { header: 'סוקר',           key: 'reviewer',      width: 25 },
+          { header: 'חריגת SLA',      key: 'slaBreach',     width: 14 },
+          { header: 'תאריך יצירה',    key: 'createdAt',     width: 20 },
+          { header: 'תאריך עדכון',    key: 'updatedAt',     width: 20 },
+        ]
+      : [
+          { header: 'Application ID', key: 'applicationId', width: 20 },
+          { header: 'Title',          key: 'title',         width: 40 },
+          { header: 'Status',         key: 'status',        width: 18 },
+          { header: 'Track',          key: 'track',         width: 14 },
+          { header: 'Author',         key: 'author',        width: 25 },
+          { header: 'Author Email',   key: 'email',         width: 30 },
+          { header: 'Reviewer',       key: 'reviewer',      width: 25 },
+          { header: 'SLA Breached',   key: 'slaBreach',     width: 14 },
+          { header: 'Created',        key: 'createdAt',     width: 20 },
+          { header: 'Updated',        key: 'updatedAt',     width: 20 },
+        ]
+    worksheet.columns = columns
 
     // Style header row
     worksheet.getRow(1).font   = { bold: true }
@@ -181,19 +216,21 @@ export async function exportSubmissions(req, res, next) {
       worksheet.addRow({
         applicationId: s.applicationId,
         title:         s.title,
-        status:        s.status,
-        track:         s.track,
+        status:        STATUS_LABELS[s.status]?.[lang] ?? s.status,
+        track:         TRACK_LABELS[s.track]?.[lang] ?? s.track,
         author:        s.author?.fullName ?? '',
         email:         s.author?.email ?? '',
         reviewer:      s.reviewer?.fullName ?? '',
-        slaBreach:     s.slaTracking?.isBreached ? 'Yes' : 'No',
+        slaBreach:     s.slaTracking?.isBreached
+          ? (lang === 'he' ? 'כן' : 'Yes')
+          : (lang === 'he' ? 'לא' : 'No'),
         createdAt:     s.createdAt.toISOString().slice(0, 10),
         updatedAt:     s.updatedAt.toISOString().slice(0, 10),
       })
     }
 
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    res.setHeader('Content-Disposition', `attachment; filename="ethicflow-submissions-${Date.now()}.xlsx"`)
+    res.setHeader('Content-Disposition', `attachment; filename="ethicflow-submissions-${lang}-${Date.now()}.xlsx"`)
 
     await workbook.xlsx.write(res)
     res.end()

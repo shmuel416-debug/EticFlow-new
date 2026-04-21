@@ -38,14 +38,14 @@ function fmtDate(iso) {
 }
 
 export default function ProtocolDetailPage() {
-  const { t }    = useTranslation()
+  const { t, i18n } = useTranslation()
   const { id }   = useParams()
   const [search] = useSearchParams()
   const navigate = useNavigate()
   const { user } = useAuth()
 
   const meetingId = search.get('meetingId')   // Set when creating new protocol
-  const isNew     = id === 'new'
+  const isNew     = !id || id === 'new'
   const canEdit   = ['SECRETARY', 'ADMIN'].includes(user?.role)
 
   const [protocol,       setProtocol]       = useState(null)
@@ -161,8 +161,12 @@ export default function ProtocolDetailPage() {
 
   // ── Download PDF ─────────────────────────────
 
-  function handlePdf() {
-    window.open(`/api/protocols/${id}/pdf`, '_blank')
+  /**
+   * Downloads protocol PDF in selected language.
+   * @param {'he'|'en'} lang
+   */
+  function handlePdf(lang) {
+    window.open(`/api/protocols/${id}/pdf?lang=${lang}`, '_blank')
   }
 
   // ── Section helpers ───────────────────────────
@@ -279,11 +283,18 @@ export default function ProtocolDetailPage() {
             </button>
           )}
           <button
-            onClick={handlePdf}
+            onClick={() => handlePdf('he')}
             className="text-sm border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-50"
             style={{ minHeight: '44px' }}
           >
             {t('protocols.downloadPdf')}
+          </button>
+          <button
+            onClick={() => handlePdf('en')}
+            className="text-sm border border-gray-200 px-3 py-1.5 rounded-lg hover:bg-gray-50"
+            style={{ minHeight: '44px' }}
+          >
+            {t('protocols.downloadPdfEn')}
           </button>
         </div>
       </div>
@@ -465,11 +476,11 @@ export default function ProtocolDetailPage() {
             </button>
           )}
           <button
-            onClick={handlePdf}
+            onClick={() => handlePdf(i18n.language === 'en' ? 'en' : 'he')}
             className="w-full text-sm border border-gray-200 text-gray-600 py-2 rounded-xl hover:bg-gray-50"
             style={{ minHeight: '44px' }}
           >
-            {t('protocols.downloadPdf')}
+            {i18n.language === 'en' ? t('protocols.downloadPdfEn') : t('protocols.downloadPdf')}
           </button>
         </div>
       </div>

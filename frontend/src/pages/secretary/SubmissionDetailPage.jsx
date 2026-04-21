@@ -40,6 +40,7 @@ export default function SubmissionDetailPage() {
   const [transitioning,  setTransitioning]  = useState(false)
   const [assigningId,    setAssigningId]    = useState('')
   const [successMsg,     setSuccessMsg]     = useState('')
+  const [pdfLoading,     setPdfLoading]     = useState(null)
 
   /**
    * Loads submission data from API.
@@ -115,19 +116,22 @@ export default function SubmissionDetailPage() {
   /**
    * Generates and downloads the approval letter PDF.
    */
-  async function handleDownloadPdf() {
+  async function handleDownloadPdf(lang) {
+    setPdfLoading(lang)
     try {
-      const response = await api.post(`/submissions/${id}/approval-letter`, {}, { responseType: 'blob' })
+      const response = await api.post(`/submissions/${id}/approval-letter?lang=${lang}`, {}, { responseType: 'blob' })
       const url  = URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }))
       const link = document.createElement('a')
       link.href     = url
-      link.download = `approval-letter-${submission.applicationId}.pdf`
+      link.download = `approval-letter-${lang}-${submission.applicationId}.pdf`
       document.body.appendChild(link)
       link.click()
       link.remove()
       URL.revokeObjectURL(url)
     } catch {
       setError(t('statusPage.pdfError'))
+    } finally {
+      setPdfLoading(null)
     }
   }
 
@@ -150,12 +154,22 @@ export default function SubmissionDetailPage() {
 
       {/* Approval letter download — only when approved */}
       {submission?.status === 'APPROVED' && (
-        <button
-          onClick={handleDownloadPdf}
-          className="w-full sm:w-auto px-6 py-2.5 text-sm font-bold text-white rounded-xl hover:opacity-90 transition"
-          style={{ background: 'var(--lev-teal-text)', minHeight: '44px' }}>
-          ⬇ {t('statusPage.downloadPdf')}
-        </button>
+        <div className="w-full sm:w-auto flex gap-2">
+          <button
+            onClick={() => handleDownloadPdf('he')}
+            disabled={pdfLoading !== null}
+            className="w-full sm:w-auto px-6 py-2.5 text-sm font-bold text-white rounded-xl hover:opacity-90 transition disabled:opacity-60"
+            style={{ background: 'var(--lev-teal-text)', minHeight: '44px' }}>
+            {pdfLoading === 'he' ? t('common.loading') : `⬇ ${t('statusPage.downloadPdf')}`}
+          </button>
+          <button
+            onClick={() => handleDownloadPdf('en')}
+            disabled={pdfLoading !== null}
+            className="w-full sm:w-auto px-6 py-2.5 text-sm font-bold text-white rounded-xl hover:opacity-90 transition disabled:opacity-60"
+            style={{ background: '#374151', minHeight: '44px' }}>
+            {pdfLoading === 'en' ? t('common.loading') : `⬇ ${t('statusPage.downloadPdfEn')}`}
+          </button>
+        </div>
       )}
       {error      && <p role="alert"  className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-2">{error}</p>}
 

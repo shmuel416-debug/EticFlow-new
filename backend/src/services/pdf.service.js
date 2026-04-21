@@ -504,20 +504,24 @@ function hRule(doc, color = '#1e3a5f', width = 1.5) {
 // ─────────────────────────────────────────────
 
 /**
- * Generates a bilingual (Hebrew + English) protocol PDF.
- * Writes to uploads/generated/protocols/{protocolId}/protocol.pdf
+ * Generates a single-language protocol PDF.
+ * Hebrew output is RTL/right-aligned, English output is LTR/left-aligned.
+ * Writes to uploads/generated/protocols/{protocolId}/protocol-{lang}.pdf
  * and upserts the Document DB record.
  *
  * @param {object} protocol - Protocol with meeting and signatures included
+ * @param {'he'|'en'} lang
  * @returns {Promise<{ docId: string, storagePath: string }>}
  */
-export async function generateProtocolPdf(protocol) {
+export async function generateProtocolPdf(protocol, lang = 'he') {
+  const safeLang = lang === 'en' ? 'en' : 'he'
   const dir         = path.join(PROTOCOL_GENERATED_DIR, protocol.id)
   await fs.mkdir(dir, { recursive: true })
-  const filename    = 'protocol.pdf'
+  const filename    = `protocol-${safeLang}.pdf`
   const absPath     = path.join(dir, filename)
   const storagePath = path.join('generated', 'protocols', protocol.id, filename)
-  const today       = fmtDate(new Date())
+  const today       = safeLang === 'he' ? fmtDate(new Date()) : fmtDateEn(new Date())
+  const textAlign   = safeLang === 'he' ? 'right' : 'left'
 
   const doc = createDoc()
 
@@ -526,21 +530,28 @@ export async function generateProtocolPdf(protocol) {
   doc.font('Arial-Bold').fontSize(20).fillColor('#ffffff')
      .text('EthicFlow', 72, 20, { align: 'center', width: 451 })
   doc.font('Arial').fontSize(11).fillColor('#93c5fd')
-     .text('פרוטוקול ועדת אתיקה  |  Ethics Committee Protocol',
+     .text(
+           safeLang === 'he' ? 'פרוטוקול ועדת אתיקה' : 'Ethics Committee Protocol',
            72, 50, { align: 'center', width: 451 })
   doc.font('Arial').fontSize(9).fillColor('#cbd5e1')
-     .text(`הופק: ${today}  •  Generated: ${today}`,
+     .text(
+           safeLang === 'he' ? `הופק: ${today}` : `Generated: ${today}`,
            72, 72, { align: 'center', width: 451 })
 
   // ── Protocol title ────────────────────────────────
   doc.moveDown(3)
   doc.font('Arial-Bold').fontSize(16).fillColor('#1e3a5f')
-     .text(protocol.title, { align: 'center' })
+     .text(protocol.title, { align: textAlign })
 
   if (protocol.meeting?.scheduledAt) {
-    const mtgDate = fmtDate(protocol.meeting.scheduledAt)
+    const mtgDate = safeLang === 'he'
+      ? fmtDate(protocol.meeting.scheduledAt)
+      : fmtDateEn(protocol.meeting.scheduledAt)
     doc.font('Arial').fontSize(11).fillColor('#64748b')
-       .text(`תאריך ישיבה: ${mtgDate}  |  Meeting Date: ${mtgDate}`, { align: 'center' })
+       .text(
+         safeLang === 'he' ? `תאריך ישיבה: ${mtgDate}` : `Meeting Date: ${mtgDate}`,
+         { align: textAlign }
+       )
   }
 
   doc.moveDown(0.5)
@@ -548,27 +559,30 @@ export async function generateProtocolPdf(protocol) {
 
   // ── Status row ────────────────────────────────────
   const statusMap = {
-    DRAFT:              { he: 'טיוטה',          en: 'Draft' },
-    PENDING_SIGNATURES: { he: 'ממתין לחתימות', en: 'Pending Signatures' },
+    DRAFT:              { he: 'טיוטה',           en: 'Draft' },
+    PENDING_SIGNATURES: { he: 'ממתין לחתימות',  en: 'Pending Signatures' },
     SIGNED:             { he: 'חתום',            en: 'Signed' },
     ARCHIVED:           { he: 'בארכיון',         en: 'Archived' },
   }
   const statusLabel = statusMap[protocol.status] ?? { he: protocol.status, en: protocol.status }
   doc.font('Arial').fontSize(10).fillColor('#64748b')
-     .text(`סטטוס: ${statusLabel.he}  |  Status: ${statusLabel.en}`, { align: 'center' })
+     .text(
+       safeLang === 'he' ? `סטטוס: ${statusLabel.he}` : `Status: ${statusLabel.en}`,
+       { align: textAlign }
+     )
   doc.moveDown(1)
 
   // ── Content sections ──────────────────────────────
   const sections = Array.isArray(protocol.contentJson?.sections)
     ? protocol.contentJson.sections
-    : [{ heading: 'תוכן / Content', content: JSON.stringify(protocol.contentJson ?? '') }]
+    : [{ heading: safeLang === 'he' ? 'תוכן' : 'Content', content: JSON.stringify(protocol.contentJson ?? '') }]
 
   for (const section of sections) {
     doc.font('Arial-Bold').fontSize(13).fillColor('#1e3a5f')
-       .text(section.heading ?? '', { align: 'right' })
+       .text(section.heading ?? '', { align: textAlign })
     doc.moveDown(0.2)
     doc.font('Arial').fontSize(11).fillColor('#1e293b')
-       .text(section.content ?? '', { align: 'right', lineGap: 4 })
+       .text(section.content ?? '', { align: textAlign, lineGap: 4 })
     doc.moveDown(1)
   }
 
@@ -576,22 +590,30 @@ export async function generateProtocolPdf(protocol) {
   if (protocol.signatures?.length > 0) {
     doc.addPage()
     doc.font('Arial-Bold').fontSize(14).fillColor('#1e3a5f')
-       .text('חתימות  /  Signatures', { align: 'center' })
+       .text(safeLang === 'he' ? 'חתימות' : 'Signatures', { align: textAlign })
     doc.moveDown(0.5)
     hRule(doc)
 
     for (const sig of protocol.signatures) {
       const name     = sig.user?.fullName ?? sig.userId
-      const heStatus = sig.status === 'SIGNED'   ? `חתם ב-${fmtDate(sig.signedAt)}`
-                     : sig.status === 'DECLINED' ? 'סירב לחתום'
-                     : 'ממתין לחתימה'
-      const enStatus = sig.status === 'SIGNED'   ? `Signed on ${fmtDate(sig.signedAt)}`
-                     : sig.status === 'DECLINED' ? 'Declined'
-                     : 'Pending signature'
+      const sigDate  = sig.signedAt
+        ? (safeLang === 'he' ? fmtDate(sig.signedAt) : fmtDateEn(sig.signedAt))
+        : null
+      const statusLine = safeLang === 'he'
+        ? (sig.status === 'SIGNED'
+            ? `חתם ב-${sigDate}`
+            : sig.status === 'DECLINED'
+              ? 'סירב לחתום'
+              : 'ממתין לחתימה')
+        : (sig.status === 'SIGNED'
+            ? `Signed on ${sigDate}`
+            : sig.status === 'DECLINED'
+              ? 'Declined'
+              : 'Pending signature')
       doc.font('Arial-Bold').fontSize(11).fillColor('#1e293b')
-         .text(name, { align: 'right' })
+         .text(name, { align: textAlign })
       doc.font('Arial').fontSize(10).fillColor('#64748b')
-         .text(`${heStatus}  |  ${enStatus}`, { align: 'right', lineGap: 6 })
+         .text(statusLine, { align: textAlign, lineGap: 6 })
     }
   }
 
@@ -599,7 +621,9 @@ export async function generateProtocolPdf(protocol) {
   const pageH = doc.page.height
   doc.font('Arial').fontSize(8).fillColor('#94a3b8')
      .text(
-       `מסמך זה הופק על ידי מערכת EthicFlow  •  Generated by EthicFlow  •  ${today}`,
+      safeLang === 'he'
+        ? `מסמך זה הופק על ידי מערכת EthicFlow • ${today}`
+        : `Generated by EthicFlow • ${today}`,
        72, pageH - 48, { align: 'center', width: 451 }
      )
 
@@ -619,7 +643,7 @@ export async function generateProtocolPdf(protocol) {
     dbDoc = await prisma.document.create({
       data: {
         filename,
-        originalName: `protocol-${protocol.id}.pdf`,
+        originalName: `protocol-${safeLang}-${protocol.id}.pdf`,
         mimeType:     'application/pdf',
         sizeBytes:    stat.size,
         storagePath,
@@ -629,5 +653,5 @@ export async function generateProtocolPdf(protocol) {
     })
   }
 
-  return { docId: dbDoc.id, storagePath: absPath }
+  return { docId: dbDoc.id, storagePath }
 }

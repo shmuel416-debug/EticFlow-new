@@ -185,7 +185,7 @@ function MonthlyTrendChart({ monthly }) {
 }
 
 export default function StatsPage() {
-  const { t }    = useTranslation()
+  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
 
   const [stats,     setStats]     = useState(null)
@@ -212,14 +212,17 @@ export default function StatsPage() {
 
   // ── Export XLSX ──────────────────────────────────
 
-  async function handleExport() {
+  async function handleExport(lang) {
     setExporting(true)
     try {
-      const res = await api.get('/reports/export/submissions', { responseType: 'blob' })
+      const res = await api.get('/reports/export/submissions', {
+        params: { lang },
+        responseType: 'blob',
+      })
       const url  = URL.createObjectURL(res.data)
       const link = document.createElement('a')
       link.href     = url
-      link.download = `submissions-export-${new Date().toISOString().slice(0, 10)}.xlsx`
+      link.download = `submissions-export-${lang}-${new Date().toISOString().slice(0, 10)}.xlsx`
       link.click()
       URL.revokeObjectURL(url)
     } catch {
@@ -260,7 +263,11 @@ export default function StatsPage() {
           <div>
             <h1 className="text-xl font-bold text-white">{t('stats.title')}</h1>
             <p className="text-sm mt-0.5" style={{ color: 'rgba(255,255,255,0.8)' }}>
-              {new Date().toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+              {new Date().toLocaleDateString(i18n.language === 'en' ? 'en-GB' : 'he-IL', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+              })}
             </p>
           </div>
           <div className="flex gap-2">
@@ -272,7 +279,7 @@ export default function StatsPage() {
               {t('auditLog.title')}
             </button>
             <button
-              onClick={handleExport}
+              onClick={() => handleExport('he')}
               disabled={exporting}
               className="flex items-center gap-2 text-sm font-bold px-4 py-2.5 rounded-xl shadow disabled:opacity-60 transition-opacity"
               style={{ background: 'white', color: 'var(--lev-navy)', minHeight: '44px' }}
@@ -280,6 +287,16 @@ export default function StatsPage() {
             >
               <span aria-hidden="true">⬇</span>
               {exporting ? t('stats.exportLoading') : t('stats.exportXlsx')}
+            </button>
+            <button
+              onClick={() => handleExport('en')}
+              disabled={exporting}
+              className="flex items-center gap-2 text-sm font-bold px-4 py-2.5 rounded-xl shadow disabled:opacity-60 transition-opacity"
+              style={{ background: '#111827', color: 'white', minHeight: '44px' }}
+              aria-label={exporting ? t('stats.exportLoading') : t('stats.exportXlsxEn')}
+            >
+              <span aria-hidden="true">⬇</span>
+              {exporting ? t('stats.exportLoading') : t('stats.exportXlsxEn')}
             </button>
           </div>
         </div>

@@ -476,6 +476,7 @@ export async function getSignInfo(req, res, next) {
 export async function getPdf(req, res, next) {
   try {
     const { id } = req.params
+    const lang = req.query.lang === 'en' ? 'en' : 'he'
 
     const protocol = await prisma.protocol.findUnique({
       where:   { id },
@@ -491,10 +492,10 @@ export async function getPdf(req, res, next) {
       throw new AppError('Protocol not found', 'NOT_FOUND', 404)
     }
 
-    const { storagePath } = await generateProtocolPdf(protocol)
+    const { storagePath } = await generateProtocolPdf(protocol, lang)
 
     res.locals.entityId = id
-    res.download(storagePath, `protocol-${id}.pdf`)
+    res.download(storagePath, `protocol-${lang}-${id}.pdf`)
   } catch (err) {
     next(err)
   }
