@@ -27,8 +27,13 @@ Digital platform replacing manual (email/Excel) ethics approval process. Manages
 - Chairman: 2 (ControlDashboard, Approve+PDF)
 - Admin: 4 (Users, AuditLog, Impersonate, Settings)
 
-## Submission Statuses
-DRAFT → SUBMITTED → TRIAGE → UNDER_REVIEW → REVISION_NEEDED → COMMITTEE_DISCUSSION → APPROVED/REJECTED/FROZEN
+## Submission Statuses (Implemented Model)
+DRAFT → SUBMITTED → IN_TRIAGE → ASSIGNED → IN_REVIEW → PENDING_REVISION → APPROVED/REJECTED/WITHDRAWN/CONTINUED
+
+Notes:
+- `ASSIGNED` represents reviewer assignment after triage.
+- `PENDING_REVISION` represents reviewer/chairman request to revise.
+- `WITHDRAWN` and `CONTINUED` are supported by backend and database enums.
 
 ## SLA Rules
 - Triage: 3 business days

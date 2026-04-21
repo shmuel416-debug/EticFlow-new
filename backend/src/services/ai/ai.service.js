@@ -15,8 +15,12 @@ import { analyze as mockAnalyze } from './mock.provider.js'
 /** @type {Record<string, Function>} */
 const providers = {
   mock: mockAnalyze,
-  // gemini: geminiAnalyze — added when API key is available
+  gemini: mockAnalyze,
+  openai: mockAnalyze,
+  azure_openai: mockAnalyze,
 }
+
+const warnedFallbacks = new Set()
 
 /**
  * Runs an AI analysis on submission data using the active provider.
@@ -26,10 +30,19 @@ const providers = {
  */
 export async function analyzeSubmission(submissionData) {
   const providerName = getAIProvider()
-  const analyze      = providers[providerName]
+  const analyze = providers[providerName]
 
   if (!analyze) {
-    throw new Error(`Unknown AI_PROVIDER: "${providerName}". Valid options: ${Object.keys(providers).join(', ')}`)
+    throw new Error(
+      `Unknown AI_PROVIDER: "${providerName}". Valid options: ${Object.keys(providers).join(', ')}`
+    )
+  }
+
+  if (providerName !== 'mock' && !warnedFallbacks.has(providerName)) {
+    warnedFallbacks.add(providerName)
+    console.warn(
+      `[AI] Provider "${providerName}" is configured but not implemented yet. Falling back to "mock".`
+    )
   }
 
   return analyze(submissionData)

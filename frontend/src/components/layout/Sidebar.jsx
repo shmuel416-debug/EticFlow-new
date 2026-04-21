@@ -25,7 +25,7 @@ const NAV_ITEMS = [
   { key: 'protocols',            icon: '📋', path: '/protocols',              roles: ['SECRETARY','CHAIRMAN','ADMIN'] },
   { key: 'notifications',        icon: '🔔', path: '/notifications',          roles: ['RESEARCHER','SECRETARY','REVIEWER','CHAIRMAN','ADMIN'] },
   { key: 'users',                icon: '👥', path: '/users',                  roles: ['ADMIN'] },
-  { key: 'reports',              icon: '📊', path: '/reports',                roles: ['CHAIRMAN','ADMIN'] },
+  { key: 'reports',              icon: '📊', path: '/reports',                roles: ['SECRETARY','CHAIRMAN','ADMIN'] },
   { key: 'auditLog',            icon: '🔍', path: '/reports/audit-log',       roles: ['ADMIN'], indent: true },
   { key: 'settings',             icon: '⚙️', path: '/settings',              roles: ['RESEARCHER','SECRETARY','REVIEWER','CHAIRMAN','ADMIN'] },
 ]

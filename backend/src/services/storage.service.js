@@ -6,6 +6,7 @@
 
 import path from 'path'
 import fs   from 'fs/promises'
+import { getStorageProvider } from '../config/services.js'
 
 /** Base upload directory relative to project root. */
 const UPLOAD_DIR = path.resolve('uploads')
@@ -21,6 +22,7 @@ const ALLOWED = {
 }
 
 const MAX_BYTES = 20 * 1024 * 1024 // 20 MB
+const warnedProviders = new Set()
 
 /**
  * Validates file size and magic bytes.
@@ -47,7 +49,7 @@ export function validateFile(file) {
  * @param {Buffer} buffer    - File contents
  * @returns {Promise<string>} Relative storage path
  */
-export async function saveFile(subId, filename, buffer) {
+async function saveFileLocal(subId, filename, buffer) {
   const dir = path.join(UPLOAD_DIR, 'submissions', subId)
   await fs.mkdir(dir, { recursive: true })
   const dest = path.join(dir, filename)
@@ -60,7 +62,7 @@ export async function saveFile(subId, filename, buffer) {
  * @param {string} storagePath
  * @returns {Promise<void>}
  */
-export async function deleteFile(storagePath) {
+async function deleteFileLocal(storagePath) {
   const full = path.join(UPLOAD_DIR, storagePath)
   await fs.unlink(full).catch(() => {}) // ignore if already gone
 }
@@ -70,6 +72,60 @@ export async function deleteFile(storagePath) {
  * @param {string} storagePath
  * @returns {string}
  */
-export function resolvePath(storagePath) {
+function resolvePathLocal(storagePath) {
   return path.join(UPLOAD_DIR, storagePath)
+}
+
+/**
+ * Resolves storage provider behavior.
+ * Currently local storage is fully implemented; other configured providers
+ * gracefully fall back to local until dedicated provider modules are added.
+ * @returns {'local'}
+ */
+function getActiveProvider() {
+  const provider = getStorageProvider()
+  if (provider === 'local') return 'local'
+
+  if (!warnedProviders.has(provider)) {
+    warnedProviders.add(provider)
+    console.warn(
+      `[Storage] Provider "${provider}" is configured but not implemented yet. Falling back to "local".`
+    )
+  }
+  return 'local'
+}
+
+/**
+ * Saves a file buffer in the active storage provider.
+ * @param {string} subId
+ * @param {string} filename
+ * @param {Buffer} buffer
+ * @returns {Promise<string>}
+ */
+export async function saveFile(subId, filename, buffer) {
+  const provider = getActiveProvider()
+  if (provider === 'local') return saveFileLocal(subId, filename, buffer)
+  return saveFileLocal(subId, filename, buffer)
+}
+
+/**
+ * Deletes a file in the active storage provider.
+ * @param {string} storagePath
+ * @returns {Promise<void>}
+ */
+export async function deleteFile(storagePath) {
+  const provider = getActiveProvider()
+  if (provider === 'local') return deleteFileLocal(storagePath)
+  return deleteFileLocal(storagePath)
+}
+
+/**
+ * Returns a local filesystem path for streaming downloads.
+ * @param {string} storagePath
+ * @returns {string}
+ */
+export function resolvePath(storagePath) {
+  const provider = getActiveProvider()
+  if (provider === 'local') return resolvePathLocal(storagePath)
+  return resolvePathLocal(storagePath)
 }

@@ -20,14 +20,14 @@ const STATUS_STEP  = { DRAFT:0,SUBMITTED:1,IN_TRIAGE:2,ASSIGNED:3,IN_REVIEW:4,PE
 
 /**
  * Renders SLA indicator for a submission.
- * @param {{ sla: object|null }} props
+ * @param {{ sla: object|null, nowMs: number }} props
  */
-function SlaIndicator({ sla }) {
+function SlaIndicator({ sla, nowMs }) {
   const { t } = useTranslation()
   if (!sla) return null
   const due  = sla.reviewDue || sla.triageDue
   if (!due) return null
-  const days = Math.ceil((new Date(due) - Date.now()) / 86400000)
+  const days = Math.ceil((new Date(due).getTime() - nowMs) / 86400000)
   const { color, label } = days < 0
     ? { color: '#dc2626', label: t('dashboard.researcher.slaBreach') }
     : days <= 2
@@ -55,6 +55,7 @@ export default function SubmissionStatusPage() {
   const LOCKED = ['SUBMITTED','IN_TRIAGE','ASSIGNED','IN_REVIEW','APPROVED','REJECTED','WITHDRAWN']
   const [activeTab,  setActiveTab]  = useState('answers')
   const [pdfLoading, setPdfLoading] = useState(null) // 'he' | 'en' | null
+  const [nowMs] = useState(() => Date.now())
 
   /** Loads submission from API. */
   const load = useCallback(async () => {
@@ -123,7 +124,7 @@ export default function SubmissionStatusPage() {
           <StatusBadge status={submission.status} />
         </div>
 
-        <SlaIndicator sla={submission.slaTracking} />
+        <SlaIndicator sla={submission.slaTracking} nowMs={nowMs} />
 
         {/* Progress bar */}
         <div className="mt-4">
@@ -192,7 +193,6 @@ export default function SubmissionStatusPage() {
             <div className="space-y-0" role="list" aria-label={t('statusPage.timeline')}>
               {STATUS_ORDER.map((s, i) => {
                 const done   = STATUS_STEP[submission.status] > i
-                const active = STATUS_STEP[submission.status] === i + 1 && submission.status === s
                 const cur    = submission.status === s
 
                 return (

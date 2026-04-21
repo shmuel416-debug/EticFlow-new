@@ -142,7 +142,7 @@ export default function SubmitPage() {
   const [successId,    setSuccessId]    = useState('')
   const [previewLang,  setPreviewLang]  = useState(lang)
 
-  const fields = formMeta?.schemaJson?.fields ?? []
+  const fields = useMemo(() => formMeta?.schemaJson?.fields ?? [], [formMeta])
 
   /* Load active form, then load existing submission data if editing */
   useEffect(() => {

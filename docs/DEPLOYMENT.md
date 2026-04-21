@@ -86,6 +86,30 @@ cat backup_20260101.sql | docker compose exec -T db psql -U ethicflow ethicflow
 tar czf uploads_$(date +%Y%m%d).tar.gz uploads/
 ```
 
+## Production Hardening Checklist
+
+Before each release, verify:
+
+- Secrets are stored in environment variables only (never committed to Git).
+- JWT secret rotated periodically and after any incident.
+- `EMAIL_PROVIDER`, `AI_PROVIDER`, `STORAGE_PROVIDER`, `CALENDAR_PROVIDER` are explicitly set in production.
+- Backup restore drill was executed in the last 30 days (DB + uploads).
+- Health check endpoint monitored (`/api/health`) with alerting.
+- Rollback command validated on the current release.
+
+Suggested restore drill cadence:
+
+```bash
+# 1) Restore DB to a staging clone
+cat backup_YYYYMMDD.sql | docker compose exec -T db psql -U ethicflow ethicflow
+
+# 2) Restore uploads archive
+tar xzf uploads_YYYYMMDD.tar.gz
+
+# 3) Validate application health
+curl https://your-domain.ac.il/api/health
+```
+
 ## Update Procedure
 
 ```bash

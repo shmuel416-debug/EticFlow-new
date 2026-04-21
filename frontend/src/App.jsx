@@ -28,11 +28,13 @@ import SubmissionStatusPage       from './pages/researcher/SubmissionStatusPage'
 import SubmissionsListPage        from './pages/researcher/SubmissionsListPage'
 import AssignmentsPage            from './pages/reviewer/AssignmentsPage'
 import ReviewDetailPage           from './pages/reviewer/ReviewDetailPage'
+import ReviewDiffPage             from './pages/reviewer/ReviewDiffPage'
 import ChairmanQueuePage          from './pages/chairman/ChairmanQueuePage'
 import ChairmanDecisionPage       from './pages/chairman/SubmissionDecisionPage'
 import UsersPage                  from './pages/admin/UsersPage'
 import MeetingsPage               from './pages/meetings/MeetingsPage'
 import MeetingDetailPage          from './pages/meetings/MeetingDetailPage'
+import MeetingsCalendarPage       from './pages/meetings/MeetingsCalendarPage'
 import ProtocolsListPage          from './pages/protocols/ProtocolsListPage'
 import ProtocolDetailPage         from './pages/protocols/ProtocolDetailPage'
 import ProtocolSignPage           from './pages/protocols/ProtocolSignPage'
@@ -62,6 +64,7 @@ export default function App() {
               <Route path="/submissions"     element={<SubmissionsListPage />} />
               <Route path="/meetings/:id"     element={<MeetingDetailPage />} />
               <Route path="/meetings"        element={<MeetingsPage />} />
+              <Route path="/meetings/calendar" element={<MeetingsCalendarPage />} />
               <Route path="/settings"        element={<SettingsPage />} />
               <Route path="/notifications"   element={<NotificationsPage />} />
 
@@ -86,10 +89,11 @@ export default function App() {
               <Route element={<ProtectedRoute roles={['REVIEWER']} />}>
                 <Route path="/reviewer/assignments"      element={<AssignmentsPage />} />
                 <Route path="/reviewer/assignments/:id"  element={<ReviewDetailPage />} />
+                <Route path="/reviewer/assignments/:id/diff" element={<ReviewDiffPage />} />
               </Route>
 
-              {/* Chairman + Admin */}
-              <Route element={<ProtectedRoute roles={['CHAIRMAN', 'ADMIN']} />}>
+              {/* Secretary + Chairman + Admin */}
+              <Route element={<ProtectedRoute roles={['SECRETARY', 'CHAIRMAN', 'ADMIN']} />}>
                 <Route path="/chairman/queue"      element={<ChairmanQueuePage />} />
                 <Route path="/chairman/queue/:id"  element={<ChairmanDecisionPage />} />
                 <Route path="/reports"             element={<StatsPage />} />

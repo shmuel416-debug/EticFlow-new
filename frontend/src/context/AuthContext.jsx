@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 /**
  * EthicFlow — Auth Context
  * Stores JWT in memory (never localStorage). Provides login/logout/user state.
@@ -27,13 +28,31 @@ function decodeJwt(token) {
 const AuthContext = createContext(null)
 
 /**
+ * Restores user payload from in-memory/session token storage if valid.
+ * @returns {{ id: string, email: string, role: string }|null}
+ */
+function getInitialUserFromToken() {
+  const stored = getToken()
+  if (!stored) return null
+
+  const payload = decodeJwt(stored)
+  const isExpired = payload && payload.exp && payload.exp * 1000 < Date.now()
+  if (!payload || isExpired) {
+    setToken(null)
+    return null
+  }
+
+  return { id: payload.id, email: payload.email, role: payload.role }
+}
+
+/**
  * Provides authentication state and actions to the component tree.
  * @param {{ children: React.ReactNode }} props
  */
 export function AuthProvider({ children }) {
   const { i18n } = useTranslation()
-  const [user, setUser]               = useState(null)
-  const [loading, setLoading]         = useState(true)
+  const [user, setUser]               = useState(() => getInitialUserFromToken())
+  const [loading]                     = useState(false)
   const [impersonation, setImpersonation] = useState(null) // { originalUser, originalToken }
 
   /** Holds the original token during impersonation so we can restore it. */
@@ -57,26 +76,6 @@ export function AuthProvider({ children }) {
     const lang = localStorage.getItem('lang') || 'he'
     applyDirection(lang)
   }, [applyDirection])
-
-  /**
-   * On mount: attempt silent session restore from sessionStorage.
-   * If a valid non-expired token exists, restore user state without re-login.
-   * sessionStorage clears when the browser tab closes (safer than localStorage).
-   */
-  useEffect(() => {
-    const stored = getToken()
-    if (stored) {
-      const payload = decodeJwt(stored)
-      const isExpired = payload && payload.exp && payload.exp * 1000 < Date.now()
-      if (payload && !isExpired) {
-        setUser({ id: payload.id, email: payload.email, role: payload.role })
-      } else {
-        // Token expired — clear it
-        setToken(null)
-      }
-    }
-    setLoading(false)
-  }, [])
 
   /**
    * Authenticates user and stores JWT in memory.

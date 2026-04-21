@@ -23,8 +23,11 @@ export default function FieldSettingsPanel({ field, onSave, onCancel }) {
 
   /* Sync local draft when selected field changes */
   useEffect(() => {
-    setDraft(field ? { ...field } : null)
-  }, [field?.id])
+    const timer = setTimeout(() => {
+      setDraft(field ? { ...field } : null)
+    }, 0)
+    return () => clearTimeout(timer)
+  }, [field])
 
   if (!draft) {
     return (
