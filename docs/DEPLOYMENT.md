@@ -110,6 +110,32 @@ tar xzf uploads_YYYYMMDD.tar.gz
 curl https://your-domain.ac.il/api/health
 ```
 
+## Rollback Drill Runbook (Sprint 9)
+
+Use this in staging/clone before each production release:
+
+```bash
+# 0) Validate compose files
+docker compose -f docker-compose.yml -f docker-compose.prod.yml config -q
+
+# 1) Record current release image tags
+docker compose -f docker-compose.yml -f docker-compose.prod.yml images
+
+# 2) Deploy candidate release
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+
+# 3) Smoke after deploy
+node backend/tests/manual/daily-production-smoke.mjs
+
+# 4) Roll back to previous image tags if smoke fails
+docker compose -f docker-compose.yml -f docker-compose.prod.yml down
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+```
+
+Evidence must be captured in:
+- `docs/ops/drills/` (drill report)
+- `docs/ops/smoke-history/` (smoke output)
+
 ## Update Procedure
 
 ```bash

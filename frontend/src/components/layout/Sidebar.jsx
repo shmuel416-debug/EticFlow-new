@@ -22,6 +22,7 @@ const NAV_ITEMS = [
   { key: 'chairmanQueue',        icon: '⚖️', path: '/chairman/queue',         roles: ['CHAIRMAN','ADMIN'] },
   { key: 'formLibrary',          icon: '📂', path: '/secretary/forms',        roles: ['SECRETARY','ADMIN'] },
   { key: 'meetings',             icon: '📅', path: '/meetings',               roles: ['SECRETARY','CHAIRMAN','ADMIN'] },
+  { key: 'meetingsCalendar',     icon: '🗓️', path: '/meetings/calendar',      roles: ['SECRETARY','CHAIRMAN','ADMIN'], indent: true },
   { key: 'protocols',            icon: '📋', path: '/protocols',              roles: ['SECRETARY','CHAIRMAN','ADMIN'] },
   { key: 'notifications',        icon: '🔔', path: '/notifications',          roles: ['RESEARCHER','SECRETARY','REVIEWER','CHAIRMAN','ADMIN'] },
   { key: 'users',                icon: '👥', path: '/users',                  roles: ['ADMIN'] },

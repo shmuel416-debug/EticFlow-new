@@ -323,17 +323,25 @@ export default function MeetingsPage() {
       {/* Header */}
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <h1 className="text-2xl font-bold" style={{ color: 'var(--lev-navy)' }}>{t('meetings.title')}</h1>
-        {canManage && (
-          <button
-            onClick={() => setShowCreate(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-white text-sm font-semibold min-h-[44px]"
-            style={{ background: 'var(--lev-navy)' }}
-            aria-label={t('meetings.create')}
+        <div className="flex items-center gap-2">
+          <Link
+            to="/meetings/calendar"
+            className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-semibold min-h-[44px] inline-flex items-center"
           >
-            <span aria-hidden="true">+</span>
-            {t('meetings.create')}
-          </button>
-        )}
+            {t('meetings.openCalendar')}
+          </Link>
+          {canManage && (
+            <button
+              onClick={() => setShowCreate(true)}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-white text-sm font-semibold min-h-[44px]"
+              style={{ background: 'var(--lev-navy)' }}
+              aria-label={t('meetings.create')}
+            >
+              <span aria-hidden="true">+</span>
+              {t('meetings.create')}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Filter tabs */}

@@ -56,3 +56,45 @@ jobs:
 
       - name: Frontend build
         run: npm run build
+
+  e2e-quality:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Playwright core E2E
+        env:
+          E2E_BASE_URL: ${{ secrets.E2E_BASE_URL || 'https://frontend-eticflow-dev.up.railway.app' }}
+          E2E_RESEARCHER_EMAIL: ${{ secrets.E2E_RESEARCHER_EMAIL }}
+          E2E_RESEARCHER_PASSWORD: ${{ secrets.E2E_RESEARCHER_PASSWORD }}
+          E2E_SECRETARY_EMAIL: ${{ secrets.E2E_SECRETARY_EMAIL }}
+          E2E_SECRETARY_PASSWORD: ${{ secrets.E2E_SECRETARY_PASSWORD }}
+          E2E_REVIEWER_EMAIL: ${{ secrets.E2E_REVIEWER_EMAIL }}
+          E2E_REVIEWER_PASSWORD: ${{ secrets.E2E_REVIEWER_PASSWORD }}
+          E2E_CHAIRMAN_EMAIL: ${{ secrets.E2E_CHAIRMAN_EMAIL }}
+          E2E_CHAIRMAN_PASSWORD: ${{ secrets.E2E_CHAIRMAN_PASSWORD }}
+          E2E_ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}
+          E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
+        run: npm run e2e
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: frontend/playwright-report
+          if-no-files-found: ignore

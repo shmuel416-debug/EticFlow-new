@@ -1,5 +1,20 @@
 # EthicFlow — Sprint Log
 
+## Sprint 9 — Stabilization & Growth
+
+| Date | Task | Status | Notes |
+|------|------|--------|-------|
+| 2026-04-21 | Stream A — Production Stability Playbook | ✅ Done | Added `docs/ops-production-stability-playbook.md`, incident template, ops evidence directories, and daily smoke script |
+| 2026-04-21 | Stream A — Daily smoke evidence | ✅ Done | Archived live run in `docs/ops/smoke-history/` |
+| 2026-04-21 | Stream B — UI/UX Design Calendar | ✅ Done | 3 options created in `docs/designs/meetings-calendar-design.html`; execution follows structured option |
+| 2026-04-21 | Stream B — UI/UX Design Reviewer Diff | ✅ Done | 3 options created in `docs/designs/reviewer-diff-design.html`; execution follows structured option |
+| 2026-04-21 | Stream B — MeetingsCalendarPage implementation | ✅ Done | Monthly navigation, day drill-down, links to meeting detail, i18n keys |
+| 2026-04-21 | Stream B — ReviewDiffPage implementation | ✅ Done | Version selectors, field-level diff table, change type summary, i18n keys |
+| 2026-04-21 | Stream C — Playwright setup + 4 core scenarios | ✅ Done | `frontend/e2e/core-flows.spec.js`, scenarios passed locally (4/4) |
+| 2026-04-21 | Stream C — CI quality gate | ✅ Done | Added `e2e-quality` job + Playwright report artifact upload |
+| 2026-04-21 | Stream D — rollback + backup/restore drill report | ✅ Done | Added `docs/ops/drills/sprint-9-rollback-backup-drill.md`; preflight PASS, runtime blocked locally |
+| 2026-04-21 | Sprint 9 regression + signoff report | ✅ Done | Published `docs/sprint-9-report-hebrew.md` |
+
 ## Sprint 8 — Google Integration (Calendar + Gmail + SSO)
 
 | Date | Task | Status | Notes |

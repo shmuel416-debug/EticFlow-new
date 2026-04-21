@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EthicFlow — Meetings Calendar Design Options</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .tab-btn.active { border-bottom: 3px solid #1e40af; color: #1e40af; font-weight: 700; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .device { border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; background:#fff; }
+  </style>
+</head>
+<body class="bg-gray-100 text-gray-900">
+  <div class="max-w-7xl mx-auto p-6">
+    <h1 class="text-2xl font-bold mb-2">Meetings Calendar — Design Options</h1>
+    <pre class="bg-white p-4 rounded-lg border text-sm mb-4">[Entry /meetings] ? [Calendar view] ? [Select day] ? [Open meeting card] ? [Meeting detail]
+                          ?
+                     [Prev/Next month]
+                          ?
+               [No meetings state / loading / error]</pre>
+
+    <div class="sticky top-0 bg-white border-b rounded-t-xl z-10 px-4">
+      <div class="flex gap-6">
+        <button class="tab-btn active py-3" onclick="showTab('a', event)">Option A — Clean</button>
+        <button class="tab-btn py-3 text-gray-500" onclick="showTab('b', event)">Option B — Structured</button>
+        <button class="tab-btn py-3 text-gray-500" onclick="showTab('c', event)">Option C — Compact</button>
+      </div>
+    </div>
+
+    <div id="tab-a" class="tab-content active mt-4">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div class="lg:col-span-2 device p-4">
+          <div class="flex justify-between mb-4"><h2 class="font-bold">יומן פגישות</h2><span class="text-sm text-gray-500">אפריל 2026</span></div>
+          <div class="grid grid-cols-7 gap-2 text-center text-xs mb-2"><span>א</span><span>ב</span><span>ג</span><span>ד</span><span>ה</span><span>ו</span><span>ש</span></div>
+          <div class="grid grid-cols-7 gap-2 text-sm">
+            <div class="p-2 rounded bg-blue-50 border border-blue-200">21<div class="text-[10px] text-blue-700">2 פגישות</div></div>
+            <div class="p-2 rounded bg-gray-50">22</div><div class="p-2 rounded bg-gray-50">23</div><div class="p-2 rounded bg-gray-50">24</div>
+            <div class="p-2 rounded bg-gray-50">25</div><div class="p-2 rounded bg-gray-50">26</div><div class="p-2 rounded bg-gray-50">27</div>
+          </div>
+        </div>
+        <div class="device p-4 max-w-sm mx-auto">
+          <h3 class="font-semibold mb-2">?? מובייל</h3>
+          <p class="text-sm text-gray-600">רשימת ימים עם אינדיקטור פגישות + פתיחת יום לחיצה אחת</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-b" class="tab-content mt-4">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div class="lg:col-span-2 device">
+          <div class="bg-blue-900 text-white p-4 flex justify-between items-center">
+            <button class="px-3 py-1 bg-blue-800 rounded">?</button>
+            <h2 class="font-bold">אפריל 2026</h2>
+            <button class="px-3 py-1 bg-blue-800 rounded">?</button>
+          </div>
+          <div class="p-4">
+            <div class="grid grid-cols-7 gap-2 text-center text-xs mb-2 font-semibold text-gray-600"><span>א</span><span>ב</span><span>ג</span><span>ד</span><span>ה</span><span>ו</span><span>ש</span></div>
+            <div class="grid grid-cols-7 gap-2 text-sm">
+              <div class="p-2 rounded-lg bg-blue-100 border border-blue-300">21<div class="text-[10px] text-blue-800">ועדת אתיקה #1</div></div>
+              <div class="p-2 rounded-lg bg-amber-100 border border-amber-300">22<div class="text-[10px] text-amber-800">פגישה צפופה</div></div>
+              <div class="p-2 rounded-lg bg-gray-50">23</div><div class="p-2 rounded-lg bg-gray-50">24</div><div class="p-2 rounded-lg bg-gray-50">25</div><div class="p-2 rounded-lg bg-gray-50">26</div><div class="p-2 rounded-lg bg-gray-50">27</div>
+            </div>
+          </div>
+        </div>
+        <div class="device p-4 max-w-sm mx-auto">
+          <h3 class="font-semibold mb-2">?? מובייל</h3>
+          <div class="space-y-2 text-sm">
+            <div class="p-2 rounded border bg-blue-50">21/04 — 2 פגישות</div>
+            <div class="p-2 rounded border bg-white">22/04 — 1 פגישה</div>
+            <div class="p-2 rounded border bg-white">23/04 — אין פגישות</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-c" class="tab-content mt-4">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div class="lg:col-span-2 device p-4">
+          <h2 class="font-bold mb-3">יומן + פאנל פרטים</h2>
+          <p class="text-sm text-gray-600">פריסה קומפקטית עם לוח ועמודת פגישות מהירה.</p>
+        </div>
+        <div class="device p-4 max-w-sm mx-auto"><p class="text-sm">מובייל עם טאבים: יומן / פגישות יום.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function showTab(id, ev) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'))
+      document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('active'); b.classList.add('text-gray-500') })
+      document.getElementById('tab-' + id).classList.add('active')
+      ev.target.classList.add('active')
+      ev.target.classList.remove('text-gray-500')
+    }
+  </script>
+</body>
+</html>

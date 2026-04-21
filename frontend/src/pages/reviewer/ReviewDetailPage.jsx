@@ -58,6 +58,12 @@ export default function ReviewDetailPage() {
           style={{ color: 'var(--lev-navy)' }}>
           ← {t('submission.detail.backToList')}
         </Link>
+        <div>
+          <Link to={`/reviewer/assignments/${id}/diff`} className="text-sm hover:underline inline-flex items-center gap-1"
+            style={{ color: 'var(--lev-teal-text)' }}>
+            {t('reviewer.diff.openDiff')}
+          </Link>
+        </div>
         <div className="flex flex-wrap items-center gap-3 mt-2">
           <h1 className="text-xl font-bold" style={{ color: 'var(--lev-navy)' }}>{submission?.title}</h1>
           <StatusBadge status={submission?.status} />
