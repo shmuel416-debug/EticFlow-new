@@ -1,11 +1,9 @@
 /**
  * EthicFlow — Institution Settings Page
- * ADMIN only. Grouped form with inline-edit + per-section Save.
- * Groups: Institution Info / SLA Thresholds / File Upload / Email
- * Pattern follows UsersPage layout — Lev palette header band.
+ * ADMIN manages all system settings; SECRETARY can edit approval templates.
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import api from '../../services/api'
@@ -51,6 +49,165 @@ const GROUPS = [
     ],
   },
 ]
+
+const TEMPLATE_PLACEHOLDERS = [
+  '{{applicationId}}',
+  '{{researchTitle}}',
+  '{{trackLabel}}',
+  '{{issueDate}}',
+  '{{approvedDate}}',
+  '{{validUntil}}',
+  '{{researcherName}}',
+  '{{researcherEmail}}',
+  '{{institutionName}}',
+]
+
+const DEFAULT_APPROVAL_TEMPLATES = {
+  he: {
+    docTitle: 'אישור ועדת אתיקה',
+    subject: 'הנדון: אישור ועדת אתיקה למחקר',
+    intro: 'ועדת האתיקה בדקה את בקשתך ושמחה לאשר את ביצוע המחקר המפורט להלן, בכפוף לתנאים הנקובים בהחלטה.',
+    conditionsTitle: 'תנאי האישור:',
+    conditions: [
+      'המחקר יתנהל בהתאם לפרוטוקול שהוגש ואושר.',
+      'כל שינוי מהותי בפרוטוקול יוגש לאישור ועדה מחדש.',
+      'יש לקבל הסכמה מדעת של כל משתתף לפני תחילת המחקר.',
+      'הממצאים יועברו לוועדה בתום המחקר.',
+    ],
+    signatureLabel: 'יו"ר ועדת האתיקה',
+    legalFooter: 'מסמך רשמי זה תקף בכפוף לנהלי ועדת האתיקה וחתימות מורשות.',
+  },
+  en: {
+    docTitle: 'Ethics Committee Approval',
+    subject: 'Re: Ethics Committee Research Approval',
+    intro:
+      'The Ethics Committee has reviewed your application and is pleased to approve the conduct of the research described below, subject to the conditions stated in this decision.',
+    conditionsTitle: 'Approval Conditions:',
+    conditions: [
+      'The research shall be conducted in accordance with the approved protocol.',
+      'Any substantive protocol amendments require re-submission for committee approval.',
+      'Informed consent must be obtained from each participant prior to commencement.',
+      'Research findings shall be submitted to the committee upon completion.',
+    ],
+    signatureLabel: 'Chairperson, Ethics Committee',
+    legalFooter: 'This official document is valid subject to ethics committee policies and authorized signatures.',
+  },
+}
+
+const TRACK_LABELS = {
+  FULL: { he: 'מסלול מלא', en: 'Full Review' },
+  EXPEDITED: { he: 'מסלול מקוצר', en: 'Expedited Review' },
+  EXEMPT: { he: 'פטור', en: 'Exempt' },
+}
+
+function templateSettingKey(lang) {
+  return lang === 'en' ? 'approval_template_en' : 'approval_template_he'
+}
+
+function templateHistoryKey(lang) {
+  return lang === 'en' ? 'approval_template_history_en' : 'approval_template_history_he'
+}
+
+function parseTemplateValue(value, lang) {
+  const fallback = DEFAULT_APPROVAL_TEMPLATES[lang]
+  if (!value) return fallback
+  try {
+    const parsed = typeof value === 'string' ? JSON.parse(value) : value
+    return {
+      ...fallback,
+      ...(parsed || {}),
+      conditions: Array.isArray(parsed?.conditions) && parsed.conditions.length > 0
+        ? parsed.conditions.slice(0, 8)
+        : fallback.conditions,
+    }
+  } catch {
+    return fallback
+  }
+}
+
+function parseTemplateHistoryValue(value, lang) {
+  if (!value) return []
+  try {
+    const parsed = typeof value === 'string' ? JSON.parse(value) : value
+    if (!Array.isArray(parsed)) return []
+    return parsed
+      .filter((item) => item && typeof item === 'object')
+      .map((item) => ({
+        id: String(item.id || ''),
+        editedAt: String(item.editedAt || ''),
+        editedByRole: String(item.editedByRole || ''),
+        template: parseTemplateValue(item.template, lang),
+      }))
+      .slice(0, 20)
+  } catch {
+    return []
+  }
+}
+
+function buildPreviewContext(lang) {
+  if (lang === 'en') {
+    return {
+      applicationId: 'APP-2026-0017',
+      researchTitle: 'AI Assisted Diagnostic Study',
+      trackLabel: 'Full Review',
+      issueDate: '21 April 2026',
+      approvedDate: '18 April 2026',
+      validUntil: '18 April 2027',
+      researcherName: 'Dr. Maya Levi',
+      researcherEmail: 'maya.levi@example.org',
+      institutionName: 'Academic Institution',
+    }
+  }
+  return {
+    applicationId: 'APP-2026-0017',
+    researchTitle: 'מחקר אבחון בסיוע בינה מלאכותית',
+    trackLabel: 'מסלול מלא',
+    issueDate: '21/04/2026',
+    approvedDate: '18/04/2026',
+    validUntil: '18/04/2027',
+    researcherName: 'ד"ר מאיה לוי',
+    researcherEmail: 'maya.levi@example.org',
+    institutionName: 'המוסד האקדמי',
+  }
+}
+
+function formatDateForPreview(date, lang) {
+  if (!date) return ''
+  const d = new Date(date)
+  if (Number.isNaN(d.getTime())) return ''
+  return d.toLocaleDateString(lang === 'he' ? 'he-IL' : 'en-GB', {
+    day: '2-digit',
+    month: lang === 'he' ? '2-digit' : 'long',
+    year: 'numeric',
+  })
+}
+
+function buildPreviewContextFromSubmission(lang, submission) {
+  if (!submission) return buildPreviewContext(lang)
+  const track = TRACK_LABELS[submission.track] || { he: submission.track || '', en: submission.track || '' }
+  const approvedDate = formatDateForPreview(submission.updatedAt, lang)
+  const validUntilDate = (() => {
+    const d = new Date(submission.updatedAt || Date.now())
+    if (Number.isNaN(d.getTime())) return ''
+    d.setFullYear(d.getFullYear() + 1)
+    return formatDateForPreview(d, lang)
+  })()
+  return {
+    applicationId: submission.applicationId || '',
+    researchTitle: submission.title || '',
+    trackLabel: lang === 'he' ? track.he : track.en,
+    issueDate: formatDateForPreview(new Date(), lang),
+    approvedDate,
+    validUntil: validUntilDate,
+    researcherName: submission.author?.fullName || '',
+    researcherEmail: submission.author?.email || '',
+    institutionName: lang === 'he' ? 'המוסד האקדמי' : 'Academic Institution',
+  }
+}
+
+function renderTemplatePreviewText(text, context) {
+  return String(text ?? '').replace(/\{\{([a-zA-Z0-9_]+)\}\}/g, (_match, tokenName) => context[tokenName] ?? '')
+}
 
 /**
  * Renders a single settings group card with its fields.
@@ -195,6 +352,338 @@ function SettingsGroup({ group, values, onSave }) {
   )
 }
 
+function ApprovalTemplateEditor({
+  values,
+  onSave,
+  previewSubmissions,
+  previewSubmission,
+  previewSubmissionId,
+  onPreviewSubmissionChange,
+  previewLoading,
+}) {
+  const { t } = useTranslation()
+  const [lang, setLang] = useState('he')
+  const [previewSource, setPreviewSource] = useState('sample')
+  const [draft, setDraft] = useState(DEFAULT_APPROVAL_TEMPLATES.he)
+  const [saving, setSaving] = useState(false)
+  const [toast, setToast] = useState(null)
+
+  const savedTemplate = useMemo(
+    () => parseTemplateValue(values[templateSettingKey(lang)], lang),
+    [values, lang]
+  )
+  const history = useMemo(
+    () => parseTemplateHistoryValue(values[templateHistoryKey(lang)], lang),
+    [values, lang]
+  )
+  const previewContext = useMemo(() => {
+    if (previewSource === 'real' && previewSubmission) {
+      return buildPreviewContextFromSubmission(lang, previewSubmission)
+    }
+    return buildPreviewContext(lang)
+  }, [lang, previewSource, previewSubmission])
+
+  useEffect(() => {
+    setDraft(savedTemplate)
+  }, [savedTemplate])
+
+  const isDirty = JSON.stringify(draft) !== JSON.stringify(savedTemplate)
+
+  function updateField(field, nextValue) {
+    setDraft((prev) => ({ ...prev, [field]: nextValue }))
+  }
+
+  function updateCondition(index, nextValue) {
+    setDraft((prev) => ({
+      ...prev,
+      conditions: prev.conditions.map((item, i) => (i === index ? nextValue : item)),
+    }))
+  }
+
+  function addCondition() {
+    if (draft.conditions.length >= 8) return
+    setDraft((prev) => ({ ...prev, conditions: [...prev.conditions, ''] }))
+  }
+
+  function removeCondition(index) {
+    if (draft.conditions.length <= 1) return
+    setDraft((prev) => ({
+      ...prev,
+      conditions: prev.conditions.filter((_item, i) => i !== index),
+    }))
+  }
+
+  async function handleSave() {
+    setSaving(true)
+    setToast(null)
+    try {
+      await onSave(lang, draft)
+      setToast({ type: 'ok', msg: t('settings.saveSuccess') })
+    } catch {
+      setToast({ type: 'err', msg: t('settings.saveError') })
+    } finally {
+      setSaving(false)
+      setTimeout(() => setToast(null), 3000)
+    }
+  }
+
+  function resetToDefault() {
+    setDraft(DEFAULT_APPROVAL_TEMPLATES[lang])
+  }
+
+  return (
+    <section className="bg-white rounded-xl border shadow-sm overflow-hidden" aria-labelledby="approval-template-title">
+      <div className="px-5 py-4 border-b flex items-center justify-between gap-2">
+        <h2 id="approval-template-title" className="text-sm font-bold" style={{ color: 'var(--lev-navy)' }}>
+          {t('settings.approvalTemplate')}
+        </h2>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setLang('he')}
+            className={`px-3 py-1.5 text-xs rounded-md border ${lang === 'he' ? 'bg-sky-100 border-sky-300' : 'bg-white border-gray-200'}`}
+          >
+            {t('settings.template.he')}
+          </button>
+          <button
+            type="button"
+            onClick={() => setLang('en')}
+            className={`px-3 py-1.5 text-xs rounded-md border ${lang === 'en' ? 'bg-sky-100 border-sky-300' : 'bg-white border-gray-200'}`}
+          >
+            {t('settings.template.en')}
+          </button>
+        </div>
+      </div>
+
+      <div className="px-5 py-4 space-y-4">
+        <p className="text-xs text-gray-600">{t('settings.template.description')}</p>
+        <div className="text-xs text-gray-500">
+          <span className="font-semibold">{t('settings.template.placeholders')}</span>
+          <div className="mt-2 flex flex-wrap gap-1">
+            {TEMPLATE_PLACEHOLDERS.map((token) => (
+              <code key={token} className="px-1.5 py-0.5 rounded bg-gray-100 border border-gray-200">{token}</code>
+            ))}
+          </div>
+        </div>
+        <div className="border border-gray-200 rounded-lg p-3 bg-gray-50 space-y-2">
+          <p className="text-xs font-semibold text-gray-700">{t('settings.template.previewSource')}</p>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setPreviewSource('sample')}
+              className={`px-3 py-1.5 text-xs rounded-md border ${previewSource === 'sample' ? 'bg-sky-100 border-sky-300' : 'bg-white border-gray-200'}`}
+            >
+              {t('settings.template.previewSample')}
+            </button>
+            <button
+              type="button"
+              onClick={() => setPreviewSource('real')}
+              className={`px-3 py-1.5 text-xs rounded-md border ${previewSource === 'real' ? 'bg-sky-100 border-sky-300' : 'bg-white border-gray-200'}`}
+              disabled={previewSubmissions.length === 0}
+            >
+              {t('settings.template.previewReal')}
+            </button>
+          </div>
+          {previewSource === 'real' && (
+            <div className="space-y-2">
+              <select
+                value={previewSubmissionId}
+                onChange={(e) => onPreviewSubmissionChange(e.target.value)}
+                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2"
+                style={{ '--tw-ring-color': 'var(--lev-navy)' }}
+              >
+                {previewSubmissions.length === 0 && (
+                  <option value="">{t('settings.template.noApprovedSubmissions')}</option>
+                )}
+                {previewSubmissions.map((sub) => (
+                  <option key={sub.id} value={sub.id}>
+                    {`${sub.applicationId} — ${sub.title}`}
+                  </option>
+                ))}
+              </select>
+              {previewLoading && <p className="text-xs text-gray-500">{t('common.loading')}</p>}
+            </div>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 gap-3">
+          <label className="text-xs font-semibold text-gray-700">{t('settings.templateFields.docTitle')}</label>
+          <input
+            type="text"
+            value={draft.docTitle}
+            onChange={(e) => updateField('docTitle', e.target.value)}
+            className="text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2"
+            style={{ '--tw-ring-color': 'var(--lev-navy)' }}
+          />
+
+          <label className="text-xs font-semibold text-gray-700">{t('settings.templateFields.subject')}</label>
+          <input
+            type="text"
+            value={draft.subject}
+            onChange={(e) => updateField('subject', e.target.value)}
+            className="text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2"
+            style={{ '--tw-ring-color': 'var(--lev-navy)' }}
+          />
+
+          <label className="text-xs font-semibold text-gray-700">{t('settings.templateFields.intro')}</label>
+          <textarea
+            rows={3}
+            value={draft.intro}
+            onChange={(e) => updateField('intro', e.target.value)}
+            className="text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2"
+            style={{ '--tw-ring-color': 'var(--lev-navy)' }}
+          />
+
+          <label className="text-xs font-semibold text-gray-700">{t('settings.templateFields.conditionsTitle')}</label>
+          <input
+            type="text"
+            value={draft.conditionsTitle}
+            onChange={(e) => updateField('conditionsTitle', e.target.value)}
+            className="text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2"
+            style={{ '--tw-ring-color': 'var(--lev-navy)' }}
+          />
+
+          <label className="text-xs font-semibold text-gray-700">{t('settings.templateFields.conditions')}</label>
+          <div className="space-y-2">
+            {draft.conditions.map((condition, index) => (
+              <div key={`${lang}-cond-${index}`} className="flex items-start gap-2">
+                <textarea
+                  rows={2}
+                  value={condition}
+                  onChange={(e) => updateCondition(index, e.target.value)}
+                  className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2"
+                  style={{ '--tw-ring-color': 'var(--lev-navy)' }}
+                />
+                <button
+                  type="button"
+                  onClick={() => removeCondition(index)}
+                  disabled={draft.conditions.length <= 1}
+                  className="text-xs border border-gray-300 rounded-md px-2 py-1 disabled:opacity-40"
+                >
+                  {t('common.delete')}
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={addCondition}
+              disabled={draft.conditions.length >= 8}
+              className="text-xs border border-gray-300 rounded-md px-3 py-1.5 disabled:opacity-40"
+            >
+              {t('settings.template.addCondition')}
+            </button>
+          </div>
+
+          <label className="text-xs font-semibold text-gray-700">{t('settings.templateFields.signatureLabel')}</label>
+          <input
+            type="text"
+            value={draft.signatureLabel}
+            onChange={(e) => updateField('signatureLabel', e.target.value)}
+            className="text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2"
+            style={{ '--tw-ring-color': 'var(--lev-navy)' }}
+          />
+
+          <label className="text-xs font-semibold text-gray-700">{t('settings.templateFields.legalFooter')}</label>
+          <textarea
+            rows={2}
+            value={draft.legalFooter}
+            onChange={(e) => updateField('legalFooter', e.target.value)}
+            className="text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2"
+            style={{ '--tw-ring-color': 'var(--lev-navy)' }}
+          />
+        </div>
+
+        <div className="border border-slate-200 rounded-lg bg-slate-50 p-4" dir={lang === 'he' ? 'rtl' : 'ltr'}>
+          <h3 className="text-xs font-bold mb-2 text-slate-700">{t('settings.template.previewTitle')}</h3>
+          <p className="text-[11px] text-slate-500 mb-3">{t('settings.template.previewNote')}</p>
+          <div className="bg-white border border-slate-200 rounded-md p-4 space-y-2">
+            <p className="text-[15px] font-bold text-slate-800">
+              {renderTemplatePreviewText(draft.docTitle, previewContext)}
+            </p>
+            <p className="text-[12px] font-semibold text-slate-700">
+              {renderTemplatePreviewText(draft.subject, previewContext)}
+            </p>
+            <p className="text-[12px] text-slate-700 whitespace-pre-wrap">
+              {renderTemplatePreviewText(draft.intro, previewContext)}
+            </p>
+            <p className="text-[12px] font-semibold text-slate-700">
+              {renderTemplatePreviewText(draft.conditionsTitle, previewContext)}
+            </p>
+            <ul className="list-disc list-inside text-[12px] text-slate-700 space-y-1">
+              {draft.conditions.map((line, idx) => (
+                <li key={`preview-cond-${idx}`}>
+                  {renderTemplatePreviewText(line, previewContext)}
+                </li>
+              ))}
+            </ul>
+            <p className="text-[12px] font-semibold text-slate-700 pt-1">
+              {renderTemplatePreviewText(draft.signatureLabel, previewContext)}
+            </p>
+            <p className="text-[11px] text-slate-500 border-t border-slate-200 pt-2">
+              {renderTemplatePreviewText(draft.legalFooter, previewContext)}
+            </p>
+          </div>
+        </div>
+
+        <div className="border border-gray-200 rounded-lg p-3 bg-gray-50 space-y-2">
+          <p className="text-xs font-semibold text-gray-700">{t('settings.template.historyTitle')}</p>
+          {history.length === 0 && (
+            <p className="text-xs text-gray-500">{t('settings.template.noHistory')}</p>
+          )}
+          {history.length > 0 && (
+            <div className="space-y-2 max-h-48 overflow-auto">
+              {history.map((entry, idx) => (
+                <div key={entry.id || `history-${idx}`} className="flex items-center justify-between gap-2 border border-gray-200 rounded-md p-2 bg-white">
+                  <div className="text-xs text-gray-600">
+                    <div>{formatDateForPreview(entry.editedAt || Date.now(), lang)}</div>
+                    <div>{entry.editedByRole || 'UNKNOWN'}</div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setDraft(entry.template)}
+                    className="text-xs border border-gray-300 rounded-md px-3 py-1.5"
+                  >
+                    {t('settings.template.restoreVersion')}
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="px-5 py-3 border-t bg-gray-50 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <div aria-live="polite" aria-atomic="true">
+          {toast && (
+            <p className={`text-xs font-semibold ${toast.type === 'ok' ? 'text-green-600' : 'text-red-600'}`}>
+              {toast.type === 'ok' ? '✓ ' : '✗ '}
+              {toast.msg}
+            </p>
+          )}
+        </div>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={resetToDefault}
+            className="text-sm font-semibold border border-gray-300 px-4 py-2 rounded-lg"
+          >
+            {t('settings.template.resetDefault')}
+          </button>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={!isDirty || saving}
+            className="text-sm font-bold text-white px-5 py-2 rounded-lg disabled:opacity-40"
+            style={{ background: 'var(--lev-navy)' }}
+          >
+            {saving ? '…' : t('settings.save')}
+          </button>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 export default function SettingsPage() {
   const { t }    = useTranslation()
   const { user } = useAuth()
@@ -202,13 +691,18 @@ export default function SettingsPage() {
   const [values,  setValues]  = useState({})   // keyed map: { key → value }
   const [loading, setLoading] = useState(true)
   const [error,   setError]   = useState(null)
+  const [previewSubmissions, setPreviewSubmissions] = useState([])
+  const [previewSubmissionId, setPreviewSubmissionId] = useState('')
+  const [previewSubmission, setPreviewSubmission] = useState(null)
+  const [previewLoading, setPreviewLoading] = useState(false)
 
   const isAdmin = user?.role === 'ADMIN'
+  const canEditTemplate = user?.role === 'ADMIN' || user?.role === 'SECRETARY'
 
-  // ── Fetch all settings (ADMIN only) ─────────
+  // ── Fetch all settings (ADMIN + SECRETARY) ─────────
 
   useEffect(() => {
-    if (!isAdmin) return
+    if (!canEditTemplate) return
     async function fetchSettings() {
       setLoading(true)
       setError(null)
@@ -224,7 +718,41 @@ export default function SettingsPage() {
       }
     }
     fetchSettings()
-  }, [isAdmin])
+  }, [canEditTemplate])
+
+  useEffect(() => {
+    if (!canEditTemplate) return
+    async function fetchPreviewSubmissions() {
+      try {
+        const res = await api.get('/submissions', { params: { statuses: 'APPROVED', limit: 50 } })
+        const list = Array.isArray(res.data?.data) ? res.data.data : []
+        setPreviewSubmissions(list)
+        setPreviewSubmissionId((prev) => prev || list[0]?.id || '')
+      } catch {
+        setPreviewSubmissions([])
+      }
+    }
+    fetchPreviewSubmissions()
+  }, [canEditTemplate])
+
+  useEffect(() => {
+    if (!previewSubmissionId) {
+      setPreviewSubmission(null)
+      return
+    }
+    async function fetchPreviewSubmissionById() {
+      setPreviewLoading(true)
+      try {
+        const res = await api.get(`/submissions/${previewSubmissionId}`)
+        setPreviewSubmission(res.data?.submission ?? null)
+      } catch {
+        setPreviewSubmission(null)
+      } finally {
+        setPreviewLoading(false)
+      }
+    }
+    fetchPreviewSubmissionById()
+  }, [previewSubmissionId])
 
   // ── Save a group — PUT each changed key ──────
 
@@ -244,8 +772,14 @@ export default function SettingsPage() {
     setValues(prev => ({ ...prev, ...Object.fromEntries(updates) }))
   }
 
-  // Non-admin users see an access-denied placeholder (after all hooks)
-  if (user && !isAdmin) {
+  async function handleTemplateSave(lang, draftTemplate) {
+    const key = templateSettingKey(lang)
+    await api.put(`/settings/${key}`, { value: draftTemplate })
+    setValues((prev) => ({ ...prev, [key]: JSON.stringify(draftTemplate) }))
+  }
+
+  // Non-authorized users see access denied
+  if (user && !canEditTemplate) {
     return (
       <div className="flex flex-col items-center justify-center py-24 text-center">
         <p className="text-4xl mb-4" aria-hidden="true">🔒</p>
@@ -287,7 +821,7 @@ export default function SettingsPage() {
 
         {!loading && !error && (
           <div className="max-w-3xl mx-auto space-y-4">
-            {GROUPS.map(group => (
+            {isAdmin && GROUPS.map(group => (
               <SettingsGroup
                 key={group.groupKey}
                 group={group}
@@ -295,6 +829,18 @@ export default function SettingsPage() {
                 onSave={handleGroupSave}
               />
             ))}
+
+            {canEditTemplate && (
+              <ApprovalTemplateEditor
+                values={values}
+                onSave={handleTemplateSave}
+                previewSubmissions={previewSubmissions}
+                previewSubmission={previewSubmission}
+                previewSubmissionId={previewSubmissionId}
+                onPreviewSubmissionChange={setPreviewSubmissionId}
+                previewLoading={previewLoading}
+              />
+            )}
           </div>
         )}
       </div>

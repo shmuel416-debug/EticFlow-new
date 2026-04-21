@@ -781,6 +781,33 @@
     "allowed_file_types": "סוגי קבצים מותרים",
     "email_sender_name": "שם שולח האימייל",
     "email_sender_address": "כתובת שולח האימייל",
+    "approvalTemplate": "טמפלט מכתב אישור",
+    "template": {
+      "description": "אפשר לערוך את שדות הטמפלט הבאים. ניתן להשתמש במשתנים מוכנים בתוך הטקסט.",
+      "placeholders": "משתנים זמינים:",
+      "he": "עברית",
+      "en": "אנגלית",
+      "resetDefault": "שחזור ברירת מחדל",
+      "addCondition": "הוסף תנאי",
+      "previewTitle": "תצוגה מקדימה",
+      "previewNote": "התצוגה מבוססת על נתוני דוגמה לצורך בדיקה מהירה של נוסח וסגנון.",
+      "previewSource": "מקור תצוגה מקדימה",
+      "previewSample": "נתוני דוגמה",
+      "previewReal": "בקשה אמיתית",
+      "noApprovedSubmissions": "אין בקשות מאושרות להצגה",
+      "historyTitle": "היסטוריית גרסאות",
+      "noHistory": "אין היסטוריה זמינה",
+      "restoreVersion": "שחזר לגרסה זו"
+    },
+    "templateFields": {
+      "docTitle": "כותרת מסמך",
+      "subject": "נושא",
+      "intro": "פסקת פתיחה",
+      "conditionsTitle": "כותרת תנאים",
+      "conditions": "רשימת תנאים",
+      "signatureLabel": "תווית חתימה",
+      "legalFooter": "פוטר משפטי"
+    },
     "saveSuccess": "ההגדרה עודכנה בהצלחה",
     "saveError": "שגיאה בשמירת ההגדרה",
     "save": "שמור"

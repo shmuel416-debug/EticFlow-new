@@ -62,7 +62,9 @@ export default function App() {
               <Route path="/submissions/:id/edit" element={<SubmitPage />} />
               <Route path="/submissions/:id"      element={<SubmissionStatusPage />} />
               <Route path="/submissions"     element={<SubmissionsListPage />} />
-              <Route path="/settings"        element={<SettingsPage />} />
+              <Route element={<ProtectedRoute roles={['SECRETARY', 'ADMIN']} />}>
+                <Route path="/settings"      element={<SettingsPage />} />
+              </Route>
               <Route path="/notifications"   element={<NotificationsPage />} />
 
               {/* Meetings — SECRETARY, CHAIRMAN, ADMIN */}

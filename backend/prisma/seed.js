@@ -13,6 +13,7 @@
 
 import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcryptjs'
+import { getDefaultApprovalTemplate } from '../src/constants/approvalTemplate.js'
 
 const prisma = new PrismaClient()
 
@@ -91,6 +92,26 @@ async function seedInstitutionSettings() {
     { key: 'sla_review_days',     value: '14',                valueType: 'number' },
     { key: 'sla_revision_days',   value: '30',                valueType: 'number' },
     { key: 'sla_approval_days',   value: '5',                 valueType: 'number' },
+    {
+      key: 'approval_template_he',
+      value: JSON.stringify(getDefaultApprovalTemplate('he')),
+      valueType: 'json',
+    },
+    {
+      key: 'approval_template_en',
+      value: JSON.stringify(getDefaultApprovalTemplate('en')),
+      valueType: 'json',
+    },
+    {
+      key: 'approval_template_history_he',
+      value: '[]',
+      valueType: 'json',
+    },
+    {
+      key: 'approval_template_history_en',
+      value: '[]',
+      valueType: 'json',
+    },
   ]
 
   await prisma.$transaction(

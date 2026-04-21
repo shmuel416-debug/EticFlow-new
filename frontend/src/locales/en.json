@@ -781,6 +781,33 @@
     "allowed_file_types": "Allowed File Types",
     "email_sender_name": "Email Sender Name",
     "email_sender_address": "Email Sender Address",
+    "approvalTemplate": "Approval Letter Template",
+    "template": {
+      "description": "You can edit the following template fields. Use built-in placeholders inside text.",
+      "placeholders": "Available placeholders:",
+      "he": "Hebrew",
+      "en": "English",
+      "resetDefault": "Reset to default",
+      "addCondition": "Add condition",
+      "previewTitle": "Live Preview",
+      "previewNote": "This preview uses sample data so you can quickly validate wording and structure.",
+      "previewSource": "Preview source",
+      "previewSample": "Sample data",
+      "previewReal": "Real submission",
+      "noApprovedSubmissions": "No approved submissions available",
+      "historyTitle": "Version history",
+      "noHistory": "No history available",
+      "restoreVersion": "Restore this version"
+    },
+    "templateFields": {
+      "docTitle": "Document title",
+      "subject": "Subject",
+      "intro": "Intro paragraph",
+      "conditionsTitle": "Conditions title",
+      "conditions": "Conditions list",
+      "signatureLabel": "Signature label",
+      "legalFooter": "Legal footer"
+    },
     "saveSuccess": "Setting updated successfully",
     "saveError": "Failed to save setting",
     "save": "Save"

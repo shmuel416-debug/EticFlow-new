@@ -12,9 +12,10 @@ import puppeteer    from 'puppeteer'
 import PDFDocument  from 'pdfkit'
 import path         from 'path'
 import fs           from 'fs/promises'
-import { createWriteStream } from 'fs'
+import { createWriteStream, existsSync, readFileSync } from 'fs'
 import { fileURLToPath }     from 'url'
 import prisma                from '../config/database.js'
+import { getDefaultApprovalTemplate, normalizeApprovalTemplate } from '../constants/approvalTemplate.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -24,6 +25,53 @@ const FONTS_DIR = path.join(__dirname, 'fonts')
 /** Output directories for generated PDFs. */
 const GENERATED_DIR          = path.resolve('uploads', 'generated', 'approval')
 const PROTOCOL_GENERATED_DIR = path.resolve('uploads', 'generated', 'protocols')
+const BRAND_PRIMARY          = '#1e3a5f'
+const BRAND_ACCENT           = '#93c5fd'
+const INSTITUTION_NAME_HE    = process.env.INSTITUTION_NAME_HE || 'המוסד האקדמי'
+const INSTITUTION_NAME_EN    = process.env.INSTITUTION_NAME_EN || 'Academic Institution'
+const PDF_LOGO_PATH          = process.env.PDF_LOGO_PATH ? path.resolve(process.env.PDF_LOGO_PATH) : null
+const INSTITUTION_LOGO_PATH  = process.env.INSTITUTION_LOGO ? path.resolve(process.env.INSTITUTION_LOGO) : null
+const PDF_LOGO_HTML_SRC      = resolvePdfLogoHtmlSrc()
+const INSTITUTION_LOGO_HTML_SRC = resolveImagePathToDataUri(INSTITUTION_LOGO_PATH)
+const PDF_LOGO_IMAGE_PATH    = PDF_LOGO_PATH && /\.(png|jpe?g|webp)$/i.test(PDF_LOGO_PATH) && existsSync(PDF_LOGO_PATH)
+  ? PDF_LOGO_PATH
+  : null
+const INSTITUTION_LOGO_IMAGE_PATH = INSTITUTION_LOGO_PATH && /\.(png|jpe?g|webp)$/i.test(INSTITUTION_LOGO_PATH) && existsSync(INSTITUTION_LOGO_PATH)
+  ? INSTITUTION_LOGO_PATH
+  : null
+
+/**
+ * Converts the configured logo path to a data URI for HTML templates.
+ * @returns {string}
+ */
+function resolvePdfLogoHtmlSrc() {
+  return resolveImagePathToDataUri(PDF_LOGO_PATH)
+}
+
+/**
+ * Converts an image path to a data URI for HTML templates.
+ * @param {string|null} imagePath
+ * @returns {string}
+ */
+function resolveImagePathToDataUri(imagePath) {
+  if (!imagePath || !existsSync(imagePath)) return ''
+  const ext = path.extname(imagePath).toLowerCase()
+  const mimeMap = {
+    '.png':  'image/png',
+    '.jpg':  'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.svg':  'image/svg+xml',
+    '.webp': 'image/webp',
+  }
+  const mime = mimeMap[ext]
+  if (!mime) return ''
+  try {
+    const file = readFileSync(imagePath)
+    return `data:${mime};base64,${file.toString('base64')}`
+  } catch {
+    return ''
+  }
+}
 
 // ─────────────────────────────────────────────
 // SHARED HELPERS
@@ -87,6 +135,36 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;')
 }
 
+/**
+ * Reads and normalizes approval template from settings store.
+ * @param {'he'|'en'} lang
+ * @returns {Promise<ReturnType<typeof getDefaultApprovalTemplate>>}
+ */
+async function getStoredApprovalTemplate(lang) {
+  const key = lang === 'en' ? 'approval_template_en' : 'approval_template_he'
+  const setting = await prisma.institutionSetting.findUnique({
+    where: { key },
+    select: { value: true },
+  })
+  if (!setting?.value) return getDefaultApprovalTemplate(lang)
+  try {
+    const parsed = JSON.parse(setting.value)
+    return normalizeApprovalTemplate(parsed, lang)
+  } catch {
+    return getDefaultApprovalTemplate(lang)
+  }
+}
+
+/**
+ * Replaces supported template placeholders with submission-specific values.
+ * @param {string} text
+ * @param {Record<string, string>} context
+ * @returns {string}
+ */
+function applyTemplateTokens(text, context) {
+  return String(text ?? '').replace(/\{\{([a-zA-Z0-9_]+)\}\}/g, (_match, tokenName) => context[tokenName] ?? '')
+}
+
 // ─────────────────────────────────────────────
 // HTML TEMPLATES
 // ─────────────────────────────────────────────
@@ -103,14 +181,51 @@ body {
 }
 .page { width: 210mm; min-height: 297mm; }
 .header {
-  background: #1e3a5f;
+  background: ${BRAND_PRIMARY};
   color: white;
   padding: 20px 40px;
-  text-align: center;
+}
+.brand-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+.logo-badge {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: #ffffff;
+  color: ${BRAND_PRIMARY};
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 15pt;
+  letter-spacing: 0.5px;
+}
+.logo-image {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+}
+.institution-logo {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
 }
 .header h1 { font-size: 20pt; font-weight: bold; letter-spacing: 1px; }
-.header .subtitle { font-size: 10pt; color: #93c5fd; margin-top: 4px; }
+.header .subtitle { font-size: 10pt; color: ${BRAND_ACCENT}; margin-top: 4px; }
 .header .doc-type { font-size: 8pt; color: #cbd5e1; margin-top: 2px; }
+.institution-line {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #e2e8f0;
+  font-size: 9pt;
+}
 .content { padding: 28px 40px; }
 .doc-title { text-align: center; margin-bottom: 14px; }
 .doc-title h2 { font-size: 16pt; font-weight: bold; color: #1e3a5f; }
@@ -171,14 +286,26 @@ hr.light  { border: none; border-top: 1px solid #e2e8f0; margin: 12px 0; }
  *  - LTR values (IDs, dates) wrapped in <bdi> to isolate from RTL context
  *  - No `flex-direction: row-reverse` — RTL flex already arranges right-to-left
  * @param {object} submission
+ * @param {ReturnType<typeof getDefaultApprovalTemplate>} template
+ * @param {Record<string, string>} templateContext
  * @returns {string}
  */
-function buildHeHtml(submission) {
+function buildHeHtml(submission, template, templateContext) {
   const today        = fmtDate(new Date())
   const approvedDate = fmtDate(submission.updatedAt)
   const expiryDate   = validUntil(submission.updatedAt, 'he')
   const track        = trackLabel(submission.track)
   const titleDisplay = submission.title.length > 80 ? submission.title.slice(0, 80) + '…' : submission.title
+  const docTitle     = escapeHtml(applyTemplateTokens(template.docTitle, templateContext))
+  const subject      = escapeHtml(applyTemplateTokens(template.subject, templateContext))
+  const intro        = escapeHtml(applyTemplateTokens(template.intro, templateContext))
+  const conditionsTitle = escapeHtml(applyTemplateTokens(template.conditionsTitle, templateContext))
+  const signatureLabel = escapeHtml(applyTemplateTokens(template.signatureLabel, templateContext))
+  const legalFooter  = escapeHtml(applyTemplateTokens(template.legalFooter, templateContext))
+  const conditionLines = template.conditions
+    .map((line) => escapeHtml(applyTemplateTokens(line, templateContext)))
+    .filter(Boolean)
+  const institution  = escapeHtml(INSTITUTION_NAME_HE)
 
   return `<!DOCTYPE html>
 <html dir="rtl" lang="he">
@@ -201,12 +328,23 @@ body {
 <body>
 <div class="page">
   <div class="header">
-    <h1>EthicFlow</h1>
+    <div class="brand-row">
+      ${PDF_LOGO_HTML_SRC
+        ? `<img src="${PDF_LOGO_HTML_SRC}" alt="EthicFlow logo" class="logo-image">`
+        : '<span class="logo-badge" aria-hidden="true">EF</span>'}
+      <h1>EthicFlow</h1>
+    </div>
     <div class="subtitle">מערכת ניהול ועדת אתיקה</div>
+    <div class="institution-line">
+      ${INSTITUTION_LOGO_HTML_SRC
+        ? `<img src="${INSTITUTION_LOGO_HTML_SRC}" alt="Institution logo" class="institution-logo">`
+        : ''}
+      <span>${institution}</span>
+    </div>
     <div class="doc-type">מכתב אישור ועדת אתיקה</div>
   </div>
   <div class="content">
-    <div class="doc-title"><h2>אישור ועדת אתיקה</h2></div>
+    <div class="doc-title"><h2>${docTitle}</h2></div>
     <div class="date-row">תאריך הנפקה: <bdi>${today}</bdi></div>
     <hr class="strong">
     <div class="addressee">
@@ -214,10 +352,9 @@ body {
       <div>${escapeHtml(submission.author.fullName)}</div>
       <div class="email"><bdi>${escapeHtml(submission.author.email)}</bdi></div>
     </div>
-    <div class="subject">הנדון: אישור ועדת אתיקה למחקר</div>
+    <div class="subject">${subject}</div>
     <div class="body-text">
-      ועדת האתיקה בדקה את בקשתך ושמחה לאשר את ביצוע המחקר המפורט להלן,
-      בכפוף לתנאים הנקובים בהחלטה.
+      ${intro}
     </div>
     <div class="details-box">
       <div class="details-row">
@@ -242,19 +379,17 @@ body {
       </div>
     </div>
     <hr class="light">
-    <div class="conditions-title">תנאי האישור:</div>
+    <div class="conditions-title">${conditionsTitle}</div>
     <ul class="conditions-list">
-      <li>המחקר יתנהל בהתאם לפרוטוקול שהוגש ואושר.</li>
-      <li>כל שינוי מהותי בפרוטוקול יוגש לאישור ועדה מחדש.</li>
-      <li>יש לקבל הסכמה מדעת של כל משתתף לפני תחילת המחקר.</li>
-      <li>הממצאים יועברו לוועדה בתום המחקר.</li>
+      ${conditionLines.map((line) => `<li>${line}</li>`).join('')}
     </ul>
     <div class="signature-section">
       <div class="sig-line"></div>
-      <div class="sig-label">יו"ר ועדת האתיקה</div>
+      <div class="sig-label">${signatureLabel}</div>
     </div>
     <div class="footer">
-      מסמך זה הופק אוטומטית על ידי מערכת EthicFlow &bull; <bdi>${today}</bdi> &bull; מס׳ בקשה: <bdi>${escapeHtml(submission.applicationId)}</bdi>
+      ${legalFooter}<br>
+      מסמך זה הופק אוטומטית על ידי מערכת EthicFlow &bull; ${institution} &bull; <bdi>${today}</bdi> &bull; מס׳ בקשה: <bdi>${escapeHtml(submission.applicationId)}</bdi>
     </div>
   </div>
 </div>
@@ -265,14 +400,26 @@ body {
 /**
  * Builds the English (LTR) approval letter HTML.
  * @param {object} submission
+ * @param {ReturnType<typeof getDefaultApprovalTemplate>} template
+ * @param {Record<string, string>} templateContext
  * @returns {string}
  */
-function buildEnHtml(submission) {
+function buildEnHtml(submission, template, templateContext) {
   const today        = fmtDateEn(new Date())
   const approvedDate = fmtDateEn(submission.updatedAt)
   const expiryDate   = validUntil(submission.updatedAt, 'en')
   const track        = trackLabel(submission.track)
   const titleDisplay = submission.title.length > 80 ? submission.title.slice(0, 80) + '…' : submission.title
+  const docTitle     = escapeHtml(applyTemplateTokens(template.docTitle, templateContext))
+  const subject      = escapeHtml(applyTemplateTokens(template.subject, templateContext))
+  const intro        = escapeHtml(applyTemplateTokens(template.intro, templateContext))
+  const conditionsTitle = escapeHtml(applyTemplateTokens(template.conditionsTitle, templateContext))
+  const signatureLabel = escapeHtml(applyTemplateTokens(template.signatureLabel, templateContext))
+  const legalFooter  = escapeHtml(applyTemplateTokens(template.legalFooter, templateContext))
+  const conditionLines = template.conditions
+    .map((line) => escapeHtml(applyTemplateTokens(line, templateContext)))
+    .filter(Boolean)
+  const institution  = escapeHtml(INSTITUTION_NAME_EN)
 
   return `<!DOCTYPE html>
 <html dir="ltr" lang="en">
@@ -289,12 +436,23 @@ body { font-family: Arial, Helvetica, sans-serif; direction: ltr; }
 <body>
 <div class="page">
   <div class="header">
-    <h1>EthicFlow</h1>
+    <div class="brand-row">
+      ${PDF_LOGO_HTML_SRC
+        ? `<img src="${PDF_LOGO_HTML_SRC}" alt="EthicFlow logo" class="logo-image">`
+        : '<span class="logo-badge" aria-hidden="true">EF</span>'}
+      <h1>EthicFlow</h1>
+    </div>
     <div class="subtitle">Ethics Committee Management System</div>
+    <div class="institution-line">
+      ${INSTITUTION_LOGO_HTML_SRC
+        ? `<img src="${INSTITUTION_LOGO_HTML_SRC}" alt="Institution logo" class="institution-logo">`
+        : ''}
+      <span>${institution}</span>
+    </div>
     <div class="doc-type">Ethics Committee Approval Letter</div>
   </div>
   <div class="content">
-    <div class="doc-title"><h2>Ethics Committee Approval</h2></div>
+    <div class="doc-title"><h2>${docTitle}</h2></div>
     <div class="date-row">Issue Date: ${today}</div>
     <hr class="strong">
     <div class="addressee">
@@ -302,10 +460,9 @@ body { font-family: Arial, Helvetica, sans-serif; direction: ltr; }
       <div>${escapeHtml(submission.author.fullName)}</div>
       <div class="email">${escapeHtml(submission.author.email)}</div>
     </div>
-    <div class="subject">Re: Ethics Committee Research Approval</div>
+    <div class="subject">${subject}</div>
     <div class="body-text">
-      The Ethics Committee has reviewed your application and is pleased to approve
-      the conduct of the research described below, subject to the conditions stated in this decision.
+      ${intro}
     </div>
     <div class="details-box">
       <div class="details-row">
@@ -330,19 +487,17 @@ body { font-family: Arial, Helvetica, sans-serif; direction: ltr; }
       </div>
     </div>
     <hr class="light">
-    <div class="conditions-title">Approval Conditions:</div>
+    <div class="conditions-title">${conditionsTitle}</div>
     <ul class="conditions-list">
-      <li>The research shall be conducted in accordance with the approved protocol.</li>
-      <li>Any substantive protocol amendments require re-submission for committee approval.</li>
-      <li>Informed consent must be obtained from each participant prior to commencement.</li>
-      <li>Research findings shall be submitted to the committee upon completion.</li>
+      ${conditionLines.map((line) => `<li>${line}</li>`).join('')}
     </ul>
     <div class="signature-section">
       <div class="sig-line"></div>
-      <div class="sig-label">Chairperson, Ethics Committee</div>
+      <div class="sig-label">${signatureLabel}</div>
     </div>
     <div class="footer">
-      Auto-generated by EthicFlow &bull; ${today} &bull; Ref: ${escapeHtml(submission.applicationId)}
+      ${legalFooter}<br>
+      Auto-generated by EthicFlow &bull; ${institution} &bull; ${today} &bull; Ref: ${escapeHtml(submission.applicationId)}
     </div>
   </div>
 </div>
@@ -392,9 +547,11 @@ async function renderHtmlToPdf(html, outputPath) {
  * @param {object} submission
  * @param {'he'|'en'} lang
  * @param {string} outputPath
+ * @param {ReturnType<typeof getDefaultApprovalTemplate>} template
+ * @param {Record<string, string>} templateContext
  * @returns {Promise<void>}
  */
-async function renderApprovalFallbackPdf(submission, lang, outputPath) {
+async function renderApprovalFallbackPdf(submission, lang, outputPath, template, templateContext) {
   const safeLang  = lang === 'en' ? 'en' : 'he'
   const doc       = new PDFDocument({ size: 'A4', margins: { top: 56, bottom: 56, left: 56, right: 56 } })
   const track     = trackLabel(submission.track)
@@ -404,6 +561,16 @@ async function renderApprovalFallbackPdf(submission, lang, outputPath) {
   const approvedEn = fmtDateEn(submission.updatedAt)
   const validHe    = validUntil(submission.updatedAt, 'he')
   const validEn    = validUntil(submission.updatedAt, 'en')
+  const institution = safeLang === 'he' ? INSTITUTION_NAME_HE : INSTITUTION_NAME_EN
+  const docTitle = applyTemplateTokens(template.docTitle, templateContext)
+  const subject = applyTemplateTokens(template.subject, templateContext)
+  const intro = applyTemplateTokens(template.intro, templateContext)
+  const conditionsTitle = applyTemplateTokens(template.conditionsTitle, templateContext)
+  const legalFooter = applyTemplateTokens(template.legalFooter, templateContext)
+  const signatureLabel = applyTemplateTokens(template.signatureLabel, templateContext)
+  const conditionLines = template.conditions
+    .map((line) => applyTemplateTokens(line, templateContext))
+    .filter(Boolean)
 
   let hasArial = false
   try {
@@ -418,43 +585,124 @@ async function renderApprovalFallbackPdf(submission, lang, outputPath) {
 
   const baseFont = safeLang === 'he' && hasArial ? 'Arial' : 'Helvetica'
   const boldFont = safeLang === 'he' && hasArial ? 'Arial-Bold' : 'Helvetica-Bold'
+  const textAlign = safeLang === 'he' ? 'right' : 'left'
+  const leftX = doc.page.margins.left
+  const rightX = doc.page.width - doc.page.margins.right
 
-  doc.font(boldFont).fontSize(18).fillColor('#1e3a5f')
-  if (safeLang === 'he') {
-    doc.text('אישור ועדת אתיקה', { align: 'right' })
-    doc.moveDown(0.5)
-    doc.font(baseFont).fontSize(10).fillColor('#475569')
-    doc.text(`תאריך הנפקה: ${todayHe}`, { align: 'right' })
-    doc.moveDown(1)
-    doc.font(boldFont).fontSize(12).fillColor('#0f172a')
-    doc.text(`מספר בקשה: ${submission.applicationId}`, { align: 'right' })
-    doc.text(`כותרת מחקר: ${submission.title}`, { align: 'right' })
-    doc.text(`סוג מסלול: ${track.he}`, { align: 'right' })
-    doc.text(`תאריך אישור: ${approvedHe}`, { align: 'right' })
-    doc.text(`תוקף עד: ${validHe}`, { align: 'right' })
-    doc.moveDown(1)
-    doc.font(baseFont).fontSize(10).fillColor('#334155')
-    doc.text(`חוקר/ת: ${submission.author.fullName} (${submission.author.email})`, { align: 'right' })
-    doc.moveDown(1)
-    doc.text('מסמך זה הופק אוטומטית על ידי EthicFlow (Fallback PDF Renderer).', { align: 'right' })
-  } else {
-    doc.text('Ethics Committee Approval Letter', { align: 'left' })
-    doc.moveDown(0.5)
-    doc.font(baseFont).fontSize(10).fillColor('#475569')
-    doc.text(`Issue Date: ${todayEn}`, { align: 'left' })
-    doc.moveDown(1)
-    doc.font(boldFont).fontSize(12).fillColor('#0f172a')
-    doc.text(`Application ID: ${submission.applicationId}`, { align: 'left' })
-    doc.text(`Research Title: ${submission.title}`, { align: 'left' })
-    doc.text(`Track: ${track.en}`, { align: 'left' })
-    doc.text(`Approved At: ${approvedEn}`, { align: 'left' })
-    doc.text(`Valid Until: ${validEn}`, { align: 'left' })
-    doc.moveDown(1)
-    doc.font(baseFont).fontSize(10).fillColor('#334155')
-    doc.text(`Researcher: ${submission.author.fullName} (${submission.author.email})`, { align: 'left' })
-    doc.moveDown(1)
-    doc.text('This document was generated automatically by EthicFlow (Fallback PDF Renderer).', { align: 'left' })
+  doc.save()
+  doc.rect(0, 0, doc.page.width, 104).fill(BRAND_PRIMARY)
+  doc.restore()
+  let drewImageLogo = false
+  if (PDF_LOGO_IMAGE_PATH) {
+    try {
+      doc.image(PDF_LOGO_IMAGE_PATH, leftX, 24, { fit: [38, 38], align: 'center', valign: 'center' })
+      drewImageLogo = true
+    } catch {
+      drewImageLogo = false
+    }
   }
+  if (!drewImageLogo) {
+    doc.roundedRect(leftX, 24, 38, 38, 10).fill('#ffffff')
+    doc.font(boldFont).fontSize(14).fillColor(BRAND_PRIMARY).text('EF', leftX + 9, 35, { width: 20, align: 'center' })
+  }
+  if (INSTITUTION_LOGO_IMAGE_PATH) {
+    try {
+      doc.image(INSTITUTION_LOGO_IMAGE_PATH, rightX - 34, 28, { fit: [26, 26], align: 'center', valign: 'center' })
+    } catch {
+      // Keep PDF generation resilient if institution logo is invalid.
+    }
+  }
+  doc.font(boldFont).fontSize(22).fillColor('#ffffff').text('EthicFlow', leftX + 48, 28, { width: 260, align: 'left' })
+  doc.font(baseFont).fontSize(10).fillColor(BRAND_ACCENT).text(
+    safeLang === 'he' ? 'מערכת ניהול ועדת אתיקה' : 'Ethics Committee Management System',
+    leftX + 48,
+    56,
+    { width: 360, align: 'left' }
+  )
+  doc.font(baseFont).fontSize(9).fillColor('#cbd5e1').text(
+    safeLang === 'he' ? `הופק: ${todayHe}` : `Generated: ${todayEn}`,
+    rightX - 180,
+    30,
+    { width: 180, align: 'right' }
+  )
+  doc.font(baseFont).fontSize(9.2).fillColor('#e2e8f0').text(institution, leftX + 48, 70, { width: 330, align: 'left' })
+
+  doc.y = 132
+  doc.font(boldFont).fontSize(17).fillColor(BRAND_PRIMARY).text(
+    docTitle,
+    leftX,
+    doc.y,
+    { width: rightX - leftX, align: textAlign }
+  )
+  doc.moveDown(0.45)
+  doc.font(baseFont).fontSize(10).fillColor('#475569').text(
+    safeLang === 'he' ? `תאריך הנפקה: ${todayHe}` : `Issue Date: ${todayEn}`,
+    { align: textAlign }
+  )
+  doc.moveDown(0.8)
+
+  const boxY = doc.y
+  doc.roundedRect(leftX, boxY, rightX - leftX, 116, 8).fillAndStroke('#f8fafc', '#cbd5e1')
+  doc.y = boxY + 10
+  doc.font(boldFont).fontSize(11).fillColor('#0f172a')
+  if (safeLang === 'he') {
+    doc.text(`מספר בקשה: ${submission.applicationId}`, { align: textAlign })
+    doc.text(`כותרת מחקר: ${submission.title}`, { align: textAlign })
+    doc.text(`סוג מסלול: ${track.he}`, { align: textAlign })
+    doc.text(`תאריך אישור: ${approvedHe}`, { align: textAlign })
+    doc.text(`תוקף עד: ${validHe}`, { align: textAlign })
+  } else {
+    doc.text(`Application ID: ${submission.applicationId}`, { align: textAlign })
+    doc.text(`Research Title: ${submission.title}`, { align: textAlign })
+    doc.text(`Track: ${track.en}`, { align: textAlign })
+    doc.text(`Approved At: ${approvedEn}`, { align: textAlign })
+    doc.text(`Valid Until: ${validEn}`, { align: textAlign })
+  }
+
+  doc.y = boxY + 132
+  doc.font(baseFont).fontSize(10.2).fillColor('#334155').text(
+    subject,
+    { align: textAlign }
+  )
+  doc.moveDown(0.4)
+  doc.text(
+    intro,
+    { align: textAlign }
+  )
+  doc.moveDown(0.6)
+  doc.font(boldFont).fontSize(10.6).fillColor(BRAND_PRIMARY).text(
+    conditionsTitle,
+    { align: textAlign }
+  )
+  doc.moveDown(0.25)
+  doc.font(baseFont).fontSize(9.9).fillColor('#334155')
+  for (const line of conditionLines) {
+    doc.text(safeLang === 'he' ? `• ${line}` : `• ${line}`, { align: textAlign })
+  }
+  doc.moveDown(0.6)
+  doc.text(
+    safeLang === 'he'
+      ? `חוקר/ת: ${submission.author.fullName} (${submission.author.email})`
+      : `Researcher: ${submission.author.fullName} (${submission.author.email})`,
+    { align: textAlign }
+  )
+  doc.moveDown(0.5)
+  doc.text(
+    safeLang === 'he'
+      ? 'המסמך הופק אוטומטית על ידי מערכת EthicFlow.'
+      : 'This document was generated automatically by EthicFlow.',
+    { align: textAlign }
+  )
+  doc.moveDown(0.4)
+  doc.fontSize(9.1).fillColor('#64748b').text(legalFooter, { align: textAlign })
+  doc.moveDown(2.2)
+
+  doc.strokeColor('#94a3b8').lineWidth(1).moveTo(leftX + 110, doc.y).lineTo(rightX - 110, doc.y).stroke()
+  doc.moveDown(0.4)
+  doc.font(boldFont).fontSize(10).fillColor('#1e293b').text(
+    signatureLabel,
+    { align: 'center' }
+  )
 
   await streamToFile(doc, outputPath)
 }
@@ -493,14 +741,29 @@ export async function generateApprovalLetter(submissionId, lang = 'he') {
   const absPath     = path.join(dir, filename)
   const storagePath = path.join('generated', 'approval', submissionId, filename)
 
-  const html = safeLang === 'he' ? buildHeHtml(submission) : buildEnHtml(submission)
+  const track = trackLabel(submission.track)
+  const template = await getStoredApprovalTemplate(safeLang)
+  const templateContext = {
+    applicationId: String(submission.applicationId ?? ''),
+    researchTitle: String(submission.title ?? ''),
+    trackLabel: safeLang === 'he' ? String(track.he) : String(track.en),
+    issueDate: safeLang === 'he' ? fmtDate(new Date()) : fmtDateEn(new Date()),
+    approvedDate: safeLang === 'he' ? fmtDate(submission.updatedAt) : fmtDateEn(submission.updatedAt),
+    validUntil: validUntil(submission.updatedAt, safeLang),
+    researcherName: String(submission.author?.fullName ?? ''),
+    researcherEmail: String(submission.author?.email ?? ''),
+    institutionName: safeLang === 'he' ? INSTITUTION_NAME_HE : INSTITUTION_NAME_EN,
+  }
+  const html = safeLang === 'he'
+    ? buildHeHtml(submission, template, templateContext)
+    : buildEnHtml(submission, template, templateContext)
   try {
     await renderHtmlToPdf(html, absPath)
   } catch (err) {
     console.warn(
       `[PDF] Puppeteer render failed for approval letter (${safeLang}), using fallback renderer: ${err?.message ?? err}`
     )
-    await renderApprovalFallbackPdf(submission, safeLang, absPath)
+    await renderApprovalFallbackPdf(submission, safeLang, absPath, template, templateContext)
   }
 
   const stat     = await fs.stat(absPath)

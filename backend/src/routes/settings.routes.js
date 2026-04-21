@@ -1,8 +1,8 @@
 /**
  * EthicFlow — Settings Routes
  *
- * GET /api/settings       — list all institution settings (ADMIN)
- * PUT /api/settings/:key  — update a setting value (ADMIN)
+ * GET /api/settings       — list institution settings (ADMIN + SECRETARY [template keys only])
+ * PUT /api/settings/:key  — update a setting value (ADMIN + SECRETARY [template keys only])
  */
 
 import { Router } from 'express'
@@ -20,7 +20,7 @@ const router = Router()
 // ─────────────────────────────────────────────
 
 const updateSchema = z.object({
-  value: z.string().min(1).max(2000),
+  value: z.unknown(),
 })
 
 // ─────────────────────────────────────────────
@@ -30,14 +30,14 @@ const updateSchema = z.object({
 router.get(
   '/',
   authenticate,
-  authorize('ADMIN'),
+  authorize('ADMIN', 'SECRETARY'),
   controller.list
 )
 
 router.put(
   '/:key',
   authenticate,
-  authorize('ADMIN'),
+  authorize('ADMIN', 'SECRETARY'),
   validate(updateSchema),
   controller.update,
   auditLog('settings.updated', 'InstitutionSetting')
