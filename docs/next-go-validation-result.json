@@ -1,0 +1,440 @@
+{
+  "metadata": {
+    "startedAt": "2026-04-21T09:17:31.965Z",
+    "baseUrl": "https://frontend-eticflow-dev.up.railway.app",
+    "endedAt": "2026-04-21T09:18:08.679Z",
+    "elapsedMs": 36714
+  },
+  "todo1_manual_ui_remaining": {
+    "status": "completed",
+    "results": {
+      "login": {
+        "RESEARCHER": {
+          "status": "PASS",
+          "msg": "login_and_me_ok"
+        },
+        "SECRETARY": {
+          "status": "PASS",
+          "msg": "login_and_me_ok"
+        },
+        "REVIEWER": {
+          "status": "PASS",
+          "msg": "login_and_me_ok"
+        },
+        "CHAIRMAN": {
+          "status": "PASS",
+          "msg": "login_and_me_ok"
+        },
+        "ADMIN": {
+          "status": "PASS",
+          "msg": "login_and_me_ok"
+        }
+      },
+      "researcher": {
+        "activeForm": {
+          "status": "PASS",
+          "msg": "PASS"
+        },
+        "createSubmission": {
+          "status": "PASS",
+          "msg": "PASS"
+        },
+        "uploadDocument": {
+          "status": "PASS",
+          "msg": "PASS"
+        },
+        "listDocuments": {
+          "status": "PASS",
+          "msg": "PASS"
+        },
+        "downloadDocument": {
+          "status": "PASS",
+          "msg": "PASS"
+        },
+        "submit": {
+          "status": "PASS",
+          "msg": "PASS"
+        },
+        "statusTimelineView": {
+          "status": "PASS",
+          "msg": "PASS"
+        }
+      },
+      "secretary": {
+        "moveToTriage": {
+          "status": "PASS",
+          "msg": "PASS"
+        },
+        "reviewerList": {
+          "status": "PASS",
+          "msg": "PASS"
+        },
+        "assignReviewer": {
+          "status": "PASS",
+          "msg": "PASS"
+        },
+        "createMeeting": {
+          "status": "PASS",
+          "msg": "PASS"
+        },
+        "addAgenda": {
+          "status": "PASS",
+          "msg": "PASS"
+        },
+        "addAttendee": {
+          "status": "PASS",
+          "msg": "PASS"
+        },
+        "meetingDetail": {
+          "status": "PASS",
+          "msg": "PASS"
+        }
+      },
+      "reviewer": {
+        "openAssignment": {
+          "status": "PASS",
+          "msg": "PASS"
+        },
+        "aiPanelBehavior": {
+          "status": "PASS",
+          "msg": "PASS"
+        },
+        "submitReview": {
+          "status": "PASS",
+          "msg": "PASS"
+        }
+      },
+      "chairman": {
+        "recordDecision": {
+          "status": "PASS",
+          "msg": "PASS"
+        },
+        "approvalPdfHe": {
+          "status": "FAIL",
+          "msg": "approval_pdf_he_failed",
+          "details": {
+            "status": 500,
+            "body": {
+              "error": "Internal server error",
+              "code": "INTERNAL_ERROR"
+            },
+            "headers": {
+              "access-control-allow-credentials": "true",
+              "connection": "keep-alive",
+              "content-length": "57",
+              "content-security-policy": "default-src 'self';base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';img-src 'self' data:;object-src 'none';script-src 'self';script-src-attr 'none';style-src 'self' https: 'unsafe-inline';upgrade-insecure-requests",
+              "content-type": "application/json; charset=utf-8",
+              "cross-origin-opener-policy": "same-origin",
+              "cross-origin-resource-policy": "same-origin",
+              "date": "Tue, 21 Apr 2026 09:17:44 GMT",
+              "etag": "W/\"39-0RDrEnatSg7USsAknkO2/u4Jpus\"",
+              "origin-agent-cluster": "?1",
+              "ratelimit-limit": "100",
+              "ratelimit-policy": "100;w=60",
+              "ratelimit-remaining": "95",
+              "ratelimit-reset": "51",
+              "referrer-policy": "no-referrer",
+              "server": "railway-edge",
+              "strict-transport-security": "max-age=15552000; includeSubDomains",
+              "vary": "Origin",
+              "x-cache": "MISS, MISS",
+              "x-cache-hits": "0, 0",
+              "x-content-type-options": "nosniff",
+              "x-dns-prefetch-control": "off",
+              "x-download-options": "noopen",
+              "x-frame-options": "SAMEORIGIN",
+              "x-permitted-cross-domain-policies": "none",
+              "x-railway-cdn-edge": "fastly/cache-sjc1000125-SJC, cache-fra-eddf8230080-FRA",
+              "x-railway-edge": "railway/europe-west4-drams3a, railway/us-west2",
+              "x-railway-request-id": "ML2YxBr0QoSUGMdEjUJq2g, b_mrbjqPR96MEvYlnpoFkQ",
+              "x-served-by": "cache-fra-eddf8230080-FRA",
+              "x-xss-protection": "0"
+            }
+          }
+        },
+        "approvalPdfEn": {
+          "status": "FAIL",
+          "msg": "approval_pdf_en_failed",
+          "details": {
+            "status": 500,
+            "body": {
+              "error": "Internal server error",
+              "code": "INTERNAL_ERROR"
+            },
+            "headers": {
+              "access-control-allow-credentials": "true",
+              "connection": "keep-alive",
+              "content-length": "57",
+              "content-security-policy": "default-src 'self';base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';img-src 'self' data:;object-src 'none';script-src 'self';script-src-attr 'none';style-src 'self' https: 'unsafe-inline';upgrade-insecure-requests",
+              "content-type": "application/json; charset=utf-8",
+              "cross-origin-opener-policy": "same-origin",
+              "cross-origin-resource-policy": "same-origin",
+              "date": "Tue, 21 Apr 2026 09:17:45 GMT",
+              "etag": "W/\"39-0RDrEnatSg7USsAknkO2/u4Jpus\"",
+              "origin-agent-cluster": "?1",
+              "ratelimit-limit": "100",
+              "ratelimit-policy": "100;w=60",
+              "ratelimit-remaining": "96",
+              "ratelimit-reset": "51",
+              "referrer-policy": "no-referrer",
+              "server": "railway-edge",
+              "strict-transport-security": "max-age=15552000; includeSubDomains",
+              "vary": "Origin",
+              "x-cache": "MISS, MISS",
+              "x-cache-hits": "0, 0",
+              "x-content-type-options": "nosniff",
+              "x-dns-prefetch-control": "off",
+              "x-download-options": "noopen",
+              "x-frame-options": "SAMEORIGIN",
+              "x-permitted-cross-domain-policies": "none",
+              "x-railway-cdn-edge": "fastly/cache-sjc1000092-SJC, cache-fra-etou8220197-FRA",
+              "x-railway-edge": "railway/europe-west4-drams3a, railway/us-west2",
+              "x-railway-request-id": "YNLO6FAiS9SShsH3vEOTxA, 1IoazFsjTNemH8WNn6XIxQ",
+              "x-served-by": "cache-fra-etou8220197-FRA",
+              "x-xss-protection": "0"
+            }
+          }
+        }
+      },
+      "admin": {
+        "usersList": {
+          "status": "PASS",
+          "msg": "PASS"
+        },
+        "impersonation": {
+          "status": "PASS",
+          "msg": "PASS"
+        },
+        "settingsSave": {
+          "status": "PASS",
+          "msg": "PASS"
+        },
+        "settingsReload": {
+          "status": "PASS",
+          "msg": "PASS"
+        },
+        "xlsxExport": {
+          "status": "PASS",
+          "msg": "PASS"
+        }
+      },
+      "responsive_i18n": {
+        "responsive": {
+          "login_375": {
+            "status": "PASS",
+            "msg": "PASS"
+          },
+          "login_768": {
+            "status": "PASS",
+            "msg": "PASS"
+          },
+          "login_1280": {
+            "status": "PASS",
+            "msg": "PASS"
+          }
+        },
+        "routes": {
+          "dashboard": {
+            "status": "PASS",
+            "msg": "PASS"
+          },
+          "reports": {
+            "status": "PASS",
+            "msg": "PASS"
+          },
+          "users": {
+            "status": "PASS",
+            "msg": "PASS"
+          },
+          "meetings": {
+            "status": "PASS",
+            "msg": "PASS"
+          }
+        },
+        "i18n": {
+          "heDir": {
+            "status": "PASS",
+            "msg": "PASS"
+          },
+          "enDir": {
+            "status": "PASS",
+            "msg": "PASS"
+          }
+        },
+        "console": {
+          "status": {
+            "status": "PASS",
+            "msg": "PASS"
+          }
+        }
+      },
+      "ids": {
+        "submissionId": "2d24abaa-dc3c-469f-94ad-22404ff6c8f0",
+        "documentId": "98d91110-556b-4178-bf26-ef0af0184198",
+        "reviewerId": "45352abe-0ad9-42c0-a28d-4325e45a26b6",
+        "meetingId": "09cdbfab-3cde-498b-9f9d-6dc665f22174"
+      },
+      "cleanupMeeting": {
+        "status": "PASS",
+        "msg": "PASS"
+      }
+    }
+  },
+  "todo2_triage": {
+    "status": "completed",
+    "findings": [
+      {
+        "key": "chairman.approvalPdfHe",
+        "severity": "High",
+        "details": {
+          "status": "FAIL",
+          "msg": "approval_pdf_he_failed",
+          "details": {
+            "status": 500,
+            "body": {
+              "error": "Internal server error",
+              "code": "INTERNAL_ERROR"
+            },
+            "headers": {
+              "access-control-allow-credentials": "true",
+              "connection": "keep-alive",
+              "content-length": "57",
+              "content-security-policy": "default-src 'self';base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';img-src 'self' data:;object-src 'none';script-src 'self';script-src-attr 'none';style-src 'self' https: 'unsafe-inline';upgrade-insecure-requests",
+              "content-type": "application/json; charset=utf-8",
+              "cross-origin-opener-policy": "same-origin",
+              "cross-origin-resource-policy": "same-origin",
+              "date": "Tue, 21 Apr 2026 09:17:44 GMT",
+              "etag": "W/\"39-0RDrEnatSg7USsAknkO2/u4Jpus\"",
+              "origin-agent-cluster": "?1",
+              "ratelimit-limit": "100",
+              "ratelimit-policy": "100;w=60",
+              "ratelimit-remaining": "95",
+              "ratelimit-reset": "51",
+              "referrer-policy": "no-referrer",
+              "server": "railway-edge",
+              "strict-transport-security": "max-age=15552000; includeSubDomains",
+              "vary": "Origin",
+              "x-cache": "MISS, MISS",
+              "x-cache-hits": "0, 0",
+              "x-content-type-options": "nosniff",
+              "x-dns-prefetch-control": "off",
+              "x-download-options": "noopen",
+              "x-frame-options": "SAMEORIGIN",
+              "x-permitted-cross-domain-policies": "none",
+              "x-railway-cdn-edge": "fastly/cache-sjc1000125-SJC, cache-fra-eddf8230080-FRA",
+              "x-railway-edge": "railway/europe-west4-drams3a, railway/us-west2",
+              "x-railway-request-id": "ML2YxBr0QoSUGMdEjUJq2g, b_mrbjqPR96MEvYlnpoFkQ",
+              "x-served-by": "cache-fra-eddf8230080-FRA",
+              "x-xss-protection": "0"
+            }
+          }
+        }
+      },
+      {
+        "key": "chairman.approvalPdfEn",
+        "severity": "High",
+        "details": {
+          "status": "FAIL",
+          "msg": "approval_pdf_en_failed",
+          "details": {
+            "status": 500,
+            "body": {
+              "error": "Internal server error",
+              "code": "INTERNAL_ERROR"
+            },
+            "headers": {
+              "access-control-allow-credentials": "true",
+              "connection": "keep-alive",
+              "content-length": "57",
+              "content-security-policy": "default-src 'self';base-uri 'self';font-src 'self' https: data:;form-action 'self';frame-ancestors 'self';img-src 'self' data:;object-src 'none';script-src 'self';script-src-attr 'none';style-src 'self' https: 'unsafe-inline';upgrade-insecure-requests",
+              "content-type": "application/json; charset=utf-8",
+              "cross-origin-opener-policy": "same-origin",
+              "cross-origin-resource-policy": "same-origin",
+              "date": "Tue, 21 Apr 2026 09:17:45 GMT",
+              "etag": "W/\"39-0RDrEnatSg7USsAknkO2/u4Jpus\"",
+              "origin-agent-cluster": "?1",
+              "ratelimit-limit": "100",
+              "ratelimit-policy": "100;w=60",
+              "ratelimit-remaining": "96",
+              "ratelimit-reset": "51",
+              "referrer-policy": "no-referrer",
+              "server": "railway-edge",
+              "strict-transport-security": "max-age=15552000; includeSubDomains",
+              "vary": "Origin",
+              "x-cache": "MISS, MISS",
+              "x-cache-hits": "0, 0",
+              "x-content-type-options": "nosniff",
+              "x-dns-prefetch-control": "off",
+              "x-download-options": "noopen",
+              "x-frame-options": "SAMEORIGIN",
+              "x-permitted-cross-domain-policies": "none",
+              "x-railway-cdn-edge": "fastly/cache-sjc1000092-SJC, cache-fra-etou8220197-FRA",
+              "x-railway-edge": "railway/europe-west4-drams3a, railway/us-west2",
+              "x-railway-request-id": "YNLO6FAiS9SShsH3vEOTxA, 1IoazFsjTNemH8WNn6XIxQ",
+              "x-served-by": "cache-fra-etou8220197-FRA",
+              "x-xss-protection": "0"
+            }
+          }
+        }
+      }
+    ],
+    "summary": {
+      "critical": 0,
+      "high": 2,
+      "medium": 0,
+      "low": 0
+    },
+    "owner": "Backend+Frontend Team",
+    "eta": "Same day hotfix + retest"
+  },
+  "todo3_revalidation": {
+    "status": "completed",
+    "results": {
+      "logins": {
+        "RESEARCHER": {
+          "status": "PASS",
+          "msg": "PASS"
+        },
+        "SECRETARY": {
+          "status": "PASS",
+          "msg": "PASS"
+        },
+        "REVIEWER": {
+          "status": "PASS",
+          "msg": "PASS"
+        },
+        "CHAIRMAN": {
+          "status": "PASS",
+          "msg": "PASS"
+        },
+        "ADMIN": {
+          "status": "PASS",
+          "msg": "PASS"
+        }
+      },
+      "rbac": {
+        "researcherReportsBlocked": {
+          "status": "PASS",
+          "msg": "PASS"
+        },
+        "reviewerSecretaryBlocked": {
+          "status": "PASS",
+          "msg": "PASS"
+        },
+        "chairmanAdminBlocked": {
+          "status": "PASS",
+          "msg": "PASS"
+        }
+      }
+    }
+  },
+  "todo4_signoff": {
+    "status": "completed",
+    "decision": "CONDITIONAL_GO",
+    "criteria": {
+      "criticalOpen": 0,
+      "highOpen": 2,
+      "coreFlowsValidated": true
+    }
+  }
+}

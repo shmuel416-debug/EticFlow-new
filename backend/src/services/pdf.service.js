@@ -184,12 +184,10 @@ function buildHeHtml(submission) {
 <html dir="rtl" lang="he">
 <head>
 <meta charset="utf-8">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
 ${BASE_CSS}
 body {
-  font-family: 'Heebo', 'Noto Sans Hebrew', Arial, sans-serif;
+  font-family: 'Arial', 'Noto Sans Hebrew', sans-serif;
   direction: rtl;
 }
 /* Details rows: in RTL flex, first child is on the RIGHT (label), second on LEFT (value) */
@@ -365,7 +363,8 @@ body { font-family: Arial, Helvetica, sans-serif; direction: ltr; }
  */
 async function renderHtmlToPdf(html, outputPath) {
   const browser = await puppeteer.launch({
-    headless: true,
+    headless: 'new',
+    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',
@@ -385,6 +384,77 @@ async function renderHtmlToPdf(html, outputPath) {
   } finally {
     await browser.close()
   }
+}
+
+/**
+ * Fallback renderer for approval letters when Puppeteer is unavailable.
+ * Uses PDFKit directly to avoid runtime Chromium dependencies.
+ * @param {object} submission
+ * @param {'he'|'en'} lang
+ * @param {string} outputPath
+ * @returns {Promise<void>}
+ */
+async function renderApprovalFallbackPdf(submission, lang, outputPath) {
+  const safeLang  = lang === 'en' ? 'en' : 'he'
+  const doc       = new PDFDocument({ size: 'A4', margins: { top: 56, bottom: 56, left: 56, right: 56 } })
+  const track     = trackLabel(submission.track)
+  const todayHe   = fmtDate(new Date())
+  const todayEn   = fmtDateEn(new Date())
+  const approvedHe = fmtDate(submission.updatedAt)
+  const approvedEn = fmtDateEn(submission.updatedAt)
+  const validHe    = validUntil(submission.updatedAt, 'he')
+  const validEn    = validUntil(submission.updatedAt, 'en')
+
+  try {
+    const arialRegular = path.join(FONTS_DIR, 'Arial.ttf')
+    const arialBold    = path.join(FONTS_DIR, 'Arial-Bold.ttf')
+    doc.registerFont('Arial', arialRegular)
+    doc.registerFont('Arial-Bold', arialBold)
+  } catch {
+    // Continue with built-in fonts if custom fonts are unavailable.
+  }
+
+  const baseFont = safeLang === 'he' ? 'Arial' : 'Helvetica'
+  const boldFont = safeLang === 'he' ? 'Arial-Bold' : 'Helvetica-Bold'
+
+  doc.font(boldFont).fontSize(18).fillColor('#1e3a5f')
+  if (safeLang === 'he') {
+    doc.text('אישור ועדת אתיקה', { align: 'right' })
+    doc.moveDown(0.5)
+    doc.font(baseFont).fontSize(10).fillColor('#475569')
+    doc.text(`תאריך הנפקה: ${todayHe}`, { align: 'right' })
+    doc.moveDown(1)
+    doc.font(boldFont).fontSize(12).fillColor('#0f172a')
+    doc.text(`מספר בקשה: ${submission.applicationId}`, { align: 'right' })
+    doc.text(`כותרת מחקר: ${submission.title}`, { align: 'right' })
+    doc.text(`סוג מסלול: ${track.he}`, { align: 'right' })
+    doc.text(`תאריך אישור: ${approvedHe}`, { align: 'right' })
+    doc.text(`תוקף עד: ${validHe}`, { align: 'right' })
+    doc.moveDown(1)
+    doc.font(baseFont).fontSize(10).fillColor('#334155')
+    doc.text(`חוקר/ת: ${submission.author.fullName} (${submission.author.email})`, { align: 'right' })
+    doc.moveDown(1)
+    doc.text('מסמך זה הופק אוטומטית על ידי EthicFlow (Fallback PDF Renderer).', { align: 'right' })
+  } else {
+    doc.text('Ethics Committee Approval Letter', { align: 'left' })
+    doc.moveDown(0.5)
+    doc.font(baseFont).fontSize(10).fillColor('#475569')
+    doc.text(`Issue Date: ${todayEn}`, { align: 'left' })
+    doc.moveDown(1)
+    doc.font(boldFont).fontSize(12).fillColor('#0f172a')
+    doc.text(`Application ID: ${submission.applicationId}`, { align: 'left' })
+    doc.text(`Research Title: ${submission.title}`, { align: 'left' })
+    doc.text(`Track: ${track.en}`, { align: 'left' })
+    doc.text(`Approved At: ${approvedEn}`, { align: 'left' })
+    doc.text(`Valid Until: ${validEn}`, { align: 'left' })
+    doc.moveDown(1)
+    doc.font(baseFont).fontSize(10).fillColor('#334155')
+    doc.text(`Researcher: ${submission.author.fullName} (${submission.author.email})`, { align: 'left' })
+    doc.moveDown(1)
+    doc.text('This document was generated automatically by EthicFlow (Fallback PDF Renderer).', { align: 'left' })
+  }
+
+  await streamToFile(doc, outputPath)
 }
 
 // ─────────────────────────────────────────────
@@ -422,7 +492,14 @@ export async function generateApprovalLetter(submissionId, lang = 'he') {
   const storagePath = path.join('generated', 'approval', submissionId, filename)
 
   const html = safeLang === 'he' ? buildHeHtml(submission) : buildEnHtml(submission)
-  await renderHtmlToPdf(html, absPath)
+  try {
+    await renderHtmlToPdf(html, absPath)
+  } catch (err) {
+    console.warn(
+      `[PDF] Puppeteer render failed for approval letter (${safeLang}), using fallback renderer: ${err?.message ?? err}`
+    )
+    await renderApprovalFallbackPdf(submission, safeLang, absPath)
+  }
 
   const stat     = await fs.stat(absPath)
   const existing = await prisma.document.findFirst({ where: { submissionId, storagePath } })

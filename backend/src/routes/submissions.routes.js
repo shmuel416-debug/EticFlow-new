@@ -216,7 +216,7 @@ router.post(
 
       const absPath = resolvePath(storagePath)
       if (!fs.existsSync(absPath)) {
-        throw new AppError('Generated file not found', 500, 'PDF_MISSING')
+        throw new AppError('Generated file not found', 'PDF_MISSING', 500)
       }
 
       const stat     = fs.statSync(absPath)
