@@ -40,6 +40,32 @@ function CalendarSyncStrip({ externalCalendarId, t }) {
 }
 
 /**
+ * Personal sync status strip for current user.
+ * @param {{ sync: { status?: string, lastSyncAt?: string|null }|null, t: Function }} props
+ */
+function PersonalCalendarSyncStrip({ sync, t }) {
+  const status = sync?.status
+  if (!status) return null
+  const toneMap = {
+    SYNCED: 'text-emerald-700 bg-emerald-50 border-emerald-200',
+    PENDING: 'text-amber-700 bg-amber-50 border-amber-200',
+    FAILED: 'text-red-700 bg-red-50 border-red-200',
+    CANCELLED: 'text-gray-700 bg-gray-50 border-gray-200',
+  }
+  return (
+    <div className={`flex items-center gap-2 mt-2 text-xs border rounded-lg px-3 py-2 w-fit ${toneMap[status] || 'text-gray-700 bg-gray-50 border-gray-200'}`}>
+      <span aria-hidden="true">👤</span>
+      <span>{t(`meetings.personalSync${status.charAt(0) + status.slice(1).toLowerCase()}`, status)}</span>
+      {sync?.lastSyncAt && (
+        <span className="opacity-70">
+          · {new Date(sync.lastSyncAt).toLocaleString('he-IL')}
+        </span>
+      )}
+    </div>
+  )
+}
+
+/**
  * Meeting Detail Page — agenda, attendees (invite/remove), attendance.
  * @returns {JSX.Element}
  */
@@ -295,6 +321,7 @@ export default function MeetingDetailPage() {
 
             {/* Calendar sync status */}
             <CalendarSyncStrip externalCalendarId={meeting.externalCalendarId} t={t} />
+            <PersonalCalendarSyncStrip sync={meeting.userCalendarSync} t={t} />
           </div>
 
           {/* Cancel button */}
