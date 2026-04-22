@@ -95,7 +95,7 @@ jobs:
           E2E_CHAIRMAN_PASSWORD: ${{ secrets.E2E_CHAIRMAN_PASSWORD }}
           E2E_ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}
           E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
-        run: npm run e2e:ci
+        run: npm run e2e:ci:strict
 
       - name: Upload Playwright report
         if: always()

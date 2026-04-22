@@ -83,3 +83,12 @@
 1. להוסיף nightly CI run ייעודי ל-E2E עם trend pass-rate שבועי.
 2. להוסיף alerting אוטומטי על עליה ב-flaky retries.
 3. להרחיב smoke i18n למסכים נוספים מעבר ל-login/calendar/diff.
+
+## עדכון סגירה תפעולית — 2026-04-22
+- בוצעה ריצת `npm run e2e:ci` מקומית:
+  - 2 עברו, 13 דולגו (credential-dependent role flows).
+- כדי למנוע מצב CI "ירוק חלקי" עם skips שקטים, נוסף preflight קשיח:
+  - קובץ חדש: `frontend/scripts/verify-e2e-env.mjs`
+  - סקריפט חדש: `frontend/package.json` → `e2e:ci:strict`
+  - workflow עודכן: `.github/workflows/quality-gates.yml` מריץ `npm run e2e:ci:strict`
+- תוצאה תפעולית: ב-CI, כל חוסר ב-`E2E_RESEARCHER_*`, `E2E_SECRETARY_*`, `E2E_REVIEWER_*`, `E2E_CHAIRMAN_*`, `E2E_ADMIN_*` יכשיל את ה-job מיידית לפני Playwright.

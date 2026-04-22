@@ -10,6 +10,7 @@
     "preview": "vite preview",
     "e2e": "playwright test",
     "e2e:ci": "playwright test --workers=2 --reporter=list,html,junit",
+    "e2e:ci:strict": "node ./scripts/verify-e2e-env.mjs && npm run e2e:ci",
     "e2e:headed": "playwright test --headed",
     "e2e:report": "playwright show-report"
   },
