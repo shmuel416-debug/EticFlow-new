@@ -58,6 +58,26 @@ function CalendarSyncBadge({ externalCalendarId, t }) {
 }
 
 /**
+ * Personal calendar sync status badge for current user.
+ * @param {{ sync: { status?: string }|null, t: Function }} props
+ */
+function PersonalSyncBadge({ sync, t }) {
+  const status = sync?.status
+  if (!status) return null
+  const styleMap = {
+    SYNCED: 'bg-emerald-100 text-emerald-800',
+    PENDING: 'bg-amber-100 text-amber-800',
+    FAILED: 'bg-red-100 text-red-700',
+    CANCELLED: 'bg-gray-100 text-gray-700',
+  }
+  return (
+    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${styleMap[status] || 'bg-gray-100 text-gray-700'}`}>
+      {t(`meetings.personalSync${status.charAt(0) + status.slice(1).toLowerCase()}`, status)}
+    </span>
+  )
+}
+
+/**
  * Multi-select attendee picker — shows a scrollable checkbox list of committee users.
  * @param {{ users: Array, selected: string[], onChange: Function, loadError: boolean, t: Function }} props
  */
@@ -414,6 +434,7 @@ export default function MeetingsPage() {
                     <h2 className="font-semibold text-gray-900 truncate">{meeting.title}</h2>
                     <StatusBadge status={meeting.status} t={t} />
                     <CalendarSyncBadge externalCalendarId={meeting.externalCalendarId} t={t} />
+                    <PersonalSyncBadge sync={meeting.userCalendarSync} t={t} />
                   </div>
                   {/* Date */}
                   <p className="text-sm text-gray-500">

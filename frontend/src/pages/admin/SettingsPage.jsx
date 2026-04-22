@@ -6,7 +6,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
-import api from '../../services/api'
+import api, { buildApiUrl } from '../../services/api'
 
 /**
  * Setting groups — controls display order and grouping.
@@ -797,15 +797,28 @@ export default function SettingsPage() {
   const { user } = useAuth()
 
   const [values,  setValues]  = useState({})   // keyed map: { key → value }
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [error,   setError]   = useState(null)
   const [previewSubmissions, setPreviewSubmissions] = useState([])
   const [previewSubmissionId, setPreviewSubmissionId] = useState('')
   const [previewSubmission, setPreviewSubmission] = useState(null)
   const [previewLoading, setPreviewLoading] = useState(false)
+  const [calendarStatus, setCalendarStatus] = useState({
+    connected: false,
+    provider: 'NONE',
+    syncEnabled: false,
+    email: null,
+    tokenExpiry: null,
+    stats: { pending: 0, failed: 0, synced: 0 },
+    lastSyncAt: null,
+  })
+  const [calendarLoading, setCalendarLoading] = useState(false)
+  const [calendarBusy, setCalendarBusy] = useState(false)
+  const [calendarMessage, setCalendarMessage] = useState('')
 
   const isAdmin = user?.role === 'ADMIN'
   const canEditTemplate = user?.role === 'ADMIN' || user?.role === 'SECRETARY'
+  const canUseCalendarSettings = ['SECRETARY', 'CHAIRMAN', 'REVIEWER', 'ADMIN'].includes(user?.role)
 
   // ── Fetch all settings (ADMIN + SECRETARY) ─────────
 
@@ -862,6 +875,50 @@ export default function SettingsPage() {
     fetchPreviewSubmissionById()
   }, [previewSubmissionId])
 
+  useEffect(() => {
+    if (!canUseCalendarSettings) return
+    async function fetchCalendarStatus() {
+      setCalendarLoading(true)
+      try {
+        const res = await api.get('/calendar/status')
+        setCalendarStatus(res.data?.data || {
+          connected: false,
+          provider: 'NONE',
+          syncEnabled: false,
+          email: null,
+          tokenExpiry: null,
+          stats: { pending: 0, failed: 0, synced: 0 },
+          lastSyncAt: null,
+        })
+      } catch {
+        setCalendarMessage(t('settings.calendar.loadError'))
+      } finally {
+        setCalendarLoading(false)
+      }
+    }
+    fetchCalendarStatus()
+  }, [canUseCalendarSettings, t])
+
+  useEffect(() => {
+    if (!canUseCalendarSettings) return
+    const params = new URLSearchParams(window.location.search)
+    const state = params.get('calendar')
+    if (!state) return
+    if (state === 'connected') {
+      setCalendarMessage(t('settings.calendar.connectedSuccess'))
+    } else if (state === 'cancelled') {
+      setCalendarMessage(t('settings.calendar.connectCancelled'))
+    } else {
+      setCalendarMessage(t('settings.calendar.connectFailed'))
+    }
+    params.delete('calendar')
+    params.delete('provider')
+    params.delete('reason')
+    const nextQuery = params.toString()
+    const nextUrl = `${window.location.pathname}${nextQuery ? `?${nextQuery}` : ''}`
+    window.history.replaceState({}, '', nextUrl)
+  }, [canUseCalendarSettings, t])
+
   // ── Save a group — PUT each changed key ──────
 
   /**
@@ -894,17 +951,50 @@ export default function SettingsPage() {
     }))
   }
 
-  // Non-authorized users see access denied
-  if (user && !canEditTemplate) {
-    return (
-      <div className="flex flex-col items-center justify-center py-24 text-center">
-        <p className="text-4xl mb-4" aria-hidden="true">🔒</p>
-        <h1 className="text-lg font-bold mb-2" style={{ color: 'var(--lev-navy)' }}>
-          {t('settings.title')}
-        </h1>
-        <p className="text-sm text-gray-600">{t('errors.FORBIDDEN')}</p>
-      </div>
-    )
+  async function refreshCalendarStatus() {
+    if (!canUseCalendarSettings) return
+    const res = await api.get('/calendar/status')
+    setCalendarStatus(res.data?.data || {
+      connected: false,
+      provider: 'NONE',
+      syncEnabled: false,
+      email: null,
+      tokenExpiry: null,
+      stats: { pending: 0, failed: 0, synced: 0 },
+      lastSyncAt: null,
+    })
+  }
+
+  function handleConnect(provider) {
+    window.location.assign(buildApiUrl(`/calendar/connect/${provider}`))
+  }
+
+  async function handleDisconnect() {
+    setCalendarBusy(true)
+    setCalendarMessage('')
+    try {
+      await api.delete('/calendar/disconnect')
+      await refreshCalendarStatus()
+      setCalendarMessage(t('settings.calendar.disconnectedSuccess'))
+    } catch {
+      setCalendarMessage(t('settings.calendar.disconnectError'))
+    } finally {
+      setCalendarBusy(false)
+    }
+  }
+
+  async function handleSyncToggle(nextValue) {
+    setCalendarBusy(true)
+    setCalendarMessage('')
+    try {
+      await api.patch('/calendar/preferences', { syncEnabled: nextValue })
+      await refreshCalendarStatus()
+      setCalendarMessage(nextValue ? t('settings.calendar.syncEnabledSuccess') : t('settings.calendar.syncDisabledSuccess'))
+    } catch {
+      setCalendarMessage(t('settings.calendar.preferencesError'))
+    } finally {
+      setCalendarBusy(false)
+    }
   }
 
   return (
@@ -937,6 +1027,92 @@ export default function SettingsPage() {
 
         {!loading && !error && (
           <div className="max-w-3xl mx-auto space-y-4">
+            {canUseCalendarSettings && (
+              <section className="bg-white rounded-xl border shadow-sm overflow-hidden" aria-labelledby="calendar-connection-title">
+                <div className="px-5 py-4 border-b flex items-center justify-between gap-3">
+                  <h2 id="calendar-connection-title" className="text-sm font-bold" style={{ color: 'var(--lev-navy)' }}>
+                    {t('settings.calendar.title')}
+                  </h2>
+                  <span className="text-xs px-2 py-1 rounded-full border border-gray-200 bg-gray-50">
+                    {calendarStatus.connected
+                      ? t('settings.calendar.connected')
+                      : t('settings.calendar.notConnected')}
+                  </span>
+                </div>
+                <div className="px-5 py-4 space-y-3">
+                  <p className="text-xs text-gray-600">{t('settings.calendar.description')}</p>
+
+                  {calendarLoading && (
+                    <p className="text-sm text-gray-500">{t('common.loading')}</p>
+                  )}
+
+                  {!calendarLoading && (
+                    <>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleConnect('google')}
+                          disabled={calendarBusy}
+                          className="text-sm border border-gray-300 rounded-lg px-4 py-2 min-h-[44px] disabled:opacity-50"
+                        >
+                          {t('settings.calendar.connectGoogle')}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleConnect('microsoft')}
+                          disabled={calendarBusy}
+                          className="text-sm border border-gray-300 rounded-lg px-4 py-2 min-h-[44px] disabled:opacity-50"
+                        >
+                          {t('settings.calendar.connectMicrosoft')}
+                        </button>
+                      </div>
+
+                      <div className="text-xs text-gray-600 space-y-1">
+                        <p>
+                          <span className="font-semibold">{t('settings.calendar.activeProvider')}:</span>{' '}
+                          {calendarStatus.provider === 'NONE' ? t('settings.calendar.none') : calendarStatus.provider}
+                        </p>
+                        <p>
+                          <span className="font-semibold">{t('settings.calendar.accountEmail')}:</span>{' '}
+                          {calendarStatus.email || t('settings.calendar.noAccount')}
+                        </p>
+                        <p>
+                          <span className="font-semibold">{t('settings.calendar.lastSyncAt')}:</span>{' '}
+                          {calendarStatus.lastSyncAt ? new Date(calendarStatus.lastSyncAt).toLocaleString() : t('settings.calendar.noSyncYet')}
+                        </p>
+                      </div>
+
+                      <label className="flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={Boolean(calendarStatus.syncEnabled)}
+                          onChange={(e) => handleSyncToggle(e.target.checked)}
+                          disabled={!calendarStatus.connected || calendarBusy}
+                          className="accent-blue-600 w-4 h-4"
+                        />
+                        <span>{t('settings.calendar.enablePersonalSync')}</span>
+                      </label>
+
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={handleDisconnect}
+                          disabled={!calendarStatus.connected || calendarBusy}
+                          className="text-sm border border-red-300 text-red-700 rounded-lg px-4 py-2 min-h-[44px] disabled:opacity-40"
+                        >
+                          {t('settings.calendar.disconnect')}
+                        </button>
+                      </div>
+                    </>
+                  )}
+
+                  {calendarMessage && (
+                    <p className="text-xs font-semibold text-blue-700" aria-live="polite">{calendarMessage}</p>
+                  )}
+                </div>
+              </section>
+            )}
+
             {isAdmin && GROUPS.map(group => (
               <SettingsGroup
                 key={group.groupKey}

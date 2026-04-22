@@ -16,6 +16,7 @@ import jwt    from 'jsonwebtoken'
 import prisma      from '../config/database.js'
 import authConfig  from '../config/auth.js'
 import { AppError } from '../utils/errors.js'
+import { COMMITTEE_ROLES } from '../constants/roles.js'
 
 // ─────────────────────────────────────────────
 // HELPERS
@@ -68,7 +69,7 @@ export async function listSigners(req, res, next) {
     const signers = await prisma.user.findMany({
       where: {
         isActive: true,
-        role: { in: ['SECRETARY', 'CHAIRMAN', 'REVIEWER', 'ADMIN'] },
+        role: { in: COMMITTEE_ROLES },
       },
       select: { id: true, fullName: true, email: true, role: true },
       orderBy: { fullName: 'asc' },

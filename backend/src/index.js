@@ -14,6 +14,7 @@ import { logActiveProviders } from './config/services.js'
 import { errorHandler } from './middleware/error.js'
 import { apiLimiter } from './middleware/rateLimit.js'
 import { startSlaCron }    from './jobs/sla.cron.js'
+import { startCalendarSyncCron } from './jobs/calendar-sync.cron.js'
 import healthRouter        from './routes/health.routes.js'
 import authRouter          from './routes/auth.routes.js'
 import formsRouter         from './routes/forms.routes.js'
@@ -26,6 +27,7 @@ import meetingsRouter      from './routes/meetings.routes.js'
 import protocolsRouter, { publicSignRouter } from './routes/protocols.routes.js'
 import reportsRouter, { auditLogsRouter } from './routes/reports.routes.js'
 import settingsRouter      from './routes/settings.routes.js'
+import calendarRouter      from './routes/calendar.routes.js'
 
 const app  = express()
 const PORT = process.env.PORT ?? process.env.API_PORT ?? 5000
@@ -74,6 +76,7 @@ app.use('/api/protocol',   publicSignRouter)  // Public sign endpoint (no auth)
 app.use('/api/reports',     reportsRouter)
 app.use('/api/audit-logs',  auditLogsRouter)
 app.use('/api/settings',    settingsRouter)
+app.use('/api/calendar',    calendarRouter)
 
 // 404 handler
 app.use((_req, res) => {
@@ -105,6 +108,7 @@ async function start() {
     console.log(`   Environment: ${process.env.NODE_ENV ?? 'development'}`)
     logActiveProviders()
     startSlaCron()
+    startCalendarSyncCron()
   })
 }
 

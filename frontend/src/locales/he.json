@@ -829,6 +829,8 @@
     "INVALID_TOKEN": "הקישור אינו תקין או שפג תוקפו",
     "SERVER_ERROR": "שגיאת שרת. נסה שוב מאוחר יותר",
     "NESTED_IMPERSONATION": "לא ניתן להתחזות כאשר כבר במצב התחזות",
-    "CANNOT_IMPERSONATE_ADMIN": "לא ניתן להתחזות לאדמין"
+    "CANNOT_IMPERSONATE_ADMIN": "לא ניתן להתחזות לאדמין",
+    "ROLE_NOT_ALLOWED": "רק חברי ועדה מורשים לפעולה זו",
+    "USER_INACTIVE": "המשתמש אינו פעיל"
   }
 }

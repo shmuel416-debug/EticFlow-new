@@ -18,6 +18,8 @@ import prisma  from '../config/database.js'
 import { AppError } from '../utils/errors.js'
 import { sendEmail } from '../services/email/email.service.js'
 import { generateProtocolPdf } from '../services/pdf.service.js'
+import { recordAuditEntry } from '../middleware/audit.js'
+import { COMMITTEE_ROLES } from '../constants/roles.js'
 
 /** Token validity window in hours. */
 const TOKEN_TTL_HOURS = 72
@@ -30,6 +32,31 @@ const TOKEN_TTL_HOURS = 72
  */
 function hashToken(rawToken) {
   return crypto.createHash('sha256').update(rawToken).digest('hex')
+}
+
+/**
+ * Records an audit row for blocked signer role validation.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {string} protocolId
+ * @param {object} meta
+ * @returns {Promise<void>}
+ */
+async function recordBlockedRoleAudit(req, res, protocolId, meta) {
+  const prevMeta = res.locals.auditMeta
+  const prevEntityId = res.locals.entityId
+
+  res.locals.entityId = protocolId
+  res.locals.auditMeta = { ...(prevMeta ?? {}), ...(meta ?? {}) }
+
+  try {
+    await recordAuditEntry(req, res, 'security.role_violation_blocked', 'Protocol')
+  } catch (err) {
+    console.error('[Protocols] Failed to write blocked-role audit log:', err.message)
+  } finally {
+    res.locals.auditMeta = prevMeta
+    res.locals.entityId = prevEntityId
+  }
 }
 
 // ─────────────────────────────────────────────
@@ -288,9 +315,27 @@ export async function requestSignatures(req, res, next) {
     }
 
     const signers = await prisma.user.findMany({
-      where: { id: { in: signerIds }, isActive: true },
-      select: { id: true, email: true, fullName: true },
+      where: {
+        id: { in: signerIds },
+        isActive: true,
+        role: { in: COMMITTEE_ROLES },
+      },
+      select: { id: true, email: true, fullName: true, role: true },
     })
+    if (signers.length !== signerIds.length) {
+      const allowedSignerIds = new Set(signers.map((signer) => signer.id))
+      const blockedSignerIds = signerIds.filter((signerId) => !allowedSignerIds.has(signerId))
+      await recordBlockedRoleAudit(req, res, id, {
+        endpoint: '/api/protocols/:id/request-signatures',
+        requestedSignerIds: signerIds,
+        blockedSignerIds,
+      })
+      throw new AppError(
+        'One or more users are not eligible to sign (must be committee members, active)',
+        'ROLE_NOT_ALLOWED',
+        400
+      )
+    }
 
     const frontendUrl = process.env.FRONTEND_URL ?? 'http://localhost:5173'
 

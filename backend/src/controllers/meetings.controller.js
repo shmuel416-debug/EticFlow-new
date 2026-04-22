@@ -17,6 +17,26 @@
 import prisma from '../config/database.js'
 import { AppError } from '../utils/errors.js'
 import * as calendarService from '../services/calendar/calendar.service.js'
+import {
+  enqueueMeetingUserSync,
+  cancelMeetingUserSyncForAttendee,
+  getUserSyncMapForMeetings,
+} from '../services/calendar/user-calendar.service.js'
+
+/**
+ * Enqueues personal sync rows without breaking main meeting flow.
+ * @param {{ meetingId: string, operation: 'create'|'update'|'cancel', targetUserIds?: string[] }} payload
+ * @returns {Promise<void>}
+ */
+async function enqueueUserSyncSafe(payload) {
+  try {
+    await enqueueMeetingUserSync(payload)
+  } catch (err) {
+    console.warn('[Meetings] User calendar sync enqueue failed (non-fatal):', err.message)
+  }
+}
+import { recordAuditEntry } from '../middleware/audit.js'
+import { COMMITTEE_ROLES } from '../constants/roles.js'
 
 // ─────────────────────────────────────────────
 // CALENDAR SYNC HELPERS (non-fatal wrappers)
@@ -88,6 +108,30 @@ async function syncDeleteToCalendar(externalId) {
   }
 }
 
+/**
+ * Records an audit row for blocked role-based operations without disrupting request flow.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {{ entityId?: string, meta?: object }} options
+ * @returns {Promise<void>}
+ */
+async function recordBlockedRoleAudit(req, res, options = {}) {
+  const prevMeta = res.locals.auditMeta
+  const prevEntityId = res.locals.entityId
+
+  if (options.entityId) res.locals.entityId = options.entityId
+  res.locals.auditMeta = { ...(prevMeta ?? {}), ...(options.meta ?? {}) }
+
+  try {
+    await recordAuditEntry(req, res, 'security.role_violation_blocked', 'Meeting')
+  } catch (err) {
+    console.error('[Meetings] Failed to write blocked-role audit log:', err.message)
+  } finally {
+    res.locals.auditMeta = prevMeta
+    res.locals.entityId = prevEntityId
+  }
+}
+
 // ─────────────────────────────────────────────
 // LIST
 // ─────────────────────────────────────────────
@@ -124,8 +168,14 @@ export async function list(req, res, next) {
       prisma.meeting.count({ where }),
     ])
 
+    const syncMap = await getUserSyncMapForMeetings(req.user?.id, meetings.map((m) => m.id))
+    const data = meetings.map((meeting) => ({
+      ...meeting,
+      userCalendarSync: syncMap.get(meeting.id) || null,
+    }))
+
     res.json({
-      data:       meetings,
+      data,
       pagination: { total, page: parseInt(page), limit: take, pages: Math.ceil(total / take) },
     })
   } catch (err) {
@@ -152,9 +202,27 @@ export async function create(req, res, next) {
     const attendeeUsers = attendeeIds.length > 0
       ? await prisma.user.findMany({
           where:  { id: { in: attendeeIds } },
-          select: { id: true, fullName: true, email: true },
+          select: { id: true, fullName: true, email: true, role: true, isActive: true },
         })
       : []
+
+    const invalidAttendees = attendeeUsers.filter(
+      (user) => !user.isActive || !COMMITTEE_ROLES.includes(user.role)
+    )
+    if (attendeeIds.length > 0 && (attendeeUsers.length !== attendeeIds.length || invalidAttendees.length > 0)) {
+      await recordBlockedRoleAudit(req, res, {
+        meta: {
+          endpoint: '/api/meetings',
+          requestedUserIds: attendeeIds,
+          invalidUsers: invalidAttendees.map((user) => ({
+            id: user.id,
+            role: user.role,
+            isActive: user.isActive,
+          })),
+        },
+      })
+      throw new AppError('One or more users are not committee members', 'ROLE_NOT_ALLOWED', 400)
+    }
 
     const meeting = await prisma.meeting.create({
       data: {
@@ -178,6 +246,12 @@ export async function create(req, res, next) {
       await prisma.meeting.update({ where: { id: meeting.id }, data: { externalCalendarId: externalId } })
       meeting.externalCalendarId = externalId
     }
+
+    await enqueueUserSyncSafe({
+      meetingId: meeting.id,
+      operation: 'create',
+      targetUserIds: attendeeIds,
+    })
 
     res.locals.entityId = meeting.id
     res.status(201).json({ data: meeting })
@@ -224,7 +298,13 @@ export async function getById(req, res, next) {
       throw new AppError('Meeting not found', 'NOT_FOUND', 404)
     }
 
-    res.json({ data: meeting })
+    const syncMap = await getUserSyncMapForMeetings(req.user?.id, [meeting.id])
+    res.json({
+      data: {
+        ...meeting,
+        userCalendarSync: syncMap.get(meeting.id) || null,
+      },
+    })
   } catch (err) {
     next(err)
   }
@@ -270,6 +350,11 @@ export async function update(req, res, next) {
       await syncUpdateToCalendar(meeting.externalCalendarId, { title, scheduledAt, location }, meeting)
     }
 
+    await enqueueUserSyncSafe({
+      meetingId: id,
+      operation: 'update',
+    })
+
     res.locals.entityId = id
     res.json({ data: updated })
   } catch (err) {
@@ -306,6 +391,11 @@ export async function cancel(req, res, next) {
     if (meeting.externalCalendarId) {
       await syncDeleteToCalendar(meeting.externalCalendarId)
     }
+
+    await enqueueUserSyncSafe({
+      meetingId: id,
+      operation: 'cancel',
+    })
 
     res.locals.entityId = id
     res.json({ success: true })
@@ -408,11 +498,35 @@ export async function addAttendee(req, res, next) {
 
     const [meeting, user] = await Promise.all([
       prisma.meeting.findUnique({ where: { id: meetingId } }),
-      prisma.user.findUnique({ where: { id: userId }, select: { id: true, fullName: true, role: true, email: true } }),
+      prisma.user.findUnique({ where: { id: userId }, select: { id: true, fullName: true, role: true, email: true, isActive: true } }),
     ])
 
     if (!meeting || !meeting.isActive) throw new AppError('Meeting not found', 'NOT_FOUND', 404)
     if (!user)                         throw new AppError('User not found', 'NOT_FOUND', 404)
+    if (!user.isActive) {
+      await recordBlockedRoleAudit(req, res, {
+        entityId: meetingId,
+        meta: {
+          endpoint: '/api/meetings/:id/attendees',
+          targetUserId: userId,
+          targetRole: user.role,
+          isActive: false,
+        },
+      })
+      throw new AppError('User is inactive', 'USER_INACTIVE', 400)
+    }
+    if (!COMMITTEE_ROLES.includes(user.role)) {
+      await recordBlockedRoleAudit(req, res, {
+        entityId: meetingId,
+        meta: {
+          endpoint: '/api/meetings/:id/attendees',
+          targetUserId: userId,
+          targetRole: user.role,
+          isActive: true,
+        },
+      })
+      throw new AppError('Only committee members can be invited to meetings', 'ROLE_NOT_ALLOWED', 400)
+    }
 
     // Upsert: reactivate if previously removed
     const attendee = await prisma.meetingAttendee.upsert({
@@ -420,6 +534,12 @@ export async function addAttendee(req, res, next) {
       create: { meetingId, userId },
       update: { isActive: true },
       include: { user: { select: { id: true, fullName: true, role: true, email: true } } },
+    })
+
+    await enqueueUserSyncSafe({
+      meetingId,
+      operation: 'create',
+      targetUserIds: [userId],
     })
 
     res.locals.entityId = meetingId
@@ -456,6 +576,12 @@ export async function removeAttendee(req, res, next) {
       where: { meetingId_userId: { meetingId, userId } },
       data:  { isActive: false },
     })
+
+    try {
+      await cancelMeetingUserSyncForAttendee(meetingId, userId)
+    } catch (err) {
+      console.warn('[Meetings] User calendar sync cancel failed (non-fatal):', err.message)
+    }
 
     res.locals.entityId = meetingId
     res.json({ success: true })

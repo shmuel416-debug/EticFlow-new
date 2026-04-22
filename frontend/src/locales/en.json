@@ -829,6 +829,8 @@
     "INVALID_TOKEN": "This link is invalid or has expired",
     "SERVER_ERROR": "Server error. Please try again later",
     "NESTED_IMPERSONATION": "Cannot impersonate while already impersonating",
-    "CANNOT_IMPERSONATE_ADMIN": "Cannot impersonate an Admin"
+    "CANNOT_IMPERSONATE_ADMIN": "Cannot impersonate an Admin",
+    "ROLE_NOT_ALLOWED": "Only committee members are allowed to perform this action",
+    "USER_INACTIVE": "The selected user is inactive"
   }
 }
