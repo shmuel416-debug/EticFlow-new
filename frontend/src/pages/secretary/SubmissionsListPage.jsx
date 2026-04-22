@@ -10,8 +10,7 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import api from '../../services/api'
 import StatusBadge from '../../components/submissions/StatusBadge'
-
-const STATUS_FILTERS = ['', 'SUBMITTED', 'IN_TRIAGE', 'ASSIGNED', 'IN_REVIEW', 'PENDING_REVISION', 'APPROVED', 'REJECTED']
+import useStatusConfig from '../../hooks/useStatusConfig'
 
 /**
  * Formats ISO date to locale short date.
@@ -28,6 +27,7 @@ function formatDate(iso) {
  */
 export default function SubmissionsListPage() {
   const { t }            = useTranslation()
+  const { statuses } = useStatusConfig()
   const [submissions,    setSubmissions]    = useState([])
   const [pagination,     setPagination]     = useState({ page: 1, pages: 1, total: 0 })
   const [loading,        setLoading]        = useState(true)
@@ -64,6 +64,10 @@ export default function SubmissionsListPage() {
     return (val) => { setter(val); setPage(1) }
   }
 
+  const statusFilters = statuses
+    .filter((status) => status.code !== 'DRAFT')
+    .map((status) => status.code)
+
   return (
     <main id="main-content" className="p-4 md:p-6 max-w-7xl mx-auto">
       {/* Header */}
@@ -95,7 +99,7 @@ export default function SubmissionsListPage() {
           aria-label={t('submission.list.filterLabel')}
         >
           <option value="">{t('submission.list.filterAll')}</option>
-          {STATUS_FILTERS.filter(Boolean).map((s) => (
+          {statusFilters.map((s) => (
             <option key={s} value={s}>{t(`submission.status.${s}`)}</option>
           ))}
         </select>

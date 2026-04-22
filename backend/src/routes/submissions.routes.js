@@ -45,10 +45,10 @@ const updateSchema = z.object({
   changeNote: z.string().max(1000).optional(),
 })
 
-const VALID_STATUSES = ['DRAFT','SUBMITTED','IN_TRIAGE','ASSIGNED','IN_REVIEW','PENDING_REVISION','APPROVED','REJECTED','WITHDRAWN','CONTINUED']
+const statusCodeSchema = z.string().trim().regex(/^[A-Z_]{2,40}$/)
 
 const listQuerySchema = z.object({
-  status:   z.enum(VALID_STATUSES).optional(),
+  status:   statusCodeSchema.optional(),
   statuses: z.string().optional(),
   search:   z.string().max(200).optional(),
   page:     z.string().regex(/^\d+$/).optional(),
@@ -56,7 +56,7 @@ const listQuerySchema = z.object({
 })
 
 const transitionSchema = z.object({
-  status: z.enum(VALID_STATUSES),
+  status: statusCodeSchema,
   note:   z.string().max(2000).optional(),
 })
 

@@ -1,7 +1,22 @@
 # EthicFlow — Progress Tracker
 
+## Latest Update: Sprint 12 — Dynamic Status Management
+**Status:** ✅ Complete | **Date:** 2026-04-22 | **Report:** `docs/sprint-12-report-hebrew.md`
+
+- [x] Status schema migrated from enum-based to DB-driven management
+- [x] Added status configuration entities: statuses, transitions, permissions
+- [x] Added status service and refactored status/SLA/notification/document logic
+- [x] Added admin status configuration API (`/api/admin/statuses*`)
+- [x] Added admin status management UI (`/admin/statuses`) + sidebar navigation
+- [x] Updated status-related components to consume dynamic backend config
+- [x] Added backend unit tests and admin E2E spec for status management
+- [x] Published Sprint 12 code-review/QA/accessibility/security reports
+- [x] Sprint 12 final report published (`docs/sprint-12-report-hebrew.md`)
+
+---
+
 ## Latest Update: Sprint 11 — UI E2E Expansion
-**Status:** ✅ Complete (CI full validation pending secrets) | **Date:** 2026-04-21 | **Report:** `docs/sprint-11-report-hebrew.md`
+**Status:** ✅ Complete (CI strict preflight added for role credentials) | **Date:** 2026-04-22 | **Report:** `docs/sprint-11-report-hebrew.md`
 
 - [x] UI E2E coverage matrix published (`docs/e2e-ui-coverage-matrix-sprint-11-hebrew.md`)
 - [x] Playwright suites reorganized by domain with shared fixtures/helpers
@@ -10,6 +25,7 @@
 - [x] RBAC negative UI scenarios implemented
 - [x] he/en + RTL/LTR smoke scenarios implemented
 - [x] CI hardening completed (webServer, retries, junit, artifacts)
+- [x] CI strict preflight added to fail when role E2E secrets are missing
 - [x] Sprint 11 final report published (`docs/sprint-11-report-hebrew.md`)
 
 ---

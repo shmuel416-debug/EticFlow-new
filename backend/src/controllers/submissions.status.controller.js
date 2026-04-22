@@ -3,27 +3,14 @@
  * Handles all status-transition actions for submissions:
  *   transitionStatus, assignReviewer, submitReview, recordDecision, addComment.
  *
- * Transition matrix (server-enforced):
- *   SUBMITTED      → IN_TRIAGE                           (SECRETARY, ADMIN)
- *   IN_TRIAGE      → ASSIGNED                            (SECRETARY, ADMIN)
- *   ASSIGNED       → IN_REVIEW                           (SECRETARY, ADMIN)
- *   IN_REVIEW      → APPROVED | REJECTED | PENDING_REVISION (CHAIRMAN, ADMIN)
- *   PENDING_REVISION → SUBMITTED                         (SECRETARY, ADMIN)
+ * Transition matrix and role/action permissions are loaded from status.service.
  */
 
 import prisma from '../config/database.js'
 import { AppError } from '../utils/errors.js'
 import { notifyStatusChange } from '../services/notification.service.js'
 import { setDueDates } from '../services/sla.service.js'
-
-/** Allowed transitions per current status and actor roles. */
-const TRANSITIONS = {
-  SUBMITTED:        { next: ['IN_TRIAGE'],                             roles: ['SECRETARY','ADMIN'] },
-  IN_TRIAGE:        { next: ['ASSIGNED'],                              roles: ['SECRETARY','ADMIN'] },
-  ASSIGNED:         { next: ['IN_REVIEW'],                             roles: ['SECRETARY','ADMIN'] },
-  IN_REVIEW:        { next: ['APPROVED','REJECTED','PENDING_REVISION'], roles: ['CHAIRMAN','ADMIN'] },
-  PENDING_REVISION: { next: ['SUBMITTED'],                             roles: ['SECRETARY','ADMIN'] },
-}
+import { can, getAllowedTransitions } from '../services/status.service.js'
 
 /**
  * Fetches a submission or throws 404.
@@ -52,12 +39,10 @@ async function findOrFail(id) {
 export async function transitionStatus(req, res, next) {
   try {
     const sub       = await findOrFail(req.params.id)
-    const rule      = TRANSITIONS[sub.status]
     const newStatus = req.body.status
 
-    if (!rule) return next(new AppError('No transitions allowed from current status', 'INVALID_TRANSITION', 400))
-    if (!rule.roles.includes(req.user.role)) return next(AppError.forbidden())
-    if (!rule.next.includes(newStatus)) {
+    const transition = await getAllowedTransitions(sub.status, req.user.role, sub)
+    if (!transition.next.includes(newStatus)) {
       return next(new AppError(`Cannot move from ${sub.status} to ${newStatus}`, 'INVALID_TRANSITION', 400))
     }
 
@@ -85,6 +70,8 @@ export async function transitionStatus(req, res, next) {
 export async function assignReviewer(req, res, next) {
   try {
     const sub = await findOrFail(req.params.id)
+    const allowedAssign = await can('ASSIGN', sub.status, req.user.role)
+    if (!allowedAssign) return next(AppError.forbidden())
 
     if (!['IN_TRIAGE','ASSIGNED'].includes(sub.status)) {
       return next(new AppError('Submission must be IN_TRIAGE or ASSIGNED to assign a reviewer', 'INVALID_TRANSITION', 400))
@@ -122,6 +109,8 @@ export async function assignReviewer(req, res, next) {
 export async function submitReview(req, res, next) {
   try {
     const sub = await findOrFail(req.params.id)
+    const allowedSubmitReview = await can('SUBMIT_REVIEW', sub.status, req.user.role)
+    if (!allowedSubmitReview) return next(AppError.forbidden())
 
     if (sub.status !== 'ASSIGNED') {
       return next(new AppError('Submission must be ASSIGNED to submit a review', 'INVALID_TRANSITION', 400))
@@ -165,6 +154,8 @@ export async function submitReview(req, res, next) {
 export async function recordDecision(req, res, next) {
   try {
     const sub = await findOrFail(req.params.id)
+    const allowedDecision = await can('RECORD_DECISION', sub.status, req.user.role)
+    if (!allowedDecision) return next(AppError.forbidden())
 
     if (sub.status !== 'IN_REVIEW') {
       return next(new AppError('Submission must be IN_REVIEW for a decision', 'INVALID_TRANSITION', 400))

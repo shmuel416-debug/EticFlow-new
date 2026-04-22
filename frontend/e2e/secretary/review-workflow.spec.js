@@ -68,6 +68,8 @@ test('submit -> assign -> review -> decision works across role UIs', async ({ br
   await secretaryPage.getByTestId(`secretary-open-submission-${submissionId}`).click()
   await expect(secretaryPage).toHaveURL(new RegExp(`/secretary/submissions/${submissionId}$`))
 
+  // Transitions are now DB-driven; keep testid contract stable.
+  await expect(secretaryPage.getByTestId('status-transition-IN_TRIAGE')).toBeVisible()
   await secretaryPage.getByTestId('status-transition-IN_TRIAGE').click()
   await secretaryPage.getByTestId('reviewer-select').selectOption(reviewerId)
   await secretaryPage.getByTestId('assign-reviewer-submit').click()

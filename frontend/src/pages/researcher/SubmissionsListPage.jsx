@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
 import api from '../../services/api'
 import StatusBadge from '../../components/submissions/StatusBadge'
+import useStatusConfig from '../../hooks/useStatusConfig'
 
 function submissionRoute(sub) {
   if (sub.status === 'DRAFT' || sub.status === 'PENDING_REVISION') {
@@ -20,6 +21,7 @@ function submissionRoute(sub) {
 export default function ResearcherSubmissionsListPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const { statuses } = useStatusConfig()
 
   const [submissions, setSubmissions] = useState([])
   const [loading, setLoading] = useState(true)
@@ -58,7 +60,7 @@ export default function ResearcherSubmissionsListPage() {
     return () => { cancelled = true }
   }, [page, searchTerm, statusFilter, t])
 
-  const statuses = ['ALL', 'DRAFT', 'SUBMITTED', 'IN_TRIAGE', 'ASSIGNED', 'IN_REVIEW', 'APPROVED', 'REJECTED', 'PENDING_REVISION']
+  const statusCodes = statuses.map((status) => status.code)
 
   return (
     <div className="space-y-6">
@@ -91,7 +93,7 @@ export default function ResearcherSubmissionsListPage() {
           style={{ borderColor: '#e5e7eb', minHeight: '44px' }}
         >
           <option value="ALL">{t('submission.list.filterAll')}</option>
-          {statuses.slice(1).map(s => (
+          {statusCodes.map(s => (
             <option key={s} value={s}>{t(`submission.status.${s}`)}</option>
           ))}
         </select>

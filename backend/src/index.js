@@ -28,6 +28,7 @@ import protocolsRouter, { publicSignRouter } from './routes/protocols.routes.js'
 import reportsRouter, { auditLogsRouter } from './routes/reports.routes.js'
 import settingsRouter      from './routes/settings.routes.js'
 import calendarRouter      from './routes/calendar.routes.js'
+import { statusesRouter, adminStatusesRouter } from './routes/statuses.routes.js'
 
 const app  = express()
 const PORT = process.env.PORT ?? process.env.API_PORT ?? 5000
@@ -77,6 +78,8 @@ app.use('/api/reports',     reportsRouter)
 app.use('/api/audit-logs',  auditLogsRouter)
 app.use('/api/settings',    settingsRouter)
 app.use('/api/calendar',    calendarRouter)
+app.use('/api/statuses',    statusesRouter)
+app.use('/api/admin/statuses', adminStatusesRouter)
 
 // 404 handler
 app.use((_req, res) => {

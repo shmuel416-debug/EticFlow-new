@@ -25,7 +25,9 @@
     "prev": "Previous",
     "next": "Next",
     "showing": "Showing",
-    "of": "of"
+    "of": "of",
+    "yes": "Yes",
+    "no": "No"
   },
   "auth": {
     "login": {
@@ -95,6 +97,7 @@
     "users": "Users",
     "reports": "Reports",
     "auditLog": "Audit Log",
+    "statusManagement": "Status Management",
     "system": "System",
     "mainNavigation": "Main Navigation",
     "meetingsCalendar": "Meetings Calendar"
@@ -847,6 +850,48 @@
     "saveSuccess": "Setting updated successfully",
     "saveError": "Failed to save setting",
     "save": "Save"
+  },
+  "statusManagement": {
+    "title": "Status Management",
+    "subtitle": "Dynamic control of statuses, transitions, and permissions",
+    "tabsLabel": "Status management tabs",
+    "tabs": {
+      "statuses": "Statuses",
+      "transitions": "Transitions",
+      "permissions": "Permissions"
+    },
+    "fields": {
+      "code": "Code",
+      "labelHe": "Hebrew label",
+      "labelEn": "English label",
+      "color": "Color",
+      "isInitial": "Initial status",
+      "isTerminal": "Terminal status"
+    },
+    "addStatus": "Add status",
+    "loadError": "Failed to load status configuration",
+    "saveError": "Failed to save configuration",
+    "deleteError": "Failed to delete status",
+    "saved": "Configuration saved",
+    "deleted": "Status deleted",
+    "actions": "Actions",
+    "select": "Select",
+    "transitionsFor": "Transitions from {{status}}",
+    "permissionsFor": "Permissions for {{status}}",
+    "requireReviewerAssigned": "Requires assigned reviewer",
+    "action": "Action",
+    "actionsMap": {
+      "VIEW": "View",
+      "EDIT": "Edit",
+      "COMMENT": "Comment",
+      "UPLOAD_DOC": "Upload document",
+      "DELETE_DOC": "Delete document",
+      "VIEW_INTERNAL": "View internal",
+      "TRANSITION": "Transition status",
+      "ASSIGN": "Assign reviewer",
+      "SUBMIT_REVIEW": "Submit review",
+      "RECORD_DECISION": "Record decision"
+    }
   },
   "errors": {
     "VALIDATION_ERROR": "Validation error",

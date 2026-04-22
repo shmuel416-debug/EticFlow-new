@@ -17,6 +17,32 @@ import { getDefaultApprovalTemplate } from '../src/constants/approvalTemplate.js
 
 const prisma = new PrismaClient()
 
+const DEFAULT_SUBMISSION_STATUSES = [
+  { code: 'DRAFT', labelHe: 'טיוטה', labelEn: 'Draft', color: '#64748b', orderIndex: 10, isInitial: true, isTerminal: false, slaPhase: null, notificationType: null, isSystem: true },
+  { code: 'SUBMITTED', labelHe: 'הוגש', labelEn: 'Submitted', color: '#2563eb', orderIndex: 20, isInitial: false, isTerminal: false, slaPhase: 'TRIAGE', notificationType: 'SUBMISSION_RECEIVED', isSystem: true },
+  { code: 'IN_TRIAGE', labelHe: 'בבדיקה ראשונית', labelEn: 'In Triage', color: '#ca8a04', orderIndex: 30, isInitial: false, isTerminal: false, slaPhase: 'TRIAGE', notificationType: null, isSystem: true },
+  { code: 'ASSIGNED', labelHe: 'הוקצה לסוקר', labelEn: 'Assigned', color: '#ea580c', orderIndex: 40, isInitial: false, isTerminal: false, slaPhase: 'REVIEW', notificationType: 'SUBMISSION_ASSIGNED', isSystem: true },
+  { code: 'IN_REVIEW', labelHe: 'בביקורת', labelEn: 'In Review', color: '#7c3aed', orderIndex: 50, isInitial: false, isTerminal: false, slaPhase: 'APPROVAL', notificationType: 'REVIEW_REQUESTED', isSystem: true },
+  { code: 'PENDING_REVISION', labelHe: 'ממתין לתיקון', labelEn: 'Pending Revision', color: '#dc2626', orderIndex: 60, isInitial: false, isTerminal: false, slaPhase: null, notificationType: 'REVISION_REQUIRED', isSystem: true },
+  { code: 'APPROVED', labelHe: 'אושר', labelEn: 'Approved', color: '#16a34a', orderIndex: 70, isInitial: false, isTerminal: true, slaPhase: 'COMPLETED', notificationType: 'APPROVED', isSystem: true },
+  { code: 'REJECTED', labelHe: 'נדחה', labelEn: 'Rejected', color: '#b91c1c', orderIndex: 80, isInitial: false, isTerminal: true, slaPhase: 'COMPLETED', notificationType: 'REJECTED', isSystem: true },
+  { code: 'WITHDRAWN', labelHe: 'בוטל', labelEn: 'Withdrawn', color: '#6b7280', orderIndex: 90, isInitial: false, isTerminal: true, slaPhase: 'COMPLETED', notificationType: null, isSystem: true },
+  { code: 'CONTINUED', labelHe: 'המשך', labelEn: 'Continued', color: '#0d9488', orderIndex: 100, isInitial: false, isTerminal: true, slaPhase: 'COMPLETED', notificationType: null, isSystem: true },
+]
+
+const DEFAULT_TRANSITIONS = [
+  { fromCode: 'SUBMITTED', toCode: 'IN_TRIAGE', allowedRoles: ['SECRETARY', 'ADMIN'], requireReviewerAssigned: false },
+  { fromCode: 'IN_TRIAGE', toCode: 'ASSIGNED', allowedRoles: ['SECRETARY', 'ADMIN'], requireReviewerAssigned: true },
+  { fromCode: 'ASSIGNED', toCode: 'IN_REVIEW', allowedRoles: ['SECRETARY', 'ADMIN'], requireReviewerAssigned: true },
+  { fromCode: 'IN_REVIEW', toCode: 'APPROVED', allowedRoles: ['CHAIRMAN', 'ADMIN'], requireReviewerAssigned: false },
+  { fromCode: 'IN_REVIEW', toCode: 'REJECTED', allowedRoles: ['CHAIRMAN', 'ADMIN'], requireReviewerAssigned: false },
+  { fromCode: 'IN_REVIEW', toCode: 'PENDING_REVISION', allowedRoles: ['CHAIRMAN', 'ADMIN'], requireReviewerAssigned: false },
+  { fromCode: 'PENDING_REVISION', toCode: 'SUBMITTED', allowedRoles: ['SECRETARY', 'ADMIN'], requireReviewerAssigned: false },
+]
+
+const STATUS_ACTIONS = ['VIEW', 'EDIT', 'COMMENT', 'UPLOAD_DOC', 'DELETE_DOC', 'VIEW_INTERNAL', 'TRANSITION', 'ASSIGN', 'SUBMIT_REVIEW', 'RECORD_DECISION']
+const ROLES = ['RESEARCHER', 'SECRETARY', 'REVIEWER', 'CHAIRMAN', 'ADMIN']
+
 // ─────────────────────────────────────────────
 // HELPERS
 // ─────────────────────────────────────────────
@@ -76,6 +102,110 @@ async function seedUsers() {
 
   console.log(`     ✓ ${usersData.length} users upserted`)
   return users
+}
+
+/**
+ * Seeds configurable submission statuses, transitions, and permissions.
+ * @returns {Promise<void>}
+ */
+async function seedStatusManagement() {
+  console.log('  → Seeding status management...')
+
+  for (const status of DEFAULT_SUBMISSION_STATUSES) {
+    await prisma.submissionStatus.upsert({
+      where: { code: status.code },
+      update: {
+        labelHe: status.labelHe,
+        labelEn: status.labelEn,
+        color: status.color,
+        orderIndex: status.orderIndex,
+        isInitial: status.isInitial,
+        isTerminal: status.isTerminal,
+        slaPhase: status.slaPhase,
+        notificationType: status.notificationType,
+        isSystem: status.isSystem,
+        isActive: true,
+      },
+      create: status,
+    })
+  }
+
+  const statusRows = await prisma.submissionStatus.findMany({
+    where: { isActive: true },
+    select: { id: true, code: true },
+  })
+  const statusIdByCode = Object.fromEntries(statusRows.map((item) => [item.code, item.id]))
+
+  for (const transition of DEFAULT_TRANSITIONS) {
+    const fromStatusId = statusIdByCode[transition.fromCode]
+    const toStatusId = statusIdByCode[transition.toCode]
+    if (!fromStatusId || !toStatusId) continue
+
+    await prisma.statusTransition.upsert({
+      where: { fromStatusId_toStatusId: { fromStatusId, toStatusId } },
+      update: {
+        allowedRoles: transition.allowedRoles,
+        requireReviewerAssigned: transition.requireReviewerAssigned,
+        isActive: true,
+      },
+      create: {
+        fromStatusId,
+        toStatusId,
+        allowedRoles: transition.allowedRoles,
+        requireReviewerAssigned: transition.requireReviewerAssigned,
+      },
+    })
+  }
+
+  for (const status of statusRows) {
+    for (const role of ROLES) {
+      for (const action of STATUS_ACTIONS) {
+        const allowed =
+          action === 'VIEW'
+            ? true
+            : action === 'EDIT'
+              ? role === 'ADMIN' || role === 'SECRETARY' || (role === 'RESEARCHER' && ['DRAFT', 'PENDING_REVISION'].includes(status.code))
+              : action === 'COMMENT'
+                ? ['SECRETARY', 'REVIEWER', 'CHAIRMAN', 'ADMIN'].includes(role)
+                : action === 'UPLOAD_DOC'
+                  ? role === 'ADMIN' || role === 'SECRETARY' || (role === 'RESEARCHER' && ['DRAFT', 'SUBMITTED', 'PENDING_REVISION'].includes(status.code))
+                  : action === 'DELETE_DOC'
+                    ? role === 'ADMIN' || role === 'SECRETARY' || (role === 'RESEARCHER' && ['DRAFT', 'SUBMITTED', 'PENDING_REVISION'].includes(status.code))
+                    : action === 'VIEW_INTERNAL'
+                      ? ['SECRETARY', 'REVIEWER', 'CHAIRMAN', 'ADMIN'].includes(role)
+                      : action === 'TRANSITION'
+                        ? (['SUBMITTED', 'IN_TRIAGE', 'ASSIGNED', 'PENDING_REVISION'].includes(status.code) && ['SECRETARY', 'ADMIN'].includes(role))
+                          || (status.code === 'IN_REVIEW' && ['CHAIRMAN', 'ADMIN'].includes(role))
+                        : action === 'ASSIGN'
+                          ? ['SECRETARY', 'ADMIN'].includes(role) && ['IN_TRIAGE', 'ASSIGNED'].includes(status.code)
+                          : action === 'SUBMIT_REVIEW'
+                            ? role === 'REVIEWER' && status.code === 'ASSIGNED'
+                            : action === 'RECORD_DECISION'
+                              ? ['CHAIRMAN', 'ADMIN'].includes(role) && status.code === 'IN_REVIEW'
+                              : false
+
+        await prisma.statusPermission.upsert({
+          where: {
+            statusId_role_action: {
+              statusId: status.id,
+              role,
+              action,
+            },
+          },
+          update: { allowed, isActive: true },
+          create: {
+            statusId: status.id,
+            role,
+            action,
+            allowed,
+          },
+        })
+      }
+    }
+  }
+
+  console.log(`     ✓ ${DEFAULT_SUBMISSION_STATUSES.length} statuses upserted`)
+  console.log(`     ✓ ${DEFAULT_TRANSITIONS.length} transitions upserted`)
 }
 
 /**
@@ -311,6 +441,7 @@ async function main() {
   console.log('🌱 Starting EthicFlow seed...')
 
   const users = await seedUsers()
+  await seedStatusManagement()
   await seedInstitutionSettings()
   const form  = await seedFormConfig()
   await seedSubmissions(users, form)

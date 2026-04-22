@@ -41,6 +41,7 @@ import ProtocolSignPage           from './pages/protocols/ProtocolSignPage'
 import StatsPage                  from './pages/reports/StatsPage'
 import AuditLogPage               from './pages/reports/AuditLogPage'
 import SettingsPage               from './pages/admin/SettingsPage'
+import StatusManagementPage       from './pages/admin/StatusManagementPage'
 
 export default function App() {
   return (
@@ -113,6 +114,7 @@ export default function App() {
               {/* Admin only */}
               <Route element={<ProtectedRoute roles={['ADMIN']} />}>
                 <Route path="/users" element={<UsersPage />} />
+                <Route path="/admin/statuses" element={<StatusManagementPage />} />
               </Route>
             </Route>
           </Route>

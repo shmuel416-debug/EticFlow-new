@@ -25,7 +25,9 @@
     "prev": "הקודם",
     "next": "הבא",
     "showing": "מציג",
-    "of": "מתוך"
+    "of": "מתוך",
+    "yes": "כן",
+    "no": "לא"
   },
   "auth": {
     "login": {
@@ -95,6 +97,7 @@
     "users": "משתמשים",
     "reports": "דוחות",
     "auditLog": "יומן ביקורת",
+    "statusManagement": "ניהול סטטוסים",
     "system": "מערכת",
     "mainNavigation": "ניווט ראשי",
     "meetingsCalendar": "לוח פגישות"
@@ -847,6 +850,48 @@
     "saveSuccess": "ההגדרה עודכנה בהצלחה",
     "saveError": "שגיאה בשמירת ההגדרה",
     "save": "שמור"
+  },
+  "statusManagement": {
+    "title": "ניהול סטטוסים",
+    "subtitle": "שליטה דינמית בסטטוסים, מעברים והרשאות",
+    "tabsLabel": "לשוניות ניהול סטטוסים",
+    "tabs": {
+      "statuses": "סטטוסים",
+      "transitions": "מעברים",
+      "permissions": "הרשאות"
+    },
+    "fields": {
+      "code": "קוד",
+      "labelHe": "שם עברי",
+      "labelEn": "שם אנגלי",
+      "color": "צבע",
+      "isInitial": "סטטוס התחלתי",
+      "isTerminal": "סטטוס סופי"
+    },
+    "addStatus": "הוסף סטטוס",
+    "loadError": "שגיאה בטעינת תצורת הסטטוסים",
+    "saveError": "שגיאה בשמירת התצורה",
+    "deleteError": "לא ניתן למחוק את הסטטוס",
+    "saved": "התצורה נשמרה",
+    "deleted": "הסטטוס נמחק",
+    "actions": "פעולות",
+    "select": "בחר",
+    "transitionsFor": "מעברים מ-{{status}}",
+    "permissionsFor": "הרשאות עבור {{status}}",
+    "requireReviewerAssigned": "דורש סוקר מוקצה",
+    "action": "פעולה",
+    "actionsMap": {
+      "VIEW": "צפייה",
+      "EDIT": "עריכה",
+      "COMMENT": "תגובה",
+      "UPLOAD_DOC": "העלאת מסמך",
+      "DELETE_DOC": "מחיקת מסמך",
+      "VIEW_INTERNAL": "צפייה פנימית",
+      "TRANSITION": "העברת סטטוס",
+      "ASSIGN": "הקצאה לסוקר",
+      "SUBMIT_REVIEW": "הגשת ביקורת",
+      "RECORD_DECISION": "רישום החלטה"
+    }
   },
   "errors": {
     "VALIDATION_ERROR": "שגיאת אימות נתונים",

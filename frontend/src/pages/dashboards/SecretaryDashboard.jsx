@@ -9,26 +9,7 @@ import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import api from '../../services/api'
-
-/** Submission status badge (inline, no import needed) */
-function StatusBadge({ status }) {
-  const { t } = useTranslation()
-  const colors = {
-    DRAFT:            'bg-gray-100 text-gray-600',
-    SUBMITTED:        'bg-blue-100 text-blue-700',
-    IN_TRIAGE:        'bg-yellow-100 text-yellow-700',
-    ASSIGNED:         'bg-purple-100 text-purple-700',
-    IN_REVIEW:        'bg-indigo-100 text-indigo-700',
-    PENDING_REVISION: 'bg-orange-100 text-orange-700',
-    APPROVED:         'bg-green-100 text-green-700',
-    REJECTED:         'bg-red-100 text-red-700',
-  }
-  return (
-    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${colors[status] ?? 'bg-gray-100 text-gray-600'}`}>
-      {t(`submission.status.${status}`, status)}
-    </span>
-  )
-}
+import StatusBadge from '../../components/submissions/StatusBadge'
 
 /** SLA dot indicator */
 function SlaDot({ slaTracking }) {

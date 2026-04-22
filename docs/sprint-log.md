@@ -1,5 +1,17 @@
 # EthicFlow — Sprint Log
 
+## Sprint 12 — Dynamic Status Management
+
+| Date | Task | Status | Notes |
+|------|------|--------|-------|
+| 2026-04-22 | Status data model migration | ✅ Done | Added `SubmissionStatus`, `StatusTransition`, `StatusPermission`, migrated submission status to string |
+| 2026-04-22 | Status service + backend refactor | ✅ Done | Added `status.service.js`, removed hardcoded transition/notification/SLA mappings |
+| 2026-04-22 | Admin Status Management API | ✅ Done | Added `/api/admin/statuses*` CRUD/reorder/transitions/permissions endpoints |
+| 2026-04-22 | Admin Status Management UI | ✅ Done | Added `/admin/statuses` page with tabs for statuses, transitions, permissions |
+| 2026-04-22 | Dynamic status UI wiring | ✅ Done | Updated StatusBadge/StatusTransitionPanel and list filters to use backend config |
+| 2026-04-22 | E2E + unit tests updates | ✅ Done | Added backend `status.service` tests and new Playwright admin status spec |
+| 2026-04-22 | Sprint 12 reports | ✅ Done | Published code-review, QA, accessibility, security, and sprint report docs |
+
 ## Sprint 11 — UI E2E Expansion
 
 | Date | Task | Status | Notes |
@@ -13,6 +25,7 @@
 | 2026-04-21 | CI hardening | ✅ Done | Updated `playwright.config.js`, `frontend/package.json`, `.github/workflows/quality-gates.yml` |
 | 2026-04-21 | Flaky triage baseline | ✅ Done | Repeat-each run passed on available smoke tests; role-based flows require secrets in CI |
 | 2026-04-21 | Sprint 11 report & tracker updates | ✅ Done | Published `docs/sprint-11-report-hebrew.md`, updated `docs/progress.md` |
+| 2026-04-22 | CI strict role-credentials preflight | ✅ Done | Added `frontend/scripts/verify-e2e-env.mjs`; `e2e-quality` now runs `npm run e2e:ci:strict` to fail early when any `E2E_*` role secret is missing |
 
 ## Sprint 10 — Ops Hardening + Product Completion
 

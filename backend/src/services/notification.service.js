@@ -6,19 +6,7 @@
 
 import prisma from '../config/database.js'
 import { sendEmail } from './email/email.service.js'
-
-/**
- * Allowed status → NotificationType transitions for easy mapping.
- * @type {Record<string, string>}
- */
-const STATUS_TO_TYPE = {
-  SUBMITTED:        'SUBMISSION_RECEIVED',
-  ASSIGNED:         'SUBMISSION_ASSIGNED',
-  IN_REVIEW:        'REVIEW_REQUESTED',
-  PENDING_REVISION: 'REVISION_REQUIRED',
-  APPROVED:         'APPROVED',
-  REJECTED:         'REJECTED',
-}
+import { getNotificationType } from './status.service.js'
 
 /**
  * Creates a Notification record and sends an email to the recipient.
@@ -57,7 +45,7 @@ export async function notifyUser(userId, type, titleKey, bodyKey, metaJson = {},
  * @returns {Promise<void>}
  */
 export async function notifyStatusChange(submission, newStatus) {
-  const type = STATUS_TO_TYPE[newStatus]
+  const type = await getNotificationType(newStatus)
   if (!type) return
 
   const meta = { applicationId: submission.applicationId, title: submission.title }

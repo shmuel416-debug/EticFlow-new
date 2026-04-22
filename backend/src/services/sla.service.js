@@ -7,6 +7,7 @@
 
 import prisma from '../config/database.js'
 import { notifyUser } from './notification.service.js'
+import { getNonTerminalCodes, getSlaPhase } from './status.service.js'
 
 /** SLA windows in business days. */
 const SLA = { TRIAGE: 3, REVIEW: 14, APPROVAL: 5 }
@@ -48,13 +49,13 @@ export function daysUntil(due) {
 export async function setDueDates(submissionId, newStatus) {
   const now = new Date()
   const updates = {}
+  const phase = await getSlaPhase(newStatus)
 
-  if (newStatus === 'SUBMITTED')  updates.triageDue    = addBusinessDays(now, SLA.TRIAGE)
-  if (newStatus === 'ASSIGNED')   updates.reviewDue    = addBusinessDays(now, SLA.REVIEW)
-  if (newStatus === 'IN_REVIEW')  updates.approvalDue  = addBusinessDays(now, SLA.APPROVAL)
-  if (newStatus === 'IN_TRIAGE')  updates.triageCompleted = now
-  if (newStatus === 'ASSIGNED')   updates.triageCompleted = now
-  if (newStatus === 'APPROVED' || newStatus === 'REJECTED') updates.reviewCompleted = now
+  if (newStatus === 'SUBMITTED' || phase === 'TRIAGE') updates.triageDue = addBusinessDays(now, SLA.TRIAGE)
+  if (newStatus === 'ASSIGNED' || phase === 'REVIEW') updates.reviewDue = addBusinessDays(now, SLA.REVIEW)
+  if (newStatus === 'IN_REVIEW' || phase === 'APPROVAL') updates.approvalDue = addBusinessDays(now, SLA.APPROVAL)
+  if (newStatus === 'IN_TRIAGE' || newStatus === 'ASSIGNED') updates.triageCompleted = now
+  if (phase === 'COMPLETED' || ['APPROVED', 'REJECTED'].includes(newStatus)) updates.reviewCompleted = now
 
   if (Object.keys(updates).length) {
     await prisma.sLATracking.update({ where: { submissionId }, data: updates })
@@ -67,8 +68,9 @@ export async function setDueDates(submissionId, newStatus) {
  * @returns {Promise<{ warnings: number, breaches: number }>}
  */
 export async function runSlaCheck() {
+  const nonTerminalCodes = await getNonTerminalCodes()
   const active = await prisma.sLATracking.findMany({
-    where:   { submission: { status: { notIn: ['APPROVED','REJECTED','WITHDRAWN','DRAFT'] } } },
+    where:   { submission: { status: { in: nonTerminalCodes } } },
     include: { submission: { include: { author: true, reviewer: true } } },
   })
 

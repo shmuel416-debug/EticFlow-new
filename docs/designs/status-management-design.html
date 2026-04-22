@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EthicFlow — Status Management Design Options</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Heebo', sans-serif; }
+    .tab-btn.active { border-bottom: 3px solid #3b82f6; color: #3b82f6; font-weight: 700; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .preview-frame { border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; background: white; }
+  </style>
+</head>
+<body class="bg-gray-100">
+  <div class="sticky top-0 bg-white border-b z-50 px-6">
+    <div class="max-w-7xl mx-auto flex gap-8">
+      <button class="tab-btn active py-4 px-2 text-sm" data-tab="a">Option A — Clean &amp; Minimal</button>
+      <button class="tab-btn py-4 px-2 text-sm text-gray-500" data-tab="b">Option B — Bold &amp; Structured</button>
+      <button class="tab-btn py-4 px-2 text-sm text-gray-500" data-tab="c">Option C — Compact &amp; Efficient</button>
+    </div>
+  </div>
+
+  <div class="max-w-7xl mx-auto p-6 space-y-6">
+    <div id="tab-a" class="tab-content active">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2">
+          <h3 class="text-sm font-bold text-gray-500 mb-2">Desktop</h3>
+          <div class="preview-frame p-6 space-y-4">
+            <div class="flex items-center justify-between">
+              <h2 class="text-xl font-bold text-slate-800">ניהול סטטוסים</h2>
+              <button class="px-4 py-2 rounded-lg bg-blue-600 text-white text-sm">הוסף סטטוס</button>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div class="p-3 rounded-lg border border-slate-200">DRAFT</div>
+              <div class="p-3 rounded-lg border border-slate-200">SUBMITTED</div>
+              <div class="p-3 rounded-lg border border-slate-200">IN_REVIEW</div>
+              <div class="p-3 rounded-lg border border-slate-200">APPROVED</div>
+            </div>
+            <div class="rounded-lg border border-slate-200 p-4">
+              <h4 class="font-semibold text-sm mb-2">הרשאות</h4>
+              <p class="text-xs text-slate-500">טבלה מינימלית role x action.</p>
+            </div>
+          </div>
+        </div>
+        <div>
+          <h3 class="text-sm font-bold text-gray-500 mb-2">Mobile</h3>
+          <div class="preview-frame max-w-[375px] mx-auto p-3 space-y-2">
+            <div class="text-sm font-bold">ניהול סטטוסים</div>
+            <button class="w-full rounded-lg bg-blue-600 text-white py-2 text-sm">הוסף סטטוס</button>
+            <div class="rounded border p-2 text-xs">DRAFT</div>
+            <div class="rounded border p-2 text-xs">SUBMITTED</div>
+            <div class="rounded border p-2 text-xs">IN_REVIEW</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-b" class="tab-content">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2">
+          <h3 class="text-sm font-bold text-gray-500 mb-2">Desktop</h3>
+          <div class="preview-frame">
+            <div class="px-6 py-5 bg-gradient-to-l from-blue-900 to-blue-700 text-white">
+              <h2 class="text-xl font-bold">ניהול סטטוסים והרשאות</h2>
+              <p class="text-sm opacity-90">הגדרת שלבים, מעברים והרשאות לפי תפקיד</p>
+            </div>
+            <div class="p-5 space-y-4">
+              <div class="flex gap-2">
+                <button class="px-4 py-2 rounded-lg bg-blue-100 text-blue-800 text-sm">סטטוסים</button>
+                <button class="px-4 py-2 rounded-lg bg-slate-100 text-slate-700 text-sm">מעברים</button>
+                <button class="px-4 py-2 rounded-lg bg-slate-100 text-slate-700 text-sm">הרשאות</button>
+              </div>
+              <div class="rounded-xl border">
+                <div class="grid grid-cols-6 text-xs font-semibold text-slate-500 border-b bg-slate-50">
+                  <div class="p-3">קוד</div><div class="p-3">שם (עברית)</div><div class="p-3">שם (אנגלית)</div><div class="p-3">צבע</div><div class="p-3">סופי</div><div class="p-3">פעולות</div>
+                </div>
+                <div class="grid grid-cols-6 text-sm border-b">
+                  <div class="p-3 font-mono">IN_REVIEW</div><div class="p-3">בביקורת</div><div class="p-3">In Review</div><div class="p-3"><span class="inline-block w-6 h-6 rounded bg-violet-600"></span></div><div class="p-3">לא</div><div class="p-3">ערוך</div>
+                </div>
+                <div class="grid grid-cols-6 text-sm">
+                  <div class="p-3 font-mono">APPROVED</div><div class="p-3">אושר</div><div class="p-3">Approved</div><div class="p-3"><span class="inline-block w-6 h-6 rounded bg-green-600"></span></div><div class="p-3">כן</div><div class="p-3">ערוך</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <h3 class="text-sm font-bold text-gray-500 mb-2">Mobile</h3>
+          <div class="preview-frame max-w-[375px] mx-auto">
+            <div class="px-3 py-3 bg-blue-800 text-white text-sm font-semibold">ניהול סטטוסים</div>
+            <div class="p-3 space-y-2">
+              <div class="flex gap-2 text-xs">
+                <button class="flex-1 rounded bg-blue-100 text-blue-700 py-1.5">סטטוסים</button>
+                <button class="flex-1 rounded bg-slate-100 text-slate-600 py-1.5">מעברים</button>
+                <button class="flex-1 rounded bg-slate-100 text-slate-600 py-1.5">הרשאות</button>
+              </div>
+              <div class="rounded border p-2 text-xs">
+                <div class="font-mono">IN_REVIEW</div>
+                <div>בביקורת · In Review</div>
+              </div>
+              <button class="w-full rounded-lg bg-blue-700 text-white py-2 text-sm">שמור שינויים</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-c" class="tab-content">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2">
+          <h3 class="text-sm font-bold text-gray-500 mb-2">Desktop</h3>
+          <div class="preview-frame p-0">
+            <div class="grid grid-cols-3 min-h-[420px]">
+              <div class="border-l p-4 bg-slate-50">
+                <h4 class="font-semibold text-sm mb-3">סטטוסים</h4>
+                <div class="space-y-2 text-xs">
+                  <div class="p-2 rounded border bg-white">SUBMITTED</div>
+                  <div class="p-2 rounded border bg-white">IN_TRIAGE</div>
+                  <div class="p-2 rounded border bg-white">ASSIGNED</div>
+                </div>
+              </div>
+              <div class="border-l p-4">
+                <h4 class="font-semibold text-sm mb-3">מעברים</h4>
+                <p class="text-xs text-slate-500">גרף צפוף למשתמשי כוח.</p>
+              </div>
+              <div class="p-4">
+                <h4 class="font-semibold text-sm mb-3">הרשאות</h4>
+                <p class="text-xs text-slate-500">Grid מורכב role/action.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <h3 class="text-sm font-bold text-gray-500 mb-2">Mobile</h3>
+          <div class="preview-frame max-w-[375px] mx-auto p-3 text-xs text-slate-600">
+            Split layout not recommended on mobile.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+    tabButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        const id = button.dataset.tab;
+        tabButtons.forEach((item) => item.classList.remove('active'));
+        tabButtons.forEach((item) => item.classList.add('text-gray-500'));
+        tabContents.forEach((item) => item.classList.remove('active'));
+        button.classList.add('active');
+        button.classList.remove('text-gray-500');
+        document.getElementById(`tab-${id}`).classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>

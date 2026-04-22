@@ -12,6 +12,7 @@
 import prisma   from '../config/database.js'
 import { AppError } from '../utils/errors.js'
 import { validateFile, saveFile, deleteFile, resolvePath } from '../services/storage.service.js'
+import { can as canByStatusPermission } from '../services/status.service.js'
 import path     from 'path'
 import fs       from 'fs'
 
@@ -39,11 +40,11 @@ function canAccess(user, submission) {
  * @param {object} submission
  * @returns {boolean}
  */
-function canWrite(user, submission) {
+async function canWrite(user, submission) {
   if (['SECRETARY', 'ADMIN'].includes(user.role)) return true
   if (user.role === 'RESEARCHER') {
-    const editableStatuses = ['DRAFT', 'SUBMITTED', 'PENDING_REVISION']
-    return submission.authorId === user.id && editableStatuses.includes(submission.status)
+    const allowed = await canByStatusPermission('UPLOAD_DOC', submission.status, user.role)
+    return submission.authorId === user.id && allowed
   }
   return false
 }
@@ -81,7 +82,7 @@ export async function upload(req, res, next) {
     if (!submission || !submission.isActive) {
       throw new AppError('Submission not found', 'NOT_FOUND', 404)
     }
-    if (!canWrite(req.user, submission)) {
+    if (!(await canWrite(req.user, submission))) {
       throw new AppError('Forbidden', 'FORBIDDEN', 403)
     }
 
@@ -219,7 +220,7 @@ export async function remove(req, res, next) {
     if (!doc || !doc.isActive) {
       throw new AppError('Document not found', 'NOT_FOUND', 404)
     }
-    if (doc.submission && !canWrite(req.user, doc.submission)) {
+    if (doc.submission && !(await canWrite(req.user, doc.submission))) {
       throw new AppError('Forbidden', 'FORBIDDEN', 403)
     }
 
