@@ -92,6 +92,8 @@ Before each release, verify:
 
 - Secrets are stored in environment variables only (never committed to Git).
 - JWT secret rotated periodically and after any incident.
+- `FRONTEND_URL` is set to the exact production frontend origin (no wildcard/fallback).
+- `AUTH_EXCHANGE_TTL_MS` is short (recommended 60-120 seconds).
 - `EMAIL_PROVIDER`, `AI_PROVIDER`, `STORAGE_PROVIDER`, `CALENDAR_PROVIDER` are explicitly set in production.
 - Backup restore drill was executed in the last 30 days (DB + uploads).
 - Health check endpoint monitored (`/api/health`) with alerting.
@@ -261,8 +263,8 @@ MICROSOFT_AUTH_REDIRECT_URI=https://yourdomain.com/api/auth/microsoft/callback
 1. User clicks "כניסה עם Microsoft" on the login page
 2. Redirected to `GET /api/auth/microsoft` → redirects to Microsoft login
 3. Microsoft redirects to `/api/auth/microsoft/callback?code=...`
-4. Backend exchanges code → gets user profile → creates/finds user → returns JWT
-5. User redirected to `/sso-callback?token=...` → stored in memory → to dashboard
+4. Backend exchanges code → gets user profile → creates/finds user → creates one-time exchange code
+5. User redirected to `/sso-callback?code=...` → frontend exchanges code for JWT → dashboard
 
 **First-time SSO users:** Created automatically as `RESEARCHER` role. Admin can promote via Users page.
 
@@ -360,8 +362,8 @@ GOOGLE_AUTH_ALLOWED_DOMAIN=lev.ac.il    # leave empty for any Google account
 1. User clicks "כניסה עם Google" on the login page
 2. Redirected to `GET /api/auth/google` → redirects to Google OAuth consent screen
 3. Google redirects to `/api/auth/google/callback?code=...`
-4. Backend exchanges code → gets user profile → creates/finds user → returns JWT
-5. User redirected to `/sso-callback?token=...` → stored in memory → to dashboard
+4. Backend exchanges code → gets user profile → creates/finds user → creates one-time exchange code
+5. User redirected to `/sso-callback?code=...` → frontend exchanges code for JWT → dashboard
 
 **First-time SSO users:** Created automatically as `RESEARCHER` role. Admin can promote via Users page.
 

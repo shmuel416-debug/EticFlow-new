@@ -70,8 +70,8 @@ export default function AuditLogPage() {
       const params = { page, limit: PAGE_SIZE }
       if (actionFilter)     params.action     = actionFilter
       if (entityTypeFilter) params.entityType = entityTypeFilter
-      if (dateFromFilter)   params.dateFrom   = dateFromFilter
-      if (dateToFilter)     params.dateTo     = dateToFilter
+      if (dateFromFilter)   params.from = `${dateFromFilter}T00:00:00.000Z`
+      if (dateToFilter)     params.to   = `${dateToFilter}T23:59:59.999Z`
       const res = await api.get('/audit-logs', { params })
       setLogs(res.data.data)
       setTotal(res.data.pagination.total)

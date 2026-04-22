@@ -88,8 +88,8 @@ router.post(
   authenticate,
   authorize('SECRETARY', 'ADMIN'),
   validate(createSchema),
-  controller.create,
-  auditLog('meeting.created', 'Meeting')
+  auditLog('meeting.created', 'Meeting'),
+  controller.create
 )
 
 router.get(
@@ -104,16 +104,16 @@ router.put(
   authenticate,
   authorize('SECRETARY', 'ADMIN'),
   validate(updateSchema),
-  controller.update,
-  auditLog('meeting.updated', 'Meeting')
+  auditLog('meeting.updated', 'Meeting'),
+  controller.update
 )
 
 router.delete(
   '/:id',
   authenticate,
   authorize('SECRETARY', 'ADMIN'),
-  controller.cancel,
-  auditLog('meeting.cancelled', 'Meeting')
+  auditLog('meeting.cancelled', 'Meeting'),
+  controller.cancel
 )
 
 router.post(
@@ -121,16 +121,16 @@ router.post(
   authenticate,
   authorize('SECRETARY', 'ADMIN'),
   validate(agendaItemSchema),
-  controller.addAgendaItem,
-  auditLog('meeting.agenda_item_added', 'Meeting')
+  auditLog('meeting.agenda_item_added', 'Meeting'),
+  controller.addAgendaItem
 )
 
 router.delete(
   '/:id/agenda/:itemId',
   authenticate,
   authorize('SECRETARY', 'ADMIN'),
-  controller.removeAgendaItem,
-  auditLog('meeting.agenda_item_removed', 'Meeting')
+  auditLog('meeting.agenda_item_removed', 'Meeting'),
+  controller.removeAgendaItem
 )
 
 router.patch(
@@ -138,8 +138,8 @@ router.patch(
   authenticate,
   authorize('SECRETARY', 'ADMIN'),
   validate(attendanceSchema),
-  controller.recordAttendance,
-  auditLog('meeting.attendance_recorded', 'Meeting')
+  auditLog('meeting.attendance_recorded', 'Meeting'),
+  controller.recordAttendance
 )
 
 router.post(
@@ -147,16 +147,16 @@ router.post(
   authenticate,
   authorize('SECRETARY', 'ADMIN'),
   validate(addAttendeeSchema),
-  controller.addAttendee,
-  auditLog('meeting.attendee_added', 'Meeting')
+  auditLog('meeting.attendee_added', 'Meeting'),
+  controller.addAttendee
 )
 
 router.delete(
   '/:id/attendees/:userId',
   authenticate,
   authorize('SECRETARY', 'ADMIN'),
-  controller.removeAttendee,
-  auditLog('meeting.attendee_removed', 'Meeting')
+  auditLog('meeting.attendee_removed', 'Meeting'),
+  controller.removeAttendee
 )
 
 export default router

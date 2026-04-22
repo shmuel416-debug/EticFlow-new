@@ -91,8 +91,8 @@ router.post(
   authenticate,
   authorize('ADMIN'),
   validate(createSchema),
-  controller.create,
-  auditLog('admin.user_created', 'User')
+  auditLog('admin.user_created', 'User'),
+  controller.create
 )
 
 router.put(
@@ -100,24 +100,24 @@ router.put(
   authenticate,
   authorize('ADMIN'),
   validate(updateSchema),
-  controller.update,
-  auditLog('admin.user_updated', 'User')
+  auditLog('admin.user_updated', 'User'),
+  controller.update
 )
 
 router.patch(
   '/admin/users/:id/deactivate',
   authenticate,
   authorize('ADMIN'),
-  controller.deactivate,
-  auditLog('admin.user_deactivated', 'User')
+  auditLog('admin.user_deactivated', 'User'),
+  controller.deactivate
 )
 
 router.post(
   '/admin/impersonate/:userId',
   authenticate,
   authorize('ADMIN'),
-  controller.impersonate,
-  auditLog('admin.impersonation_start', 'User')
+  auditLog('admin.impersonation_start', 'User'),
+  controller.impersonate
 )
 
 export default router

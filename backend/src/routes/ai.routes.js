@@ -16,8 +16,8 @@ const router = Router()
 router.post(
   '/analyze/:subId',
   authenticate,
-  controller.runAnalysis,
-  auditLog('ai.analysis_requested', 'AIAnalysis')
+  auditLog('ai.analysis_requested', 'AIAnalysis'),
+  controller.runAnalysis
 )
 
 router.get(

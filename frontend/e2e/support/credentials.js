@@ -34,6 +34,12 @@ export const USERS = {
 export const ROLES = ['RESEARCHER', 'SECRETARY', 'REVIEWER', 'CHAIRMAN', 'ADMIN']
 
 /**
+ * Roles required for cross-role submission → review E2E (API setup + multi-role UI).
+ * ADMIN is not used in these flows.
+ */
+export const WORKFLOW_ROLES = ['RESEARCHER', 'SECRETARY', 'REVIEWER', 'CHAIRMAN']
+
+/**
  * Returns true when credentials for role are configured.
  * @param {string} role
  * @returns {boolean}
@@ -49,4 +55,11 @@ export function hasRoleCredentials(role) {
  */
 export function hasAllRoleCredentials() {
   return ROLES.every((role) => hasRoleCredentials(role))
+}
+
+/**
+ * @returns {boolean} True when workflow E2E can run (all roles used by those tests).
+ */
+export function hasWorkflowRoleCredentials() {
+  return WORKFLOW_ROLES.every((role) => hasRoleCredentials(role))
 }

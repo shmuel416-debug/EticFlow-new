@@ -403,6 +403,7 @@ export async function signByToken(req, res, next) {
       })
     }
 
+    res.locals.entityId = sig.protocolId
     res.json({
       data: {
         action:       newStatus,

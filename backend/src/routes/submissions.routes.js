@@ -13,7 +13,7 @@ import { z } from 'zod'
 import { validate, validateQuery } from '../middleware/validate.js'
 import { authenticate } from '../middleware/auth.js'
 import { authorize } from '../middleware/role.js'
-import { auditLog } from '../middleware/audit.js'
+import { auditLog, recordAuditEntry } from '../middleware/audit.js'
 import * as controller from '../controllers/submissions.controller.js'
 
 import * as statusController from '../controllers/submissions.status.controller.js'
@@ -110,8 +110,8 @@ router.post(
   authenticate,
   authorize('RESEARCHER'),
   validate(createSchema),
-  controller.create,
-  auditLog('submission.create', 'Submission')
+  auditLog('submission.create', 'Submission'),
+  controller.create
 )
 
 router.put(
@@ -119,24 +119,24 @@ router.put(
   authenticate,
   authorize('RESEARCHER', 'SECRETARY', 'ADMIN'),
   validate(updateSchema),
-  controller.update,
-  auditLog('submission.update', 'Submission')
+  auditLog('submission.update', 'Submission'),
+  controller.update
 )
 
 router.post(
   '/:id/submit',
   authenticate,
   authorize('RESEARCHER'),
-  controller.researcherSubmit,
-  auditLog('submission.submitted', 'Submission')
+  auditLog('submission.submitted', 'Submission'),
+  controller.researcherSubmit
 )
 
 router.post(
   '/:id/continue',
   authenticate,
   authorize('RESEARCHER'),
-  controller.continueSubmission,
-  auditLog('submission.continue', 'Submission')
+  auditLog('submission.continue', 'Submission'),
+  controller.continueSubmission
 )
 
 router.patch(
@@ -144,8 +144,8 @@ router.patch(
   authenticate,
   authorize('SECRETARY', 'CHAIRMAN', 'ADMIN'),
   validate(transitionSchema),
-  statusController.transitionStatus,
-  auditLog('submission.status_changed', 'Submission')
+  auditLog('submission.status_changed', 'Submission'),
+  statusController.transitionStatus
 )
 
 router.patch(
@@ -153,8 +153,8 @@ router.patch(
   authenticate,
   authorize('SECRETARY', 'ADMIN'),
   validate(assignSchema),
-  statusController.assignReviewer,
-  auditLog('submission.reviewer_assigned', 'Submission')
+  auditLog('submission.reviewer_assigned', 'Submission'),
+  statusController.assignReviewer
 )
 
 router.patch(
@@ -162,8 +162,8 @@ router.patch(
   authenticate,
   authorize('REVIEWER'),
   validate(reviewSchema),
-  statusController.submitReview,
-  auditLog('submission.review_submitted', 'Submission')
+  auditLog('submission.review_submitted', 'Submission'),
+  statusController.submitReview
 )
 
 router.patch(
@@ -171,8 +171,8 @@ router.patch(
   authenticate,
   authorize('CHAIRMAN', 'ADMIN'),
   validate(decisionSchema),
-  statusController.recordDecision,
-  auditLog('submission.decision_recorded', 'Submission')
+  auditLog('submission.decision_recorded', 'Submission'),
+  statusController.recordDecision
 )
 
 router.post(
@@ -180,8 +180,8 @@ router.post(
   authenticate,
   authorize('SECRETARY', 'REVIEWER', 'CHAIRMAN', 'ADMIN'),
   validate(commentSchema),
-  statusController.addComment,
-  auditLog('submission.comment_added', 'Submission')
+  auditLog('submission.comment_added', 'Submission'),
+  statusController.addComment
 )
 
 /**
@@ -226,12 +226,19 @@ router.post(
       res.setHeader('Content-Length',      stat.size)
       res.setHeader('X-Document-Id',       docId)
 
+      res.locals.entityId = id
+      res.on('finish', () => {
+        if (res.statusCode < 400) {
+          recordAuditEntry(req, res, 'submission.approval_letter_generated', 'Submission').catch((err) => {
+            console.error('[Audit] Failed to write audit log:', err.message)
+          })
+        }
+      })
       fs.createReadStream(absPath).pipe(res)
     } catch (err) {
       next(err)
     }
-  },
-  auditLog('submission.approval_letter_generated', 'Submission')
+  }
 )
 
 export default router

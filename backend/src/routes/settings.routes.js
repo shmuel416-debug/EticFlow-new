@@ -44,8 +44,8 @@ router.post(
   authenticate,
   authorize('ADMIN', 'SECRETARY'),
   validate(previewSchema),
-  controller.previewApprovalTemplate,
-  auditLog('settings.template_previewed', 'Submission')
+  auditLog('settings.template_previewed', 'Submission'),
+  controller.previewApprovalTemplate
 )
 
 router.put(
@@ -53,8 +53,8 @@ router.put(
   authenticate,
   authorize('ADMIN', 'SECRETARY'),
   validate(updateSchema),
-  controller.update,
-  auditLog('settings.updated', 'InstitutionSetting')
+  auditLog('settings.updated', 'InstitutionSetting'),
+  controller.update
 )
 
 export default router

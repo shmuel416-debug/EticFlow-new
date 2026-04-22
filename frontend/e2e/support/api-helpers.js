@@ -3,7 +3,7 @@
  */
 
 import { expect } from '@playwright/test'
-import { USERS, ROLES, hasRoleCredentials } from './credentials'
+import { USERS, hasRoleCredentials } from './credentials'
 
 /**
  * Performs HTTP call with optional bearer auth.
@@ -50,13 +50,14 @@ export async function loginRoleApi(ctx, role) {
 }
 
 /**
- * Logs in all known roles and returns role→token map.
+ * Logs in a subset of roles and returns role→token map.
  * @param {import('@playwright/test').APIRequestContext} ctx
+ * @param {readonly string[]} roles
  * @returns {Promise<Record<string,string>>}
  */
-export async function loginAllRolesApi(ctx) {
+export async function loginRolesApi(ctx, roles) {
   const tokens = {}
-  for (const role of ROLES) {
+  for (const role of roles) {
     tokens[role] = await loginRoleApi(ctx, role)
   }
   return tokens

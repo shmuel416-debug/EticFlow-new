@@ -30,8 +30,8 @@ router.post(
   authenticate,
   authorize('RESEARCHER', 'SECRETARY', 'ADMIN'),
   upload.array('files', 10),
-  controller.upload,
-  auditLog('document.upload', 'Document')
+  auditLog('document.upload', 'Document'),
+  controller.upload
 )
 
 router.get(
@@ -50,8 +50,8 @@ router.delete(
   '/:id',
   authenticate,
   authorize('RESEARCHER', 'SECRETARY', 'ADMIN'),
-  controller.remove,
-  auditLog('document.delete', 'Document')
+  auditLog('document.delete', 'Document'),
+  controller.remove
 )
 
 export default router

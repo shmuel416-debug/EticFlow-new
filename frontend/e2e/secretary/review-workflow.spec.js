@@ -3,11 +3,14 @@
  */
 
 import { test, expect } from '../support/fixtures'
-import { hasAllRoleCredentials } from '../support/credentials'
+import { hasWorkflowRoleCredentials } from '../support/credentials'
 import { apiCall } from '../support/api-helpers'
 import { loginViaUi, gotoAuthed } from '../support/ui-helpers'
 
-test.skip(!hasAllRoleCredentials(), 'All role credentials must be configured for cross-role workflow')
+test.skip(
+  !hasWorkflowRoleCredentials(),
+  'RESEARCHER, SECRETARY, REVIEWER, and CHAIRMAN credentials are required for cross-role workflow'
+)
 
 /**
  * Creates a submitted submission via API for deterministic UI workflow testing.

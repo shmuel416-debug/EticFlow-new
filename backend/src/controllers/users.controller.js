@@ -162,6 +162,7 @@ export async function create(req, res, next) {
       data: { email, fullName, role, department, phone, passwordHash, authProvider: 'LOCAL' },
     })
 
+    res.locals.entityId = user.id
     res.status(201).json({ data: safeUser(user) })
   } catch (err) {
     next(err)

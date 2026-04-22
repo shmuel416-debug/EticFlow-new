@@ -24,6 +24,7 @@ import * as googleAuth    from '../services/auth/google.provider.js'
  * Value: bcrypt('EthicFlowDummy2026!', 12)
  */
 const DUMMY_BCRYPT_HASH = '$2b$12$Z8nII1EDprDhFMZYH2.BVOhjlIjGBtStf/OgyisITv/gZJaXF6Y8y'
+const DEFAULT_AUTH_EXCHANGE_TTL_MS = 90 * 1000
 
 // ─────────────────────────────────────────────
 // HELPERS
@@ -52,6 +53,29 @@ function hashToken(rawToken) {
 }
 
 /**
+ * Issues a short-lived one-time auth exchange code for SSO handoff.
+ * Stores only the SHA-256 hash in DB to avoid exposing bearer material.
+ * @param {string} userId
+ * @returns {Promise<string>} Raw one-time code for redirect URL
+ */
+async function issueAuthExchangeCode(userId) {
+  const rawCode = crypto.randomBytes(32).toString('hex')
+  const codeHash = hashToken(rawCode)
+  const parsedTtl = parseInt(process.env.AUTH_EXCHANGE_TTL_MS ?? String(DEFAULT_AUTH_EXCHANGE_TTL_MS), 10)
+  const ttlMs = Number.isFinite(parsedTtl) ? Math.max(30_000, parsedTtl) : DEFAULT_AUTH_EXCHANGE_TTL_MS
+
+  await prisma.authExchangeCode.create({
+    data: {
+      codeHash,
+      userId,
+      expiresAt: new Date(Date.now() + ttlMs),
+    },
+  })
+
+  return rawCode
+}
+
+/**
  * Strips sensitive fields from a user record.
  * @param {object} user - Prisma User record
  * @returns {{ id, email, fullName, role, department, phone, createdAt }}
@@ -63,18 +87,38 @@ function safeUser(user) {
 
 /**
  * Resolves frontend base URL for auth redirects.
- * Priority: FRONTEND_URL env → Origin header → localhost fallback.
+ * Production: FRONTEND_URL is mandatory (strict allowlist target).
+ * Development: FRONTEND_URL env → Origin header → localhost fallback.
  * @param {import('express').Request} req
  * @returns {string}
  */
 function resolveFrontendUrl(req) {
-  const fromEnv = process.env.FRONTEND_URL
-  if (fromEnv) return fromEnv
+  const fromEnv = process.env.FRONTEND_URL?.trim()
+  const normalizedEnv = fromEnv ? fromEnv.replace(/\/$/, '') : null
+  const isProd = process.env.NODE_ENV === 'production'
+
+  if (isProd) {
+    if (!normalizedEnv) {
+      throw new Error('FRONTEND_URL must be configured in production')
+    }
+    return normalizedEnv
+  }
+
+  if (normalizedEnv) return normalizedEnv
 
   const origin = req.get('origin')
-  if (origin) return origin
+  if (origin) return origin.replace(/\/$/, '')
 
   return 'http://localhost:5173'
+}
+
+/**
+ * Returns a safe frontend fallback URL for catch blocks.
+ * Never trusts request-origin in failure paths.
+ * @returns {string}
+ */
+function safeFrontendFallbackUrl() {
+  return process.env.FRONTEND_URL?.trim()?.replace(/\/$/, '') || 'http://localhost:5173'
 }
 
 // ─────────────────────────────────────────────
@@ -125,12 +169,59 @@ export async function login(req, res, next) {
     // Always run bcrypt — prevents timing-based email enumeration (constant-time)
     const validPassword = await bcrypt.compare(password, user?.passwordHash ?? DUMMY_BCRYPT_HASH)
 
-if (!user || !validPassword || !user.isActive) {
+    if (!user || !validPassword || !user.isActive) {
       return next(new AppError('Invalid email or password', 'INVALID_CREDENTIALS', 401))
     }
 
     res.locals.entityId = user.id
     res.json({ user: safeUser(user), token: signToken(user) })
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
+ * POST /api/auth/exchange-code
+ * Exchanges a short-lived one-time SSO code for a JWT.
+ * @param {import('express').Request} req - body: { code }
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
+export async function exchangeCode(req, res, next) {
+  try {
+    const { code } = req.body
+    const codeHash = hashToken(code)
+    const now = new Date()
+
+    const record = await prisma.authExchangeCode.findUnique({
+      where: { codeHash },
+      include: { user: true },
+    })
+
+    if (!record || !record.isActive || record.usedAt || record.expiresAt <= now) {
+      return next(new AppError('Invalid or expired exchange code', 'INVALID_EXCHANGE_CODE', 401))
+    }
+
+    const consumeResult = await prisma.authExchangeCode.updateMany({
+      where: {
+        id:       record.id,
+        isActive: true,
+        usedAt:   null,
+        expiresAt: { gt: now },
+      },
+      data: { usedAt: now },
+    })
+
+    if (consumeResult.count !== 1) {
+      return next(new AppError('Invalid or expired exchange code', 'INVALID_EXCHANGE_CODE', 401))
+    }
+
+    if (!record.user || !record.user.isActive) {
+      return next(new AppError('Invalid exchange code user', 'INVALID_EXCHANGE_CODE', 401))
+    }
+
+    res.locals.entityId = record.user.id
+    res.json({ user: safeUser(record.user), token: signToken(record.user) })
   } catch (err) {
     next(err)
   }
@@ -221,6 +312,7 @@ export async function resetPassword(req, res, next) {
       data:  { passwordHash, resetToken: null, resetTokenExpiry: null },
     })
 
+    res.locals.entityId = user.id
     res.json({ message: 'Password reset successful' })
   } catch (err) {
     next(err)
@@ -318,7 +410,7 @@ export async function googleRedirect(req, res, next) {
     res.redirect(authUrl)
   } catch (err) {
     console.error('[Auth/Google] redirect error:', err.message)
-    const frontendUrl = resolveFrontendUrl(req)
+    const frontendUrl = safeFrontendFallbackUrl()
     res.redirect(`${frontendUrl}/login?error=sso_failed`)
   }
 }
@@ -358,12 +450,12 @@ export async function googleCallback(req, res, next) {
     if (!user || !user.isActive) return res.redirect(`${frontendUrl}/login?error=account_inactive`)
 
     res.locals.entityId = user.id
-    const token = signToken(user)
-
-    res.redirect(`${frontendUrl}/sso-callback?token=${token}`)
+    const exchangeCode = await issueAuthExchangeCode(user.id)
+    res.redirect(`${frontendUrl}/sso-callback?code=${exchangeCode}`)
   } catch (err) {
     console.error('[Auth/Google] callback error:', err.message)
-    res.redirect(`${frontendUrl}/login?error=sso_failed`)
+    const fallbackUrl = safeFrontendFallbackUrl()
+    res.redirect(`${fallbackUrl}/login?error=sso_failed`)
   }
 }
 
@@ -391,7 +483,7 @@ export async function microsoftRedirect(req, res, next) {
     res.redirect(authUrl)
   } catch (err) {
     console.error('[Auth/Microsoft] redirect error:', err.message)
-    const frontendUrl = resolveFrontendUrl(req)
+    const frontendUrl = safeFrontendFallbackUrl()
     res.redirect(`${frontendUrl}/login?error=sso_failed`)
   }
 }
@@ -435,12 +527,13 @@ export async function microsoftCallback(req, res, next) {
     if (!user || !user.isActive) return res.redirect(`${frontendUrl}/login?error=account_inactive`)
 
     res.locals.entityId = user.id
-    const token = signToken(user)
+    const exchangeCode = await issueAuthExchangeCode(user.id)
 
-    // Redirect to frontend SSO callback page with token in query param
-    res.redirect(`${frontendUrl}/sso-callback?token=${token}`)
+    // Redirect with one-time code only (never include JWT in URL)
+    res.redirect(`${frontendUrl}/sso-callback?code=${exchangeCode}`)
   } catch (err) {
     console.error('[Auth/Microsoft] callback error:', err.message)
-    res.redirect(`${frontendUrl}/login?error=sso_failed`)
+    const fallbackUrl = safeFrontendFallbackUrl()
+    res.redirect(`${fallbackUrl}/login?error=sso_failed`)
   }
 }

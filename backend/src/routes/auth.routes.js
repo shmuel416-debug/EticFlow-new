@@ -5,6 +5,7 @@
  * GET  /api/auth/me                    — get current user (protected)
  * POST /api/auth/forgot-password       — send reset email
  * POST /api/auth/reset-password        — apply new password via token
+ * POST /api/auth/exchange-code         — exchange one-time SSO code for JWT
  * GET  /api/auth/microsoft             — redirect to Microsoft login (SSO)
  * GET  /api/auth/microsoft/callback    — handle Microsoft OAuth2 callback
  * GET  /api/auth/google                — redirect to Google login (SSO)
@@ -43,20 +44,24 @@ const resetSchema = z.object({
   password: z.string().min(8, 'Password must be at least 8 characters'),
 })
 
+const exchangeCodeSchema = z.object({
+  code: z.string().regex(/^[a-f0-9]{64}$/i, 'Invalid exchange code format'),
+})
+
 router.post(
   '/register',
   registerLimiter,
   validate(registerSchema),
-  controller.register,
-  auditLog('auth.register', 'User')
+  auditLog('auth.register', 'User'),
+  controller.register
 )
 
 router.post(
   '/login',
   loginLimiter,
   validate(loginSchema),
-  controller.login,
-  auditLog('auth.login', 'User')
+  auditLog('auth.login', 'User'),
+  controller.login
 )
 
 router.get('/me', authenticate, controller.me)
@@ -71,16 +76,23 @@ router.post(
 router.post(
   '/reset-password',
   validate(resetSchema),
-  controller.resetPassword,
-  auditLog('auth.reset-password', 'User')
+  auditLog('auth.reset-password', 'User'),
+  controller.resetPassword
+)
+
+router.post(
+  '/exchange-code',
+  validate(exchangeCodeSchema),
+  auditLog('auth.sso.exchange', 'User'),
+  controller.exchangeCode
 )
 
 // Microsoft SSO — no body validation needed (query params handled in controller)
 router.get('/microsoft',          controller.microsoftRedirect)
-router.get('/microsoft/callback', controller.microsoftCallback, auditLog('auth.sso.microsoft', 'User'))
+router.get('/microsoft/callback', auditLog('auth.sso.microsoft', 'User'), controller.microsoftCallback)
 
 // Google SSO — no body validation needed (query params handled in controller)
 router.get('/google',          controller.googleRedirect)
-router.get('/google/callback', controller.googleCallback, auditLog('auth.sso.google', 'User'))
+router.get('/google/callback', auditLog('auth.sso.google', 'User'), controller.googleCallback)
 
 export default router

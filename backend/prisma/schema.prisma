@@ -126,12 +126,34 @@ model User {
   comments          Comment[]
   notifications     Notification[]
   auditLogs         AuditLog[]
+  authExchangeCodes AuthExchangeCode[]
   meetingAttendees  MeetingAttendee[]
   protocolSignatures ProtocolSignature[]
   uploadedDocuments Document[]         @relation("DocumentUploader")
   aiAnalyses        AIAnalysis[]
 
   @@map("users")
+}
+
+// ─────────────────────────────────────────────
+// 1.1 AUTH EXCHANGE CODE (SSO handoff)
+// ─────────────────────────────────────────────
+
+model AuthExchangeCode {
+  id        String   @id @default(uuid())
+  codeHash  String   @unique @map("code_hash")
+  userId    String   @map("user_id")
+  expiresAt DateTime @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([expiresAt])
+  @@index([userId, createdAt])
+  @@map("auth_exchange_codes")
 }
 
 // ─────────────────────────────────────────────

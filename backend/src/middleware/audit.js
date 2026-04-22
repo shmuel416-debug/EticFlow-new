@@ -1,14 +1,13 @@
 /**
  * EthicFlow — Audit Log Middleware
- * Factory that returns an Express middleware recording sensitive actions.
- * Fire-and-forget: never blocks or fails the request.
- * Saves to AuditLog table: userId, action, entityType, entityId, IP, userAgent.
+ * Patches res.json (and auth SSO res.redirect) so a successful response records
+ * an audit row. Must be registered *before* the route handler, otherwise Express
+ * never runs post-handlers when the handler only calls res.json without next().
  */
 
 import prisma from '../config/database.js'
 
 /**
- * Extracts the client IP address from the request.
  * @param {import('express').Request} req
  * @returns {string|null}
  */
@@ -21,31 +20,57 @@ function getIpAddress(req) {
 }
 
 /**
- * Creates an Express middleware that logs an action to the audit table.
- * Place AFTER the controller in the route definition.
- * @param {string} action      - Action identifier, e.g. 'submission.approved'
- * @param {string} entityType  - Entity type, e.g. 'Submission'
+ * Persists a single audit row. Exported for non-JSON success paths (e.g. PDF stream on finish).
+ * @param {import('express').Request}  req
+ * @param {import('express').Response} res
+ * @param {string} action
+ * @param {string} entityType
+ * @returns {Promise<void>}
+ */
+export function recordAuditEntry(req, res, action, entityType) {
+  const entityId = req.params?.id ?? req.params?.subId ?? res.locals?.entityId ?? null
+  return prisma.auditLog.create({
+    data: {
+      userId: req.user?.id ?? null,
+      action,
+      entityType,
+      entityId,
+      ipAddress: getIpAddress(req),
+      userAgent: req.headers['user-agent'] ?? null,
+      metaJson:  res.locals?.auditMeta ?? null,
+    },
+  })
+}
+
+/**
+ * Creates an Express middleware that records an audit on successful res.json, or
+ * (for SSO) on a successful redirect to the sso-callback with an exchange code.
+ * @param {string} action      e.g. 'submission.submitted'
+ * @param {string} entityType  e.g. 'Submission' (Prisma / domain label)
  * @returns {import('express').RequestHandler}
  */
 export function auditLog(action, entityType) {
   return (req, res, next) => {
-    const entityId = req.params?.id ?? res.locals?.entityId ?? null
-    const userId   = req.user?.id ?? null
+    const origJson = res.json.bind(res)
+    res.json = (body) => {
+      if (res.statusCode < 400) {
+        recordAuditEntry(req, res, action, entityType).catch((err) => {
+          console.error('[Audit] Failed to write audit log:', err.message)
+        })
+      }
+      return origJson(body)
+    }
 
-    // Fire-and-forget — do not await
-    prisma.auditLog.create({
-      data: {
-        userId,
-        action,
-        entityType,
-        entityId,
-        ipAddress: getIpAddress(req),
-        userAgent: req.headers['user-agent'] ?? null,
-        metaJson:  res.locals?.auditMeta ?? null,
-      },
-    }).catch((err) => {
-      console.error('[Audit] Failed to write audit log:', err.message)
-    })
+    const origRedirect = res.redirect.bind(res)
+    res.redirect = (url) => {
+      const s = String(url)
+      if (s.includes('/sso-callback') && s.includes('code=')) {
+        recordAuditEntry(req, res, action, entityType).catch((err) => {
+          console.error('[Audit] Failed to write audit log:', err.message)
+        })
+      }
+      return origRedirect.call(res, url)
+    }
 
     next()
   }

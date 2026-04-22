@@ -29,21 +29,24 @@ import settingsRouter      from './routes/settings.routes.js'
 
 const app  = express()
 const PORT = process.env.PORT ?? process.env.API_PORT ?? 5000
+const IS_PROD = process.env.NODE_ENV === 'production'
+const FRONTEND_URL = process.env.FRONTEND_URL?.trim()?.replace(/\/$/, '')
+
+if (IS_PROD && !FRONTEND_URL) {
+  throw new Error('FRONTEND_URL must be configured in production')
+}
 
 // ─────────────────────────────────────────────
 // MIDDLEWARE
 // ─────────────────────────────────────────────
 
+app.disable('x-powered-by')
 app.use(helmet())
 
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production'
-    ? [
-        process.env.FRONTEND_URL,
-        'frontend-eticflow.railway.internal',
-        'https://frontend-eticflow-dev.up.railway.app',
-      ].filter(Boolean)
-    : 'http://localhost:5173',
+  origin: IS_PROD
+    ? FRONTEND_URL
+    : (FRONTEND_URL ? [FRONTEND_URL, 'http://localhost:5173'] : 'http://localhost:5173'),
   credentials: true,
 }))
 

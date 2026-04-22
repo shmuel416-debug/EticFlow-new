@@ -70,8 +70,8 @@ router.post(
   authenticate,
   authorize('SECRETARY', 'ADMIN'),
   validate(createSchema),
-  controller.create,
-  auditLog('form.create', 'FormConfig')
+  auditLog('form.create', 'FormConfig'),
+  controller.create
 )
 
 router.put(
@@ -79,32 +79,32 @@ router.put(
   authenticate,
   authorize('SECRETARY', 'ADMIN'),
   validate(updateSchema),
-  controller.update,
-  auditLog('form.update', 'FormConfig')
+  auditLog('form.update', 'FormConfig'),
+  controller.update
 )
 
 router.post(
   '/:id/publish',
   authenticate,
   authorize('SECRETARY', 'ADMIN'),
-  controller.publish,
-  auditLog('form.publish', 'FormConfig')
+  auditLog('form.publish', 'FormConfig'),
+  controller.publish
 )
 
 router.post(
   '/:id/archive',
   authenticate,
   authorize('SECRETARY', 'ADMIN'),
-  controller.archive,
-  auditLog('form.archive', 'FormConfig')
+  auditLog('form.archive', 'FormConfig'),
+  controller.archive
 )
 
 router.post(
   '/:id/restore',
   authenticate,
   authorize('SECRETARY', 'ADMIN'),
-  controller.restore,
-  auditLog('form.restore', 'FormConfig')
+  auditLog('form.restore', 'FormConfig'),
+  controller.restore
 )
 
 export default router

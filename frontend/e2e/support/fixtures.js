@@ -3,7 +3,8 @@
  */
 
 import { test as base, expect, request } from '@playwright/test'
-import { loginAllRolesApi } from './api-helpers'
+import { loginRolesApi } from './api-helpers'
+import { WORKFLOW_ROLES } from './credentials'
 
 /**
  * Custom fixture typing via JSDoc.
@@ -24,7 +25,7 @@ export const test = base.extend(
     },
 
     tokens: async ({ apiContext }, applyFixture) => {
-      const roleTokens = await loginAllRolesApi(apiContext)
+      const roleTokens = await loginRolesApi(apiContext, WORKFLOW_ROLES)
       await applyFixture(roleTokens)
     },
   })

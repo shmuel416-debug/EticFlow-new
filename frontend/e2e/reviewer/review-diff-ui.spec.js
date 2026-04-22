@@ -3,11 +3,14 @@
  */
 
 import { test, expect } from '../support/fixtures'
-import { hasAllRoleCredentials } from '../support/credentials'
+import { hasWorkflowRoleCredentials } from '../support/credentials'
 import { apiCall } from '../support/api-helpers'
 import { loginViaUi, gotoAuthed } from '../support/ui-helpers'
 
-test.skip(!hasAllRoleCredentials(), 'All role credentials must be configured for reviewer diff workflow')
+test.skip(
+  !hasWorkflowRoleCredentials(),
+  'RESEARCHER, SECRETARY, REVIEWER, and CHAIRMAN credentials are required for reviewer diff workflow'
+)
 
 /**
  * Builds a submission with at least two versions and reviewer assignment.

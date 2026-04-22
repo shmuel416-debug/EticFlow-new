@@ -1,11 +1,11 @@
 /**
  * EthicFlow — SSO Callback Page
- * Handles the redirect from the backend after a successful Microsoft SSO login.
- * Reads the JWT from the URL query param, stores it via AuthContext, and redirects to dashboard.
+ * Handles the redirect from the backend after SSO login (Google/Microsoft).
+ * Exchanges a short-lived one-time code for JWT, then redirects to dashboard.
  *
  * Route: /sso-callback (public — no ProtectedRoute wrapper)
  * Query params:
- *   ?token=<jwt>   — on success
+ *   ?code=<one-time-code> — on success
  *   ?error=<code>  — on failure
  */
 
@@ -13,6 +13,7 @@ import { useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
+import api from '../../services/api'
 
 /**
  * Maps backend error codes to i18n translation keys.
@@ -42,13 +43,26 @@ export default function SsoCallbackPage() {
   const { loginWithToken }        = useAuth()
 
   useEffect(() => {
-    const token = searchParams.get('token')
+    const code = searchParams.get('code')
     const error = searchParams.get('error')
 
-    if (token) {
-      // Store token + decode user, then redirect to dashboard
-      loginWithToken(token)
-      navigate('/dashboard', { replace: true })
+    if (code) {
+      /**
+       * Exchanges one-time SSO code for JWT.
+       * Keeps tokens out of redirect URLs and browser history.
+       * @returns {Promise<void>}
+       */
+      const runExchange = async () => {
+        try {
+          const { data } = await api.post('/auth/exchange-code', { code })
+          loginWithToken(data.token)
+          navigate('/dashboard', { replace: true })
+        } catch {
+          navigate(`/login?ssoError=${encodeURIComponent(t('auth.ssoFailed'))}`, { replace: true })
+        }
+      }
+
+      runExchange()
       return
     }
 

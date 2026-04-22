@@ -71,8 +71,8 @@ router.post(
   authenticate,
   authorize('SECRETARY', 'ADMIN'),
   validate(createSchema),
-  controller.create,
-  auditLog('protocol.created', 'Protocol')
+  auditLog('protocol.created', 'Protocol'),
+  controller.create
 )
 
 router.get(
@@ -87,16 +87,16 @@ router.put(
   authenticate,
   authorize('SECRETARY', 'ADMIN'),
   validate(updateSchema),
-  controller.update,
-  auditLog('protocol.updated', 'Protocol')
+  auditLog('protocol.updated', 'Protocol'),
+  controller.update
 )
 
 router.post(
   '/:id/finalize',
   authenticate,
   authorize('SECRETARY', 'ADMIN'),
-  controller.finalize,
-  auditLog('protocol.finalized', 'Protocol')
+  auditLog('protocol.finalized', 'Protocol'),
+  controller.finalize
 )
 
 router.post(
@@ -104,8 +104,8 @@ router.post(
   authenticate,
   authorize('SECRETARY', 'ADMIN'),
   validate(requestSignaturesSchema),
-  controller.requestSignatures,
-  auditLog('protocol.signatures_requested', 'Protocol')
+  auditLog('protocol.signatures_requested', 'Protocol'),
+  controller.requestSignatures
 )
 
 router.get(
@@ -133,8 +133,8 @@ publicSignRouter.get(
 publicSignRouter.post(
   '/sign/:token',
   validate(signActionSchema),
-  controller.signByToken,
-  auditLog('protocol.signed', 'Protocol')
+  auditLog('protocol.signed', 'Protocol'),
+  controller.signByToken
 )
 
 export default router

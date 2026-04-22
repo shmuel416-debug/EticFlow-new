@@ -78,6 +78,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
       - name: Run Playwright core E2E
         env:
           E2E_BASE_URL: ${{ secrets.E2E_BASE_URL || 'http://127.0.0.1:4173' }}
