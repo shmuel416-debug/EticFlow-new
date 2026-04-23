@@ -1,31 +1,35 @@
 /**
  * EthicFlow — Statistics & Reports Page
- * Design: Option B (Bold & Structured) + Lev Academic Center palette.
- * Header band: Lev navy gradient with KPI cards inside.
- * Body: white background with bar chart, track breakdown, monthly trend.
- * Roles: SECRETARY, CHAIRMAN, ADMIN
+ * Uses design-system StatCard KPIs + Card-wrapped charts.
+ * Brand palette only via CSS vars. Roles: SECRETARY, CHAIRMAN, ADMIN.
  */
 
 import { useState, useEffect, useCallback } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import {
+  BarChart3, CheckCircle2, Clock, FileText, Activity, Download,
+} from 'lucide-react'
 import api from '../../services/api'
+import {
+  Button, Card, CardHeader, CardBody, PageHeader, StatCard, Badge,
+} from '../../components/ui'
 
-/** Submission status colours for the bar chart */
+/** Submission status colours for the bar chart — CSS-var driven */
 const STATUS_BARS = [
-  { key: 'SUBMITTED',        labelKey: 'submission.status.SUBMITTED',        color: '#f59e0b' },
-  { key: 'IN_TRIAGE',        labelKey: 'submission.status.IN_TRIAGE',        color: '#93c5fd' },
-  { key: 'IN_REVIEW',        labelKey: 'submission.status.IN_REVIEW',        color: '#3b82f6' },
-  { key: 'APPROVED',         labelKey: 'submission.status.APPROVED',         color: '#10b981' },
-  { key: 'REJECTED',         labelKey: 'submission.status.REJECTED',         color: '#f87171' },
-  { key: 'PENDING_REVISION', labelKey: 'submission.status.PENDING_REVISION', color: '#fb923c' },
+  { key: 'SUBMITTED',        labelKey: 'submission.status.SUBMITTED',        color: 'var(--status-warning)' },
+  { key: 'IN_TRIAGE',        labelKey: 'submission.status.IN_TRIAGE',        color: 'var(--status-info)' },
+  { key: 'IN_REVIEW',        labelKey: 'submission.status.IN_REVIEW',        color: 'var(--lev-navy)' },
+  { key: 'APPROVED',         labelKey: 'submission.status.APPROVED',         color: 'var(--status-success)' },
+  { key: 'REJECTED',         labelKey: 'submission.status.REJECTED',         color: 'var(--status-danger)' },
+  { key: 'PENDING_REVISION', labelKey: 'submission.status.PENDING_REVISION', color: 'var(--lev-gold-600)' },
 ]
 
 /** Track colours */
 const TRACK_COLORS = {
-  FULL:      '#3b82f6',
-  EXPEDITED: '#10b981',
-  EXEMPT:    '#f59e0b',
+  FULL:      'var(--lev-navy)',
+  EXPEDITED: 'var(--status-success)',
+  EXEMPT:    'var(--status-warning)',
 }
 
 /** Track i18n keys */
@@ -33,25 +37,6 @@ const TRACK_LABEL_KEYS = {
   FULL:      'submission.tracks.FULL',
   EXPEDITED: 'submission.tracks.EXPEDITED',
   EXEMPT:    'submission.tracks.EXEMPT',
-}
-
-/**
- * Renders a single KPI card inside the header band.
- * @param {{ label: string, value: string|number, accent?: boolean }} props
- */
-function KpiCard({ label, value, accent }) {
-  return (
-    <div className="rounded-xl p-4 text-center border border-white/20" style={{ background: 'rgba(255,255,255,0.15)' }}>
-      <div
-        className="text-3xl font-bold"
-        style={{ color: accent ? '#6ee7b7' : 'white' }}
-        aria-label={`${label}: ${value}`}
-      >
-        {value}
-      </div>
-      <div className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.85)' }}>{label}</div>
-    </div>
-  )
 }
 
 /**
@@ -71,11 +56,20 @@ function StatusBarChart({ byStatus }) {
           <div key={key} className="flex flex-col items-center gap-1 flex-1">
             <span className="text-xs font-bold" style={{ color }}>{count}</span>
             <div
-              className="w-full rounded-t-md transition-all duration-500"
-              style={{ height: `${Math.max(heightPct * 1.2, count > 0 ? 4 : 0)}px`, background: color, maxHeight: '120px' }}
+              className="w-full transition-all duration-500"
+              style={{
+                height: `${Math.max(heightPct * 1.2, count > 0 ? 4 : 0)}px`,
+                background: color,
+                maxHeight: '120px',
+                borderTopLeftRadius: 'var(--radius-md)',
+                borderTopRightRadius: 'var(--radius-md)',
+              }}
               role="presentation"
             />
-            <span className="text-xs text-gray-500 text-center leading-tight" style={{ fontSize: '11px' }}>
+            <span
+              className="text-xs text-center leading-tight"
+              style={{ color: 'var(--text-muted)', fontSize: 11 }}
+            >
               {t(labelKey)}
             </span>
           </div>
@@ -99,20 +93,25 @@ function TrackBreakdown({ byTrack, total }) {
         return (
           <div key={key}>
             <div className="flex justify-between text-xs mb-1">
-              <span className="font-semibold text-gray-700">{t(labelKey)}</span>
-              <span className="text-gray-500">{count} ({pct}%)</span>
+              <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>{t(labelKey)}</span>
+              <span className="tabular-nums" style={{ color: 'var(--text-muted)' }}>{count} ({pct}%)</span>
             </div>
             <div
-              className="w-full bg-gray-100 rounded-full h-2.5"
+              className="w-full h-2.5"
               role="progressbar"
               aria-valuenow={count}
               aria-valuemin={0}
               aria-valuemax={total}
               aria-label={t(labelKey)}
+              style={{ background: 'var(--surface-sunken)', borderRadius: 'var(--radius-full)' }}
             >
               <div
-                className="h-2.5 rounded-full transition-all duration-500"
-                style={{ width: `${pct}%`, background: TRACK_COLORS[key] }}
+                className="h-2.5 transition-all duration-500"
+                style={{
+                  width: `${pct}%`,
+                  background: TRACK_COLORS[key],
+                  borderRadius: 'var(--radius-full)',
+                }}
               />
             </div>
           </div>
@@ -135,7 +134,7 @@ function MonthlyTrendChart({ monthly }) {
   const W      = 400
   const H      = 80
   const pad    = 10
-  const span   = Math.max(monthly.length - 1, 1)  // guard against single-point array
+  const span   = Math.max(monthly.length - 1, 1)
 
   const points = monthly.map((m, i) => {
     const x = pad + (i / span) * (W - 2 * pad)
@@ -150,20 +149,16 @@ function MonthlyTrendChart({ monthly }) {
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-24" preserveAspectRatio="none">
         <defs>
           <linearGradient id="trendGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="var(--lev-navy)" stopOpacity="0.2"/>
+            <stop offset="0%"   stopColor="var(--lev-navy)" stopOpacity="0.2"/>
             <stop offset="100%" stopColor="var(--lev-navy)" stopOpacity="0"/>
           </linearGradient>
         </defs>
-        {/* Grid lines */}
         {[0.25, 0.5, 0.75].map(f => (
           <line key={f} x1={pad} y1={pad + f * (H - 2 * pad)} x2={W - pad} y2={pad + f * (H - 2 * pad)}
-            stroke="#f0f0f0" strokeWidth="1"/>
+            stroke="var(--border-subtle)" strokeWidth="1"/>
         ))}
-        {/* Area fill */}
         <polygon points={areaPoints} fill="url(#trendGrad)"/>
-        {/* Line */}
         <polyline points={points} fill="none" stroke="var(--lev-navy)" strokeWidth="2.5" strokeLinejoin="round"/>
-        {/* Endpoint dots */}
         {monthly.map((m, i) => {
           const x = pad + (i / span) * (W - 2 * pad)
           const y = H - pad - ((m.count / max) * (H - 2 * pad))
@@ -172,10 +167,9 @@ function MonthlyTrendChart({ monthly }) {
             : null
         })}
       </svg>
-      {/* Month labels */}
-      <div className="flex justify-between text-xs text-gray-500 mt-1 px-1">
+      <div className="flex justify-between mt-1 px-1" style={{ color: 'var(--text-muted)' }}>
         {monthly.map((m, i) => (
-          <span key={i} className="text-center" style={{ fontSize: '10px' }}>
+          <span key={i} className="text-center" style={{ fontSize: 10 }}>
             {m.month.slice(5)}
           </span>
         ))}
@@ -195,8 +189,6 @@ export default function StatsPage() {
   const [exporting, setExporting] = useState(false)
   const returnPath = `${location.pathname}${location.search}`
 
-  // ── Fetch stats ──────────────────────────────────
-
   const fetchStats = useCallback(async () => {
     setLoading(true)
     setError(null)
@@ -211,8 +203,6 @@ export default function StatsPage() {
   }, [])
 
   useEffect(() => { fetchStats() }, [fetchStats])
-
-  // ── Export XLSX ──────────────────────────────────
 
   async function handleExport(lang) {
     setExporting(true)
@@ -234,8 +224,6 @@ export default function StatsPage() {
     }
   }
 
-  // ── Derived values — convert API arrays to keyed maps ───────────────
-
   const byStatus = Object.fromEntries(
     (stats?.byStatus ?? []).map(r => [r.status, r.count])
   )
@@ -253,125 +241,148 @@ export default function StatsPage() {
     : '—'
   const totalApproved = byStatus['APPROVED'] ?? '—'
 
-  return (
-    <div className="flex flex-col h-full">
+  const dateSubtitle = new Date().toLocaleDateString(
+    i18n.language === 'en' ? 'en-GB' : 'he-IL',
+    { day: '2-digit', month: '2-digit', year: 'numeric' }
+  )
 
-      {/* ── Bold header band — Lev navy gradient ── */}
-      <div
-        className="px-4 md:px-6 py-5"
-        style={{ background: 'linear-gradient(135deg, var(--lev-navy) 0%, #2d4db5 100%)' }}
-      >
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
-          <div>
-            <h1 className="text-xl font-bold text-white">{t('stats.title')}</h1>
-            <p className="text-sm mt-0.5" style={{ color: 'rgba(255,255,255,0.8)' }}>
-              {new Date().toLocaleDateString(i18n.language === 'en' ? 'en-GB' : 'he-IL', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-              })}
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <button
+  return (
+    <div className="max-w-5xl mx-auto">
+      <PageHeader
+        title={t('stats.title')}
+        subtitle={dateSubtitle}
+        backTo="/dashboard"
+        actions={
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="secondary"
               onClick={() => navigate('/reports/audit-log', { state: { from: returnPath } })}
-              className="text-sm font-semibold px-4 py-2.5 rounded-xl border border-white/30 text-white hover:bg-white/10 transition-colors"
-              style={{ minHeight: '44px' }}
+              leftIcon={<Activity size={16} strokeWidth={1.75} aria-hidden="true" focusable="false" />}
             >
               {t('auditLog.title')}
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="gold"
               onClick={() => handleExport('he')}
               disabled={exporting}
-              className="flex items-center gap-2 text-sm font-bold px-4 py-2.5 rounded-xl shadow disabled:opacity-60 transition-opacity"
-              style={{ background: 'white', color: 'var(--lev-navy)', minHeight: '44px' }}
+              leftIcon={<Download size={16} strokeWidth={1.75} aria-hidden="true" focusable="false" />}
               aria-label={exporting ? t('stats.exportLoading') : t('stats.exportXlsx')}
             >
-              <span aria-hidden="true">⬇</span>
               {exporting ? t('stats.exportLoading') : t('stats.exportXlsx')}
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="primary"
               onClick={() => handleExport('en')}
               disabled={exporting}
-              className="flex items-center gap-2 text-sm font-bold px-4 py-2.5 rounded-xl shadow disabled:opacity-60 transition-opacity"
-              style={{ background: '#111827', color: 'white', minHeight: '44px' }}
+              leftIcon={<Download size={16} strokeWidth={1.75} aria-hidden="true" focusable="false" />}
               aria-label={exporting ? t('stats.exportLoading') : t('stats.exportXlsxEn')}
             >
-              <span aria-hidden="true">⬇</span>
               {exporting ? t('stats.exportLoading') : t('stats.exportXlsxEn')}
-            </button>
+            </Button>
           </div>
-        </div>
+        }
+      />
 
-        {/* KPI cards row — inside header */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <KpiCard label={t('stats.submissions')} value={loading ? '…' : total} />
-          <KpiCard label={t('stats.approvalRate')} value={loading ? '…' : approvalRate} accent />
-          <KpiCard label={t('stats.avgProcessingDays')} value={loading ? '…' : `${avgDays} ${t('stats.days')}`} />
-          <KpiCard label={t('stats.totalApproved')} value={loading ? '…' : totalApproved} accent />
-        </div>
+      {/* KPI grid */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+        <StatCard
+          label={t('stats.submissions')}
+          value={loading ? '…' : total}
+          tone="navy"
+          icon={FileText}
+        />
+        <StatCard
+          label={t('stats.approvalRate')}
+          value={loading ? '…' : approvalRate}
+          tone="success"
+          icon={CheckCircle2}
+        />
+        <StatCard
+          label={t('stats.avgProcessingDays')}
+          value={loading ? '…' : `${avgDays}`}
+          hint={t('stats.days')}
+          tone="purple"
+          icon={Clock}
+        />
+        <StatCard
+          label={t('stats.totalApproved')}
+          value={loading ? '…' : totalApproved}
+          tone="gold"
+          icon={BarChart3}
+        />
       </div>
 
-      {/* ── Main content ── */}
-      <div className="flex-1 overflow-auto bg-gray-50 p-4 md:p-6">
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm mb-4" role="alert">
-            {error}
-          </div>
-        )}
+      {error && (
+        <div
+          role="alert"
+          className="mb-4 text-sm"
+          style={{
+            background: 'var(--status-danger-50)',
+            color: 'var(--status-danger)',
+            border: '1px solid var(--status-danger)',
+            borderRadius: 'var(--radius-lg)',
+            padding: '12px 14px',
+          }}
+        >
+          {error}
+        </div>
+      )}
 
-        {!loading && stats && (
-          <div className="max-w-5xl mx-auto space-y-4">
-
-            {/* Row 1: Status bar chart + Track breakdown */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-
-              {/* Bar chart (spans 2 cols) */}
-              <div className="md:col-span-2 bg-white rounded-xl border p-5 shadow-sm">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-sm font-bold" style={{ color: 'var(--lev-navy)' }}>
-                    {t('stats.byStatus')}
-                  </h2>
-                  <span className="text-xs px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 font-semibold">
+      {!loading && stats && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card className="md:col-span-2">
+              <CardHeader
+                title={t('stats.byStatus')}
+                actions={
+                  <Badge tone="navy" size="sm">
                     {total} {t('stats.submissions')}
-                  </span>
-                </div>
+                  </Badge>
+                }
+              />
+              <CardBody>
                 <StatusBarChart byStatus={byStatus} />
-              </div>
+              </CardBody>
+            </Card>
 
-              {/* Track breakdown */}
-              <div className="bg-white rounded-xl border p-5 shadow-sm">
-                <h2 className="text-sm font-bold mb-4" style={{ color: 'var(--lev-navy)' }}>
-                  {t('stats.byTrack')}
-                </h2>
+            <Card>
+              <CardHeader title={t('stats.byTrack')} />
+              <CardBody>
                 {total > 0
                   ? <TrackBreakdown byTrack={byTrack} total={total} />
-                  : <p className="text-xs text-gray-500">{t('stats.noData')}</p>}
-              </div>
-            </div>
+                  : <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('stats.noData')}</p>}
+              </CardBody>
+            </Card>
+          </div>
 
-            {/* Row 2: Monthly trend full-width */}
-            <div className="bg-white rounded-xl border p-5 shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-sm font-bold" style={{ color: 'var(--lev-navy)' }}>
-                  {t('stats.monthlyTrend')}
-                </h2>
-                <span className="text-xs text-gray-500">{t('stats.last12Months')}</span>
-              </div>
+          <Card>
+            <CardHeader
+              title={t('stats.monthlyTrend')}
+              actions={
+                <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                  {t('stats.last12Months')}
+                </span>
+              }
+            />
+            <CardBody>
               {monthly.length > 0
                 ? <MonthlyTrendChart monthly={monthly} />
-                : <p className="text-xs text-gray-500">{t('stats.noData')}</p>}
-            </div>
+                : <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('stats.noData')}</p>}
+            </CardBody>
+          </Card>
+        </div>
+      )}
 
-          </div>
-        )}
-
-        {loading && (
-          <div className="flex justify-center py-20 text-gray-500 text-sm" role="status" aria-live="polite">
-            {t('common.loading')}
-          </div>
-        )}
-      </div>
+      {loading && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="flex justify-center py-20 text-sm"
+          style={{ color: 'var(--text-muted)' }}
+        >
+          {t('common.loading')}
+        </div>
+      )}
     </div>
   )
 }

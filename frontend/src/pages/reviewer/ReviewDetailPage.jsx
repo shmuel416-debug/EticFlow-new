@@ -1,30 +1,46 @@
 /**
  * EthicFlow — Reviewer Review Detail Page
  * Shows form answers + comments for the reviewer, with ReviewForm to submit evaluation.
+ * Refreshed to Lev design system (PageHeader + Card primitives + Button).
+ * IS 5568 / WCAG 2.2 AA.
  */
 
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom'
+import { Eye, ArrowRight, ArrowLeft, MessageSquare } from 'lucide-react'
 import api from '../../services/api'
 import StatusBadge from '../../components/submissions/StatusBadge'
 import FormAnswersViewer from '../../components/submissions/FormAnswersViewer'
 import CommentThread from '../../components/submissions/CommentThread'
 import ReviewForm from '../../components/submissions/ReviewForm'
 import AiPanel from '../../components/submissions/AiPanel'
+import {
+  PageHeader,
+  Card,
+  CardHeader,
+  CardBody,
+  Spinner,
+} from '../../components/ui'
 
 /**
  * Reviewer's detail page — read-only form answers + ReviewForm.
+ * @returns {JSX.Element}
  */
 export default function ReviewDetailPage() {
-  const { t }        = useTranslation()
+  const { t, i18n }  = useTranslation()
   const { id }       = useParams()
   const navigate     = useNavigate()
   const location     = useLocation()
+  const isRtl        = i18n.dir() === 'rtl'
+  const DiffArrow    = isRtl ? ArrowLeft : ArrowRight
   const [submission, setSubmission] = useState(null)
   const [loading,    setLoading]    = useState(true)
   const [error,      setError]      = useState('')
-  const backTo       = typeof location.state?.from === 'string' ? location.state.from : '/reviewer/assignments'
+  const backTo       =
+    typeof location.state?.from === 'string'
+      ? location.state.from
+      : '/reviewer/assignments'
 
   /**
    * Loads submission data.
@@ -47,68 +63,139 @@ export default function ReviewDetailPage() {
     navigate(backTo)
   }
 
-  if (loading) return <div className="p-8 text-center text-gray-400">{t('common.loading')}</div>
-  if (error)   return <div className="p-8 text-center text-red-600" role="alert">{error}</div>
+  if (loading) {
+    return (
+      <div
+        className="flex items-center justify-center gap-3 p-8"
+        role="status"
+        aria-live="polite"
+      >
+        <Spinner size={20} label={t('common.loading')} />
+        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+          {t('common.loading')}
+        </p>
+      </div>
+    )
+  }
+  if (error) {
+    return (
+      <div
+        role="alert"
+        aria-live="assertive"
+        className="p-8 text-center text-sm font-medium"
+        style={{ color: 'var(--status-danger)' }}
+      >
+        {error}
+      </div>
+    )
+  }
 
-  const latestVersion = submission?.versions?.slice(-1)[0]
+  const latestVersion   = submission?.versions?.slice(-1)[0]
   const alreadyReviewed = submission?.status !== 'ASSIGNED'
+
+  const diffLink = (
+    <Link
+      to={`/reviewer/assignments/${id}/diff`}
+      state={{ from: `${location.pathname}${location.search}` }}
+      data-testid="open-review-diff"
+      className="inline-flex items-center gap-2 text-sm font-semibold hover:underline"
+      style={{
+        color: 'var(--lev-teal-text)',
+        minHeight: 40,
+        padding: '0 10px',
+        borderRadius: 'var(--radius-lg)',
+      }}
+    >
+      <Eye
+        size={16}
+        strokeWidth={1.75}
+        aria-hidden="true"
+        focusable="false"
+      />
+      <span>{t('reviewer.diff.openDiff')}</span>
+      <DiffArrow
+        size={16}
+        strokeWidth={1.75}
+        aria-hidden="true"
+        focusable="false"
+      />
+    </Link>
+  )
+
+  const headerActions = (
+    <div className="flex items-center gap-2 flex-wrap">
+      {diffLink}
+      <span
+        className="text-xs font-mono"
+        style={{ color: 'var(--text-muted)' }}
+      >
+        {submission?.applicationId}
+      </span>
+      <StatusBadge status={submission?.status} />
+    </div>
+  )
 
   return (
     <main id="main-content" className="p-4 md:p-6 max-w-5xl mx-auto space-y-6">
-      <div>
-        <Link to={backTo} className="text-sm hover:underline mb-2 inline-flex items-center gap-1"
-          style={{ color: 'var(--lev-navy)' }}>
-          ← {t('submission.detail.backToList')}
-        </Link>
-        <div>
-          <Link
-            to={`/reviewer/assignments/${id}/diff`}
-            state={{ from: `${location.pathname}${location.search}` }}
-            data-testid="open-review-diff"
-            className="text-sm hover:underline inline-flex items-center gap-1"
-            style={{ color: 'var(--lev-teal-text)' }}>
-            {t('reviewer.diff.openDiff')}
-          </Link>
-        </div>
-        <div className="flex flex-wrap items-center gap-3 mt-2">
-          <h1 className="text-xl font-bold" style={{ color: 'var(--lev-navy)' }}>{submission?.title}</h1>
-          <StatusBadge status={submission?.status} />
-          <span className="text-sm text-gray-500 font-mono">{submission?.applicationId}</span>
-        </div>
-      </div>
+      <PageHeader
+        title={submission?.title}
+        subtitle={submission?.applicationId}
+        backTo={backTo}
+        backLabel={t('submission.detail.backToList')}
+        actions={headerActions}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Form answers */}
-        <section className="lg:col-span-2 bg-white rounded-xl border border-gray-200 p-5">
-          <h2 className="text-base font-semibold mb-4" style={{ color: 'var(--lev-navy)' }}>
-            {t('submission.detail.sectionAnswers')}
-          </h2>
-          <FormAnswersViewer formConfig={submission?.formConfig} dataJson={latestVersion?.dataJson ?? {}} />
-        </section>
+        <Card as="section" className="lg:col-span-2">
+          <CardHeader title={t('submission.detail.sectionAnswers')} />
+          <CardBody>
+            <FormAnswersViewer
+              formConfig={submission?.formConfig}
+              dataJson={latestVersion?.dataJson ?? {}}
+            />
+          </CardBody>
+        </Card>
 
-        {/* Sidebar: AI panel + Review form */}
         <aside className="space-y-5">
           <AiPanel submissionId={id} canRun={!alreadyReviewed} />
 
-          <section className="bg-white rounded-xl border border-gray-200 p-5">
-            <h2 className="text-base font-semibold mb-4" style={{ color: 'var(--lev-navy)' }}>
-              {t('reviewer.review.pageTitle')}
-            </h2>
-            {alreadyReviewed
-              ? <p className="text-sm text-gray-500">{t('reviewer.review.submitSuccess')}</p>
-              : <ReviewForm submissionId={id} onSuccess={handleReviewSuccess} />
-            }
-          </section>
+          <Card as="section">
+            <CardHeader title={t('reviewer.review.pageTitle')} />
+            <CardBody>
+              {alreadyReviewed ? (
+                <p
+                  role="status"
+                  aria-live="polite"
+                  className="text-sm"
+                  style={{ color: 'var(--text-muted)' }}
+                >
+                  {t('reviewer.review.submitSuccess')}
+                </p>
+              ) : (
+                <ReviewForm submissionId={id} onSuccess={handleReviewSuccess} />
+              )}
+            </CardBody>
+          </Card>
         </aside>
       </div>
 
-      {/* Comments */}
-      <section className="bg-white rounded-xl border border-gray-200 p-5">
-        <h2 className="text-base font-semibold mb-4" style={{ color: 'var(--lev-navy)' }}>
-          {t('submission.detail.sectionComments')}
-        </h2>
-        <CommentThread comments={submission?.comments ?? []} onAdd={null} />
-      </section>
+      <Card as="section">
+        <CardHeader
+          title={t('submission.detail.sectionComments')}
+          actions={
+            <MessageSquare
+              size={18}
+              strokeWidth={1.75}
+              aria-hidden="true"
+              focusable="false"
+              style={{ color: 'var(--text-muted)' }}
+            />
+          }
+        />
+        <CardBody>
+          <CommentThread comments={submission?.comments ?? []} onAdd={null} />
+        </CardBody>
+      </Card>
     </main>
   )
 }

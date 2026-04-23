@@ -1,17 +1,19 @@
 /**
- * EthicFlow — App Layout
- * Wraps all authenticated pages. Renders Sidebar + top header + <Outlet>.
- * Mobile: hamburger toggles sidebar drawer. Desktop: always visible.
+ * EthicFlow — App Layout (brand refresh)
+ * Wraps all authenticated pages. Renders Sidebar + sticky top header + <Outlet>.
+ * Mobile: hamburger toggles sidebar drawer. Desktop: sidebar always visible.
+ * Monochrome lucide icons replace emojis for professional look.
  */
 
 import { useEffect, useState } from 'react'
 import { Outlet, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { Menu, Bell } from 'lucide-react'
 import Sidebar from './Sidebar'
 import LanguageSwitcher from '../ui/LanguageSwitcher'
 import ImpersonationBanner from './ImpersonationBanner'
-import api from '../../services/api'
 import RoleSwitcher from './RoleSwitcher'
+import api from '../../services/api'
 
 /**
  * Shell layout used by all protected routes.
@@ -22,9 +24,6 @@ export default function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
 
-  /**
-   * Toggle mobile drawer state from header button.
-   */
   function handleToggleSidebar() {
     setSidebarOpen((prev) => !prev)
   }
@@ -48,77 +47,89 @@ export default function AppLayout() {
   }, [])
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
-
-      {/* Impersonation banner — shown above everything when admin is impersonating */}
+    <div className="min-h-screen flex flex-col" style={{ background: 'var(--surface-base)' }}>
       <ImpersonationBanner />
 
       <div className="flex flex-1 min-h-0">
+        <a href="#main-content" className="skip-link">{t('common.skipToMain')}</a>
 
-      {/* IS 5568 — skip navigation to main content */}
-      <a href="#main-content" className="skip-link">{t('common.skipToMain')}</a>
+        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-      {/* Sidebar */}
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-
-      {/* Main area */}
-      <div className="flex-1 flex flex-col min-w-0">
-
-        {/* Top header */}
-        <header className="bg-white border-b border-gray-100 px-4 md:px-6 py-3
-          flex items-center justify-between sticky top-0 z-20 shadow-sm">
-
-          {/* Mobile: hamburger */}
-          <button
-            className="md:hidden text-gray-700 hover:text-gray-900"
-            type="button"
-            onClick={handleToggleSidebar}
-            aria-label={t('pages.openMenu')}
-            aria-expanded={sidebarOpen}
-            style={{ minWidth: '44px', minHeight: '44px' }}
+        <div className="flex-1 flex flex-col min-w-0">
+          {/* ── Sticky top header ── */}
+          <header
+            className="sticky top-0 z-20 px-4 md:px-6 py-2.5 flex items-center justify-between bg-white"
+            style={{
+              borderBottom: '1px solid var(--border-default)',
+              boxShadow: 'var(--shadow-xs)',
+            }}
           >
-            <span aria-hidden="true" className="text-xl">☰</span>
-          </button>
-
-          {/* Desktop: page title placeholder — filled by each page */}
-          <div id="page-title" className="hidden md:block" />
-
-          {/* Right side actions */}
-          <div className="flex items-center gap-3 ms-auto">
-            <RoleSwitcher />
-            <LanguageSwitcher />
             <button
               type="button"
-              onClick={() => navigate('/notifications')}
-              aria-label={unreadCount > 0
-                ? `${t('common.notifications')} — ${unreadCount}`
-                : t('common.notifications')}
-              style={{ minWidth: '44px', minHeight: '44px', position: 'relative' }}
-              className="flex items-center justify-center text-gray-600 hover:text-gray-900"
+              onClick={handleToggleSidebar}
+              aria-label={t('pages.openMenu')}
+              aria-expanded={sidebarOpen}
+              aria-controls="app-sidebar"
+              className="md:hidden inline-flex items-center justify-center rounded-lg transition hover:bg-gray-100"
+              style={{
+                minWidth: 44,
+                minHeight: 44,
+                color: 'var(--text-secondary)',
+              }}
             >
-              <span aria-hidden="true" className="text-xl">🔔</span>
-              {unreadCount > 0 && (
-                <span
-                  className="absolute top-1.5 end-1.5 min-w-4 h-4 px-1 rounded-full text-white text-xs
-                    flex items-center justify-center font-bold"
-                  style={{ background: 'var(--lev-purple)', fontSize: '10px' }}
-                  aria-hidden="true"
-                >
-                  {unreadCount > 99 ? '99+' : unreadCount}
-                </span>
-              )}
+              <Menu size={22} strokeWidth={1.75} aria-hidden="true" focusable="false" />
             </button>
-          </div>
-        </header>
 
-        {/* Page content */}
-        <main id="main-content" tabIndex="-1" className="flex-1 p-4 md:p-6 overflow-auto">
-          <Outlet />
-        </main>
+            <div id="page-title" className="hidden md:block" />
 
+            <div className="flex items-center gap-2 ms-auto">
+              <RoleSwitcher />
+              <LanguageSwitcher />
+              <button
+                type="button"
+                onClick={() => navigate('/notifications')}
+                aria-label={unreadCount > 0
+                  ? `${t('common.notifications')} — ${unreadCount}`
+                  : t('common.notifications')}
+                className="relative inline-flex items-center justify-center rounded-lg transition hover:bg-gray-100"
+                style={{
+                  minWidth: 44,
+                  minHeight: 44,
+                  color: 'var(--text-secondary)',
+                }}
+              >
+                <Bell size={20} strokeWidth={1.75} aria-hidden="true" focusable="false" />
+                {unreadCount > 0 && (
+                  <span
+                    aria-hidden="true"
+                    className="absolute tabular-nums font-bold text-white flex items-center justify-center"
+                    style={{
+                      top: 6,
+                      insetInlineEnd: 6,
+                      minWidth: 16,
+                      height: 16,
+                      padding: '0 4px',
+                      borderRadius: 'var(--radius-full)',
+                      background: 'var(--lev-purple)',
+                      fontSize: 10,
+                    }}
+                  >
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
+              </button>
+            </div>
+          </header>
+
+          <main
+            id="main-content"
+            tabIndex="-1"
+            className="flex-1 p-4 md:p-6 overflow-auto"
+          >
+            <Outlet />
+          </main>
+        </div>
       </div>
-
-      </div>{/* end flex row */}
     </div>
   )
 }

@@ -10,6 +10,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Bot, AlertTriangle, ArrowRight } from 'lucide-react'
 import api from '../../services/api'
 
 /** Risk level color config. */
@@ -48,7 +49,8 @@ function ScoreBar({ score }) {
  * AiPanel — advisory analysis results card.
  */
 export default function AiPanel({ submissionId, canRun = false }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const isRtl = i18n.dir() === 'rtl'
 
   const [analysis, setAnalysis] = useState(null)
   const [loading,  setLoading]  = useState(true)
@@ -110,10 +112,10 @@ export default function AiPanel({ submissionId, canRun = false }) {
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100"
         style={{ background: 'var(--lev-navy)' }}>
         <div className="flex items-center gap-2">
-          <span className="text-lg" aria-hidden="true">🤖</span>
+          <Bot size={20} strokeWidth={1.75} aria-hidden="true" focusable="false" className="text-white shrink-0" />
           <h2 className="text-sm font-bold text-white">{t('ai.panelTitle')}</h2>
         </div>
-        <span className="text-xs text-blue-200">{t('ai.advisoryOnly')}</span>
+        <span className="text-xs text-white/85">{t('ai.advisoryOnly')}</span>
       </div>
 
       <div className="p-4 space-y-4">
@@ -134,7 +136,12 @@ export default function AiPanel({ submissionId, canRun = false }) {
           <>
             <div className="flex justify-end">
               <span
-                className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-700"
+                className="inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold"
+                style={{
+                  borderColor: 'var(--lev-navy-50)',
+                  background: 'var(--lev-navy-50)',
+                  color: 'var(--lev-navy)',
+                }}
                 aria-label={t('ai.analysisLanguage')}
               >
                 {t('ai.analysisLanguage')}: {t(`ai.langTag.${resultLanguage}`)}
@@ -160,7 +167,14 @@ export default function AiPanel({ submissionId, canRun = false }) {
             </div>
 
             {coverage && (
-              <div className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs text-blue-900">
+              <div
+                className="rounded-lg border px-3 py-2 text-xs"
+                style={{
+                  borderColor: 'var(--lev-teal)',
+                  background: 'var(--lev-teal-50)',
+                  color: 'var(--text-primary)',
+                }}
+              >
                 {t('ai.coverage', {
                   answers: coverage.answerFieldCount ?? 0,
                   documents: coverage.documentCount ?? 0,
@@ -179,7 +193,14 @@ export default function AiPanel({ submissionId, canRun = false }) {
                 <ul className="space-y-1" aria-label={t('ai.flags')}>
                   {result.flags.map((flag, i) => (
                     <li key={i} className="flex items-start gap-2 text-xs text-gray-600">
-                      <span className="text-amber-500 mt-0.5 flex-shrink-0" aria-hidden="true">⚠</span>
+                      <AlertTriangle
+                        size={14}
+                        strokeWidth={2}
+                        aria-hidden="true"
+                        focusable="false"
+                        className="mt-0.5 flex-shrink-0"
+                        style={{ color: 'var(--status-warning)' }}
+                      />
                       {flag}
                     </li>
                   ))}
@@ -194,7 +215,14 @@ export default function AiPanel({ submissionId, canRun = false }) {
                 <ul className="space-y-1" aria-label={t('ai.suggestions')}>
                   {result.suggestions.map((s, i) => (
                     <li key={i} className="flex items-start gap-2 text-xs text-gray-600">
-                      <span className="text-blue-500 mt-0.5 flex-shrink-0" aria-hidden="true">→</span>
+                      <ArrowRight
+                        size={14}
+                        strokeWidth={2}
+                        aria-hidden="true"
+                        focusable="false"
+                        className={`mt-0.5 flex-shrink-0 ${isRtl ? 'rotate-180' : ''}`}
+                        style={{ color: 'var(--lev-teal-text)' }}
+                      />
                       {s}
                     </li>
                   ))}
@@ -224,7 +252,7 @@ export default function AiPanel({ submissionId, canRun = false }) {
                 type="checkbox"
                 checked={responseLanguage === 'en'}
                 onChange={(event) => setResponseLanguage(event.target.checked ? 'en' : 'he')}
-                className="w-4 h-4 accent-blue-600"
+                className="w-4 h-4 accent-[var(--lev-navy)]"
               />
               <span>{t('ai.askEnglishQuestion')}</span>
             </label>

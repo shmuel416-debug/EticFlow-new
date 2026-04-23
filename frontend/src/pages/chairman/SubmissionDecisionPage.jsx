@@ -1,25 +1,65 @@
 /**
  * EthicFlow — Chairman Submission Decision Page
  * Full submission view with form answers, reviewer comments, and decision buttons.
- * IS 5568: confirmation dialogs via window.confirm, aria-describedby on buttons.
+ * Refreshed to Lev design system (PageHeader + Card primitives + Modal confirmations).
+ * IS 5568 / WCAG 2.2 AA.
  */
 
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useParams, Link, useNavigate, useLocation } from 'react-router-dom'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
+import {
+  CheckCircle2,
+  XCircle,
+  AlertTriangle,
+  AlertCircle,
+} from 'lucide-react'
 import api from '../../services/api'
 import StatusBadge from '../../components/submissions/StatusBadge'
 import FormAnswersViewer from '../../components/submissions/FormAnswersViewer'
 import CommentThread from '../../components/submissions/CommentThread'
+import {
+  PageHeader,
+  Card,
+  CardHeader,
+  CardBody,
+  Button,
+  Spinner,
+  Modal,
+  FormField,
+  Textarea,
+} from '../../components/ui'
 
 const DECISIONS = [
-  { key: 'APPROVED',           style: 'bg-green-600 hover:bg-green-700 text-white', confirm: 'chairman.decision.confirmApprove' },
-  { key: 'REJECTED',           style: 'bg-red-600 hover:bg-red-700 text-white',     confirm: 'chairman.decision.confirmReject' },
-  { key: 'REVISION_REQUIRED',  style: 'bg-yellow-500 hover:bg-yellow-600 text-white', confirm: 'chairman.decision.confirmRevision' },
+  {
+    key: 'APPROVED',
+    variant: 'primary',
+    icon: CheckCircle2,
+    labelKey: 'chairman.decision.approve',
+    confirm: 'chairman.decision.confirmApprove',
+    tone: 'success',
+  },
+  {
+    key: 'REJECTED',
+    variant: 'danger',
+    icon: XCircle,
+    labelKey: 'chairman.decision.reject',
+    confirm: 'chairman.decision.confirmReject',
+    tone: 'danger',
+  },
+  {
+    key: 'REVISION_REQUIRED',
+    variant: 'secondary',
+    icon: AlertTriangle,
+    labelKey: 'chairman.decision.requestRevision',
+    confirm: 'chairman.decision.confirmRevision',
+    tone: 'warning',
+  },
 ]
 
 /**
  * Chairman's decision page for a single submission.
+ * @returns {JSX.Element}
  */
 export default function SubmissionDecisionPage() {
   const { t }        = useTranslation()
@@ -31,7 +71,9 @@ export default function SubmissionDecisionPage() {
   const [deciding,   setDeciding]   = useState(false)
   const [note,       setNote]       = useState('')
   const [error,      setError]      = useState('')
-  const backTo       = typeof location.state?.from === 'string' ? location.state.from : '/chairman/queue'
+  const [pendingDecision, setPendingDecision] = useState(null)
+  const backTo       =
+    typeof location.state?.from === 'string' ? location.state.from : '/chairman/queue'
 
   /**
    * Fetches submission from API.
@@ -50,108 +92,229 @@ export default function SubmissionDecisionPage() {
   useEffect(() => { fetchSubmission() }, [fetchSubmission])
 
   /**
-   * Records a chairman decision.
-   * @param {string} decision - APPROVED | REJECTED | REVISION_REQUIRED
-   * @param {string} confirmKey - i18n key for confirmation dialog
+   * Commits the pending decision after modal confirmation.
    */
-  async function handleDecision(decision, confirmKey) {
-    if (!window.confirm(t(confirmKey))) return
+  async function handleConfirmDecision() {
+    if (!pendingDecision) return
     setDeciding(true)
     setError('')
     try {
-      await api.patch(`/submissions/${id}/decision`, { decision, note: note.trim() || undefined })
+      await api.patch(`/submissions/${id}/decision`, {
+        decision: pendingDecision.key,
+        note: note.trim() || undefined,
+      })
       navigate(backTo)
     } catch (err) {
       setError(t(`errors.${err.code}`, t('errors.SERVER_ERROR')))
       setDeciding(false)
+      setPendingDecision(null)
     }
   }
 
-  if (loading)   return <div className="p-8 text-center text-gray-400">{t('common.loading')}</div>
-  if (!submission) return <div className="p-8 text-center text-red-600" role="alert">{error}</div>
+  if (loading) {
+    return (
+      <div
+        className="flex items-center justify-center gap-3 p-8"
+        role="status"
+        aria-live="polite"
+      >
+        <Spinner size={20} label={t('common.loading')} />
+        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+          {t('common.loading')}
+        </p>
+      </div>
+    )
+  }
+  if (!submission) {
+    return (
+      <div
+        role="alert"
+        aria-live="assertive"
+        className="p-8 text-center text-sm font-medium"
+        style={{ color: 'var(--status-danger)' }}
+      >
+        {error}
+      </div>
+    )
+  }
 
-  const latestVersion   = submission.versions?.slice(-1)[0]
-  const alreadyDecided  = submission.status !== 'IN_REVIEW'
+  const latestVersion  = submission.versions?.slice(-1)[0]
+  const alreadyDecided = submission.status !== 'IN_REVIEW'
+  const ConfirmIcon    = pendingDecision?.icon ?? null
+
+  const headerActions = (
+    <div className="flex items-center gap-2 flex-wrap">
+      <span
+        className="text-xs font-mono"
+        style={{ color: 'var(--text-muted)' }}
+      >
+        {submission.applicationId}
+      </span>
+      <StatusBadge status={submission.status} />
+    </div>
+  )
 
   return (
     <main id="main-content" className="p-4 md:p-6 max-w-5xl mx-auto space-y-6">
-      <div>
-        <Link to={backTo} className="text-sm hover:underline mb-2 inline-flex items-center gap-1"
-          style={{ color: 'var(--lev-navy)' }}>
-          ← {t('submission.detail.backToList')}
-        </Link>
-        <div className="flex flex-wrap items-center gap-3 mt-2">
-          <h1 className="text-xl font-bold" style={{ color: 'var(--lev-navy)' }}>{submission.title}</h1>
-          <StatusBadge status={submission.status} />
-          <span className="text-sm text-gray-500 font-mono">{submission.applicationId}</span>
-        </div>
-      </div>
+      <PageHeader
+        title={submission.title}
+        subtitle={submission.applicationId}
+        backTo={backTo}
+        backLabel={t('submission.detail.backToList')}
+        actions={headerActions}
+      />
 
-      {error && <p role="alert" className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-2">{error}</p>}
+      {error && (
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="inline-flex items-center gap-2 text-sm font-medium"
+          style={{
+            background: 'var(--status-danger-50)',
+            color: 'var(--status-danger)',
+            border: '1px solid var(--status-danger)',
+            borderRadius: 'var(--radius-lg)',
+            padding: '10px 14px',
+          }}
+        >
+          <AlertCircle
+            size={16}
+            strokeWidth={1.75}
+            aria-hidden="true"
+            focusable="false"
+          />
+          {error}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Form answers */}
-        <section className="lg:col-span-2 bg-white rounded-xl border border-gray-200 p-5">
-          <h2 className="text-base font-semibold mb-4" style={{ color: 'var(--lev-navy)' }}>
-            {t('submission.detail.sectionAnswers')}
-          </h2>
-          <FormAnswersViewer formConfig={submission.formConfig} dataJson={latestVersion?.dataJson ?? {}} />
-        </section>
+        <Card as="section" className="lg:col-span-2">
+          <CardHeader title={t('submission.detail.sectionAnswers')} />
+          <CardBody>
+            <FormAnswersViewer
+              formConfig={submission.formConfig}
+              dataJson={latestVersion?.dataJson ?? {}}
+            />
+          </CardBody>
+        </Card>
 
-        {/* Decision panel */}
         <aside>
-          <section className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
-            <h2 className="text-base font-semibold" style={{ color: 'var(--lev-navy)' }}>
-              {t('chairman.decision.pageTitle')}
-            </h2>
-
-            {alreadyDecided ? (
-              <p className="text-sm text-gray-500">{t('chairman.decision.decisionRecorded')}</p>
-            ) : (
-              <>
-                <div>
-                  <label htmlFor="decision-note" className="block text-sm font-medium text-gray-700 mb-1">
-                    {t('chairman.decision.noteLabel')}
-                  </label>
-                  <textarea
-                    id="decision-note"
-                    data-testid="chairman-decision-note"
-                    value={note}
-                    onChange={(e) => setNote(e.target.value)}
-                    placeholder={t('chairman.decision.notePlaceholder')}
-                    rows={3}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 resize-none"
+          <Card as="section">
+            <CardHeader title={t('chairman.decision.pageTitle')} />
+            <CardBody>
+              {alreadyDecided ? (
+                <p
+                  role="status"
+                  aria-live="polite"
+                  className="text-sm"
+                  style={{ color: 'var(--text-muted)' }}
+                >
+                  {t('chairman.decision.decisionRecorded')}
+                </p>
+              ) : (
+                <div className="space-y-4">
+                  <FormField
+                    label={t('chairman.decision.noteLabel')}
+                    render={({ inputId, describedBy, required, invalid }) => (
+                      <Textarea
+                        id={inputId}
+                        data-testid="chairman-decision-note"
+                        value={note}
+                        onChange={(e) => setNote(e.target.value)}
+                        placeholder={t('chairman.decision.notePlaceholder')}
+                        aria-required={required || undefined}
+                        aria-describedby={describedBy}
+                        invalid={invalid}
+                        rows={3}
+                      />
+                    )}
                   />
-                </div>
 
-                <div id="decision-actions" className="space-y-2">
-                  {DECISIONS.map(({ key, style, confirm }) => (
-                    <button
-                      key={key}
-                      data-testid={`chairman-decision-${key}`}
-                      onClick={() => handleDecision(key, confirm)}
-                      disabled={deciding}
-                      className={`w-full py-2.5 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 ${style}`}
-                      style={{ minHeight: '44px' }}
-                      aria-describedby="decision-actions"
-                    >
-                      {t(`chairman.decision.${key === 'APPROVED' ? 'approve' : key === 'REJECTED' ? 'reject' : 'requestRevision'}`)}
-                    </button>
-                  ))}
+                  <div
+                    id="decision-actions"
+                    role="group"
+                    aria-label={t('chairman.decision.pageTitle')}
+                    className="space-y-2"
+                  >
+                    {DECISIONS.map(({ key, variant, icon: Icon, labelKey }) => (
+                      <Button
+                        key={key}
+                        data-testid={`chairman-decision-${key}`}
+                        onClick={() =>
+                          setPendingDecision(
+                            DECISIONS.find((d) => d.key === key) ?? null
+                          )
+                        }
+                        disabled={deciding}
+                        variant={variant}
+                        fullWidth
+                        aria-describedby="decision-actions"
+                        leftIcon={
+                          <Icon
+                            size={16}
+                            strokeWidth={1.75}
+                            aria-hidden="true"
+                            focusable="false"
+                          />
+                        }
+                      >
+                        {t(labelKey)}
+                      </Button>
+                    ))}
+                  </div>
                 </div>
-              </>
-            )}
-          </section>
+              )}
+            </CardBody>
+          </Card>
         </aside>
       </div>
 
-      {/* Comments */}
-      <section className="bg-white rounded-xl border border-gray-200 p-5">
-        <h2 className="text-base font-semibold mb-4" style={{ color: 'var(--lev-navy)' }}>
-          {t('submission.detail.sectionComments')}
-        </h2>
-        <CommentThread comments={submission.comments ?? []} onAdd={null} />
-      </section>
+      <Card as="section">
+        <CardHeader title={t('submission.detail.sectionComments')} />
+        <CardBody>
+          <CommentThread comments={submission.comments ?? []} onAdd={null} />
+        </CardBody>
+      </Card>
+
+      <Modal
+        open={!!pendingDecision}
+        onClose={() => !deciding && setPendingDecision(null)}
+        title={pendingDecision ? t(pendingDecision.confirm) : ''}
+        footer={
+          <>
+            <Button
+              variant="secondary"
+              onClick={() => setPendingDecision(null)}
+              disabled={deciding}
+            >
+              {t('common.cancel', 'ביטול')}
+            </Button>
+            <Button
+              variant={pendingDecision?.variant ?? 'primary'}
+              onClick={handleConfirmDecision}
+              loading={deciding}
+              leftIcon={
+                ConfirmIcon ? (
+                  <ConfirmIcon
+                    size={16}
+                    strokeWidth={1.75}
+                    aria-hidden="true"
+                    focusable="false"
+                  />
+                ) : null
+              }
+            >
+              {pendingDecision ? t(pendingDecision.labelKey) : ''}
+            </Button>
+          </>
+        }
+      >
+        {pendingDecision && (
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+            {t(pendingDecision.confirm)}
+          </p>
+        )}
+      </Modal>
     </main>
   )
 }

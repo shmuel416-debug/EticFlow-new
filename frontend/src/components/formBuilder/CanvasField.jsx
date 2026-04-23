@@ -8,6 +8,7 @@
 import { useTranslation }             from 'react-i18next'
 import { useSortable }                from '@dnd-kit/sortable'
 import { CSS }                        from '@dnd-kit/utilities'
+import { Copy, X }                    from 'lucide-react'
 import { FIELD_TYPE_COLOR }           from './fieldTypes'
 
 /**
@@ -51,7 +52,7 @@ export default function CanvasField({ field, isSelected, onSelect, onRemove, onD
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--lev-navy)]',
         isSelected
           ? 'border-[var(--lev-navy)] shadow-[0_0_0_3px_rgba(30,42,114,0.12)]'
-          : 'border-gray-200 hover:border-blue-300',
+          : 'border-gray-200 hover:border-[var(--lev-teal)]',
       ].join(' ')}
     >
       {/* Header row */}
@@ -94,16 +95,20 @@ export default function CanvasField({ field, isSelected, onSelect, onRemove, onD
             type="button"
             onClick={() => onDuplicate(field.id)}
             aria-label={t('secretary.formBuilder.fieldDuplicate')}
-            className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors"
-            style={{ minWidth: '32px', minHeight: '32px' }}
-          >⧉</button>
+            className="inline-flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors"
+            style={{ minWidth: 36, minHeight: 36 }}
+          >
+            <Copy size={16} strokeWidth={1.75} aria-hidden="true" focusable="false" />
+          </button>
           <button
             type="button"
             onClick={() => onRemove(field.id)}
             aria-label={t('secretary.formBuilder.fieldDelete')}
-            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
-            style={{ minWidth: '32px', minHeight: '32px' }}
-          >✕</button>
+            className="inline-flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+            style={{ minWidth: 36, minHeight: 36 }}
+          >
+            <X size={16} strokeWidth={1.75} aria-hidden="true" focusable="false" />
+          </button>
         </div>
       </div>
 

@@ -8,6 +8,7 @@
 
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { ClipboardList } from 'lucide-react'
 import FormFieldPreview from './FormFieldPreview'
 
 /**
@@ -87,7 +88,14 @@ export default function FormPreview({ formName, formNameEn, fields, initialLang 
           {/* Empty state */}
           {fields.length === 0 && (
             <div className="text-center py-12">
-              <p className="text-3xl mb-3" aria-hidden="true">📋</p>
+              <ClipboardList
+                className="mx-auto mb-3"
+                size={40}
+                strokeWidth={1.5}
+                aria-hidden="true"
+                focusable="false"
+                style={{ color: 'var(--lev-navy)' }}
+              />
               <p className="text-sm font-semibold" style={{ color: 'var(--lev-navy)' }}>
                 {t('secretary.formPreview.emptyTitle')}
               </p>

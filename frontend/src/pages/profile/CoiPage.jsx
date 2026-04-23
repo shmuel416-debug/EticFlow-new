@@ -1,13 +1,51 @@
 /**
- * EthicFlow — Conflict of Interest Declarations Page
+ * EthicFlow — Conflict of Interest Declarations Page (brand refresh)
  * Lets users create and manage their own COI declarations.
+ *
+ * Visual: PageHeader + Card shells, monochrome lucide icons, brand tokens.
+ * Behaviour unchanged — same endpoints, same fields, same validation.
+ * IS 5568 / WCAG 2.2 AA compliant.
  */
 
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import {
+  AlertTriangle,
+  Plus,
+  Trash2,
+  ShieldAlert,
+} from 'lucide-react'
 import api from '../../services/api'
+import {
+  Button,
+  IconButton,
+  PageHeader,
+  Card,
+  CardHeader,
+  CardBody,
+  Badge,
+  FormField,
+  Input,
+  Textarea,
+  Select,
+  Spinner,
+  EmptyState,
+  AccessibleIcon,
+} from '../../components/ui'
 
 const SCOPES = ['SUBMISSION', 'USER', 'DEPARTMENT', 'GLOBAL']
+
+/**
+ * Maps a COI scope key to a Badge tone.
+ * @param {string} scope
+ * @returns {'info'|'navy'|'purple'|'neutral'}
+ */
+function scopeTone(scope) {
+  if (scope === 'SUBMISSION') return 'info'
+  if (scope === 'USER')       return 'navy'
+  if (scope === 'DEPARTMENT') return 'purple'
+  return 'neutral'
+}
 
 /**
  * COI declarations management page.
@@ -74,121 +112,183 @@ export default function CoiPage() {
   }
 
   const showSubmission = form.scope === 'SUBMISSION'
-  const showUser = form.scope === 'USER'
+  const showUser       = form.scope === 'USER'
   const showDepartment = form.scope === 'DEPARTMENT'
 
   return (
-    <div className="max-w-3xl mx-auto space-y-5">
-      <div>
-        <h1 className="text-2xl font-bold" style={{ color: 'var(--lev-navy)' }}>{t('coi.page.title')}</h1>
-        <p className="text-sm text-gray-500 mt-1">{t('coi.page.subtitle')}</p>
-      </div>
+    <div className="max-w-3xl mx-auto">
+      <PageHeader
+        title={t('coi.page.title')}
+        subtitle={t('coi.page.subtitle')}
+      />
 
-      {error && <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm" role="alert">{error}</div>}
-
-      <section className="bg-white border border-gray-200 rounded-xl p-4 space-y-3">
-        <h2 className="text-sm font-semibold" style={{ color: 'var(--lev-navy)' }}>{t('coi.declare')}</h2>
-        <label htmlFor="coi-scope" className="block text-xs font-semibold text-gray-600">
-          {t('coi.scopeLabel')}
-        </label>
-        <select
-          id="coi-scope"
-          value={form.scope}
-          onChange={(event) => setForm((prev) => ({ ...prev, scope: event.target.value }))}
-          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm min-h-[44px]"
+      {error && (
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="mb-4 flex items-start gap-2 text-sm font-medium"
+          style={{
+            background: 'var(--status-danger-50)',
+            color: 'var(--status-danger)',
+            border: '1px solid var(--status-danger)',
+            borderRadius: 'var(--radius-lg)',
+            padding: '12px 14px',
+          }}
         >
-          {SCOPES.map((scope) => (
-            <option key={scope} value={scope}>{t(`coi.scope.${scope.toLowerCase()}`)}</option>
-          ))}
-        </select>
-
-        {showSubmission && (
-          <>
-            <label htmlFor="coi-submission-id" className="block text-xs font-semibold text-gray-600">
-              {t('coi.fields.submissionId')}
-            </label>
-            <input
-              id="coi-submission-id"
-              value={form.targetSubmissionId}
-              onChange={(event) => setForm((prev) => ({ ...prev, targetSubmissionId: event.target.value }))}
-              placeholder={t('coi.fields.submissionId')}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm min-h-[44px]"
-            />
-          </>
-        )}
-        {showUser && (
-          <>
-            <label htmlFor="coi-user-id" className="block text-xs font-semibold text-gray-600">
-              {t('coi.fields.userId')}
-            </label>
-            <input
-              id="coi-user-id"
-              value={form.targetUserId}
-              onChange={(event) => setForm((prev) => ({ ...prev, targetUserId: event.target.value }))}
-              placeholder={t('coi.fields.userId')}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm min-h-[44px]"
-            />
-          </>
-        )}
-        {showDepartment && (
-          <>
-            <label htmlFor="coi-department" className="block text-xs font-semibold text-gray-600">
-              {t('coi.fields.department')}
-            </label>
-            <input
-              id="coi-department"
-              value={form.targetDepartment}
-              onChange={(event) => setForm((prev) => ({ ...prev, targetDepartment: event.target.value }))}
-              placeholder={t('coi.fields.department')}
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm min-h-[44px]"
-            />
-          </>
-        )}
-
-        <label htmlFor="coi-reason" className="block text-xs font-semibold text-gray-600">
-          {t('coi.reason')}
-        </label>
-        <textarea
-          id="coi-reason"
-          value={form.reason}
-          onChange={(event) => setForm((prev) => ({ ...prev, reason: event.target.value }))}
-          placeholder={t('coi.reason')}
-          rows={3}
-          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"
-        />
-
-        <button
-          onClick={handleCreate}
-          disabled={saving || !form.reason.trim()}
-          className="px-4 py-2 rounded-lg text-white text-sm font-semibold disabled:opacity-60"
-          style={{ background: 'var(--lev-navy)', minHeight: '44px' }}
-        >
-          {saving ? t('common.loading') : t('coi.declare')}
-        </button>
-      </section>
-
-      <section className="bg-white border border-gray-200 rounded-xl p-4">
-        <h2 className="text-sm font-semibold mb-3" style={{ color: 'var(--lev-navy)' }}>{t('coi.page.list')}</h2>
-        {loading && <p className="text-sm text-gray-500">{t('common.loading')}</p>}
-        {!loading && items.length === 0 && <p className="text-sm text-gray-500">{t('coi.page.empty')}</p>}
-        <div className="space-y-2">
-          {items.map((item) => (
-            <div key={item.id} className="border border-gray-100 rounded-lg p-3 flex items-start justify-between gap-3">
-              <div>
-                <p className="text-xs text-gray-500">{t(`coi.scope.${item.scope.toLowerCase()}`)}</p>
-                <p className="text-sm text-gray-800">{item.reason}</p>
-              </div>
-              <button
-                onClick={() => handleDelete(item.id)}
-                className="text-xs px-3 py-2 rounded bg-red-50 text-red-700 min-h-[44px]"
-                aria-label={`${t('common.delete')} ${t(`coi.scope.${item.scope.toLowerCase()}`)}`}
-              >
-                {t('common.delete')}
-              </button>
-            </div>
-          ))}
+          <AccessibleIcon icon={AlertTriangle} size={18} decorative />
+          <span>{error}</span>
         </div>
-      </section>
+      )}
+
+      {/* ── Declare form ─────────────────────────── */}
+      <Card className="mb-5">
+        <CardHeader title={t('coi.declare')} />
+        <CardBody>
+          <div className="space-y-3">
+            <FormField
+              label={t('coi.scopeLabel')}
+              render={({ inputId, describedBy }) => (
+                <Select
+                  id={inputId}
+                  aria-describedby={describedBy}
+                  value={form.scope}
+                  onChange={(event) => setForm((prev) => ({ ...prev, scope: event.target.value }))}
+                >
+                  {SCOPES.map((scope) => (
+                    <option key={scope} value={scope}>
+                      {t(`coi.scope.${scope.toLowerCase()}`)}
+                    </option>
+                  ))}
+                </Select>
+              )}
+            />
+
+            {showSubmission && (
+              <FormField
+                label={t('coi.fields.submissionId')}
+                render={({ inputId, describedBy }) => (
+                  <Input
+                    id={inputId}
+                    aria-describedby={describedBy}
+                    value={form.targetSubmissionId}
+                    onChange={(event) => setForm((prev) => ({ ...prev, targetSubmissionId: event.target.value }))}
+                    placeholder={t('coi.fields.submissionId')}
+                  />
+                )}
+              />
+            )}
+            {showUser && (
+              <FormField
+                label={t('coi.fields.userId')}
+                render={({ inputId, describedBy }) => (
+                  <Input
+                    id={inputId}
+                    aria-describedby={describedBy}
+                    value={form.targetUserId}
+                    onChange={(event) => setForm((prev) => ({ ...prev, targetUserId: event.target.value }))}
+                    placeholder={t('coi.fields.userId')}
+                  />
+                )}
+              />
+            )}
+            {showDepartment && (
+              <FormField
+                label={t('coi.fields.department')}
+                render={({ inputId, describedBy }) => (
+                  <Input
+                    id={inputId}
+                    aria-describedby={describedBy}
+                    value={form.targetDepartment}
+                    onChange={(event) => setForm((prev) => ({ ...prev, targetDepartment: event.target.value }))}
+                    placeholder={t('coi.fields.department')}
+                  />
+                )}
+              />
+            )}
+
+            <FormField
+              label={t('coi.reason')}
+              required
+              render={({ inputId, describedBy, required, invalid }) => (
+                <Textarea
+                  id={inputId}
+                  aria-describedby={describedBy}
+                  aria-required={required || undefined}
+                  invalid={invalid}
+                  value={form.reason}
+                  onChange={(event) => setForm((prev) => ({ ...prev, reason: event.target.value }))}
+                  placeholder={t('coi.reason')}
+                  rows={3}
+                />
+              )}
+            />
+
+            <div>
+              <Button
+                variant="gold"
+                onClick={handleCreate}
+                disabled={saving || !form.reason.trim()}
+                loading={saving}
+                leftIcon={<AccessibleIcon icon={Plus} size={16} decorative />}
+              >
+                {t('coi.declare')}
+              </Button>
+            </div>
+          </div>
+        </CardBody>
+      </Card>
+
+      {/* ── Active declarations ──────────────────── */}
+      <Card>
+        <CardHeader title={t('coi.page.list')} />
+        <CardBody>
+          {loading && (
+            <div className="flex items-center gap-2" role="status" aria-live="polite">
+              <Spinner size={18} label={t('common.loading')} />
+              <span className="text-sm" style={{ color: 'var(--text-muted)' }}>
+                {t('common.loading')}
+              </span>
+            </div>
+          )}
+
+          {!loading && items.length === 0 && (
+            <EmptyState
+              icon={ShieldAlert}
+              title={t('coi.page.empty')}
+            />
+          )}
+
+          {!loading && items.length > 0 && (
+            <ul className="space-y-2" aria-label={t('coi.page.list')}>
+              {items.map((item) => (
+                <li
+                  key={item.id}
+                  className="flex items-start justify-between gap-3 p-3"
+                  style={{
+                    border: '1px solid var(--border-subtle)',
+                    borderRadius: 'var(--radius-lg)',
+                    background: 'var(--surface-raised)',
+                  }}
+                >
+                  <div className="min-w-0">
+                    <Badge tone={scopeTone(item.scope)} size="sm">
+                      {t(`coi.scope.${item.scope.toLowerCase()}`)}
+                    </Badge>
+                    <p className="text-sm mt-1.5" style={{ color: 'var(--text-primary)' }}>
+                      {item.reason}
+                    </p>
+                  </div>
+                  <IconButton
+                    icon={Trash2}
+                    label={`${t('common.delete')} ${t(`coi.scope.${item.scope.toLowerCase()}`)}`}
+                    onClick={() => handleDelete(item.id)}
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardBody>
+      </Card>
     </div>
   )
 }

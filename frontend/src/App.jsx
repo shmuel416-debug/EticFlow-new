@@ -7,6 +7,7 @@
 
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { Construction } from 'lucide-react'
 import { AuthProvider } from './context/AuthContext'
 
 import AppLayout         from './components/layout/AppLayout'
@@ -44,6 +45,7 @@ import AuditLogPage               from './pages/reports/AuditLogPage'
 import SettingsPage               from './pages/admin/SettingsPage'
 import StatusManagementPage       from './pages/admin/StatusManagementPage'
 import CoiPage                    from './pages/profile/CoiPage'
+import AccessibilityStatementPage from './pages/AccessibilityStatementPage'
 
 export default function App() {
   return (
@@ -56,6 +58,7 @@ export default function App() {
           <Route path="/reset-password"        element={<ResetPasswordPage />} />
           <Route path="/sso-callback"          element={<SsoCallbackPage />} />
           <Route path="/protocol/sign/:token"  element={<ProtocolSignPage />} />
+          <Route path="/accessibility-statement" element={<AccessibilityStatementPage />} />
 
           {/* ── Protected (all authenticated roles) ── */}
           <Route element={<ProtectedRoute />}>
@@ -139,11 +142,18 @@ function PlaceholderPage({ pageKey }) {
   const { t } = useTranslation()
   return (
     <div className="flex flex-col items-center justify-center py-24 text-center">
-      <p className="text-4xl mb-4" aria-hidden="true">🚧</p>
+      <Construction
+        className="mb-4"
+        size={48}
+        strokeWidth={1.5}
+        aria-hidden="true"
+        focusable="false"
+        style={{ color: 'var(--lev-navy)' }}
+      />
       <h1 className="text-lg font-bold mb-2" style={{ color: 'var(--lev-navy)' }}>
         {t(`pages.${pageKey}`)}
       </h1>
-      <p className="text-sm text-gray-600">{t('pages.comingSoon')}</p>
+      <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{t('pages.comingSoon')}</p>
     </div>
   )
 }

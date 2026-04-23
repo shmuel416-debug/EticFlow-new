@@ -5,6 +5,7 @@
  */
 
 import { useTranslation } from 'react-i18next'
+import { Check, X } from 'lucide-react'
 
 /**
  * Renders a single answer value based on field type.
@@ -21,7 +22,21 @@ function FieldAnswer({ field, value }) {
       return <span className="text-gray-400 italic">{t('submission.detail.noAnswer')}</span>
     }
     if (Array.isArray(value)) return <span>{value.join(', ')}</span>
-    if (typeof value === 'boolean') return <span>{value ? '✓' : '✗'}</span>
+    if (typeof value === 'boolean') {
+      return value
+        ? (
+          <span className="inline-flex items-center gap-1" style={{ color: 'var(--status-success)' }}>
+            <Check size={16} strokeWidth={2} aria-hidden="true" focusable="false" />
+            {t('common.yes')}
+          </span>
+        )
+        : (
+          <span className="inline-flex items-center gap-1" style={{ color: 'var(--text-muted)' }}>
+            <X size={16} strokeWidth={2} aria-hidden="true" focusable="false" />
+            {t('common.no')}
+          </span>
+        )
+    }
     return <span className="whitespace-pre-wrap">{String(value)}</span>
   }
 

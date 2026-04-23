@@ -1,26 +1,33 @@
 /**
  * EthicFlow — FormLibraryPage
  * Secretary views all forms (draft/published/archived), creates, edits, archives.
- * Design: Option B — stats bar + card grid with colored top stripe.
- * IS 5568 / WCAG 2.1 AA. Lev palette only. Mobile-first.
+ * Keeps the existing card-grid UX but rebuilt on the EthicFlow design system
+ * (PageHeader, Card, StatCard, Tabs, Button, Input, EmptyState) with the Lev
+ * palette and lucide-react icons. IS 5568 / WCAG 2.2 AA. Mobile-first.
  * @module pages/secretary/FormLibraryPage
  */
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { useNavigate }                               from 'react-router-dom'
-import { useTranslation }                            from 'react-i18next'
-import api                                           from '../../services/api'
-import FormCard                                      from '../../components/formLibrary/FormCard'
+import { useNavigate }    from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import {
+  FilePlus2, FileText, FileEdit, FileCheck2, Archive, Search, X, Inbox,
+} from 'lucide-react'
+import api                from '../../services/api'
+import FormCard           from '../../components/formLibrary/FormCard'
+import {
+  Button, StatCard, Tabs, Input, EmptyState, Skeleton, IconButton,
+  PageHeader,
+} from '../../components/ui'
 
-/* ─── Status filter keys ─────────────────── */
+/** Status filter keys. */
 const FILTERS = ['all', 'draft', 'published', 'archived']
 
-/* ─── Stats bar ─────────────────────────── */
 /**
- * Summary stats: total / draft / published / archived counts.
+ * Summary stats row: total / draft / published / archived counts.
  * @param {{ forms: object[] }} props
  */
-function StatsBar({ forms }) {
+function StatsRow({ forms }) {
   const { t } = useTranslation()
   const counts = useMemo(() => ({
     total:     forms.length,
@@ -30,86 +37,34 @@ function StatsBar({ forms }) {
   }), [forms])
 
   const stats = [
-    { key: 'total',     value: counts.total,     label: t('secretary.formLibrary.statTotal'),     sub: t('secretary.formLibrary.statTotalLabel'),     bg: '#EEF0FA', border: '#c7cce8', color: 'var(--lev-navy)' },
-    { key: 'draft',     value: counts.draft,     label: t('secretary.formLibrary.statDraft'),     sub: t('secretary.formLibrary.statDraftLabel'),     bg: '#fef9c3', border: '#fde68a', color: '#92400e'         },
-    { key: 'published', value: counts.published, label: t('secretary.formLibrary.statPublished'), sub: t('secretary.formLibrary.statPublishedLabel'), bg: '#dcfce7', border: '#86efac', color: '#16a34a'         },
-    { key: 'archived',  value: counts.archived,  label: t('secretary.formLibrary.statArchived'),  sub: t('secretary.formLibrary.statArchivedLabel'),  bg: '#f3f4f6', border: '#e5e7eb', color: '#6b7280'         },
+    { key: 'total',     value: counts.total,     label: t('secretary.formLibrary.statTotal'),     hint: t('secretary.formLibrary.statTotalLabel'),     tone: 'navy',    icon: FileText   },
+    { key: 'draft',     value: counts.draft,     label: t('secretary.formLibrary.statDraft'),     hint: t('secretary.formLibrary.statDraftLabel'),     tone: 'warning', icon: FileEdit   },
+    { key: 'published', value: counts.published, label: t('secretary.formLibrary.statPublished'), hint: t('secretary.formLibrary.statPublishedLabel'), tone: 'success', icon: FileCheck2 },
+    { key: 'archived',  value: counts.archived,  label: t('secretary.formLibrary.statArchived'),  hint: t('secretary.formLibrary.statArchivedLabel'),  tone: 'muted',   icon: Archive    },
   ]
 
   return (
-    <div className="bg-white border-b px-4 md:px-6 py-3 shrink-0" aria-label={t('secretary.formLibrary.statsSummaryLabel')}>
-      <div className="flex gap-3 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-        {stats.map(s => (
-          <div key={s.key}
-            className="rounded-xl p-3 shrink-0 flex-1 min-w-[80px]"
-            style={{ background: s.bg, border: `1px solid ${s.border}` }}>
-            <p className="text-xs font-semibold" style={{ color: s.color }}>{s.label}</p>
-            <p className="text-2xl font-bold leading-none mt-0.5" style={{ color: s.color }}>{s.value}</p>
-            <p className="text-xs mt-0.5" style={{ color: s.color, opacity: 0.7 }}>{s.sub}</p>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-/* ─── Filter tab bar ─────────────────────── */
-/**
- * Filter tabs: all / draft / published / archived.
- * @param {{ active: string, onChange: (f: string) => void, counts: object }} props
- */
-function FilterTabs({ active, onChange, counts }) {
-  const { t } = useTranslation()
-  const labels = {
-    all:       t('secretary.formLibrary.filterAll'),
-    draft:     t('secretary.formLibrary.filterDraft'),
-    published: t('secretary.formLibrary.filterPublished'),
-    archived:  t('secretary.formLibrary.filterArchived'),
-  }
-  return (
-    <div className="flex gap-4 overflow-x-auto" role="tablist"
-      aria-label={t('secretary.formLibrary.filterLabel')} style={{ scrollbarWidth: 'none' }}>
-      {FILTERS.map(f => (
-        <button key={f} type="button" role="tab"
-          aria-selected={active === f}
-          onClick={() => onChange(f)}
-          className="py-2.5 text-xs font-semibold border-b-2 whitespace-nowrap transition-colors shrink-0"
-          style={{
-            borderColor: active === f ? 'var(--lev-navy)' : 'transparent',
-            color:        active === f ? 'var(--lev-navy)' : '#6b7280',
-            minHeight:    '44px',
-          }}>
-          {labels[f]}{f !== 'all' && counts[f] > 0 ? ` (${counts[f]})` : ''}
-        </button>
+    <div
+      className="grid grid-cols-2 lg:grid-cols-4 gap-3"
+      aria-label={t('secretary.formLibrary.statsSummaryLabel')}
+    >
+      {stats.map(s => (
+        <StatCard
+          key={s.key}
+          value={s.value}
+          label={s.label}
+          hint={s.hint}
+          tone={s.tone}
+          icon={s.icon}
+        />
       ))}
     </div>
   )
 }
 
-/* ─── Empty state ────────────────────────── */
-/**
- * @param {{ filtered: boolean }} props
- */
-function EmptyState({ filtered }) {
-  const { t } = useTranslation()
-  return (
-    <div className="col-span-full flex flex-col items-center justify-center py-20 text-center">
-      <p className="text-4xl mb-4" aria-hidden="true">📋</p>
-      <p className="text-sm font-semibold mb-1" style={{ color: 'var(--lev-navy)' }}>
-        {t('secretary.formLibrary.emptyTitle')}
-      </p>
-      <p className="text-xs" style={{ color: 'var(--lev-teal-text)' }}>
-        {filtered
-          ? t('secretary.formLibrary.emptyFilterHint')
-          : t('secretary.formLibrary.emptyHint')}
-      </p>
-    </div>
-  )
-}
-
-/* ─── Main page ──────────────────────────── */
 /**
  * FormLibraryPage — lists all forms in a card grid with stats and filters.
+ * @returns {JSX.Element}
  */
 export default function FormLibraryPage() {
   const { t }    = useTranslation()
@@ -121,7 +76,6 @@ export default function FormLibraryPage() {
   const [filter,   setFilter]   = useState('all')
   const [search,   setSearch]   = useState('')
 
-  /* Load forms from API */
   useEffect(() => {
     let cancelled = false
     async function load() {
@@ -139,7 +93,6 @@ export default function FormLibraryPage() {
     return () => { cancelled = true }
   }, [t])
 
-  /* Filtered + searched list */
   const visible = useMemo(() => {
     let list = filter === 'all' ? forms : forms.filter(f => f.status === filter)
     if (search.trim()) {
@@ -151,7 +104,6 @@ export default function FormLibraryPage() {
     return list
   }, [forms, filter, search])
 
-  /* Status counts for tab labels */
   const counts = useMemo(() => ({
     draft:     forms.filter(f => f.status === 'draft').length,
     published: forms.filter(f => f.status === 'published').length,
@@ -181,106 +133,161 @@ export default function FormLibraryPage() {
     }
   }, [t])
 
+  const tabItems = FILTERS.map((f) => ({
+    key: f,
+    label: t(`secretary.formLibrary.filter${f.charAt(0).toUpperCase() + f.slice(1)}`),
+    count: f === 'all' ? undefined : counts[f],
+  }))
+
+  const filtered = filter !== 'all' || search !== ''
+
   return (
-    <div className="flex flex-col" style={{ minHeight: '100%' }}>
+    <>
+      <a href="#forms-grid" className="skip-link">{t('common.skipToMain')}</a>
 
-      {/* Skip link — IS 5568 */}
-      <a href="#forms-grid"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:start-2
-          focus:z-50 focus:px-4 focus:py-2 focus:rounded-lg focus:text-sm
-          focus:font-semibold focus:text-white"
-        style={{ background: 'var(--lev-navy)' }}>
-        {t('common.skipToMain')}
-      </a>
+      <div className="p-4 md:p-6 space-y-4">
+        <PageHeader
+          title={t('secretary.formLibrary.title')}
+          subtitle={t('secretary.formLibrary.subtitle')}
+          actions={
+            <Button
+              variant="gold"
+              leftIcon={<FilePlus2 size={18} strokeWidth={1.75} aria-hidden="true" focusable="false" />}
+              onClick={() => navigate('/secretary/forms/new')}
+              aria-label={t('secretary.formLibrary.newForm')}
+            >
+              {t('secretary.formLibrary.newForm')}
+            </Button>
+          }
+        />
 
-      {/* Page header */}
-      <div className="bg-white border-b px-4 md:px-6 py-4 flex items-center justify-between shrink-0">
-        <div>
-          <h1 className="text-base font-bold" style={{ color: 'var(--lev-navy)' }}>
-            {t('secretary.formLibrary.title')}
-          </h1>
-          <p className="text-xs mt-0.5" style={{ color: 'var(--lev-teal-text)' }}>
-            {t('secretary.formLibrary.subtitle')}
-          </p>
-        </div>
-        <button type="button"
-          onClick={() => navigate('/secretary/forms/new')}
-          className="flex items-center gap-1.5 px-4 py-2.5 text-sm font-semibold text-white rounded-xl hover:opacity-90 transition-opacity"
-          style={{ background: 'var(--lev-navy)', minHeight: '44px' }}
-          aria-label={t('secretary.formLibrary.newForm')}>
-          <span aria-hidden="true">+</span>
-          <span className="hidden sm:inline">{t('secretary.formLibrary.newForm')}</span>
-        </button>
-      </div>
+        {!loading && !error && <StatsRow forms={forms} />}
 
-      {/* Stats bar */}
-      {!loading && !error && <StatsBar forms={forms} />}
-
-      {/* Filter + search toolbar */}
-      <div className="bg-white border-b px-4 md:px-6 flex items-center justify-between gap-4 shrink-0">
-        <FilterTabs active={filter} onChange={setFilter} counts={counts} />
-        <div className="shrink-0 py-2">
-          <label htmlFor="form-search" className="sr-only">{t('secretary.formLibrary.search')}</label>
-          <input id="form-search" type="search"
-            placeholder={t('secretary.formLibrary.search')}
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="text-xs border border-gray-200 rounded-lg px-3 py-2 focus:outline-none hidden sm:block"
-            style={{ minHeight: '36px', width: '180px' }}
-            onFocus={e => (e.target.style.borderColor = 'var(--lev-teal)')}
-            onBlur={e  => (e.target.style.borderColor = '')}
-          />
-        </div>
-      </div>
-
-      {/* Content */}
-      <main id="forms-grid" className="flex-1 p-4 md:p-6">
-
-        {/* Error */}
         {error && (
-          <div role="alert" className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-sm text-red-700 flex justify-between">
-            {error}
-            <button onClick={() => setError('')} className="text-red-500 font-bold ms-3" style={{ minWidth: '28px' }}>✕</button>
+          <div
+            role="alert"
+            className="flex items-center justify-between gap-3 text-sm font-medium"
+            style={{
+              background: 'var(--status-danger-50)',
+              color: 'var(--status-danger)',
+              border: '1px solid var(--status-danger)',
+              borderRadius: 'var(--radius-lg)',
+              padding: '12px 14px',
+            }}
+          >
+            <span>{error}</span>
+            <IconButton
+              icon={X}
+              label={t('secretary.formBuilder.closeError')}
+              onClick={() => setError('')}
+            />
           </div>
         )}
 
-        {/* Loading skeleton */}
-        {loading && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" aria-live="polite" aria-label={t('common.loading')}>
-            {[1, 2, 3, 4].map(i => (
-              <div key={i} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden animate-pulse">
-                <div className="h-2 bg-gray-200" />
-                <div className="p-4 space-y-3">
-                  <div className="h-4 bg-gray-200 rounded w-3/4" />
-                  <div className="h-3 bg-gray-100 rounded w-1/2" />
-                  <div className="h-9 bg-gray-100 rounded-xl mt-4" />
-                </div>
-              </div>
-            ))}
+        <div
+          className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 bg-white p-3"
+          style={{
+            borderRadius: 'var(--radius-2xl)',
+            border: '1px solid var(--border-default)',
+            boxShadow: 'var(--shadow-sm)',
+          }}
+        >
+          <Tabs
+            items={tabItems}
+            value={filter}
+            onChange={setFilter}
+            variant="pills"
+            ariaLabel={t('secretary.formLibrary.filterLabel')}
+          />
+          <div className="md:w-64">
+            <label htmlFor="form-search" className="lev-sr-only">
+              {t('secretary.formLibrary.search')}
+            </label>
+            <Input
+              id="form-search"
+              icon={Search}
+              type="search"
+              placeholder={t('secretary.formLibrary.search')}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              aria-label={t('secretary.formLibrary.search')}
+            />
           </div>
-        )}
+        </div>
 
-        {/* Card grid */}
-        {!loading && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" role="list"
-            aria-label={t('secretary.formLibrary.title')}>
-            {visible.length === 0
-              ? <EmptyState filtered={filter !== 'all' || search !== ''} />
-              : visible.map(form => (
-                  <div key={form.id} role="listitem">
-                    <FormCard
-                      form={form}
-                      onEdit={handleEdit}
-                      onPreview={handlePreview}
-                      onArchive={handleArchive}
-                      onRestore={handleRestore}
-                    />
+        <section id="forms-grid">
+          {loading && (
+            <div
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+              role="status"
+              aria-live="polite"
+              aria-label={t('common.loading')}
+            >
+              {[1, 2, 3, 4].map(i => (
+                <div
+                  key={i}
+                  className="bg-white overflow-hidden"
+                  style={{
+                    borderRadius: 'var(--radius-2xl)',
+                    border: '1px solid var(--border-default)',
+                    boxShadow: 'var(--shadow-sm)',
+                  }}
+                >
+                  <div style={{ height: 8, background: 'var(--surface-sunken)' }} />
+                  <div className="p-4 space-y-3">
+                    <Skeleton width="75%" height={16} />
+                    <Skeleton width="50%" height={12} />
+                    <Skeleton width="100%" height={36} radius="var(--radius-xl)" />
                   </div>
-                ))
-            }
-          </div>
-        )}
-      </main>
-    </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {!loading && visible.length === 0 && (
+            <EmptyState
+              icon={Inbox}
+              title={t('secretary.formLibrary.emptyTitle')}
+              description={
+                filtered
+                  ? t('secretary.formLibrary.emptyFilterHint')
+                  : t('secretary.formLibrary.emptyHint')
+              }
+              action={
+                filtered ? null : (
+                  <Button
+                    variant="gold"
+                    leftIcon={<FilePlus2 size={18} strokeWidth={1.75} aria-hidden="true" focusable="false" />}
+                    onClick={() => navigate('/secretary/forms/new')}
+                  >
+                    {t('secretary.formLibrary.newForm')}
+                  </Button>
+                )
+              }
+            />
+          )}
+
+          {!loading && visible.length > 0 && (
+            <div
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+              role="list"
+              aria-label={t('secretary.formLibrary.title')}
+            >
+              {visible.map(form => (
+                <div key={form.id} role="listitem">
+                  <FormCard
+                    form={form}
+                    onEdit={handleEdit}
+                    onPreview={handlePreview}
+                    onArchive={handleArchive}
+                    onRestore={handleRestore}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
+    </>
   )
 }

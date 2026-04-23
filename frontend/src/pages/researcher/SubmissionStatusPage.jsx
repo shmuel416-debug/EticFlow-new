@@ -1,19 +1,42 @@
 /**
  * EthicFlow — Submission Status Page (Researcher)
  * Full timeline view for a single submission.
- * Tabs: ציר זמן | הערות | מסמכים.
- * Lev palette, mobile-first, IS 5568.
+ * Tabs: answers | timeline | comments | documents.
+ * Refreshed to Lev design system (PageHeader + Card primitives + Tabs).
+ * IS 5568 / WCAG 2.2 AA. Lev palette only.
  */
 
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useParams, Link, useLocation } from 'react-router-dom'
+import { useParams, useLocation, useNavigate } from 'react-router-dom'
+import {
+  Check,
+  Circle,
+  Download,
+  AlertTriangle,
+  AlertCircle,
+  Pencil,
+  ArrowRight,
+  ArrowLeft,
+} from 'lucide-react'
 import api from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
 import StatusBadge from '../../components/submissions/StatusBadge'
 import CommentThread from '../../components/submissions/CommentThread'
 import FormAnswersViewer from '../../components/submissions/FormAnswersViewer'
 import DocumentList from '../../components/submissions/DocumentList'
+import {
+  PageHeader,
+  Card,
+  CardHeader,
+  CardBody,
+  Button,
+  Spinner,
+  Tabs,
+  Modal,
+  Textarea,
+  FormField,
+} from '../../components/ui'
 
 const STATUS_ORDER = ['SUBMITTED','IN_TRIAGE','ASSIGNED','IN_REVIEW','PENDING_REVISION','APPROVED']
 const STATUS_STEP  = { DRAFT:0,SUBMITTED:1,IN_TRIAGE:2,ASSIGNED:3,IN_REVIEW:4,PENDING_REVISION:4,APPROVED:5,REJECTED:5,WITHDRAWN:5 }
@@ -29,14 +52,23 @@ function SlaIndicator({ sla, nowMs }) {
   if (!due) return null
   const days = Math.ceil((new Date(due).getTime() - nowMs) / 86400000)
   const { color, label } = days < 0
-    ? { color: '#dc2626', label: t('dashboard.researcher.slaBreach') }
+    ? { color: 'var(--status-danger)', label: t('dashboard.researcher.slaBreach') }
     : days <= 2
-      ? { color: '#d97706', label: t('dashboard.researcher.slaRemaining', { days }) }
-      : { color: '#16a34a', label: t('dashboard.researcher.slaRemaining', { days }) }
+      ? { color: 'var(--status-warning)', label: t('dashboard.researcher.slaRemaining', { days }) }
+      : { color: 'var(--status-success)', label: t('dashboard.researcher.slaRemaining', { days }) }
 
   return (
     <div className="flex items-center gap-1.5">
-      <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: color }} aria-hidden="true" />
+      <span
+        className="flex-shrink-0"
+        style={{
+          width: 10,
+          height: 10,
+          borderRadius: 'var(--radius-full)',
+          background: color,
+        }}
+        aria-hidden="true"
+      />
       <span className="text-sm font-medium" style={{ color }}>{label}</span>
     </div>
   )
@@ -44,20 +76,25 @@ function SlaIndicator({ sla, nowMs }) {
 
 /**
  * Full status page for researcher to track their submission.
+ * @returns {JSX.Element}
  */
 export default function SubmissionStatusPage() {
-  const { t }        = useTranslation()
+  const { t, i18n } = useTranslation()
   const { id }       = useParams()
   const location     = useLocation()
+  const navigate     = useNavigate()
   const { user }     = useAuth()
+  const isRtl        = i18n.dir() === 'rtl'
+  const FixArrow     = isRtl ? ArrowLeft : ArrowRight
   const [submission, setSubmission] = useState(null)
   const [loading,    setLoading]    = useState(true)
   const [error,      setError]      = useState('')
-  const LOCKED = ['SUBMITTED','IN_TRIAGE','ASSIGNED','IN_REVIEW','APPROVED','REJECTED','WITHDRAWN']
   const [activeTab,  setActiveTab]  = useState('answers')
   const [pdfLoading, setPdfLoading] = useState(null) // 'he' | 'en' | null
   const [withdrawing, setWithdrawing] = useState(false)
-  const [nowMs] = useState(() => Date.now())
+  const [nowMs]      = useState(() => Date.now())
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [withdrawNote, setWithdrawNote] = useState('')
   const backTo = typeof location.state?.from === 'string' ? location.state.from : '/dashboard'
 
   /** Loads submission from API. */
@@ -102,15 +139,17 @@ export default function SubmissionStatusPage() {
   }
 
   /**
-   * Withdraws the current submission after user confirmation.
+   * Withdraws the current submission after confirmation via modal.
    * @returns {Promise<void>}
    */
-  async function handleWithdraw() {
-    if (!window.confirm(t('statusPage.confirmWithdraw'))) return
-    const note = window.prompt(t('statusPage.withdrawReasonPrompt')) ?? ''
+  async function handleConfirmWithdraw() {
     setWithdrawing(true)
     try {
-      await api.post(`/submissions/${id}/withdraw`, { note: note.trim() || undefined })
+      await api.post(`/submissions/${id}/withdraw`, {
+        note: withdrawNote.trim() || undefined,
+      })
+      setConfirmOpen(false)
+      setWithdrawNote('')
       await load()
     } catch {
       setError(t('errors.SERVER_ERROR'))
@@ -119,164 +158,363 @@ export default function SubmissionStatusPage() {
     }
   }
 
-  if (loading) return <div className="py-20 text-center text-gray-400">{t('common.loading')}</div>
-  if (error)   return <div className="py-20 text-center text-red-600" role="alert">{error}</div>
+  if (loading) {
+    return (
+      <div
+        className="flex items-center justify-center gap-3 py-20"
+        role="status"
+        aria-live="polite"
+      >
+        <Spinner size={20} label={t('common.loading')} />
+        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+          {t('common.loading')}
+        </p>
+      </div>
+    )
+  }
+  if (error) {
+    return (
+      <div
+        role="alert"
+        aria-live="assertive"
+        className="py-20 text-center text-sm font-medium"
+        style={{ color: 'var(--status-danger)' }}
+      >
+        {error}
+      </div>
+    )
+  }
 
   const step     = STATUS_STEP[submission.status] ?? 1
   const latest   = submission.versions?.slice(-1)[0]
   const progress = Math.round((step / 5) * 100)
 
   return (
-    <main id="main-content" className="max-w-3xl mx-auto space-y-5 p-4 md:p-6">
+    <main id="main-content" className="max-w-3xl mx-auto p-4 md:p-6 space-y-5">
+      <PageHeader
+        title={submission.title}
+        subtitle={submission.applicationId}
+        backTo={backTo}
+        backLabel={t('statusPage.backToDashboard')}
+        actions={<StatusBadge status={submission.status} />}
+      />
 
-      {/* Back link */}
-      <Link to={backTo} className="inline-flex items-center gap-1 text-sm hover:underline"
-        style={{ color: 'var(--lev-teal-text)' }}>
-        ← {t('statusPage.backToDashboard')}
-      </Link>
+      <Card>
+        <CardBody>
+          <SlaIndicator sla={submission.slaTracking} nowMs={nowMs} />
 
-      {/* Title + status */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-        <div className="flex flex-wrap items-start gap-3 mb-3">
-          <div className="flex-1 min-w-0">
-            <h1 className="text-lg font-bold" style={{ color: 'var(--lev-navy)' }}>{submission.title}</h1>
-            <p className="text-xs font-mono text-gray-400 mt-0.5">{submission.applicationId}</p>
-          </div>
-          <StatusBadge status={submission.status} />
-        </div>
-
-        <SlaIndicator sla={submission.slaTracking} nowMs={nowMs} />
-
-        {/* Progress bar */}
-        <div className="mt-4">
-          <div className="h-2 bg-gray-100 rounded-full overflow-hidden" role="progressbar"
-            aria-valuenow={step} aria-valuemin={0} aria-valuemax={5}
-            aria-label={t('statusPage.progressLabel', { current: step, total: 5 })}>
-            <div className="h-full rounded-full transition-all duration-500"
-              style={{ width: `${progress}%`, background: submission.status === 'REJECTED' ? '#dc2626' : 'var(--lev-teal-text)' }} />
-          </div>
-          <p className="text-xs text-center mt-1 text-gray-500">
-            {t('statusPage.progressLabel', { current: step, total: 5 })}
-          </p>
-        </div>
-
-        {/* Action buttons */}
-        {submission.status === 'PENDING_REVISION' && (
-          <Link to={`/submissions/${id}/edit`}
-            className="mt-4 w-full py-2.5 text-sm font-bold text-white rounded-xl text-center hover:opacity-90 transition block"
-            style={{ background: '#dc2626' }}>
-            {t('statusPage.fixAndResubmit')} →
-          </Link>
-        )}
-        {['DRAFT', 'SUBMITTED', 'IN_TRIAGE', 'PENDING_REVISION'].includes(submission.status) && (
-          <button
-            type="button"
-            onClick={handleWithdraw}
-            disabled={withdrawing}
-            className="mt-3 w-full py-2.5 text-sm font-bold rounded-xl border border-red-300 text-red-700 hover:bg-red-50 disabled:opacity-50"
-            style={{ minHeight: '44px' }}
-          >
-            {withdrawing ? t('common.loading') : t('statusPage.withdraw')}
-          </button>
-        )}
-        {submission.status === 'APPROVED' && user?.role !== 'REVIEWER' && (
-          <div className="mt-4 flex gap-2">
-            <button
-              onClick={() => handleDownloadPdf('he')}
-              disabled={pdfLoading !== null}
-              className="flex-1 py-2.5 text-sm font-bold text-white rounded-xl hover:opacity-90 transition disabled:opacity-60"
-              style={{ background: 'var(--lev-teal-text)', minHeight: '44px' }}>
-              {pdfLoading === 'he' ? t('common.loading') : `⬇ ${t('statusPage.downloadPdf')}`}
-            </button>
-            <button
-              onClick={() => handleDownloadPdf('en')}
-              disabled={pdfLoading !== null}
-              className="flex-1 py-2.5 text-sm font-bold text-white rounded-xl hover:opacity-90 transition disabled:opacity-60"
-              style={{ background: '#374151', minHeight: '44px' }}>
-              {pdfLoading === 'en' ? t('common.loading') : `⬇ ${t('statusPage.downloadPdfEn')}`}
-            </button>
-          </div>
-        )}
-      </div>
-
-      {/* Tabs */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div role="tablist" className="flex border-b border-gray-100">
-          {[
-            { key: 'answers',   label: t('submission.detail.sectionAnswers') },
-            { key: 'timeline',  label: t('statusPage.timeline') },
-            { key: 'comments',  label: t('statusPage.comments') },
-            { key: 'documents', label: t('documents.tabLabel') },
-          ].map(tab => (
-            <button key={tab.key} role="tab"
-              aria-selected={activeTab === tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={`flex-1 py-3 text-sm font-medium transition-colors ${
-                activeTab === tab.key ? 'border-b-2 font-bold' : 'text-gray-500 hover:text-gray-700'
-              }`}
-              style={activeTab === tab.key ? { color: 'var(--lev-navy)', borderColor: 'var(--lev-navy)' } : {}}>
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
-        <div role="tabpanel" className="p-5">
-          {activeTab === 'timeline' && (
-            <div className="space-y-0" role="list" aria-label={t('statusPage.timeline')}>
-              {STATUS_ORDER.map((s, i) => {
-                const done   = STATUS_STEP[submission.status] > i
-                const cur    = submission.status === s
-
-                return (
-                  <div key={s} role="listitem" className="flex gap-4">
-                    <div className="flex flex-col items-center">
-                      <div className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0"
-                        style={{
-                          background: done || cur ? (submission.status === 'REJECTED' && cur ? '#dc2626' : 'var(--lev-teal-text)') : '#f3f4f6',
-                          color:      done || cur ? '#fff' : '#9ca3af',
-                        }}>
-                        {done ? '✓' : i + 1}
-                      </div>
-                      {i < STATUS_ORDER.length - 1 && (
-                        <div className="w-0.5 my-1 min-h-[24px]"
-                          style={{ background: done ? 'var(--lev-teal-text)' : '#e5e7eb' }} />
-                      )}
-                    </div>
-                    <div className={`pb-5 ${!done && !cur ? 'opacity-40' : ''}`}>
-                      <p className="text-sm font-semibold" style={{ color: cur ? 'var(--lev-navy)' : '#374151' }}>
-                        {t(`statusPage.steps.${s}`)}
-                        {cur && <span className="text-xs font-normal ms-2" style={{ color: 'var(--lev-teal-text)' }}>
-                          {t('statusPage.currentStep')}
-                        </span>}
-                      </p>
-                      {s === 'ASSIGNED' && submission.reviewer && (
-                        <p className="text-xs text-gray-500 mt-0.5">
-                          {t('statusPage.reviewer')}: {submission.reviewer.fullName}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                )
-              })}
+          <div className="mt-4">
+            <div
+              className="h-2 overflow-hidden"
+              role="progressbar"
+              aria-valuenow={step}
+              aria-valuemin={0}
+              aria-valuemax={5}
+              aria-label={t('statusPage.progressLabel', { current: step, total: 5 })}
+              style={{
+                background: 'var(--border-subtle)',
+                borderRadius: 'var(--radius-full)',
+              }}
+            >
+              <div
+                className="h-full transition-all duration-500"
+                style={{
+                  width: `${progress}%`,
+                  background:
+                    submission.status === 'REJECTED'
+                      ? 'var(--status-danger)'
+                      : 'var(--lev-teal-text)',
+                  borderRadius: 'var(--radius-full)',
+                }}
+              />
             </div>
-          )}
+            <p
+              className="text-xs text-center mt-1"
+              style={{ color: 'var(--text-muted)' }}
+            >
+              {t('statusPage.progressLabel', { current: step, total: 5 })}
+            </p>
+          </div>
 
-          {activeTab === 'comments' && (
-            <CommentThread comments={submission.comments ?? []} onAdd={null} />
-          )}
+          {/* Action buttons */}
+          <div className="mt-4 flex flex-col gap-2">
+            {submission.status === 'PENDING_REVISION' && (
+              <Button
+                variant="danger"
+                fullWidth
+                leftIcon={
+                  <Pencil
+                    size={16}
+                    strokeWidth={1.75}
+                    aria-hidden="true"
+                    focusable="false"
+                  />
+                }
+                rightIcon={
+                  <FixArrow
+                    size={16}
+                    strokeWidth={1.75}
+                    aria-hidden="true"
+                    focusable="false"
+                  />
+                }
+                onClick={() => navigate(`/submissions/${id}/edit`)}
+              >
+                {t('statusPage.fixAndResubmit')}
+              </Button>
+            )}
 
-          {activeTab === 'answers' && (
-            <FormAnswersViewer formConfig={submission.formConfig} dataJson={latest?.dataJson ?? {}} />
-          )}
+            {['DRAFT', 'SUBMITTED', 'IN_TRIAGE', 'PENDING_REVISION'].includes(
+              submission.status
+            ) && (
+              <Button
+                variant="secondary"
+                fullWidth
+                onClick={() => setConfirmOpen(true)}
+                disabled={withdrawing}
+              >
+                {withdrawing ? t('common.loading') : t('statusPage.withdraw')}
+              </Button>
+            )}
 
-          {activeTab === 'documents' && (
-            <DocumentList
-              submissionId={submission.id}
-              canUpload={['DRAFT','SUBMITTED','PENDING_REVISION'].includes(submission.status)}
+            {submission.status === 'APPROVED' && user?.role !== 'REVIEWER' && (
+              <div className="flex gap-2">
+                <Button
+                  variant="primary"
+                  fullWidth
+                  onClick={() => handleDownloadPdf('he')}
+                  disabled={pdfLoading !== null}
+                  loading={pdfLoading === 'he'}
+                  leftIcon={
+                    <Download
+                      size={16}
+                      strokeWidth={1.75}
+                      aria-hidden="true"
+                      focusable="false"
+                    />
+                  }
+                >
+                  {t('statusPage.downloadPdf')}
+                </Button>
+                <Button
+                  variant="secondary"
+                  fullWidth
+                  onClick={() => handleDownloadPdf('en')}
+                  disabled={pdfLoading !== null}
+                  loading={pdfLoading === 'en'}
+                  leftIcon={
+                    <Download
+                      size={16}
+                      strokeWidth={1.75}
+                      aria-hidden="true"
+                      focusable="false"
+                    />
+                  }
+                >
+                  {t('statusPage.downloadPdfEn')}
+                </Button>
+              </div>
+            )}
+          </div>
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardBody padded={false}>
+          <div className="px-5 pt-4">
+            <Tabs
+              variant="underline"
+              value={activeTab}
+              onChange={setActiveTab}
+              ariaLabel={t('statusPage.timeline')}
+              items={[
+                { key: 'answers',   label: t('submission.detail.sectionAnswers') },
+                { key: 'timeline',  label: t('statusPage.timeline') },
+                { key: 'comments',  label: t('statusPage.comments') },
+                { key: 'documents', label: t('documents.tabLabel') },
+              ]}
+            />
+          </div>
+
+          <div
+            role="tabpanel"
+            id={`tabpanel-${activeTab}`}
+            aria-labelledby={`tab-${activeTab}`}
+            className="p-5"
+          >
+            {activeTab === 'timeline' && (
+              <div
+                className="space-y-0"
+                role="list"
+                aria-label={t('statusPage.timeline')}
+              >
+                {STATUS_ORDER.map((s, i) => {
+                  const done = STATUS_STEP[submission.status] > i
+                  const cur  = submission.status === s
+                  const isRejected = submission.status === 'REJECTED' && cur
+                  const activeBg = isRejected
+                    ? 'var(--status-danger)'
+                    : 'var(--lev-teal-text)'
+
+                  return (
+                    <div key={s} role="listitem" className="flex gap-4">
+                      <div className="flex flex-col items-center">
+                        <div
+                          className="flex items-center justify-center font-bold text-sm flex-shrink-0"
+                          style={{
+                            width: 36,
+                            height: 36,
+                            borderRadius: 'var(--radius-full)',
+                            background:
+                              done || cur
+                                ? activeBg
+                                : 'var(--surface-sunken)',
+                            color:
+                              done || cur ? '#fff' : 'var(--text-muted)',
+                          }}
+                        >
+                          {done ? (
+                            <Check
+                              size={18}
+                              strokeWidth={2}
+                              aria-hidden="true"
+                              focusable="false"
+                            />
+                          ) : (
+                            <span aria-hidden="true">{i + 1}</span>
+                          )}
+                        </div>
+                        {i < STATUS_ORDER.length - 1 && (
+                          <div
+                            className="my-1"
+                            style={{
+                              width: 2,
+                              minHeight: 24,
+                              background: done
+                                ? 'var(--lev-teal-text)'
+                                : 'var(--border-default)',
+                            }}
+                          />
+                        )}
+                      </div>
+                      <div className={`pb-5 ${!done && !cur ? 'opacity-40' : ''}`}>
+                        <p
+                          className="text-sm font-semibold"
+                          style={{
+                            color: cur
+                              ? 'var(--lev-navy)'
+                              : 'var(--text-secondary)',
+                          }}
+                        >
+                          {t(`statusPage.steps.${s}`)}
+                          {cur && (
+                            <span
+                              className="text-xs font-normal ms-2"
+                              style={{ color: 'var(--lev-teal-text)' }}
+                            >
+                              {t('statusPage.currentStep')}
+                            </span>
+                          )}
+                        </p>
+                        {s === 'ASSIGNED' && submission.reviewer && (
+                          <p
+                            className="text-xs mt-0.5"
+                            style={{ color: 'var(--text-muted)' }}
+                          >
+                            {t('statusPage.reviewer')}: {submission.reviewer.fullName}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+
+            {activeTab === 'comments' && (
+              <CommentThread comments={submission.comments ?? []} onAdd={null} />
+            )}
+
+            {activeTab === 'answers' && (
+              <FormAnswersViewer
+                formConfig={submission.formConfig}
+                dataJson={latest?.dataJson ?? {}}
+              />
+            )}
+
+            {activeTab === 'documents' && (
+              <DocumentList
+                submissionId={submission.id}
+                canUpload={['DRAFT','SUBMITTED','PENDING_REVISION'].includes(
+                  submission.status
+                )}
+              />
+            )}
+          </div>
+        </CardBody>
+      </Card>
+
+      <Modal
+        open={confirmOpen}
+        onClose={() => !withdrawing && setConfirmOpen(false)}
+        title={t('statusPage.confirmWithdraw')}
+        description={t('statusPage.withdrawReasonPrompt')}
+        footer={
+          <>
+            <Button
+              variant="secondary"
+              onClick={() => setConfirmOpen(false)}
+              disabled={withdrawing}
+            >
+              {t('common.cancel', 'ביטול')}
+            </Button>
+            <Button
+              variant="danger"
+              onClick={handleConfirmWithdraw}
+              loading={withdrawing}
+              leftIcon={
+                <AlertTriangle
+                  size={16}
+                  strokeWidth={1.75}
+                  aria-hidden="true"
+                  focusable="false"
+                />
+              }
+            >
+              {t('statusPage.withdraw')}
+            </Button>
+          </>
+        }
+      >
+        <FormField
+          label={t('statusPage.withdrawReasonPrompt')}
+          render={({ inputId, describedBy, required, invalid }) => (
+            <Textarea
+              id={inputId}
+              value={withdrawNote}
+              onChange={(e) => setWithdrawNote(e.target.value)}
+              aria-required={required || undefined}
+              aria-describedby={describedBy}
+              invalid={invalid}
+              rows={4}
             />
           )}
-        </div>
-      </div>
+        />
+        <p
+          role="alert"
+          aria-live="assertive"
+          className="mt-3 text-xs inline-flex items-center gap-2"
+          style={{ color: 'var(--status-warning)' }}
+        >
+          <AlertCircle
+            size={14}
+            strokeWidth={1.75}
+            aria-hidden="true"
+            focusable="false"
+          />
+          {t('statusPage.confirmWithdraw')}
+        </p>
+      </Modal>
     </main>
   )
 }

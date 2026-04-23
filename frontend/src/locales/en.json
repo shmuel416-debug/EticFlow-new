@@ -116,7 +116,8 @@
     "system": "System",
     "mainNavigation": "Main Navigation",
     "meetingsCalendar": "Meetings Calendar",
-    "privacy": "Privacy Center"
+    "privacy": "Privacy Center",
+    "accessibilityStatement": "Accessibility Statement"
   },
   "dashboard": {
     "researcher": {
@@ -148,7 +149,11 @@
     "reviewer": {
       "title": "Reviewer Dashboard",
       "assignedToMe": "Assigned to Me",
-      "completedReviews": "Completed Reviews"
+      "completedReviews": "Completed Reviews",
+      "completedReviewsHint": "Final outcomes (approved / rejected / continued) for submissions assigned to you",
+      "openAssignments": "Continue working",
+      "openAssignmentsHint": "Open the list of submissions assigned to you and start a review.",
+      "loadError": "Could not load dashboard data"
     },
     "chairman": {
       "title": "Chairman Dashboard",
@@ -158,7 +163,15 @@
     "admin": {
       "title": "Admin Dashboard",
       "totalUsers": "Total Users",
-      "systemHealth": "System Health"
+      "totalForms": "Forms in system",
+      "systemHealth": "System Health",
+      "healthOk": "Healthy",
+      "healthError": "Issue",
+      "quickLinks": "Quick links",
+      "linkUsers": "User management",
+      "linkStatuses": "Status configuration",
+      "linkForms": "Form library",
+      "loadError": "Some data could not be loaded. Try refreshing the page."
     }
   },
   "submission": {
@@ -383,9 +396,9 @@
       "cardFields": "{{count}} fields",
       "cardUpdated": "Updated {{date}}",
       "cardSubmissions": "{{count}} submissions",
-      "actionEdit": "✏️ Edit",
-      "actionPreview": "👁 Preview",
-      "actionArchive": "🗃 Archive",
+      "actionEdit": "Edit",
+      "actionPreview": "Preview",
+      "actionArchive": "Archive",
       "actionRestore": "Restore",
       "confirmArchive": "Move this form to archive? This will lock the form.",
       "confirmRestore": "Restore this form from archive?",

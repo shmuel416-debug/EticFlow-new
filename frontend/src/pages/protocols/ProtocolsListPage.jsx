@@ -2,28 +2,50 @@
  * EthicFlow — Protocols List Page
  * Displays all meeting protocols with status filter tabs.
  * Roles: SECRETARY, CHAIRMAN, ADMIN
- * Design: Option A — Clean & Minimal (white cards, whitespace, subtle badges)
+ * Rebuilt on the EthicFlow design system (PageHeader, Card, Badge, Tabs,
+ * Button, Modal, Select, EmptyState) with the Lev palette and lucide-react
+ * icons. IS 5568 / WCAG 2.2 AA.
  */
 
 import { useState, useEffect, useCallback } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import {
+  FilePlus2, FileText, Inbox, Check,
+} from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import api from '../../services/api'
+import {
+  Button, Badge, Tabs, Modal, Select, FormField, EmptyState, Spinner,
+  PageHeader, AccessibleIcon,
+} from '../../components/ui'
 
-/** Status badge styles per status value. */
-const STATUS_STYLES = {
-  DRAFT:              'bg-yellow-50 text-yellow-800 border border-yellow-200',
-  PENDING_SIGNATURES: 'bg-blue-50  text-blue-800  border border-blue-200',
-  SIGNED:             'bg-green-50 text-green-800 border border-green-200',
-  ARCHIVED:           'bg-gray-100 text-gray-600  border border-gray-200',
+/**
+ * Maps a protocol status to a Badge tone.
+ * @param {string} status
+ * @returns {'warning'|'info'|'success'|'neutral'}
+ */
+function statusTone(status) {
+  switch (status) {
+    case 'DRAFT':              return 'warning'
+    case 'PENDING_SIGNATURES': return 'info'
+    case 'SIGNED':             return 'success'
+    case 'ARCHIVED':           return 'neutral'
+    default:                   return 'neutral'
+  }
 }
 
-/** Progress bar color per status. */
-const PROGRESS_COLOR = {
-  SIGNED:             'bg-green-500',
-  PENDING_SIGNATURES: 'bg-blue-500',
-  default:            'bg-gray-300',
+/**
+ * Maps a protocol status to the signature progress bar color.
+ * @param {string} status
+ * @returns {string}
+ */
+function progressColor(status) {
+  switch (status) {
+    case 'SIGNED':             return 'var(--status-success)'
+    case 'PENDING_SIGNATURES': return 'var(--status-info)'
+    default:                   return 'var(--border-default)'
+  }
 }
 
 /**
@@ -36,6 +58,22 @@ function fmtDate(iso) {
   return new Date(iso).toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
+/**
+ * Counts signed signatures out of total.
+ * @param {Array<{ status: string }>} sigs
+ * @returns {{ signed: number, total: number }}
+ */
+function sigProgress(sigs = []) {
+  const signed = sigs.filter(s => s.status === 'SIGNED').length
+  return { signed, total: sigs.length }
+}
+
+/**
+ * Protocols list page — lists meeting protocols with status filter tabs.
+ * Preserves all data-fetching, permissions, and routing from the previous
+ * version; only presentation is updated.
+ * @returns {JSX.Element}
+ */
 export default function ProtocolsListPage() {
   const { t }    = useTranslation()
   const navigate = useNavigate()
@@ -57,8 +95,6 @@ export default function ProtocolsListPage() {
   const [createError, setCreateError] = useState('')
   const returnPath = `${location.pathname}${location.search}`
 
-  // ── Fetch ────────────────────────────────────
-
   const fetchProtocols = useCallback(async () => {
     setLoading(true)
     setError(null)
@@ -77,29 +113,24 @@ export default function ProtocolsListPage() {
 
   useEffect(() => { fetchProtocols() }, [fetchProtocols])
 
-  // ── Count by status for tab badges ──────────
-
   const counts = protocols.reduce((acc, p) => {
     acc[p.status] = (acc[p.status] ?? 0) + 1
     return acc
   }, {})
 
-  // ── Filter tabs config ────────────────────────
-
   const TABS = [
-    { key: 'ALL',               labelKey: 'protocols.filterAll' },
-    { key: 'DRAFT',             labelKey: 'protocols.filterDraft' },
-    { key: 'PENDING_SIGNATURES',labelKey: 'protocols.filterPending' },
-    { key: 'SIGNED',            labelKey: 'protocols.filterSigned' },
-    { key: 'ARCHIVED',          labelKey: 'protocols.filterArchived' },
+    { key: 'ALL',                labelKey: 'protocols.filterAll' },
+    { key: 'DRAFT',              labelKey: 'protocols.filterDraft' },
+    { key: 'PENDING_SIGNATURES', labelKey: 'protocols.filterPending' },
+    { key: 'SIGNED',             labelKey: 'protocols.filterSigned' },
+    { key: 'ARCHIVED',           labelKey: 'protocols.filterArchived' },
   ]
 
-  // ── Signature progress helper ─────────────────
-
-  function sigProgress(sigs = []) {
-    const signed = sigs.filter(s => s.status === 'SIGNED').length
-    return { signed, total: sigs.length }
-  }
+  const tabItems = TABS.map(tab => ({
+    key: tab.key,
+    label: t(tab.labelKey),
+    count: tab.key === 'ALL' ? total : (counts[tab.key] ?? 0),
+  }))
 
   /**
    * Loads available meetings and opens the create dialog.
@@ -147,8 +178,6 @@ export default function ProtocolsListPage() {
     navigate(`/protocols/new?meetingId=${selectedMeetingId}`)
   }
 
-  // ── Status label helper ───────────────────────
-
   const STATUS_LABEL = {
     DRAFT:              t('protocols.statusDraft'),
     PENDING_SIGNATURES: t('protocols.statusPendingSig'),
@@ -157,215 +186,242 @@ export default function ProtocolsListPage() {
   }
 
   return (
-    <div className="flex flex-col h-full">
-      {/* ── Page header ── */}
-      <div className="bg-white border-b px-4 md:px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
-        <div>
-          <h1 className="text-lg font-bold" style={{ color: 'var(--lev-navy)' }}>
-            {t('protocols.title')}
-          </h1>
-          <p className="text-xs text-gray-400">{t('protocols.subtitle')}</p>
-        </div>
-        {canCreate && (
-          <button
-            onClick={handleOpenCreateModal}
-            className="flex items-center gap-2 text-sm font-semibold text-white px-4 py-2 rounded-lg"
-            style={{ background: 'var(--lev-navy)', minHeight: '44px' }}
-            aria-label={t('protocols.new')}
-          >
-            <span aria-hidden="true">+</span>
-            <span>{t('protocols.new')}</span>
-          </button>
-        )}
-      </div>
+    <div className="p-4 md:p-6 space-y-4">
+      <PageHeader
+        title={t('protocols.title')}
+        subtitle={t('protocols.subtitle')}
+        actions={
+          canCreate ? (
+            <Button
+              variant="gold"
+              onClick={handleOpenCreateModal}
+              leftIcon={<FilePlus2 size={18} strokeWidth={1.75} aria-hidden="true" focusable="false" />}
+              aria-label={t('protocols.new')}
+            >
+              {t('protocols.new')}
+            </Button>
+          ) : null
+        }
+      />
 
-      {showCreateModal && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label={t('protocols.new')}>
-          <div className="w-full max-w-md bg-white rounded-xl border border-gray-200 shadow-xl p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-bold" style={{ color: 'var(--lev-navy)' }}>
-                {t('protocols.selectMeetingTitle')}
-              </h2>
-              <button
-                type="button"
-                onClick={() => setShowCreateModal(false)}
-                className="text-gray-500 hover:text-gray-800"
-                style={{ minWidth: '44px', minHeight: '44px' }}
-                aria-label={t('common.cancel')}
-              >
-                ✕
-              </button>
-            </div>
+      <Tabs
+        items={tabItems}
+        value={filter}
+        onChange={setFilter}
+        variant="pills"
+        ariaLabel={t('protocols.title')}
+      />
 
-            {loadingMeetings && (
-              <p className="text-sm text-gray-500">{t('common.loading')}</p>
-            )}
-
-            {!loadingMeetings && createError && (
-              <p className="text-sm text-red-600 mb-3" role="alert">{createError}</p>
-            )}
-
-            {!loadingMeetings && !createError && meetings.length === 0 && (
-              <p className="text-sm text-gray-600 mb-3">{t('protocols.noMeetingsForCreate')}</p>
-            )}
-
-            {!loadingMeetings && !createError && meetings.length > 0 && (
-              <div className="mb-4">
-                <label className="block text-xs text-gray-500 mb-1">{t('protocols.selectMeetingLabel')}</label>
-                <select
-                  value={selectedMeetingId}
-                  onChange={(event) => setSelectedMeetingId(event.target.value)}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"
-                  style={{ minHeight: '44px' }}
-                >
-                  {meetings.map((meeting) => (
-                    <option key={meeting.id} value={meeting.id}>
-                      {meeting.title} — {fmtDate(meeting.scheduledAt)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setShowCreateModal(false)}
-                className="flex-1 border border-gray-200 text-gray-600 rounded-lg text-sm"
-                style={{ minHeight: '44px' }}
-              >
-                {t('common.cancel')}
-              </button>
-              <button
-                type="button"
-                onClick={handleStartCreateProtocol}
-                disabled={loadingMeetings || meetings.length === 0 || !selectedMeetingId || creating}
-                className="flex-1 text-white rounded-lg text-sm font-semibold disabled:opacity-60"
-                style={{ background: 'var(--lev-navy)', minHeight: '44px' }}
-              >
-                {t('protocols.new')}
-              </button>
-            </div>
-          </div>
+      {loading && (
+        <div className="flex justify-center py-16" role="status" aria-live="polite">
+          <Spinner size={32} label={t('common.loading')} />
         </div>
       )}
 
-      {/* ── Filter tabs ── */}
-      <div className="bg-white border-b overflow-x-auto">
-        <div className="flex gap-0 px-4 md:px-6 min-w-max" role="tablist" aria-label={t('protocols.title')}>
-          {TABS.map(tab => {
-            const count = tab.key === 'ALL' ? total : (counts[tab.key] ?? 0)
-            const isActive = filter === tab.key
-            return (
-              <button
-                key={tab.key}
-                role="tab"
-                aria-selected={isActive}
-                onClick={() => setFilter(tab.key)}
-                className={`py-3 px-4 text-sm border-b-2 transition-colors whitespace-nowrap flex items-center gap-1.5 ${
-                  isActive
-                    ? 'border-blue-500 text-blue-600 font-semibold'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
-                }`}
-                style={{ minHeight: '44px' }}
-              >
-                {t(tab.labelKey)}
-                {count > 0 && (
-                  <span className={`text-xs px-1.5 py-0.5 rounded-full ${
-                    isActive ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'
-                  }`}>
-                    {count}
-                  </span>
-                )}
-              </button>
-            )
-          })}
+      {error && (
+        <div
+          role="alert"
+          className="text-sm font-medium"
+          style={{
+            background: 'var(--status-danger-50)',
+            color: 'var(--status-danger)',
+            border: '1px solid var(--status-danger)',
+            borderRadius: 'var(--radius-lg)',
+            padding: '12px 14px',
+          }}
+        >
+          {t('protocols.loadError')}
         </div>
-      </div>
+      )}
 
-      {/* ── Main content ── */}
-      <div className="flex-1 overflow-auto bg-gray-50 p-4">
-        {loading && (
-          <div className="flex justify-center py-16 text-gray-400 text-sm" role="status" aria-live="polite">
-            {t('common.loading')}
-          </div>
-        )}
+      {!loading && !error && protocols.length === 0 && (
+        <EmptyState
+          icon={Inbox}
+          title={t('protocols.noProtocols')}
+          action={
+            canCreate ? (
+              <Button
+                variant="gold"
+                onClick={handleOpenCreateModal}
+                leftIcon={<FilePlus2 size={18} strokeWidth={1.75} aria-hidden="true" focusable="false" />}
+              >
+                {t('protocols.new')}
+              </Button>
+            ) : null
+          }
+        />
+      )}
 
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm" role="alert">
-            {t('protocols.loadError')}
-          </div>
-        )}
+      {!loading && !error && protocols.length > 0 && (
+        <ul className="space-y-3 max-w-3xl mx-auto" role="list">
+          {protocols.map(protocol => {
+            const { signed, total: sigTotal } = sigProgress(protocol.signatures)
+            const pct = sigTotal > 0 ? Math.round((signed / sigTotal) * 100) : 0
+            const barColor = progressColor(protocol.status)
+            const label = `${protocol.title} — ${STATUS_LABEL[protocol.status] ?? protocol.status}`
 
-        {!loading && !error && protocols.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-20 text-center" aria-live="polite">
-            <p className="text-3xl mb-3" aria-hidden="true">📋</p>
-            <p className="text-gray-500 text-sm">{t('protocols.noProtocols')}</p>
-          </div>
-        )}
+            return (
+              <li key={protocol.id} role="listitem">
+                <button
+                  type="button"
+                  onClick={() => navigate(`/protocols/${protocol.id}`, { state: { from: returnPath } })}
+                  className="w-full text-right bg-white p-4 transition hover:shadow-md"
+                  style={{
+                    borderRadius: 'var(--radius-2xl)',
+                    border: '1px solid var(--border-default)',
+                    boxShadow: 'var(--shadow-sm)',
+                    minHeight: 64,
+                  }}
+                  aria-label={label}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <AccessibleIcon icon={FileText} size={14} decorative style={{ color: 'var(--text-muted)' }} />
+                        <Badge tone={statusTone(protocol.status)} size="sm">
+                          {STATUS_LABEL[protocol.status] ?? protocol.status}
+                        </Badge>
+                      </div>
+                      <h2
+                        className="font-semibold text-sm truncate"
+                        style={{ color: 'var(--lev-navy)' }}
+                      >
+                        {protocol.title}
+                      </h2>
+                      <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                        {t('protocols.meeting')}: {protocol.meeting?.title}
+                        {protocol.meeting?.scheduledAt && ` • ${fmtDate(protocol.meeting.scheduledAt)}`}
+                      </p>
+                    </div>
 
-        {!loading && !error && protocols.length > 0 && (
-          <ul className="space-y-3 max-w-3xl mx-auto" role="list">
-            {protocols.map(protocol => {
-              const { signed, total: sigTotal } = sigProgress(protocol.signatures)
-              const pct = sigTotal > 0 ? Math.round((signed / sigTotal) * 100) : 0
-              const barColor = PROGRESS_COLOR[protocol.status] ?? PROGRESS_COLOR.default
-
-              return (
-                <li key={protocol.id} role="listitem">
-                  <button
-                    onClick={() => navigate(`/protocols/${protocol.id}`, { state: { from: returnPath } })}
-                    className="w-full text-right bg-white rounded-xl border hover:shadow-md transition-shadow p-4 cursor-pointer"
-                    aria-label={`${protocol.title} — ${STATUS_LABEL[protocol.status]}`}
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      {/* Left info */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1 flex-wrap">
-                          <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${STATUS_STYLES[protocol.status]}`}>
-                            {STATUS_LABEL[protocol.status]}
+                    <div
+                      className="shrink-0 text-left min-w-[88px]"
+                      aria-label={`${t('protocols.signatures')}: ${signed}/${sigTotal}`}
+                    >
+                      <div className="text-xs mb-1" style={{ color: 'var(--text-muted)' }}>
+                        {t('protocols.signatures')}
+                      </div>
+                      {sigTotal > 0 ? (
+                        <div className="flex items-center gap-1.5">
+                          <div
+                            className="overflow-hidden"
+                            role="progressbar"
+                            aria-valuenow={signed}
+                            aria-valuemin={0}
+                            aria-valuemax={sigTotal}
+                            style={{
+                              width: 64,
+                              height: 6,
+                              borderRadius: 'var(--radius-full)',
+                              background: 'var(--surface-sunken)',
+                            }}
+                          >
+                            <div
+                              className="h-full"
+                              style={{
+                                width: `${pct}%`,
+                                background: barColor,
+                                borderRadius: 'var(--radius-full)',
+                              }}
+                            />
+                          </div>
+                          <span
+                            className="inline-flex items-center gap-0.5 text-xs font-semibold tabular-nums"
+                            style={{
+                              color: protocol.status === 'SIGNED'
+                                ? 'var(--status-success)'
+                                : 'var(--text-secondary)',
+                            }}
+                          >
+                            {signed}/{sigTotal}
+                            {protocol.status === 'SIGNED' && (
+                              <AccessibleIcon icon={Check} size={12} decorative />
+                            )}
                           </span>
                         </div>
-                        <h2 className="font-semibold text-sm truncate" style={{ color: 'var(--lev-navy)' }}>
-                          {protocol.title}
-                        </h2>
-                        <p className="text-xs text-gray-400 mt-0.5">
-                          {t('protocols.meeting')}: {protocol.meeting?.title}
-                          {protocol.meeting?.scheduledAt && ` • ${fmtDate(protocol.meeting.scheduledAt)}`}
-                        </p>
-                      </div>
-
-                      {/* Signature progress */}
-                      <div className="shrink-0 text-left min-w-[80px]" aria-label={`${t('protocols.signatures')}: ${signed}/${sigTotal}`}>
-                        <div className="text-xs text-gray-400 mb-1">{t('protocols.signatures')}</div>
-                        {sigTotal > 0 ? (
-                          <div className="flex items-center gap-1.5">
-                            <div
-                              className="w-16 h-1.5 bg-gray-200 rounded-full overflow-hidden"
-                              role="progressbar"
-                              aria-valuenow={signed}
-                              aria-valuemin={0}
-                              aria-valuemax={sigTotal}
-                            >
-                              <div className={`h-full rounded-full ${barColor}`} style={{ width: `${pct}%` }} />
-                            </div>
-                            <span className={`text-xs font-semibold ${protocol.status === 'SIGNED' ? 'text-green-600' : 'text-gray-500'}`}>
-                              {signed}/{sigTotal}
-                              {protocol.status === 'SIGNED' && ' ✓'}
-                            </span>
-                          </div>
-                        ) : (
-                          <span className="text-xs text-gray-400">—</span>
-                        )}
-                      </div>
+                      ) : (
+                        <span className="text-xs" style={{ color: 'var(--text-muted)' }}>—</span>
+                      )}
                     </div>
-                  </button>
-                </li>
-              )
-            })}
-          </ul>
+                  </div>
+                </button>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+
+      <Modal
+        open={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        title={t('protocols.selectMeetingTitle')}
+        size="sm"
+        closeLabel={t('common.cancel')}
+        footer={
+          <>
+            <Button
+              variant="secondary"
+              onClick={() => setShowCreateModal(false)}
+            >
+              {t('common.cancel')}
+            </Button>
+            <Button
+              variant="gold"
+              onClick={handleStartCreateProtocol}
+              disabled={loadingMeetings || meetings.length === 0 || !selectedMeetingId || creating}
+              loading={creating}
+              leftIcon={<FilePlus2 size={18} strokeWidth={1.75} aria-hidden="true" focusable="false" />}
+            >
+              {t('protocols.new')}
+            </Button>
+          </>
+        }
+      >
+        {loadingMeetings && (
+          <div className="flex items-center gap-2 py-2" role="status" aria-live="polite">
+            <Spinner size={16} label={t('common.loading')} />
+            <span className="text-sm" style={{ color: 'var(--text-muted)' }}>
+              {t('common.loading')}
+            </span>
+          </div>
         )}
-      </div>
+
+        {!loadingMeetings && createError && (
+          <p
+            role="alert"
+            className="text-sm mb-3"
+            style={{ color: 'var(--status-danger)' }}
+          >
+            {createError}
+          </p>
+        )}
+
+        {!loadingMeetings && !createError && meetings.length === 0 && (
+          <p className="text-sm mb-1" style={{ color: 'var(--text-secondary)' }}>
+            {t('protocols.noMeetingsForCreate')}
+          </p>
+        )}
+
+        {!loadingMeetings && !createError && meetings.length > 0 && (
+          <FormField
+            label={t('protocols.selectMeetingLabel')}
+            render={({ inputId, describedBy }) => (
+              <Select
+                id={inputId}
+                value={selectedMeetingId}
+                onChange={(event) => setSelectedMeetingId(event.target.value)}
+                aria-describedby={describedBy}
+              >
+                {meetings.map((meeting) => (
+                  <option key={meeting.id} value={meeting.id}>
+                    {meeting.title} — {fmtDate(meeting.scheduledAt)}
+                  </option>
+                ))}
+              </Select>
+            )}
+          />
+        )}
+      </Modal>
     </div>
   )
 }

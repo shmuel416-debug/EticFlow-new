@@ -1,12 +1,24 @@
 /**
  * EthicFlow — Notifications Page
  * Displays user notifications with mark-as-read functionality.
+ * Refreshed to Lev design system (PageHeader + Card primitives + Badge).
  * IS 5568: role="list", aria-live for updates.
  */
 
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Bell, Check, AlertCircle } from 'lucide-react'
 import api from '../services/api'
+import {
+  PageHeader,
+  Card,
+  CardBody,
+  Button,
+  Badge,
+  Spinner,
+  EmptyState,
+  IconButton,
+} from '../components/ui'
 
 /**
  * Formats ISO date to relative or locale time.
@@ -14,11 +26,15 @@ import api from '../services/api'
  * @returns {string}
  */
 function formatDate(iso) {
-  return new Date(iso).toLocaleString('he-IL', { dateStyle: 'short', timeStyle: 'short' })
+  return new Date(iso).toLocaleString('he-IL', {
+    dateStyle: 'short',
+    timeStyle: 'short',
+  })
 }
 
 /**
  * User notifications list with mark-read actions.
+ * @returns {JSX.Element}
  */
 export default function NotificationsPage() {
   const { t }               = useTranslation()
@@ -53,7 +69,7 @@ export default function NotificationsPage() {
     try {
       await api.patch(`/notifications/${notifId}/read`)
       setNotifications((prev) =>
-        prev.map((n) => n.id === notifId ? { ...n, isRead: true } : n)
+        prev.map((n) => (n.id === notifId ? { ...n, isRead: true } : n))
       )
     } catch { /* silent */ }
   }
@@ -73,72 +89,186 @@ export default function NotificationsPage() {
 
   const unread = notifications.filter((n) => !n.isRead).length
 
+  const headerActions = (
+    <div className="flex items-center gap-2 flex-wrap">
+      {unread > 0 && (
+        <Badge tone="info" size="md">
+          {t('notifications.unreadBadge', { count: unread })}
+        </Badge>
+      )}
+      {unread > 0 && (
+        <Button
+          variant="secondary"
+          onClick={handleMarkAllRead}
+          disabled={markingAll}
+          loading={markingAll}
+          leftIcon={
+            <Check
+              size={16}
+              strokeWidth={1.75}
+              aria-hidden="true"
+              focusable="false"
+            />
+          }
+        >
+          {t('notifications.markAllRead')}
+        </Button>
+      )}
+    </div>
+  )
+
   return (
-    <main id="main-content" className="p-4 md:p-6 max-w-3xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-bold" style={{ color: 'var(--lev-navy)' }}>
-          {t('notifications.pageTitle')}
-          {unread > 0 && (
-            <span className="ms-2 text-sm font-normal bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
-              {t('notifications.unreadBadge', { count: unread })}
-            </span>
-          )}
-        </h1>
-        {unread > 0 && (
-          <button
-            onClick={handleMarkAllRead}
-            disabled={markingAll}
-            className="text-sm px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50"
-            style={{ minHeight: '44px' }}
-          >
-            {t('notifications.markAllRead')}
-          </button>
-        )}
-      </div>
+    <main id="main-content" className="p-4 md:p-6 max-w-3xl mx-auto space-y-5">
+      <PageHeader
+        title={t('notifications.pageTitle')}
+        backTo="/dashboard"
+        backLabel={t('common.backToDashboard', t('statusPage.backToDashboard'))}
+        actions={headerActions}
+      />
 
-      {error && <p role="alert" className="text-sm text-red-600 mb-4">{error}</p>}
-
-      {loading && <p className="text-center text-gray-400 py-8">{t('common.loading')}</p>}
-
-      {!loading && notifications.length === 0 && (
-        <div className="text-center py-16 text-gray-400">
-          <p className="text-4xl mb-3" aria-hidden="true">🔔</p>
-          <p>{t('notifications.noItems')}</p>
+      {error && (
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="inline-flex items-center gap-2 text-sm font-medium"
+          style={{
+            background: 'var(--status-danger-50)',
+            color: 'var(--status-danger)',
+            border: '1px solid var(--status-danger)',
+            borderRadius: 'var(--radius-lg)',
+            padding: '10px 14px',
+          }}
+        >
+          <AlertCircle
+            size={16}
+            strokeWidth={1.75}
+            aria-hidden="true"
+            focusable="false"
+          />
+          {error}
         </div>
       )}
 
-      <ul role="list" aria-live="polite" className="space-y-2">
-        {notifications.map((notif) => (
-          <li
-            key={notif.id}
-            className={`p-4 rounded-xl border transition-colors cursor-pointer ${
-              notif.isRead ? 'bg-white border-gray-200' : 'bg-blue-50 border-blue-200'
-            }`}
-            onClick={() => !notif.isRead && handleMarkRead(notif.id)}
-            role="button"
-            tabIndex={notif.isRead ? -1 : 0}
-            onKeyDown={(e) => e.key === 'Enter' && !notif.isRead && handleMarkRead(notif.id)}
-            aria-label={notif.isRead ? undefined : `${t(`notifications.types.${notif.type}`, notif.type)} — ${t('notifications.markAllRead')}`}
-          >
-            <div className="flex items-start gap-3">
-              {!notif.isRead && (
-                <span className="mt-1.5 w-2 h-2 rounded-full bg-blue-500 flex-shrink-0" aria-hidden="true" />
-              )}
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-800">
-                  {t(`notifications.types.${notif.type}`, notif.type)}
-                </p>
-                {notif.metaJson?.applicationId && (
-                  <p className="text-xs text-gray-500 mt-0.5 font-mono">{notif.metaJson.applicationId}</p>
-                )}
-                <time className="text-xs text-gray-400 mt-1 block" dateTime={notif.createdAt}>
-                  {formatDate(notif.createdAt)}
-                </time>
-              </div>
-            </div>
-          </li>
-        ))}
-      </ul>
+      {loading && (
+        <div
+          className="flex items-center justify-center gap-3 py-8"
+          role="status"
+          aria-live="polite"
+        >
+          <Spinner size={20} label={t('common.loading')} />
+          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+            {t('common.loading')}
+          </p>
+        </div>
+      )}
+
+      {!loading && notifications.length === 0 && (
+        <Card>
+          <CardBody>
+            <EmptyState
+              icon={Bell}
+              title={t('notifications.noItems')}
+            />
+          </CardBody>
+        </Card>
+      )}
+
+      {!loading && notifications.length > 0 && (
+        <ul
+          role="list"
+          aria-live="polite"
+          aria-label={t('notifications.pageTitle')}
+          className="space-y-2"
+        >
+          {notifications.map((notif) => {
+            const isRead = notif.isRead
+            return (
+              <li
+                key={notif.id}
+                className="transition-colors"
+                style={{
+                  background: isRead
+                    ? 'var(--surface-raised)'
+                    : 'var(--lev-navy-50)',
+                  border: `1px solid ${
+                    isRead ? 'var(--border-default)' : 'var(--lev-navy)'
+                  }`,
+                  borderRadius: 'var(--radius-xl)',
+                  padding: 16,
+                }}
+              >
+                <div
+                  role="button"
+                  tabIndex={isRead ? -1 : 0}
+                  onClick={() => !isRead && handleMarkRead(notif.id)}
+                  onKeyDown={(e) =>
+                    e.key === 'Enter' && !isRead && handleMarkRead(notif.id)
+                  }
+                  aria-label={
+                    isRead
+                      ? undefined
+                      : `${t(`notifications.types.${notif.type}`, notif.type)} — ${t('notifications.markAllRead')}`
+                  }
+                  className="flex items-start gap-3 w-full"
+                  style={{ cursor: isRead ? 'default' : 'pointer' }}
+                >
+                  <div
+                    className="inline-flex items-center justify-center flex-shrink-0"
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: 'var(--radius-full)',
+                      background: isRead
+                        ? 'var(--surface-sunken)'
+                        : 'var(--lev-navy)',
+                      color: isRead ? 'var(--text-muted)' : '#fff',
+                    }}
+                    aria-hidden="true"
+                  >
+                    <Bell size={18} strokeWidth={1.75} />
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <p
+                      className="text-sm font-medium"
+                      style={{ color: 'var(--text-primary)' }}
+                    >
+                      {t(`notifications.types.${notif.type}`, notif.type)}
+                    </p>
+                    {notif.metaJson?.applicationId && (
+                      <p
+                        className="text-xs mt-0.5 font-mono"
+                        style={{ color: 'var(--text-muted)' }}
+                      >
+                        {notif.metaJson.applicationId}
+                      </p>
+                    )}
+                    <time
+                      className="text-xs mt-1 block"
+                      style={{ color: 'var(--text-muted)' }}
+                      dateTime={notif.createdAt}
+                    >
+                      {formatDate(notif.createdAt)}
+                    </time>
+                  </div>
+
+                  {!isRead && (
+                    <IconButton
+                      icon={Check}
+                      label={t('notifications.markAllRead')}
+                      variant="subtle"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleMarkRead(notif.id)
+                      }}
+                    />
+                  )}
+                </div>
+              </li>
+            )
+          })}
+        </ul>
+      )}
     </main>
   )
 }

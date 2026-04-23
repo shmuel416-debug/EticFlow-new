@@ -1,48 +1,61 @@
 /**
  * EthicFlow — Form Builder Field Type Definitions
- * Defines palette categories, icons, and per-type color tokens.
- * All labels are i18n keys under secretary.fieldTypes.*
+ * Palette categories with lucide icons (monochrome, brand-consistent).
+ * Labels use i18n keys under secretary.fieldTypes.*
  */
 
-/** @typedef {{ type: string, icon: string }} PaletteItem */
+import {
+  Type,
+  FileText,
+  Calendar,
+  Hash,
+  Mail,
+  Phone,
+  ChevronDown,
+  CircleDot,
+  CheckSquare,
+  Paperclip,
+  ClipboardList,
+  PenLine,
+} from 'lucide-react'
 
-/** Palette sections — order matches the approved Lev design */
+/** Palette sections — order matches Lev design */
 export const FIELD_CATEGORIES = [
   {
     key: 'basic',
     i18nKey: 'secretary.formBuilder.categoryBasic',
     items: [
-      { type: 'text',     icon: '✏️' },
-      { type: 'textarea', icon: '📝' },
-      { type: 'date',     icon: '📅' },
-      { type: 'number',   icon: '🔢' },
-      { type: 'email',    icon: '✉️' },
-      { type: 'phone',    icon: '📞' },
+      { type: 'text',     Icon: Type },
+      { type: 'textarea', Icon: FileText },
+      { type: 'date',     Icon: Calendar },
+      { type: 'number',   Icon: Hash },
+      { type: 'email',    Icon: Mail },
+      { type: 'phone',    Icon: Phone },
     ],
   },
   {
     key: 'selection',
     i18nKey: 'secretary.formBuilder.categorySelection',
     items: [
-      { type: 'select',   icon: '⬇️' },
-      { type: 'radio',    icon: '🔘' },
-      { type: 'checkbox', icon: '☑️' },
+      { type: 'select',   Icon: ChevronDown },
+      { type: 'radio',    Icon: CircleDot },
+      { type: 'checkbox', Icon: CheckSquare },
     ],
   },
   {
     key: 'special',
     i18nKey: 'secretary.formBuilder.categorySpecial',
     items: [
-      { type: 'file',        icon: '📎' },
-      { type: 'declaration', icon: '📋' },
-      { type: 'signature',   icon: '✍️' },
+      { type: 'file',        Icon: Paperclip },
+      { type: 'declaration', Icon: ClipboardList },
+      { type: 'signature',   Icon: PenLine },
     ],
   },
 ]
 
 /**
  * Badge background color per field type.
- * Uses Lev palette — all pass WCAG AA on white bg.
+ * Uses Lev palette — contrast checked for UI chrome.
  */
 export const FIELD_TYPE_COLOR = {
   text:        'var(--lev-navy)',

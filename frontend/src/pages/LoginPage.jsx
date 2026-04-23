@@ -1,25 +1,30 @@
 /**
- * EthicFlow — Login Page
- * Option A design with Lev Academic Center colors.
- * IS 5568 / WCAG 2.1 AA compliant.
- * Responsive: split-panel on desktop, stacked on mobile.
+ * EthicFlow — Login Page (brand refresh)
+ * Split-screen: hero/brand panel + form panel. In Hebrew (RTL) form appears
+ * on the LEFT visually and hero on the RIGHT (DOM order: hero → form so that
+ * flex-row in RTL flips them to right-then-left).
+ * Mobile: stacked, brand hero on top, form below.
+ * IS 5568 / WCAG 2.2 AA compliant.
  */
 
 import { useState } from 'react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { Mail, Lock, ArrowRight, ArrowLeft, FileCheck2, Timer, Signature } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { buildApiUrl } from '../services/api'
-import LanguageSwitcher from '../components/ui/LanguageSwitcher'
+import {
+  Button, Input, FormField, LanguageSwitcher,
+} from '../components/ui'
 import levLogo from '../assets/LOGO.jpg'
 
 /**
- * Microsoft logo SVG (brand colors, aria-hidden since button has text label).
+ * Microsoft logo SVG (brand colors preserved per MS guidelines).
  * @returns {JSX.Element}
  */
 function MicrosoftLogo() {
   return (
-    <svg aria-hidden="true" width="20" height="20" viewBox="0 0 23 23" fill="none"
+    <svg aria-hidden="true" width="18" height="18" viewBox="0 0 23 23" fill="none"
       xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0">
       <rect x="1"  y="1"  width="10" height="10" fill="#F25022"/>
       <rect x="12" y="1"  width="10" height="10" fill="#7FBA00"/>
@@ -30,12 +35,12 @@ function MicrosoftLogo() {
 }
 
 /**
- * Google logo SVG (brand colors, aria-hidden since button has text label).
+ * Google logo SVG (brand colors preserved per Google guidelines).
  * @returns {JSX.Element}
  */
 function GoogleLogo() {
   return (
-    <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24"
+    <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24"
       xmlns="http://www.w3.org/2000/svg" className="flex-shrink-0">
       <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
       <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -65,27 +70,24 @@ function ssoErrorKey(code) {
 
 /**
  * Login page — POST /api/auth/login → JWT stored in AuthContext memory.
- * Supports Microsoft SSO via /api/auth/microsoft redirect.
+ * Supports Microsoft + Google SSO via /api/auth/{provider} redirect.
+ * @returns {JSX.Element}
  */
 export default function LoginPage() {
-  const { t }            = useTranslation()
-  const { login }        = useAuth()
-  const navigate         = useNavigate()
-  const [searchParams]   = useSearchParams()
+  const { t, i18n }  = useTranslation()
+  const { login }    = useAuth()
+  const navigate     = useNavigate()
+  const [searchParams] = useSearchParams()
+  const isRtl = i18n.dir() === 'rtl'
 
   const [email,    setEmail]    = useState('')
   const [password, setPassword] = useState('')
   const [loading,  setLoading]  = useState(false)
 
-  // Error can come from form submit OR from SSO callback redirect
   const initialSsoError = searchParams.get('ssoError')
     || (searchParams.get('error') ? t(ssoErrorKey(searchParams.get('error'))) : '')
   const [error, setError] = useState(initialSsoError)
 
-  /**
-   * Handles form submission — calls login() and redirects on success.
-   * @param {React.FormEvent} e
-   */
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
@@ -101,177 +103,272 @@ export default function LoginPage() {
     }
   }
 
+  const features = [
+    { icon: FileCheck2, text: t('auth.login.feature1') },
+    { icon: Timer,      text: t('auth.login.feature2') },
+    { icon: Signature,  text: t('auth.login.feature3') },
+  ]
+
   return (
     <>
-      {/* IS 5568 — skip navigation */}
       <a href="#main-content" className="skip-link">{t('common.skipToMain')}</a>
 
       <div className="min-h-screen flex flex-col md:flex-row">
 
-        {/* ── Branding panel (hidden on mobile) ── */}
-        <div
-          className="hidden md:flex md:w-5/12 flex-col items-center justify-center p-12 text-white"
-          style={{ background: 'linear-gradient(135deg, var(--lev-navy) 0%, #2B3A8F 50%, var(--lev-purple) 100%)' }}
-          aria-hidden="true"
+        {/* ── Hero / brand panel — DOM first, renders on the start side (RIGHT in RTL) ── */}
+        <aside
+          className="hidden md:flex md:w-[45%] flex-col items-center justify-center p-12 text-white relative overflow-hidden"
+          style={{ background: 'var(--gradient-brand)' }}
+          aria-label={t('auth.login.systemTitle')}
         >
-          <div className="mb-8 text-center">
-            {/* Logo on white pill so original colors show against the dark gradient */}
-            <div className="bg-white rounded-2xl px-6 py-4 inline-flex items-center justify-center mx-auto mb-5 shadow-lg">
-              <img src={levLogo} alt="" className="h-14 w-auto" />
+          {/* decorative accent ring */}
+          <span
+            aria-hidden="true"
+            className="absolute"
+            style={{
+              width: 520, height: 520,
+              borderRadius: '50%',
+              border: '1px solid rgba(255,255,255,0.08)',
+              top: -180, insetInlineEnd: -180,
+            }}
+          />
+          <span
+            aria-hidden="true"
+            className="absolute"
+            style={{
+              width: 320, height: 320,
+              borderRadius: '50%',
+              border: '1px solid rgba(201,162,39,0.16)',
+              bottom: -120, insetInlineStart: -120,
+            }}
+          />
+
+          <div className="relative text-center mb-10">
+            <div className="bg-white rounded-2xl px-6 py-4 inline-flex items-center justify-center mx-auto mb-6 shadow-lg">
+              <img src={levLogo} alt="" aria-hidden="true" className="h-14 w-auto" />
             </div>
             <h1 className="text-2xl font-bold leading-tight">{t('auth.login.systemTitle')}</h1>
-            <p className="text-sm mt-1 opacity-80">{t('common.institution')}</p>
+            <p className="text-sm mt-1.5 opacity-85">{t('common.institution')}</p>
+            <div
+              className="mt-4 mx-auto"
+              aria-hidden="true"
+              style={{
+                height: 3, width: 64, borderRadius: 999,
+                background: 'var(--lev-gold)',
+              }}
+            />
           </div>
-          <div className="space-y-3 w-full max-w-xs">
-            {[
-              { icon: '📄', text: t('auth.login.feature1') },
-              { icon: '⏱', text: t('auth.login.feature2') },
-              { icon: '✍️', text: t('auth.login.feature3') },
-            ].map(({ icon, text }) => (
-              <div key={text} className="flex items-center gap-3 rounded-xl p-3"
-                style={{ background: 'rgba(255,255,255,0.1)' }}>
-                <span className="text-lg">{icon}</span>
-                <span className="text-sm">{text}</span>
-              </div>
-            ))}
-          </div>
-          <p className="text-xs opacity-40 mt-10">© 2026 {t('common.institution')}</p>
-        </div>
 
-        {/* ── Form panel ── */}
+          <ul className="relative space-y-3 w-full max-w-xs" aria-label={t('common.institution')}>
+            {features.map(({ icon: Icon, text }) => (
+              <li
+                key={text}
+                className="flex items-center gap-3 rounded-xl p-3"
+                style={{
+                  background: 'rgba(255,255,255,0.08)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                }}
+              >
+                <span
+                  className="inline-flex items-center justify-center flex-shrink-0"
+                  style={{
+                    width: 32, height: 32, borderRadius: 'var(--radius-lg)',
+                    background: 'var(--lev-gold)',
+                    color: 'var(--lev-navy)',
+                  }}
+                >
+                  <Icon size={16} strokeWidth={2} aria-hidden="true" focusable="false" />
+                </span>
+                <span className="text-sm">{text}</span>
+              </li>
+            ))}
+          </ul>
+
+          <p className="relative text-xs opacity-60 mt-12">
+            &copy; 2026 {t('common.institution')}
+          </p>
+        </aside>
+
+        {/* ── Form panel — renders visually on the LEFT side in RTL ── */}
         <main
           id="main-content"
           tabIndex="-1"
           className="flex-1 bg-white flex flex-col items-center justify-center p-6 md:p-12"
         >
-          {/* Mobile logo */}
-          <div className="md:hidden mb-8 text-center w-full">
-            <div className="w-full py-8 px-6 mb-6 rounded-2xl text-white text-center"
-              style={{ background: 'linear-gradient(135deg, var(--lev-navy) 0%, var(--lev-purple) 100%)' }}>
+          {/* Mobile brand header */}
+          <div className="md:hidden w-full mb-6">
+            <div
+              className="rounded-2xl text-white text-center p-6"
+              style={{ background: 'var(--gradient-brand)' }}
+            >
               <div className="bg-white rounded-xl px-4 py-3 inline-flex items-center justify-center mx-auto mb-3 shadow">
                 <img src={levLogo} alt={t('common.institution')} className="h-10 w-auto" />
               </div>
               <p className="text-lg font-bold">{t('auth.login.systemTitle')}</p>
-              <p className="text-xs opacity-70">{t('common.institution')}</p>
+              <p className="text-xs opacity-85">{t('common.institution')}</p>
             </div>
           </div>
 
           <div className="w-full max-w-sm">
-            <p className="text-xs text-gray-600 mb-1">{t('auth.login.institutionLabel')}</p>
-            <h2 className="text-2xl font-bold mb-1" style={{ color: 'var(--lev-navy)' }}>
+            <p className="text-xs mb-1 font-medium" style={{ color: 'var(--text-muted)' }}>
+              {t('auth.login.institutionLabel')}
+            </p>
+            <h2 className="text-2xl md:text-3xl font-bold mb-1.5" style={{ color: 'var(--lev-navy)' }}>
               {t('auth.login.title')}
             </h2>
-            <p className="text-gray-600 text-sm mb-8">{t('auth.login.subtitle')}</p>
+            <p className="text-sm mb-7" style={{ color: 'var(--text-secondary)' }}>
+              {t('auth.login.subtitle')}
+            </p>
 
-            {/* Error message — IS 5568: role="alert" + aria-live */}
             {error && (
-              <div role="alert" aria-live="assertive" data-testid="login-error"
-                className="mb-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-red-700 text-sm">
+              <div
+                role="alert"
+                aria-live="assertive"
+                data-testid="login-error"
+                className="mb-4 text-sm font-medium"
+                style={{
+                  background: 'var(--status-danger-50)',
+                  color: 'var(--status-danger)',
+                  border: '1px solid var(--status-danger)',
+                  borderRadius: 'var(--radius-lg)',
+                  padding: '12px 14px',
+                }}
+              >
                 {error}
               </div>
             )}
 
             <form onSubmit={handleSubmit} noValidate aria-label={t('auth.login.title')}>
-              <div className="space-y-5">
-                <div>
-                  <label htmlFor="login-email" className="block text-sm font-semibold mb-1.5"
-                    style={{ color: 'var(--lev-navy)' }}>
-                    {t('auth.login.emailLabel')}
-                  </label>
-                  <input
-                    id="login-email"
-                    type="email"
-                    data-testid="login-email"
-                    autoComplete="email"
-                    aria-required="true"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder={t('auth.login.emailPlaceholder')}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm bg-gray-50
-                      focus:outline-none focus:ring-2 focus:ring-offset-1 transition-shadow"
-                    style={{ '--tw-ring-color': 'var(--lev-navy)' }}
-                    dir="ltr"
-                    disabled={loading}
-                  />
-                </div>
-                <div>
-                  <label htmlFor="login-password" className="block text-sm font-semibold mb-1.5"
-                    style={{ color: 'var(--lev-navy)' }}>
-                    {t('auth.login.passwordLabel')}
-                  </label>
-                  <input
-                    id="login-password"
-                    type="password"
-                    data-testid="login-password"
-                    autoComplete="current-password"
-                    aria-required="true"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder={t('auth.login.passwordPlaceholder')}
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm bg-gray-50
-                      focus:outline-none focus:ring-2 focus:ring-offset-1 transition-shadow"
-                    dir="ltr"
-                    disabled={loading}
-                  />
-                </div>
+              <div className="space-y-4">
+                <FormField
+                  label={t('auth.login.emailLabel')}
+                  required
+                  render={({ inputId, describedBy, required, invalid }) => (
+                    <Input
+                      id={inputId}
+                      icon={Mail}
+                      type="email"
+                      data-testid="login-email"
+                      autoComplete="email"
+                      aria-required={required || undefined}
+                      aria-describedby={describedBy}
+                      invalid={invalid}
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder={t('auth.login.emailPlaceholder')}
+                      dir="ltr"
+                      disabled={loading}
+                    />
+                  )}
+                />
 
-                {/* Submit — IS 5568: min 44px */}
-                <button
+                <FormField
+                  label={t('auth.login.passwordLabel')}
+                  required
+                  render={({ inputId, describedBy, required, invalid }) => (
+                    <Input
+                      id={inputId}
+                      icon={Lock}
+                      type="password"
+                      data-testid="login-password"
+                      autoComplete="current-password"
+                      aria-required={required || undefined}
+                      aria-describedby={describedBy}
+                      invalid={invalid}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder={t('auth.login.passwordPlaceholder')}
+                      dir="ltr"
+                      disabled={loading}
+                    />
+                  )}
+                />
+
+                <Button
                   type="submit"
-                  disabled={loading}
+                  variant="gold"
+                  size="lg"
+                  fullWidth
+                  loading={loading}
                   data-testid="login-submit"
-                  style={{ background: 'var(--lev-navy)', minHeight: '44px' }}
-                  className="w-full text-white rounded-xl py-3 font-semibold text-sm
-                    hover:opacity-90 disabled:opacity-60 transition-opacity"
+                  rightIcon={
+                    isRtl
+                      ? <ArrowLeft size={18} strokeWidth={2} aria-hidden="true" focusable="false" />
+                      : <ArrowRight size={18} strokeWidth={2} aria-hidden="true" focusable="false" />
+                  }
                 >
                   {loading ? t('common.loading') : t('auth.login.submitButton')}
-                </button>
+                </Button>
               </div>
 
-              <div className="mt-5 flex items-center justify-between">
-                <Link to="/forgot-password" className="text-sm hover:underline"
-                  style={{ color: 'var(--lev-teal-text)' }}>
+              <div className="mt-5 flex items-center justify-between gap-3 flex-wrap">
+                <Link
+                  to="/forgot-password"
+                  className="text-sm font-semibold hover:underline"
+                  style={{ color: 'var(--lev-teal-text)' }}
+                >
                   {t('auth.login.forgotPassword')}
                 </Link>
                 <LanguageSwitcher />
               </div>
 
-              {/* SSO divider */}
               <div className="flex items-center gap-3 my-6" aria-hidden="true">
-                <div className="flex-1 h-px bg-gray-200" />
-                <span className="text-xs text-gray-400">{t('auth.login.orDivider')}</span>
-                <div className="flex-1 h-px bg-gray-200" />
+                <div className="flex-1 h-px" style={{ background: 'var(--border-default)' }} />
+                <span className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
+                  {t('auth.login.orDivider')}
+                </span>
+                <div className="flex-1 h-px" style={{ background: 'var(--border-default)' }} />
               </div>
 
-              {/* Microsoft SSO button */}
               <a
                 href={buildApiUrl('/auth/microsoft')}
                 role="button"
-                style={{ minHeight: '44px', borderColor: '#D1D5DB' }}
-                className="w-full flex items-center justify-center gap-3 border rounded-xl
-                  px-4 py-3 text-sm font-medium text-gray-700 bg-white
-                  hover:bg-gray-50 transition-colors focus-visible:outline-none
-                  focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-blue-500"
                 aria-label={t('auth.loginWithMicrosoft')}
+                className="w-full flex items-center justify-center gap-3 transition hover:bg-gray-50"
+                style={{
+                  minHeight: 48,
+                  padding: '10px 16px',
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: 'var(--text-primary)',
+                  background: '#fff',
+                  border: '1px solid var(--border-default)',
+                  borderRadius: 'var(--radius-xl)',
+                }}
               >
                 <MicrosoftLogo />
                 <span>{t('auth.loginWithMicrosoft')}</span>
               </a>
 
-              {/* Google SSO button */}
               <a
                 href={buildApiUrl('/auth/google')}
                 role="button"
-                style={{ minHeight: '44px', borderColor: '#D1D5DB' }}
-                className="mt-3 w-full flex items-center justify-center gap-3 border rounded-xl
-                  px-4 py-3 text-sm font-medium text-gray-700 bg-white
-                  hover:bg-gray-50 transition-colors focus-visible:outline-none
-                  focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-blue-500"
                 aria-label={t('auth.loginWithGoogle')}
+                className="mt-3 w-full flex items-center justify-center gap-3 transition hover:bg-gray-50"
+                style={{
+                  minHeight: 48,
+                  padding: '10px 16px',
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: 'var(--text-primary)',
+                  background: '#fff',
+                  border: '1px solid var(--border-default)',
+                  borderRadius: 'var(--radius-xl)',
+                }}
               >
                 <GoogleLogo />
                 <span>{t('auth.loginWithGoogle')}</span>
               </a>
+
+              <p className="mt-6 text-center text-xs" style={{ color: 'var(--text-muted)' }}>
+                <Link
+                  to="/accessibility-statement"
+                  className="font-semibold hover:underline"
+                  style={{ color: 'var(--lev-teal-text)' }}
+                >
+                  {t('nav.accessibilityStatement')}
+                </Link>
+              </p>
             </form>
           </div>
         </main>

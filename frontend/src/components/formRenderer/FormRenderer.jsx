@@ -6,6 +6,7 @@
  */
 
 import { useTranslation } from 'react-i18next'
+import { Check, Paperclip } from 'lucide-react'
 
 const INPUT_BASE = 'w-full text-sm border rounded-lg px-3 py-2.5 bg-white focus:outline-none transition-colors'
 
@@ -47,7 +48,14 @@ function FieldLabel({ id, label, required }) {
 function FieldFeedback({ id, error, valid }) {
   const { t } = useTranslation()
   if (error) return <p id={id} role="alert" aria-live="polite" className="text-xs mt-1 text-red-600">{error}</p>
-  if (valid) return <p className="text-xs mt-1" style={{ color: '#16a34a' }}>✓ {t('submission.submit.validField')}</p>
+  if (valid) {
+    return (
+      <p className="text-xs mt-1 flex items-center gap-1" style={{ color: 'var(--status-success)' }}>
+        <Check size={14} strokeWidth={2} aria-hidden="true" focusable="false" className="shrink-0" />
+        {t('submission.submit.validField')}
+      </p>
+    )
+  }
   return null
 }
 
@@ -195,9 +203,9 @@ export function FormField({ field, value, error, lang, onChange }) {
       <div>
         <FieldLabel id={id} label={label} required={field.required} />
         <label htmlFor={id}
-          className="flex flex-col items-center justify-center gap-1 w-full border-2 border-dashed rounded-xl p-4 cursor-pointer transition-colors hover:bg-blue-50/30 text-center"
+          className="flex flex-col items-center justify-center gap-1 w-full border-2 border-dashed rounded-xl p-4 cursor-pointer transition-colors hover:bg-[var(--lev-teal-50)] text-center"
           style={{ borderColor: hasErr ? '#dc2626' : 'var(--lev-teal)', minHeight: '80px' }}>
-          <span aria-hidden="true" className="text-xl">📎</span>
+          <Paperclip size={22} strokeWidth={1.75} aria-hidden="true" focusable="false" style={{ color: 'var(--lev-navy)' }} />
           <span className="text-xs font-semibold" style={{ color: 'var(--lev-teal-text)' }}>
             {value ? t('submission.submit.fileSelected', { name: value }) : t('submission.submit.fileButton')}
           </span>
@@ -213,7 +221,10 @@ export function FormField({ field, value, error, lang, onChange }) {
 
   if (field.type === 'declaration') {
     return (
-      <div className="rounded-xl p-4 space-y-2" style={{ background: '#f0f9ff', border: '1px solid #bae6fd' }}>
+      <div
+        className="rounded-xl p-4 space-y-2"
+        style={{ background: 'var(--status-info-50)', border: '1px solid var(--lev-teal)' }}
+      >
         <p className="text-xs font-semibold" style={{ color: 'var(--lev-navy)' }}>{label}</p>
         <p className="text-xs text-gray-600">{t('submission.submit.declarationText')}</p>
         <label className="flex items-start gap-2 cursor-pointer" style={{ minHeight: '44px' }}>

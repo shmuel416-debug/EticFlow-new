@@ -6,6 +6,7 @@
  */
 
 import { useTranslation } from 'react-i18next'
+import { Paperclip } from 'lucide-react'
 
 /* Shared input class — Lev palette, 44px min height */
 const INPUT_CLASS =
@@ -152,9 +153,9 @@ export default function FormFieldPreview({ field, previewLang }) {
         hint={t('secretary.formPreview.fileHint')}>
         <label htmlFor={id}
           className="flex items-center justify-center gap-2 w-full border-2 border-dashed
-            rounded-lg p-4 cursor-pointer text-sm transition-colors hover:bg-blue-50/30"
+            rounded-lg p-4 cursor-pointer text-sm transition-colors hover:bg-[var(--lev-teal-50)]"
           style={{ borderColor: 'var(--lev-teal)', color: 'var(--lev-teal-text)', minHeight: '60px' }}>
-          <span aria-hidden="true">📎</span>
+          <Paperclip size={18} strokeWidth={1.75} aria-hidden="true" focusable="false" />
           {t('secretary.formPreview.fileButton')}
           <input id={id} type="file" className="sr-only" aria-required={field.required} />
         </label>
@@ -165,8 +166,10 @@ export default function FormFieldPreview({ field, previewLang }) {
   /* ── Declaration ── */
   if (field.type === 'declaration') {
     return (
-      <div className="border rounded-xl p-4 space-y-3"
-        style={{ borderColor: 'var(--lev-teal)', background: '#f0f9ff' }}>
+      <div
+        className="border rounded-xl p-4 space-y-3"
+        style={{ borderColor: 'var(--lev-teal)', background: 'var(--status-info-50)' }}
+      >
         <p className="text-sm font-semibold" style={{ color: 'var(--lev-navy)' }}>{label}</p>
         <p className="text-xs" style={{ color: 'var(--lev-teal-text)' }}>
           {t('secretary.formPreview.declarationSample')}

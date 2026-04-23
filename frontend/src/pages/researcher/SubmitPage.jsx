@@ -1,16 +1,37 @@
 /**
  * EthicFlow — SubmitPage (Researcher)
  * Researcher fills and submits a dynamic form loaded from /api/forms/active.
- * Design B: navy header band + numbered sections + right summary sidebar.
- * IS 5568 / WCAG 2.1 AA. Lev palette only. Mobile-first.
+ * Refreshed to Lev design system: PageHeader + Card primitives + Button/IconButton.
+ * IS 5568 / WCAG 2.2 AA. Lev palette only via CSS vars. Mobile-first.
  * @module pages/researcher/SubmitPage
  */
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useNavigate, useParams }                    from 'react-router-dom'
 import { useTranslation }                            from 'react-i18next'
+import {
+  CheckCircle2,
+  AlertCircle,
+  AlertTriangle,
+  ArrowRight,
+  ArrowLeft,
+  X,
+  Save,
+  Send,
+} from 'lucide-react'
 import api                                           from '../../services/api'
 import FormRenderer                                  from '../../components/formRenderer/FormRenderer'
+import {
+  PageHeader,
+  Card,
+  CardHeader,
+  CardBody,
+  Button,
+  IconButton,
+  Spinner,
+  Badge,
+  EmptyState,
+} from '../../components/ui'
 
 /* ── Summary sidebar ─────────────────────── */
 /**
@@ -25,50 +46,94 @@ function SummarySidebar({ fields, values, errors }) {
     return v !== undefined && v !== '' && v !== false && !(Array.isArray(v) && v.length === 0)
   })
   const hasErrors = Object.values(errors).some(Boolean)
+  const remaining = required.length - filled.length
 
   return (
-    <aside className="hidden md:flex flex-col gap-4 w-44 shrink-0 ps-4 border-s"
-      aria-label={t('submission.submit.summaryTitle')}>
-      <div className="rounded-xl p-3 border" style={{ background: '#EEF0FA', borderColor: '#c7cce8' }}>
-        <p className="text-xs font-bold mb-2" style={{ color: 'var(--lev-navy)' }}>
-          {t('submission.submit.summaryTitle')}
-        </p>
-        <div className="space-y-1.5 text-xs">
-          <div className="flex justify-between">
-            <span className="text-gray-500">{t('submission.submit.summaryRequired')}</span>
-            <span className="font-bold" style={{ color: 'var(--lev-purple)' }}>{required.length}</span>
+    <aside
+      className="hidden md:flex flex-col gap-4 w-56 shrink-0"
+      aria-label={t('submission.submit.summaryTitle')}
+    >
+      <Card>
+        <CardHeader title={t('submission.submit.summaryTitle')} />
+        <CardBody>
+          <div className="space-y-2 text-xs">
+            <div className="flex justify-between">
+              <span style={{ color: 'var(--text-muted)' }}>
+                {t('submission.submit.summaryRequired')}
+              </span>
+              <span className="font-bold" style={{ color: 'var(--lev-purple)' }}>
+                {required.length}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span style={{ color: 'var(--text-muted)' }}>
+                {t('submission.submit.summaryFilled')}
+              </span>
+              <span className="font-bold" style={{ color: 'var(--status-success)' }}>
+                {filled.length}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span style={{ color: 'var(--text-muted)' }}>
+                {t('submission.submit.summaryRemaining')}
+              </span>
+              <span
+                className="font-bold"
+                style={{
+                  color:
+                    remaining > 0
+                      ? 'var(--status-warning)'
+                      : 'var(--status-success)',
+                }}
+              >
+                {remaining}
+              </span>
+            </div>
           </div>
-          <div className="flex justify-between">
-            <span className="text-gray-500">{t('submission.submit.summaryFilled')}</span>
-            <span className="font-bold" style={{ color: '#16a34a' }}>{filled.length}</span>
+
+          <div
+            className="mt-3 h-1.5 overflow-hidden"
+            style={{
+              background: 'var(--border-subtle)',
+              borderRadius: 'var(--radius-full)',
+            }}
+            aria-hidden="true"
+          >
+            <div
+              className="h-full transition-all"
+              style={{
+                width: `${required.length ? (filled.length / required.length) * 100 : 0}%`,
+                background: 'var(--lev-navy)',
+                borderRadius: 'var(--radius-full)',
+              }}
+            />
           </div>
-          <div className="flex justify-between">
-            <span className="text-gray-500">{t('submission.submit.summaryRemaining')}</span>
-            <span className="font-bold" style={{ color: required.length - filled.length > 0 ? '#d97706' : '#16a34a' }}>
-              {required.length - filled.length}
-            </span>
-          </div>
-        </div>
-        {/* Mini progress bar */}
-        <div className="mt-2 h-1.5 rounded-full bg-gray-200 overflow-hidden" aria-hidden="true">
-          <div className="h-full rounded-full transition-all"
-            style={{ width: `${required.length ? (filled.length / required.length) * 100 : 0}%`, background: 'var(--lev-navy)' }} />
-        </div>
-      </div>
+        </CardBody>
+      </Card>
 
       {hasErrors && (
-        <div className="rounded-xl p-3 text-xs" style={{ background: '#fef2f2', border: '1px solid #fecaca' }}>
-          <p className="font-semibold text-red-700 mb-1">{t('submission.submit.errorsTitle')}</p>
-          <ul className="space-y-0.5 text-red-600 list-disc list-inside">
-            {Object.entries(errors).filter(([, v]) => v).slice(0, 4).map(([k]) => {
-              const field = fields.find(f => (f.id || f.key) === k)
-              return field ? <li key={k}>{field.labelHe || field.labelEn}</li> : null
-            })}
-          </ul>
-        </div>
+        <Card>
+          <CardHeader title={t('submission.submit.errorsTitle')} />
+          <CardBody>
+            <ul
+              className="space-y-1 text-xs list-disc list-inside"
+              style={{ color: 'var(--status-danger)' }}
+            >
+              {Object.entries(errors)
+                .filter(([, v]) => v)
+                .slice(0, 4)
+                .map(([k]) => {
+                  const field = fields.find(f => (f.id || f.key) === k)
+                  return field ? <li key={k}>{field.labelHe || field.labelEn}</li> : null
+                })}
+            </ul>
+          </CardBody>
+        </Card>
       )}
 
-      <p className="text-xs text-gray-400">{t('submission.submit.summaryTip')}</p>
+      <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+        {t('submission.submit.summaryTip')}
+      </p>
     </aside>
   )
 }
@@ -80,17 +145,33 @@ function SummarySidebar({ fields, values, errors }) {
  */
 function Section({ num, title, children }) {
   return (
-    <section aria-labelledby={`section-${num}`}>
-      <h2 id={`section-${num}`} className="flex items-center gap-2 text-xs font-bold mb-3"
-        style={{ color: 'var(--lev-purple)' }}>
-        <span className="w-5 h-5 rounded-full flex items-center justify-center text-white text-xs shrink-0"
-          style={{ background: 'var(--lev-purple)' }} aria-hidden="true">{num}</span>
-        {title}
-      </h2>
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 md:p-5 space-y-5">
-        {children}
-      </div>
-    </section>
+    <Card as="section" aria-labelledby={`section-${num}`}>
+      <CardHeader>
+        <h2
+          id={`section-${num}`}
+          className="flex items-center gap-2 text-sm font-bold"
+          style={{ color: 'var(--lev-purple)' }}
+        >
+          <span
+            className="inline-flex items-center justify-center text-xs shrink-0"
+            style={{
+              width: 22,
+              height: 22,
+              borderRadius: 'var(--radius-full)',
+              background: 'var(--lev-purple)',
+              color: '#fff',
+            }}
+            aria-hidden="true"
+          >
+            {num}
+          </span>
+          {title}
+        </h2>
+      </CardHeader>
+      <CardBody>
+        <div className="space-y-5">{children}</div>
+      </CardBody>
+    </Card>
   )
 }
 
@@ -102,19 +183,37 @@ function SuccessScreen({ applicationId }) {
   const { t }    = useTranslation()
   const navigate = useNavigate()
   return (
-    <div className="flex flex-col items-center justify-center py-20 text-center px-4" data-testid="submit-success-screen">
-      <span className="text-5xl mb-4" aria-hidden="true">✅</span>
+    <div
+      className="flex flex-col items-center justify-center py-20 text-center px-4"
+      data-testid="submit-success-screen"
+      role="status"
+      aria-live="polite"
+    >
+      <div
+        className="inline-flex items-center justify-center mb-4"
+        style={{
+          width: 72,
+          height: 72,
+          borderRadius: 'var(--radius-full)',
+          background: 'var(--status-success-50)',
+          color: 'var(--status-success)',
+        }}
+      >
+        <CheckCircle2 size={40} strokeWidth={1.75} aria-hidden="true" focusable="false" />
+      </div>
       <h2 className="text-lg font-bold mb-2" style={{ color: 'var(--lev-navy)' }}>
         {t('submission.submit.submitSuccess')}
       </h2>
-      <p className="text-sm text-gray-600 mb-6 max-w-sm">
+      <p className="text-sm mb-6 max-w-sm" style={{ color: 'var(--text-muted)' }}>
         {t('submission.submit.submitSuccessBody', { id: applicationId })}
       </p>
-      <button type="button" onClick={() => navigate('/dashboard')} data-testid="submit-success-dashboard"
-        className="px-6 py-3 text-sm font-semibold text-white rounded-xl hover:opacity-90"
-        style={{ background: 'var(--lev-navy)', minHeight: '44px' }}>
+      <Button
+        variant="primary"
+        onClick={() => navigate('/dashboard')}
+        data-testid="submit-success-dashboard"
+      >
         {t('submission.submit.backToDashboard')}
-      </button>
+      </Button>
     </div>
   )
 }
@@ -122,12 +221,15 @@ function SuccessScreen({ applicationId }) {
 /* ── Main page ───────────────────────────── */
 /**
  * SubmitPage — loads active form, renders fields, posts submission.
+ * @returns {JSX.Element}
  */
 export default function SubmitPage() {
   const { t, i18n } = useTranslation()
   const navigate    = useNavigate()
   const { id: editId } = useParams()          // present on /submissions/:id/edit
   const lang        = i18n.language === 'en' ? 'en' : 'he'
+  const isRtl       = i18n.dir() === 'rtl'
+  const SubmitArrow = isRtl ? ArrowLeft : ArrowRight
 
   const [formMeta,    setFormMeta]    = useState(null)
   const [loading,     setLoading]     = useState(true)
@@ -243,11 +345,9 @@ export default function SubmitPage() {
       let applicationId
 
       if (targetId) {
-        // Update the existing draft data
         const { data } = await api.put(`/submissions/${targetId}`, { dataJson: values })
         applicationId = data.submission?.applicationId
       } else {
-        // Create a new draft
         const { data } = await api.post('/submissions', {
           formConfigId: formMeta.id,
           title:        values[fields[0]?.id || fields[0]?.key] || t('submission.submit.pageTitle'),
@@ -257,11 +357,9 @@ export default function SubmitPage() {
         applicationId = data.submission?.applicationId
       }
 
-      // Transition DRAFT → SUBMITTED
       await api.post(`/submissions/${targetId}/submit`)
       setSuccessId(applicationId ?? '')
     } catch (err) {
-      // api.js interceptor normalises errors to { message, code, status }
       const key = `errors.${err.code}`
       setSubmitError(t(key) !== key ? t(key) : (err.message || t('errors.SERVER_ERROR')))
     } finally {
@@ -272,8 +370,15 @@ export default function SubmitPage() {
   /* ── Render states ── */
   if (loading) {
     return (
-      <div className="flex flex-1 items-center justify-center py-24" role="status" aria-live="polite">
-        <p className="text-sm" style={{ color: 'var(--lev-teal-text)' }}>{t('common.loading')}</p>
+      <div
+        className="flex flex-1 items-center justify-center py-24 gap-3"
+        role="status"
+        aria-live="polite"
+      >
+        <Spinner size={20} label={t('common.loading')} />
+        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+          {t('common.loading')}
+        </p>
       </div>
     )
   }
@@ -282,112 +387,210 @@ export default function SubmitPage() {
 
   if (loadError || !formMeta) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-center">
-        <p className="text-3xl mb-3" aria-hidden="true">⚠️</p>
-        <p className="text-sm font-semibold mb-4" style={{ color: 'var(--lev-navy)' }}>
-          {loadError || t('submission.submit.noActiveForm')}
-        </p>
-        <button type="button" onClick={() => navigate('/dashboard')}
-          className="px-5 py-2.5 text-sm font-semibold text-white rounded-xl hover:opacity-90"
-          style={{ background: 'var(--lev-navy)', minHeight: '44px' }}>
-          {t('submission.submit.backToDashboard')}
-        </button>
+      <div className="p-4 md:p-6">
+        <PageHeader
+          title={t('submission.submit.pageTitle')}
+          backTo="/dashboard"
+          backLabel={t('submission.submit.backToDashboard')}
+        />
+        <Card>
+          <CardBody>
+            <EmptyState
+              icon={AlertTriangle}
+              title={loadError || t('submission.submit.noActiveForm')}
+              action={
+                <Button
+                  variant="primary"
+                  onClick={() => navigate('/dashboard')}
+                >
+                  {t('submission.submit.backToDashboard')}
+                </Button>
+              }
+            />
+          </CardBody>
+        </Card>
       </div>
     )
   }
 
   const formDisplayName = previewLang === 'en' && formMeta.nameEn ? formMeta.nameEn : formMeta.name
 
-  return (
-    <div className="-m-4 md:-m-6 flex flex-col" style={{ minHeight: 'calc(100vh - 64px)' }}>
+  const langToggle = (
+    <div
+      role="group"
+      aria-label={t('secretary.formBuilder.previewLanguage')}
+      className="flex gap-1 shrink-0"
+    >
+      {['he', 'en'].map(l => {
+        const isActive = previewLang === l
+        return (
+          <button
+            key={l}
+            type="button"
+            data-testid={`submit-lang-${l}`}
+            aria-pressed={isActive}
+            onClick={() => setPreviewLang(l)}
+            className="text-xs font-semibold transition-colors"
+            style={{
+              minHeight: 36,
+              padding: '0 12px',
+              borderRadius: 'var(--radius-lg)',
+              background: isActive ? 'var(--lev-navy)' : 'transparent',
+              color: isActive ? '#fff' : 'var(--lev-navy)',
+              border: `1px solid ${isActive ? 'var(--lev-navy)' : 'var(--border-default)'}`,
+            }}
+          >
+            {l === 'he' ? 'עב' : 'EN'}
+          </button>
+        )
+      })}
+    </div>
+  )
 
-      {/* Skip link — IS 5568 */}
-      <a href="#submit-form"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:start-2
-          focus:z-50 focus:px-4 focus:py-2 focus:rounded-lg focus:text-sm
-          focus:font-semibold focus:text-white"
-        style={{ background: 'var(--lev-navy)' }}>
+  return (
+    <div className="p-4 md:p-6">
+      <a href="#submit-form" className="skip-link">
         {t('common.skipToMain')}
       </a>
 
-      {/* Navy header band */}
-      <header className="px-5 py-5 shrink-0" style={{ background: 'var(--lev-navy)' }} data-testid="submit-header">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-base font-bold text-white">{t('submission.submit.pageTitle')}</h1>
-            <p className="text-xs text-white/70 mt-0.5">{formDisplayName} · {t('submission.submit.requiredNote')}</p>
-          </div>
-          {/* Language toggle */}
-          <div role="group" aria-label={t('secretary.formBuilder.previewLanguage')} className="flex gap-1 shrink-0">
-            {['he', 'en'].map(l => (
-              <button key={l} type="button"
-                data-testid={`submit-lang-${l}`}
-                aria-pressed={previewLang === l}
-                onClick={() => setPreviewLang(l)}
-                className="text-xs px-3 py-1.5 rounded-lg font-semibold transition-colors"
-                style={{
-                  background:  previewLang === l ? 'white' : 'transparent',
-                  color:       previewLang === l ? 'var(--lev-navy)' : 'rgba(255,255,255,0.6)',
-                  border:      previewLang === l ? 'none' : '1px solid rgba(255,255,255,0.3)',
-                  minHeight:   '36px',
-                }}>
-                {l === 'he' ? 'עב' : 'EN'}
-              </button>
-            ))}
-          </div>
-        </div>
-      </header>
+      <PageHeader
+        title={t('submission.submit.pageTitle')}
+        subtitle={`${formDisplayName} · ${t('submission.submit.requiredNote')}`}
+        backTo="/dashboard"
+        backLabel={t('submission.submit.backToDashboard')}
+        actions={langToggle}
+      />
 
-      {/* Body */}
-      <div className="flex flex-1 overflow-hidden">
-        <main id="submit-form" className="flex-1 overflow-y-auto p-4 md:p-6">
-
-          {/* Submit error */}
+      <div className="flex gap-6">
+        {/* Main column */}
+        <main id="submit-form" className="flex-1 min-w-0 space-y-5">
           {submitError && (
-            <div role="alert" aria-live="assertive"
-              className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 flex justify-between text-sm text-red-700">
-              {submitError}
-              <button onClick={() => setSubmitError('')} className="text-red-500 ms-3 font-bold" style={{ minWidth: '28px' }}>✕</button>
+            <div
+              role="alert"
+              aria-live="assertive"
+              className="flex items-start justify-between gap-3 text-sm font-medium"
+              style={{
+                background: 'var(--status-danger-50)',
+                color: 'var(--status-danger)',
+                border: '1px solid var(--status-danger)',
+                borderRadius: 'var(--radius-lg)',
+                padding: '12px 14px',
+              }}
+            >
+              <div className="flex items-start gap-2 min-w-0">
+                <AlertCircle
+                  size={18}
+                  strokeWidth={1.75}
+                  aria-hidden="true"
+                  focusable="false"
+                  style={{ flexShrink: 0, marginTop: 2 }}
+                />
+                <span className="min-w-0 break-words">{submitError}</span>
+              </div>
+              <IconButton
+                icon={X}
+                label={t('common.close', 'סגור')}
+                onClick={() => setSubmitError('')}
+              />
             </div>
           )}
 
-          {/* Numbered sections */}
-          <div className="space-y-5 max-w-xl">
-            {sections.map((sectionFields, idx) => (
-              <Section key={idx} num={idx + 1} title={sectionTitles[idx] ?? t('submission.submit.sectionFallback', { num: idx + 1 })}>
-                <FormRenderer
-                  fields={sectionFields}
-                  values={values}
-                  errors={errors}
-                  lang={previewLang}
-                  onChange={handleChange}
-                />
-              </Section>
-            ))}
-          </div>
+          {sections.map((sectionFields, idx) => (
+            <Section
+              key={idx}
+              num={idx + 1}
+              title={
+                sectionTitles[idx] ?? t('submission.submit.sectionFallback', { num: idx + 1 })
+              }
+            >
+              <FormRenderer
+                fields={sectionFields}
+                values={values}
+                errors={errors}
+                lang={previewLang}
+                onChange={handleChange}
+              />
+            </Section>
+          ))}
 
-          {/* Action buttons */}
-          <div className="flex gap-3 mt-6 max-w-xl">
-            <button type="button" onClick={handleSaveDraft} disabled={submitting || savingDraft}
+          <div className="flex flex-wrap gap-3 pt-1">
+            <Button
+              variant="secondary"
+              onClick={handleSaveDraft}
+              disabled={submitting || savingDraft}
+              loading={savingDraft}
+              leftIcon={
+                draftSaved ? (
+                  <CheckCircle2
+                    size={16}
+                    strokeWidth={1.75}
+                    aria-hidden="true"
+                    focusable="false"
+                  />
+                ) : (
+                  <Save
+                    size={16}
+                    strokeWidth={1.75}
+                    aria-hidden="true"
+                    focusable="false"
+                  />
+                )
+              }
               data-testid="submit-save-draft"
-              className="px-5 py-2.5 text-sm font-semibold border border-gray-200 rounded-xl hover:bg-gray-50 disabled:opacity-40 transition-colors"
-              style={{ color: draftSaved ? '#16a34a' : 'var(--lev-navy)', minHeight: '44px',
-                borderColor: draftSaved ? '#86efac' : '' }}>
-              {draftSaved ? t('submission.submit.draftSaved') : savingDraft ? t('common.loading') : t('submission.submit.saveDraft')}
-            </button>
-            <button type="button" onClick={handleSubmit} disabled={submitting}
+              style={
+                draftSaved
+                  ? {
+                      color: 'var(--status-success)',
+                      borderColor: 'var(--status-success)',
+                    }
+                  : undefined
+              }
+            >
+              {draftSaved
+                ? t('submission.submit.draftSaved')
+                : savingDraft
+                  ? t('common.loading')
+                  : t('submission.submit.saveDraft')}
+            </Button>
+
+            <Button
+              variant="gold"
+              onClick={handleSubmit}
+              disabled={submitting}
+              loading={submitting}
+              leftIcon={
+                <Send
+                  size={16}
+                  strokeWidth={1.75}
+                  aria-hidden="true"
+                  focusable="false"
+                />
+              }
+              rightIcon={
+                <SubmitArrow
+                  size={16}
+                  strokeWidth={1.75}
+                  aria-hidden="true"
+                  focusable="false"
+                />
+              }
               data-testid="submit-final-submit"
-              className="flex-1 py-2.5 text-sm font-semibold text-white rounded-xl hover:opacity-90 disabled:opacity-50 transition-opacity"
-              style={{ background: 'var(--lev-navy)', minHeight: '44px' }}>
-              {submitting ? t('submission.submit.submitting') : t('submission.submit.submitBtn')}
-            </button>
+            >
+              {submitting
+                ? t('submission.submit.submitting')
+                : t('submission.submit.submitBtn')}
+            </Button>
+
+            {draftSaved && (
+              <Badge tone="success" size="md">
+                {t('submission.submit.draftSaved')}
+              </Badge>
+            )}
           </div>
         </main>
 
-        {/* Summary sidebar — desktop only */}
-        <div className="hidden md:block p-6 shrink-0">
-          <SummarySidebar fields={fields} values={values} errors={errors} />
-        </div>
+        {/* Summary sidebar */}
+        <SummarySidebar fields={fields} values={values} errors={errors} />
       </div>
     </div>
   )

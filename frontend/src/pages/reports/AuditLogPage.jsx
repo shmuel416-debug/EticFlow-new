@@ -1,31 +1,36 @@
 /**
  * EthicFlow — Audit Log Page
- * Paginated, filterable table of system audit events.
- * Desktop: full table. Mobile: card layout.
- * Role: ADMIN only.
+ * Paginated, filterable audit-event list using Table primitive with
+ * responsive mobile card fallback. Role: ADMIN only.
  */
 
 import { useState, useEffect, useCallback } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import {
+  Activity, Search, Filter, ChevronLeft, ChevronRight,
+} from 'lucide-react'
 import api from '../../services/api'
+import {
+  Button, Card, PageHeader, Input, Select, FormField, Table, Badge,
+} from '../../components/ui'
 
-/** Action badge colours keyed by action verb prefix */
-const ACTION_COLORS = {
-  APPROVED:  'bg-green-50  text-green-700',
-  CREATED:   'bg-blue-50   text-blue-700',
-  UPDATED:   'bg-indigo-50 text-indigo-700',
-  SUBMITTED: 'bg-yellow-50 text-yellow-700',
-  REJECTED:  'bg-red-50    text-red-700',
-  DELETED:   'bg-red-50    text-red-700',
-  PUBLISHED: 'bg-purple-50 text-purple-700',
-  LOGIN:     'bg-gray-100  text-gray-600',
+/** Action badge tone keyed by action verb prefix */
+const ACTION_TONES = {
+  APPROVED:  'success',
+  CREATED:   'info',
+  UPDATED:   'navy',
+  SUBMITTED: 'warning',
+  REJECTED:  'danger',
+  DELETED:   'danger',
+  PUBLISHED: 'purple',
+  LOGIN:     'neutral',
 }
 
-/** Returns a badge colour class for an action string. */
-function actionBadgeClass(action = '') {
-  const prefix = action.split('_').pop() // e.g. "SUBMISSION_APPROVED" → "APPROVED"
-  return ACTION_COLORS[prefix] ?? 'bg-gray-100 text-gray-600'
+/** Returns badge tone for an action string. */
+function actionBadgeTone(action = '') {
+  const prefix = action.split('_').pop()
+  return ACTION_TONES[prefix] ?? 'neutral'
 }
 
 /**
@@ -46,9 +51,9 @@ const PAGE_SIZE = 20
 const ENTITY_TYPES = ['SUBMISSION', 'USER', 'FORM', 'MEETING', 'PROTOCOL', 'DOCUMENT', 'AUTH']
 
 export default function AuditLogPage() {
-  const { t }    = useTranslation()
-  const navigate = useNavigate()
-  const location = useLocation()
+  const { t, i18n } = useTranslation()
+  const location    = useLocation()
+  const isRtl       = i18n.dir() === 'rtl'
 
   const [logs,      setLogs]      = useState([])
   const [total,     setTotal]     = useState(0)
@@ -56,14 +61,11 @@ export default function AuditLogPage() {
   const [loading,   setLoading]   = useState(true)
   const [error,     setError]     = useState(null)
 
-  // ── Filters ──────────────────────────────────────
   const [actionFilter,     setActionFilter]     = useState('')
   const [entityTypeFilter, setEntityTypeFilter] = useState('')
   const [dateFromFilter,   setDateFromFilter]   = useState('')
   const [dateToFilter,     setDateToFilter]     = useState('')
   const backTo = typeof location.state?.from === 'string' ? location.state.from : '/reports'
-
-  // ── Fetch ────────────────────────────────────────
 
   const fetchLogs = useCallback(async () => {
     setLoading(true)
@@ -86,8 +88,6 @@ export default function AuditLogPage() {
 
   useEffect(() => { fetchLogs() }, [fetchLogs])
 
-  // ── Pagination ───────────────────────────────────
-
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
 
   function handleFilterChange(setter) {
@@ -97,224 +97,249 @@ export default function AuditLogPage() {
     }
   }
 
-  // ── Common input style ───────────────────────────
+  const hasAnyFilter = actionFilter || entityTypeFilter || dateFromFilter || dateToFilter
 
-  const inputClass = 'text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2 bg-white'
-  const inputStyle = { minHeight: '40px', '--tw-ring-color': 'var(--lev-navy)' }
+  const PrevIcon = isRtl ? ChevronRight : ChevronLeft
+  const NextIcon = isRtl ? ChevronLeft  : ChevronRight
+
+  const columns = [
+    {
+      key: 'createdAt',
+      header: t('auditLog.time'),
+      render: (log) => (
+        <span className="text-xs whitespace-nowrap tabular-nums" style={{ color: 'var(--text-muted)' }}>
+          {fmtDateTime(log.createdAt)}
+        </span>
+      ),
+    },
+    {
+      key: 'user',
+      header: t('auditLog.user'),
+      render: (log) => (
+        log.user
+          ? <span className="font-medium" style={{ color: 'var(--text-primary)' }}>{log.user.fullName}</span>
+          : <span style={{ color: 'var(--text-muted)' }}>—</span>
+      ),
+    },
+    {
+      key: 'action',
+      header: t('auditLog.action'),
+      render: (log) => (
+        <Badge tone={actionBadgeTone(log.action)} size="sm">
+          {log.action}
+        </Badge>
+      ),
+    },
+    {
+      key: 'entityType',
+      header: t('auditLog.entityType'),
+      render: (log) => (
+        <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+          {log.entityType ?? '—'}
+        </span>
+      ),
+    },
+    {
+      key: 'entityId',
+      header: t('auditLog.entityId'),
+      hideOnMobile: true,
+      render: (log) => (
+        <span className="text-xs font-mono" style={{ color: 'var(--text-muted)' }}>
+          {log.entityId?.slice(0, 8) ?? '—'}
+        </span>
+      ),
+    },
+    {
+      key: 'ipAddress',
+      header: t('auditLog.ip'),
+      hideOnMobile: true,
+      render: (log) => (
+        <span className="text-xs font-mono" style={{ color: 'var(--text-muted)' }}>
+          {log.ipAddress ?? '—'}
+        </span>
+      ),
+    },
+  ]
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="max-w-6xl mx-auto">
+      <PageHeader
+        title={
+          <span className="inline-flex items-center gap-2">
+            <Activity size={22} strokeWidth={1.75} aria-hidden="true" focusable="false" style={{ color: 'var(--lev-navy)' }} />
+            {t('auditLog.title')}
+          </span>
+        }
+        subtitle={t('auditLog.system')}
+        backTo={backTo}
+      />
 
-      {/* ── Header ── */}
-      <div
-        className="px-4 md:px-6 py-4 flex flex-col md:flex-row md:items-center justify-between gap-3"
-        style={{ background: 'linear-gradient(135deg, var(--lev-navy) 0%, #2d4db5 100%)' }}
-      >
-        <div>
-          <h1 className="text-xl font-bold text-white">{t('auditLog.title')}</h1>
-          <p className="text-sm mt-0.5" style={{ color: 'rgba(255,255,255,0.6)' }}>
-            {t('auditLog.system')}
-          </p>
-        </div>
-        <button
-          onClick={() => navigate(backTo)}
-          className="text-sm font-semibold px-4 py-2.5 rounded-xl border border-white/30 text-white hover:bg-white/10 transition-colors self-start md:self-auto"
-          style={{ minHeight: '44px' }}
-          aria-label={t('stats.title')}
-        >
-          ← {t('stats.title')}
-        </button>
-      </div>
-
-      {/* ── Filter bar ── */}
-      <div className="bg-white border-b px-4 md:px-6 py-3 flex flex-wrap gap-3 items-end">
-        <div className="flex flex-col gap-1">
-          <label className="text-xs text-gray-500 font-medium">{t('auditLog.filterAction')}</label>
-          <input
-            type="text"
-            placeholder={t('auditLog.filterAction')}
-            value={actionFilter}
-            onChange={handleFilterChange(setActionFilter)}
-            className={inputClass}
-            style={inputStyle}
-            aria-label={t('auditLog.filterAction')}
-          />
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <label className="text-xs text-gray-500 font-medium">{t('auditLog.filterEntity')}</label>
-          <select
-            value={entityTypeFilter}
-            onChange={handleFilterChange(setEntityTypeFilter)}
-            className={inputClass}
-            style={inputStyle}
-            aria-label={t('auditLog.filterEntity')}
-          >
-            <option value="">— {t('auditLog.filterEntity')} —</option>
-            {ENTITY_TYPES.map(et => (
-              <option key={et} value={et}>{et}</option>
-            ))}
-          </select>
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <label className="text-xs text-gray-500 font-medium">{t('auditLog.dateFrom')}</label>
-          <input
-            type="date"
-            value={dateFromFilter}
-            onChange={handleFilterChange(setDateFromFilter)}
-            className={inputClass}
-            style={inputStyle}
-            aria-label={t('auditLog.dateFrom')}
-          />
-        </div>
-
-        <div className="flex flex-col gap-1">
-          <label className="text-xs text-gray-500 font-medium">{t('auditLog.dateTo')}</label>
-          <input
-            type="date"
-            value={dateToFilter}
-            onChange={handleFilterChange(setDateToFilter)}
-            className={inputClass}
-            style={inputStyle}
-            aria-label={t('auditLog.dateTo')}
-          />
-        </div>
-
-        {(actionFilter || entityTypeFilter || dateFromFilter || dateToFilter) && (
-          <button
-            onClick={() => { setActionFilter(''); setEntityTypeFilter(''); setDateFromFilter(''); setDateToFilter(''); setPage(1) }}
-            className="text-xs text-gray-500 hover:text-red-600 transition-colors self-end pb-2"
-          >
-            {t('auditLog.clearFilter')}
-          </button>
-        )}
-      </div>
-
-      {/* ── Content ── */}
-      <div className="flex-1 overflow-auto bg-gray-50">
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm m-4" role="alert">
-            {error}
+      {/* Filter toolbar */}
+      <Card className="mb-4">
+        <div className="p-4 flex flex-wrap gap-3 items-end">
+          <div className="flex-1 min-w-[200px]">
+            <FormField
+              label={t('auditLog.filterAction')}
+              render={({ inputId }) => (
+                <Input
+                  id={inputId}
+                  icon={Search}
+                  type="text"
+                  placeholder={t('auditLog.filterAction')}
+                  value={actionFilter}
+                  onChange={handleFilterChange(setActionFilter)}
+                />
+              )}
+            />
           </div>
-        )}
 
-        {loading && (
-          <div className="flex justify-center py-16 text-gray-400 text-sm" role="status" aria-live="polite">
-            {t('auditLog.loading')}
-          </div>
-        )}
-
-        {!loading && logs.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-20 text-center" aria-live="polite">
-            <p className="text-3xl mb-3" aria-hidden="true">🔍</p>
-            <p className="text-gray-500 text-sm">{t('auditLog.noLogs')}</p>
-          </div>
-        )}
-
-        {/* Desktop table */}
-        {!loading && logs.length > 0 && (
-          <>
-            <div className="hidden md:block">
-              <table className="w-full text-sm">
-                <thead className="bg-white border-b sticky top-0">
-                  <tr>
-                    <th className="text-right px-5 py-3 font-semibold text-gray-500 text-xs">{t('auditLog.time')}</th>
-                    <th className="text-right px-5 py-3 font-semibold text-gray-500 text-xs">{t('auditLog.user')}</th>
-                    <th className="text-right px-5 py-3 font-semibold text-gray-500 text-xs">{t('auditLog.action')}</th>
-                    <th className="text-right px-5 py-3 font-semibold text-gray-500 text-xs">{t('auditLog.entityType')}</th>
-                    <th className="text-right px-5 py-3 font-semibold text-gray-500 text-xs">{t('auditLog.entityId')}</th>
-                    <th className="text-right px-5 py-3 font-semibold text-gray-500 text-xs">{t('auditLog.ip')}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {logs.map(log => (
-                    <tr key={log.id} className="hover:bg-white transition-colors">
-                      <td className="px-5 py-3 text-xs text-gray-400 whitespace-nowrap">{fmtDateTime(log.createdAt)}</td>
-                      <td className="px-5 py-3 text-sm font-medium text-gray-800">
-                        {log.user ? log.user.fullName : <span className="text-gray-400">—</span>}
-                      </td>
-                      <td className="px-5 py-3">
-                        <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${actionBadgeClass(log.action)}`}>
-                          {log.action}
-                        </span>
-                      </td>
-                      <td className="px-5 py-3 text-xs text-gray-500">{log.entityType ?? '—'}</td>
-                      <td className="px-5 py-3 text-xs text-gray-400 font-mono">{log.entityId?.slice(0, 8) ?? '—'}</td>
-                      <td className="px-5 py-3 text-xs text-gray-400 font-mono">{log.ipAddress ?? '—'}</td>
-                    </tr>
+          <div className="min-w-[180px]">
+            <FormField
+              label={t('auditLog.filterEntity')}
+              render={({ inputId }) => (
+                <Select
+                  id={inputId}
+                  value={entityTypeFilter}
+                  onChange={handleFilterChange(setEntityTypeFilter)}
+                >
+                  <option value="">— {t('auditLog.filterEntity')} —</option>
+                  {ENTITY_TYPES.map(et => (
+                    <option key={et} value={et}>{et}</option>
                   ))}
-                </tbody>
-              </table>
-            </div>
+                </Select>
+              )}
+            />
+          </div>
 
-            {/* Mobile card layout */}
-            <ul className="md:hidden p-4 space-y-3" role="list">
-              {logs.map(log => (
-                <li key={log.id} className="bg-white rounded-xl border p-4 shadow-sm" role="listitem">
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${actionBadgeClass(log.action)}`}>
-                      {log.action}
-                    </span>
-                    <span className="text-xs text-gray-400 whitespace-nowrap">{fmtDateTime(log.createdAt)}</span>
-                  </div>
-                  <p className="text-sm font-semibold text-gray-800">
-                    {log.user ? log.user.fullName : <span className="text-gray-400">—</span>}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {log.entityType ?? '—'}
-                    {log.ipAddress && ` • ${log.ipAddress}`}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
-      </div>
+          <div className="min-w-[150px]">
+            <FormField
+              label={t('auditLog.dateFrom')}
+              render={({ inputId }) => (
+                <Input
+                  id={inputId}
+                  type="date"
+                  value={dateFromFilter}
+                  onChange={handleFilterChange(setDateFromFilter)}
+                />
+              )}
+            />
+          </div>
 
-      {/* ── Pagination ── */}
+          <div className="min-w-[150px]">
+            <FormField
+              label={t('auditLog.dateTo')}
+              render={({ inputId }) => (
+                <Input
+                  id={inputId}
+                  type="date"
+                  value={dateToFilter}
+                  onChange={handleFilterChange(setDateToFilter)}
+                />
+              )}
+            />
+          </div>
+
+          {hasAnyFilter && (
+            <Button
+              variant="ghost"
+              size="sm"
+              leftIcon={<Filter size={14} strokeWidth={1.75} aria-hidden="true" focusable="false" />}
+              onClick={() => {
+                setActionFilter(''); setEntityTypeFilter('')
+                setDateFromFilter(''); setDateToFilter(''); setPage(1)
+              }}
+            >
+              {t('auditLog.clearFilter')}
+            </Button>
+          )}
+        </div>
+      </Card>
+
+      {error && (
+        <div
+          role="alert"
+          className="mb-4 text-sm"
+          style={{
+            background: 'var(--status-danger-50)',
+            color: 'var(--status-danger)',
+            border: '1px solid var(--status-danger)',
+            borderRadius: 'var(--radius-lg)',
+            padding: '12px 14px',
+          }}
+        >
+          {error}
+        </div>
+      )}
+
+      <Card>
+        <Table
+          columns={columns}
+          rows={logs}
+          rowKey={(log) => log.id}
+          loading={loading}
+          caption={t('auditLog.title')}
+          emptyTitle={t('auditLog.noLogs')}
+        />
+      </Card>
+
+      {/* Pagination */}
       {!loading && total > PAGE_SIZE && (
-        <div className="bg-white border-t px-4 md:px-6 py-3 flex items-center justify-between">
-          <span className="text-xs text-gray-400">
+        <div
+          className="mt-4 p-3 flex items-center justify-between bg-white"
+          style={{
+            border: '1px solid var(--border-default)',
+            borderRadius: 'var(--radius-xl)',
+            boxShadow: 'var(--shadow-sm)',
+          }}
+        >
+          <span className="text-xs tabular-nums" style={{ color: 'var(--text-muted)' }}>
             {t('common.showing')} {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, total)} {t('common.of')} {total}
           </span>
-          <div className="flex gap-1.5">
-            <button
+          <div className="flex gap-1.5 items-center">
+            <Button
+              variant="secondary"
+              size="sm"
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="text-xs px-3 py-1.5 rounded-lg border text-gray-600 disabled:opacity-40 hover:bg-gray-50 transition-colors"
-              style={{ minHeight: '36px' }}
+              leftIcon={<PrevIcon size={14} strokeWidth={1.75} aria-hidden="true" focusable="false" />}
               aria-label={t('common.prevPage')}
             >
               {t('common.prev')}
-            </button>
+            </Button>
             {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
               const pg = Math.max(1, Math.min(page - 2, totalPages - 4)) + i
+              const isActive = pg === page
               return (
                 <button
                   key={pg}
+                  type="button"
                   onClick={() => setPage(pg)}
-                  className={`text-xs px-3 py-1.5 rounded-lg transition-colors ${
-                    pg === page
-                      ? 'text-white font-bold'
-                      : 'border text-gray-600 hover:bg-gray-50'
-                  }`}
-                  style={{ minHeight: '36px', background: pg === page ? 'var(--lev-navy)' : undefined }}
-                  aria-current={pg === page ? 'page' : undefined}
+                  aria-current={isActive ? 'page' : undefined}
+                  className="text-xs font-semibold transition"
+                  style={{
+                    minWidth: 36,
+                    minHeight: 36,
+                    padding: '0 10px',
+                    borderRadius: 'var(--radius-lg)',
+                    background: isActive ? 'var(--lev-navy)' : 'transparent',
+                    color: isActive ? '#fff' : 'var(--text-secondary)',
+                    border: isActive ? '1px solid var(--lev-navy)' : '1px solid var(--border-default)',
+                  }}
                 >
                   {pg}
                 </button>
               )
             })}
-            <button
+            <Button
+              variant="secondary"
+              size="sm"
               onClick={() => setPage(p => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              className="text-xs px-3 py-1.5 rounded-lg border text-gray-600 disabled:opacity-40 hover:bg-gray-50 transition-colors"
-              style={{ minHeight: '36px' }}
+              rightIcon={<NextIcon size={14} strokeWidth={1.75} aria-hidden="true" focusable="false" />}
               aria-label={t('common.nextPage')}
             >
               {t('common.next')}
-            </button>
+            </Button>
           </div>
         </div>
       )}

@@ -1,17 +1,30 @@
 /**
- * EthicFlow — Secretary Dashboard (real data)
- * Shows live KPI summary cards + recent submissions table.
+ * EthicFlow — Secretary Dashboard (brand refresh)
+ * Lev Academic Center palette + design-system primitives: PageHeader, StatCard,
+ * Card, EmptyState, Button, Badge. Shows live KPI summary cards + recent
+ * submissions table.
  * Data source: GET /api/submissions/dashboard/secretary
  * IS 5568 / WCAG 2.2 AA: semantic headings, aria, responsive.
  */
 
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
+import {
+  ArrowRight, ArrowLeft, ClipboardList, AlertCircle, Clock,
+  Search, Pencil, CheckCircle2, Inbox, AlertTriangle,
+} from 'lucide-react'
 import api from '../../services/api'
 import StatusBadge from '../../components/submissions/StatusBadge'
+import {
+  Button, Card, CardHeader, PageHeader, StatCard, EmptyState, Spinner,
+} from '../../components/ui'
 
-/** SLA dot indicator */
+/**
+ * SLA indicator — small colored dot with accessible label. Brand-var colors.
+ * @param {{ slaTracking: object, labels: {breach: string, warning: string, onTime: string} }} props
+ * @returns {JSX.Element|null}
+ */
 function SlaDot({ slaTracking, labels }) {
   if (!slaTracking) return null
   const now     = new Date()
@@ -19,13 +32,25 @@ function SlaDot({ slaTracking, labels }) {
   const msLeft  = due ? new Date(due) - now : null
   const dayLeft = msLeft ? msLeft / 86400000 : null
 
+  let color = 'var(--status-success)'
+  let label = labels.onTime
   if (slaTracking.isBreached || (dayLeft !== null && dayLeft < 0)) {
-    return <span className="w-2.5 h-2.5 rounded-full bg-red-500 inline-block" title={labels.breach} aria-label={labels.breach} />
+    color = 'var(--status-danger)'
+    label = labels.breach
+  } else if (dayLeft !== null && dayLeft < 3) {
+    color = 'var(--status-warning)'
+    label = labels.warning
   }
-  if (dayLeft !== null && dayLeft < 3) {
-    return <span className="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block" title={labels.warning} aria-label={labels.warning} />
-  }
-  return <span className="w-2.5 h-2.5 rounded-full bg-green-400 inline-block" title={labels.onTime} aria-label={labels.onTime} />
+
+  return (
+    <span
+      className="inline-block w-2.5 h-2.5 rounded-full"
+      style={{ background: color }}
+      title={label}
+      aria-label={label}
+      role="img"
+    />
+  )
 }
 
 /**
@@ -33,17 +58,20 @@ function SlaDot({ slaTracking, labels }) {
  * @returns {JSX.Element}
  */
 export default function SecretaryDashboard() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const isRtl = i18n.dir() === 'rtl'
+  const NextIcon = isRtl ? ArrowLeft : ArrowRight
   const slaLabels = {
     breach: t('dashboard.researcher.slaBreach'),
     warning: t('notifications.types.SLA_WARNING'),
     onTime: t('common.ok'),
   }
   const location = useLocation()
+  const navigate = useNavigate()
 
-  const [stats, setStats]           = useState(null)
-  const [loading, setLoading]       = useState(true)
-  const [error, setError]           = useState(null)
+  const [stats, setStats]     = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError]     = useState(null)
   const returnPath = `${location.pathname}${location.search}`
 
   useEffect(() => {
@@ -62,113 +90,189 @@ export default function SecretaryDashboard() {
   }, [t])
 
   const cards = stats ? [
-    { label: t('dashboard.secretary.pendingReview'),      value: stats.total,           color: 'var(--lev-navy)' },
-    { label: t('dashboard.secretary.slaWarning'),         value: stats.slaBreach,       color: '#dc2626' },
-    { label: t('submission.status.IN_TRIAGE'),            value: stats.inTriage,        color: '#d97706' },
-    { label: t('submission.status.IN_REVIEW'),            value: stats.inReview,        color: '#7c3aed' },
-    { label: t('submission.status.PENDING_REVISION'),     value: stats.pendingRevision, color: '#ea580c' },
+    { label: t('dashboard.secretary.pendingReview'),  value: stats.total,           tone: 'navy',    icon: ClipboardList },
+    { label: t('dashboard.secretary.slaWarning'),     value: stats.slaBreach,       tone: 'danger',  icon: AlertCircle   },
+    { label: t('submission.status.IN_TRIAGE'),        value: stats.inTriage,        tone: 'warning', icon: Clock         },
+    { label: t('submission.status.IN_REVIEW'),        value: stats.inReview,        tone: 'purple',  icon: Search        },
+    { label: t('submission.status.PENDING_REVISION'), value: stats.pendingRevision, tone: 'warning', icon: Pencil        },
   ] : []
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <h1 className="text-2xl font-bold" style={{ color: 'var(--lev-navy)' }}>
-          {t('dashboard.secretary.title')}
-        </h1>
-        <Link
-          to="/secretary/submissions"
-          className="text-sm px-4 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 min-h-[44px] flex items-center"
-        >
-          {t('nav.secretarySubmissions')} →
-        </Link>
-      </div>
+    <div className="space-y-5">
+      <PageHeader
+        title={t('dashboard.secretary.title')}
+        subtitle={t('submission.list.title')}
+        actions={
+          <Button
+            variant="secondary"
+            size="md"
+            onClick={() => navigate('/secretary/submissions')}
+            rightIcon={<NextIcon size={16} strokeWidth={1.75} aria-hidden="true" focusable="false" />}
+          >
+            {t('nav.secretarySubmissions')}
+          </Button>
+        }
+      />
 
-      {/* Loading */}
       {loading && (
-        <div className="flex justify-center py-8">
-          <div role="status" aria-label={t('common.loading')}
-               className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
+        <div
+          className="flex justify-center py-10"
+          role="status"
+          aria-live="polite"
+          aria-label={t('common.loading')}
+        >
+          <Spinner size={28} label={t('common.loading')} />
         </div>
       )}
 
-      {/* Error */}
-      {error && <div role="alert" className="bg-red-50 text-red-700 rounded-lg p-4 text-sm">{error}</div>}
+      {error && (
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="text-sm font-medium flex items-start gap-2"
+          style={{
+            background: 'var(--status-danger-50)',
+            color: 'var(--status-danger)',
+            border: '1px solid var(--status-danger)',
+            borderRadius: 'var(--radius-lg)',
+            padding: '12px 14px',
+          }}
+        >
+          <AlertTriangle size={18} strokeWidth={2} aria-hidden="true" focusable="false" />
+          <span>{error}</span>
+        </div>
+      )}
 
-      {/* KPI cards */}
-      {!loading && stats && (
+      {!loading && !error && stats && (
         <>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-            {cards.map(({ label, value, color }) => (
-              <div key={label} className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
-                <p className="text-xs text-gray-500 leading-tight">{label}</p>
-                <p className="text-3xl font-bold mt-1" style={{ color }}>{value}</p>
-              </div>
+            {cards.map(({ label, value, tone, icon }) => (
+              <StatCard
+                key={label}
+                value={value}
+                label={label}
+                tone={tone}
+                icon={icon}
+              />
             ))}
           </div>
 
-          {/* Recent submissions table */}
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-            <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-              <h2 className="font-semibold" style={{ color: 'var(--lev-navy)' }}>
-                {t('submission.list.title')}
-              </h2>
-              <Link to="/secretary/submissions" className="text-xs text-blue-600 hover:underline">
-                {t('common.viewAll')} →
-              </Link>
-            </div>
-
-            {/* Desktop table */}
-            <div className="hidden md:block overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-right border-b border-gray-50 bg-gray-50">
-                    <th scope="col" className="px-4 py-2 font-semibold text-gray-500">{t('submission.table.id')}</th>
-                    <th scope="col" className="px-4 py-2 font-semibold text-gray-500">{t('submission.table.title')}</th>
-                    <th scope="col" className="px-4 py-2 font-semibold text-gray-500">{t('common.researcher')}</th>
-                    <th scope="col" className="px-4 py-2 font-semibold text-gray-500">{t('submission.table.status')}</th>
-                    <th scope="col" className="px-4 py-2 font-semibold text-gray-500">SLA</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {stats.recentSubmissions.map(sub => (
-                    <tr key={sub.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-4 py-2 font-mono text-xs text-gray-600">
-                        <Link to={`/secretary/submissions/${sub.id}`} state={{ from: returnPath }} className="hover:underline text-blue-600">
-                          {sub.applicationId}
-                        </Link>
-                      </td>
-                      <td className="px-4 py-2 max-w-xs truncate">{sub.title}</td>
-                      <td className="px-4 py-2 text-gray-600">{sub.author?.fullName}</td>
-                      <td className="px-4 py-2"><StatusBadge status={sub.status} /></td>
-                      <td className="px-4 py-2"><SlaDot slaTracking={sub.slaTracking} labels={slaLabels} /></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Mobile cards */}
-            <div className="md:hidden divide-y divide-gray-50">
-              {stats.recentSubmissions.map(sub => (
-                <Link key={sub.id} to={`/secretary/submissions/${sub.id}`} state={{ from: returnPath }}
-                  className="block p-4 hover:bg-gray-50">
-                  <div className="flex items-start justify-between mb-1">
-                    <p className="font-mono text-xs text-gray-500">{sub.applicationId}</p>
-                    <SlaDot slaTracking={sub.slaTracking} labels={slaLabels} />
-                  </div>
-                  <p className="text-sm font-medium truncate">{sub.title}</p>
-                  <div className="flex items-center justify-between mt-2">
-                    <p className="text-xs text-gray-500">{sub.author?.fullName}</p>
-                    <StatusBadge status={sub.status} />
-                  </div>
+          <Card>
+            <CardHeader
+              title={t('submission.list.title')}
+              actions={
+                <Link
+                  to="/secretary/submissions"
+                  className="inline-flex items-center gap-1 text-xs font-semibold hover:underline"
+                  style={{ color: 'var(--lev-teal-text)' }}
+                >
+                  <span>{t('common.viewAll')}</span>
+                  <NextIcon size={14} strokeWidth={1.75} aria-hidden="true" focusable="false" />
                 </Link>
-              ))}
-            </div>
+              }
+            />
 
-            {stats.recentSubmissions.length === 0 && (
-              <p className="text-center py-8 text-gray-500 text-sm">{t('submission.list.empty')}</p>
+            {stats.recentSubmissions.length === 0 ? (
+              <EmptyState
+                icon={Inbox}
+                title={t('submission.list.empty')}
+              />
+            ) : (
+              <>
+                {/* Desktop table */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr
+                        className="text-right"
+                        style={{
+                          background: 'var(--surface-sunken)',
+                          borderBottom: '1px solid var(--border-subtle)',
+                        }}
+                      >
+                        <th scope="col" className="px-4 py-2.5 font-semibold" style={{ color: 'var(--text-muted)' }}>
+                          {t('submission.table.id')}
+                        </th>
+                        <th scope="col" className="px-4 py-2.5 font-semibold" style={{ color: 'var(--text-muted)' }}>
+                          {t('submission.table.title')}
+                        </th>
+                        <th scope="col" className="px-4 py-2.5 font-semibold" style={{ color: 'var(--text-muted)' }}>
+                          {t('common.researcher')}
+                        </th>
+                        <th scope="col" className="px-4 py-2.5 font-semibold" style={{ color: 'var(--text-muted)' }}>
+                          {t('submission.table.status')}
+                        </th>
+                        <th scope="col" className="px-4 py-2.5 font-semibold" style={{ color: 'var(--text-muted)' }}>
+                          SLA
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {stats.recentSubmissions.map(sub => (
+                        <tr
+                          key={sub.id}
+                          className="transition-colors hover:bg-gray-50"
+                          style={{ borderBottom: '1px solid var(--border-subtle)' }}
+                        >
+                          <td className="px-4 py-2.5 font-mono text-xs">
+                            <Link
+                              to={`/secretary/submissions/${sub.id}`}
+                              state={{ from: returnPath }}
+                              className="hover:underline font-semibold"
+                              style={{ color: 'var(--lev-teal-text)' }}
+                            >
+                              {sub.applicationId}
+                            </Link>
+                          </td>
+                          <td className="px-4 py-2.5 max-w-xs truncate" style={{ color: 'var(--text-primary)' }}>
+                            {sub.title}
+                          </td>
+                          <td className="px-4 py-2.5" style={{ color: 'var(--text-secondary)' }}>
+                            {sub.author?.fullName}
+                          </td>
+                          <td className="px-4 py-2.5">
+                            <StatusBadge status={sub.status} />
+                          </td>
+                          <td className="px-4 py-2.5">
+                            <SlaDot slaTracking={sub.slaTracking} labels={slaLabels} />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile cards */}
+                <div className="md:hidden">
+                  {stats.recentSubmissions.map(sub => (
+                    <Link
+                      key={sub.id}
+                      to={`/secretary/submissions/${sub.id}`}
+                      state={{ from: returnPath }}
+                      className="block p-4 hover:bg-gray-50 transition-colors"
+                      style={{ borderBottom: '1px solid var(--border-subtle)' }}
+                    >
+                      <div className="flex items-start justify-between mb-1 gap-2">
+                        <p className="font-mono text-xs" style={{ color: 'var(--text-muted)' }}>
+                          {sub.applicationId}
+                        </p>
+                        <SlaDot slaTracking={sub.slaTracking} labels={slaLabels} />
+                      </div>
+                      <p className="text-sm font-medium truncate" style={{ color: 'var(--text-primary)' }}>
+                        {sub.title}
+                      </p>
+                      <div className="flex items-center justify-between mt-2 gap-2">
+                        <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>
+                          {sub.author?.fullName}
+                        </p>
+                        <StatusBadge status={sub.status} />
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </>
             )}
-          </div>
+          </Card>
         </>
       )}
     </div>

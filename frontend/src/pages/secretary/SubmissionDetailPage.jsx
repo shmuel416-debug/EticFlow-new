@@ -2,11 +2,13 @@
  * EthicFlow — Submission Detail Page (Secretary / Chairman / Admin)
  * Full submission view with form answers, comments, status transitions, and reviewer assignment.
  * Role-conditioned: secretary sees assign+transition, chairman sees decision buttons.
+ * Refreshed to Lev design system (PageHeader + Card primitives + Button).
  */
 
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useParams, Link, useLocation } from 'react-router-dom'
+import { useParams, useLocation } from 'react-router-dom'
+import { Download, CheckCircle2, AlertCircle, MessageSquare } from 'lucide-react'
 import api from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
 import StatusBadge from '../../components/submissions/StatusBadge'
@@ -16,9 +18,18 @@ import ReviewerSelect from '../../components/submissions/ReviewerSelect'
 import FormAnswersViewer from '../../components/submissions/FormAnswersViewer'
 import DocumentList from '../../components/submissions/DocumentList'
 import AiPanel from '../../components/submissions/AiPanel'
+import {
+  PageHeader,
+  Card,
+  CardHeader,
+  CardBody,
+  Button,
+  Spinner,
+} from '../../components/ui'
 
 /**
  * Shared submission detail page for staff roles.
+ * @returns {JSX.Element}
  */
 export default function SubmissionDetailPage() {
   const { t }            = useTranslation()
@@ -98,20 +109,18 @@ export default function SubmissionDetailPage() {
     await fetchSubmission()
   }
 
-  if (loading) return <div className="p-8 text-center text-gray-400">{t('common.loading')}</div>
-  if (error && !submission) return <div className="p-8 text-center text-red-600" role="alert">{error}</div>
-
-  const latestVersion = submission?.versions?.slice(-1)[0]
-  const canAssign     = ['SECRETARY','ADMIN'].includes(user?.role) && ['IN_TRIAGE','ASSIGNED'].includes(submission?.status)
-  const backTo        = typeof location.state?.from === 'string' ? location.state.from : '/secretary/submissions'
-
   /**
    * Generates and downloads the approval letter PDF.
+   * @param {'he'|'en'} lang
    */
   async function handleDownloadPdf(lang) {
     setPdfLoading(lang)
     try {
-      const response = await api.post(`/submissions/${id}/approval-letter?lang=${lang}`, {}, { responseType: 'blob' })
+      const response = await api.post(
+        `/submissions/${id}/approval-letter?lang=${lang}`,
+        {},
+        { responseType: 'blob' }
+      )
       const url  = URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }))
       const link = document.createElement('a')
       link.href     = url
@@ -127,124 +136,253 @@ export default function SubmissionDetailPage() {
     }
   }
 
+  if (loading) {
+    return (
+      <div
+        className="flex items-center justify-center gap-3 p-8"
+        role="status"
+        aria-live="polite"
+      >
+        <Spinner size={20} label={t('common.loading')} />
+        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+          {t('common.loading')}
+        </p>
+      </div>
+    )
+  }
+  if (error && !submission) {
+    return (
+      <div
+        role="alert"
+        aria-live="assertive"
+        className="p-8 text-center text-sm font-medium"
+        style={{ color: 'var(--status-danger)' }}
+      >
+        {error}
+      </div>
+    )
+  }
+
+  const latestVersion = submission?.versions?.slice(-1)[0]
+  const canAssign     =
+    ['SECRETARY','ADMIN'].includes(user?.role) &&
+    ['IN_TRIAGE','ASSIGNED'].includes(submission?.status)
+  const backTo        =
+    typeof location.state?.from === 'string'
+      ? location.state.from
+      : '/secretary/submissions'
+
+  const headerActions = (
+    <div className="flex items-center gap-2 flex-wrap">
+      <span
+        className="text-xs font-mono"
+        style={{ color: 'var(--text-muted)' }}
+      >
+        {submission?.applicationId}
+      </span>
+      <StatusBadge status={submission?.status} />
+    </div>
+  )
+
   return (
     <main id="main-content" className="p-4 md:p-6 max-w-5xl mx-auto space-y-6">
-      {/* Back + header */}
-      <div>
-        <Link to={backTo} className="text-sm hover:underline mb-2 inline-flex items-center gap-1"
-          style={{ color: 'var(--lev-navy)' }}>
-          ← {t('submission.detail.backToList')}
-        </Link>
-        <div className="flex flex-wrap items-center gap-3 mt-2">
-          <h1 className="text-xl font-bold" style={{ color: 'var(--lev-navy)' }}>{submission?.title}</h1>
-          <StatusBadge status={submission?.status} />
-          <span className="text-sm text-gray-500 font-mono">{submission?.applicationId}</span>
-        </div>
-      </div>
+      <PageHeader
+        title={submission?.title}
+        subtitle={submission?.applicationId}
+        backTo={backTo}
+        backLabel={t('submission.detail.backToList')}
+        actions={headerActions}
+      />
 
-      {successMsg && <p role="status" className="text-sm text-green-600 bg-green-50 border border-green-200 rounded-lg px-4 py-2">{successMsg}</p>}
+      {successMsg && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="inline-flex items-center gap-2 text-sm font-medium"
+          style={{
+            background: 'var(--status-success-50)',
+            color: 'var(--status-success)',
+            border: '1px solid var(--status-success)',
+            borderRadius: 'var(--radius-lg)',
+            padding: '10px 14px',
+          }}
+        >
+          <CheckCircle2
+            size={16}
+            strokeWidth={1.75}
+            aria-hidden="true"
+            focusable="false"
+          />
+          {successMsg}
+        </div>
+      )}
+
+      {error && (
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="inline-flex items-center gap-2 text-sm font-medium"
+          style={{
+            background: 'var(--status-danger-50)',
+            color: 'var(--status-danger)',
+            border: '1px solid var(--status-danger)',
+            borderRadius: 'var(--radius-lg)',
+            padding: '10px 14px',
+          }}
+        >
+          <AlertCircle
+            size={16}
+            strokeWidth={1.75}
+            aria-hidden="true"
+            focusable="false"
+          />
+          {error}
+        </div>
+      )}
 
       {/* Approval letter download — only when approved */}
       {submission?.status === 'APPROVED' && (
-        <div className="w-full sm:w-auto flex gap-2">
-          <button
-            onClick={() => handleDownloadPdf('he')}
-            disabled={pdfLoading !== null}
-            className="w-full sm:w-auto px-6 py-2.5 text-sm font-bold text-white rounded-xl hover:opacity-90 transition disabled:opacity-60"
-            style={{ background: 'var(--lev-teal-text)', minHeight: '44px' }}>
-            {pdfLoading === 'he' ? t('common.loading') : `⬇ ${t('statusPage.downloadPdf')}`}
-          </button>
-          <button
-            onClick={() => handleDownloadPdf('en')}
-            disabled={pdfLoading !== null}
-            className="w-full sm:w-auto px-6 py-2.5 text-sm font-bold text-white rounded-xl hover:opacity-90 transition disabled:opacity-60"
-            style={{ background: '#374151', minHeight: '44px' }}>
-            {pdfLoading === 'en' ? t('common.loading') : `⬇ ${t('statusPage.downloadPdfEn')}`}
-          </button>
-        </div>
+        <Card>
+          <CardHeader title={t('documents.sectionTitle')} />
+          <CardBody>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="primary"
+                onClick={() => handleDownloadPdf('he')}
+                disabled={pdfLoading !== null}
+                loading={pdfLoading === 'he'}
+                leftIcon={
+                  <Download
+                    size={16}
+                    strokeWidth={1.75}
+                    aria-hidden="true"
+                    focusable="false"
+                  />
+                }
+              >
+                {t('statusPage.downloadPdf')}
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => handleDownloadPdf('en')}
+                disabled={pdfLoading !== null}
+                loading={pdfLoading === 'en'}
+                leftIcon={
+                  <Download
+                    size={16}
+                    strokeWidth={1.75}
+                    aria-hidden="true"
+                    focusable="false"
+                  />
+                }
+              >
+                {t('statusPage.downloadPdfEn')}
+              </Button>
+            </div>
+          </CardBody>
+        </Card>
       )}
-      {error      && <p role="alert"  className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-2">{error}</p>}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Form answers — main column */}
-        <section className="lg:col-span-2 bg-white rounded-xl border border-gray-200 p-5">
-          <h2 className="text-base font-semibold mb-4" style={{ color: 'var(--lev-navy)' }}>
-            {t('submission.detail.sectionAnswers')}
-          </h2>
-          <FormAnswersViewer
-            formConfig={submission?.formConfig}
-            dataJson={latestVersion?.dataJson ?? {}}
-          />
-        </section>
-
-        {/* Actions sidebar */}
-        <aside className="space-y-5">
-          {/* Status transitions */}
-          <section className="bg-white rounded-xl border border-gray-200 p-4">
-            <h2 className="text-sm font-semibold mb-3" style={{ color: 'var(--lev-navy)' }}>
-              {t('submission.detail.sectionStatus')}
-            </h2>
-            <StatusTransitionPanel
-              currentStatus={submission?.status}
-              userRole={user?.role}
-              onTransition={handleTransition}
-              loading={transitioning}
+        <Card className="lg:col-span-2" as="section">
+          <CardHeader title={t('submission.detail.sectionAnswers')} />
+          <CardBody>
+            <FormAnswersViewer
+              formConfig={submission?.formConfig}
+              dataJson={latestVersion?.dataJson ?? {}}
             />
-          </section>
+          </CardBody>
+        </Card>
 
-          {/* Reviewer assignment */}
-          {canAssign && (
-            <section className="bg-white rounded-xl border border-gray-200 p-4">
-              <h2 className="text-sm font-semibold mb-3" style={{ color: 'var(--lev-navy)' }}>
-                {t('submission.detail.sectionReviewer')}
-              </h2>
-              <ReviewerSelect
-                value={assigningId}
-                onChange={setAssigningId}
-                submissionId={submission?.id}
-                disabled={transitioning}
+        <aside className="space-y-5">
+          <Card as="section">
+            <CardHeader title={t('submission.detail.sectionStatus')} />
+            <CardBody>
+              <StatusTransitionPanel
+                currentStatus={submission?.status}
+                userRole={user?.role}
+                onTransition={handleTransition}
+                loading={transitioning}
               />
-              <button
-                onClick={handleAssign}
-                data-testid="assign-reviewer-submit"
-                disabled={transitioning || !assigningId}
-                className="mt-3 w-full py-2 text-sm rounded-lg text-white disabled:opacity-50"
-                style={{ background: 'var(--lev-navy)', minHeight: '44px' }}
-              >
-                {t('submission.detail.assignReviewer')}
-              </button>
-            </section>
+            </CardBody>
+          </Card>
+
+          {canAssign && (
+            <Card as="section">
+              <CardHeader title={t('submission.detail.sectionReviewer')} />
+              <CardBody>
+                <ReviewerSelect
+                  value={assigningId}
+                  onChange={setAssigningId}
+                  submissionId={submission?.id}
+                  disabled={transitioning}
+                />
+                <Button
+                  variant="gold"
+                  fullWidth
+                  className="mt-3"
+                  onClick={handleAssign}
+                  data-testid="assign-reviewer-submit"
+                  disabled={transitioning || !assigningId}
+                  loading={transitioning && !!assigningId}
+                >
+                  {t('submission.detail.assignReviewer')}
+                </Button>
+              </CardBody>
+            </Card>
           )}
 
-          {/* Current reviewer info */}
           {submission?.reviewer && (
-            <section className="bg-gray-50 rounded-xl border border-gray-200 p-4 text-sm">
-              <p className="font-medium text-gray-700">{t('submission.detail.sectionReviewer')}</p>
-              <p className="text-gray-600 mt-1">{submission.reviewer.fullName}</p>
-              <p className="text-gray-400 text-xs">{submission.reviewer.email}</p>
-            </section>
+            <Card as="section">
+              <CardHeader title={t('submission.detail.sectionReviewer')} />
+              <CardBody>
+                <p
+                  className="text-sm font-medium"
+                  style={{ color: 'var(--text-primary)' }}
+                >
+                  {submission.reviewer.fullName}
+                </p>
+                <p
+                  className="text-xs mt-0.5"
+                  style={{ color: 'var(--text-muted)' }}
+                >
+                  {submission.reviewer.email}
+                </p>
+              </CardBody>
+            </Card>
           )}
 
-          {/* AI advisory panel */}
           <AiPanel submissionId={submission.id} canRun />
         </aside>
       </div>
 
-      {/* Documents */}
-      <section className="bg-white rounded-xl border border-gray-200 p-5">
-        <h2 className="text-base font-semibold mb-4" style={{ color: 'var(--lev-navy)' }}>
-          {t('documents.sectionTitle')}
-        </h2>
-        <DocumentList submissionId={submission.id} canUpload />
-      </section>
+      <Card as="section">
+        <CardHeader title={t('documents.sectionTitle')} />
+        <CardBody>
+          <DocumentList submissionId={submission.id} canUpload />
+        </CardBody>
+      </Card>
 
-      {/* Comments */}
-      <section className="bg-white rounded-xl border border-gray-200 p-5">
-        <h2 className="text-base font-semibold mb-4" style={{ color: 'var(--lev-navy)' }}>
-          {t('submission.detail.sectionComments')}
-        </h2>
-        <CommentThread comments={submission?.comments ?? []} onAdd={handleAddComment} />
-      </section>
+      <Card as="section">
+        <CardHeader
+          title={t('submission.detail.sectionComments')}
+          actions={
+            <MessageSquare
+              size={18}
+              strokeWidth={1.75}
+              aria-hidden="true"
+              focusable="false"
+              style={{ color: 'var(--text-muted)' }}
+            />
+          }
+        />
+        <CardBody>
+          <CommentThread
+            comments={submission?.comments ?? []}
+            onAdd={handleAddComment}
+          />
+        </CardBody>
+      </Card>
     </main>
   )
 }

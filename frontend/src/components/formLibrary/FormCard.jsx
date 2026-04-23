@@ -6,6 +6,7 @@
  */
 
 import { useTranslation } from 'react-i18next'
+import { Pencil, Eye, Archive, RotateCcw } from 'lucide-react'
 
 /** Top border color per status */
 const STATUS_BORDER = {
@@ -93,36 +94,40 @@ export default function FormCard({ form, onEdit, onPreview, onArchive, onRestore
         <div className="flex gap-2 mt-auto">
           {isDraft && (
             <button type="button" onClick={() => onEdit(form.id)}
-              className="flex-1 py-2 text-xs font-semibold text-white rounded-xl hover:opacity-90 transition-opacity"
+              className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 text-xs font-semibold text-white rounded-xl hover:opacity-90 transition-opacity"
               style={{ background: 'var(--lev-navy)', minHeight: '44px' }}
               aria-label={`${t('secretary.formLibrary.actionEdit')} — ${displayName}`}>
+              <Pencil size={14} strokeWidth={2} aria-hidden="true" focusable="false" />
               {t('secretary.formLibrary.actionEdit')}
             </button>
           )}
 
           {!isArchived && (
             <button type="button" onClick={() => onPreview(form.id)}
-              className="flex-1 py-2 text-xs font-semibold border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+              className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 text-xs font-semibold border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
               style={{ color: 'var(--lev-teal-text)', minHeight: '44px' }}
               aria-label={`${t('secretary.formLibrary.actionPreview')} — ${displayName}`}>
+              <Eye size={14} strokeWidth={2} aria-hidden="true" focusable="false" />
               {t('secretary.formLibrary.actionPreview')}
             </button>
           )}
 
           {!isArchived && (
             <button type="button" onClick={() => onArchive(form.id)}
-              className="py-2 px-3 text-xs font-semibold rounded-xl border transition-colors"
-              style={{ color: '#dc2626', background: '#fef2f2', borderColor: '#fecaca', minHeight: '44px' }}
+              className="flex-1 min-w-0 inline-flex items-center justify-center gap-1.5 py-2 px-2 text-xs font-semibold rounded-xl border transition-colors"
+              style={{ color: 'var(--status-danger)', background: 'var(--status-danger-50)', borderColor: 'var(--status-danger)', minHeight: '44px' }}
               aria-label={`${t('secretary.formLibrary.actionArchive')} — ${displayName}`}>
-              🗃
+              <Archive size={14} strokeWidth={2} aria-hidden="true" focusable="false" />
+              {t('secretary.formLibrary.actionArchive')}
             </button>
           )}
 
           {isArchived && (
             <button type="button" onClick={() => onRestore(form.id)}
-              className="flex-1 py-2 text-xs font-semibold border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+              className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 text-xs font-semibold border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
               style={{ color: 'var(--lev-navy)', minHeight: '44px' }}
               aria-label={`${t('secretary.formLibrary.actionRestore')} — ${displayName}`}>
+              <RotateCcw size={14} strokeWidth={2} aria-hidden="true" focusable="false" />
               {t('secretary.formLibrary.actionRestore')}
             </button>
           )}

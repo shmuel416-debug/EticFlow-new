@@ -10,6 +10,7 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { FileText, Image, FileSpreadsheet, Folder, Download, X, Paperclip } from 'lucide-react'
 import api from '../../services/api'
 
 /** Allowed extensions for the file picker (informational only — server enforces). */
@@ -22,13 +23,27 @@ function fmtSize(bytes) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
-/** Icon per MIME type. @param {string} mime @returns {string} */
-function mimeIcon(mime) {
-  if (mime === 'application/pdf')                              return '📄'
-  if (mime.startsWith('image/'))                               return '🖼'
-  if (mime.includes('word'))                                   return '📝'
-  if (mime.includes('spreadsheet') || mime.includes('excel')) return '📊'
-  return '📁'
+/**
+ * Monochrome MIME-type glyph (decorative).
+ * @param {{ mime: string }} props
+ * @returns {JSX.Element}
+ */
+function MimeGlyph({ mime }) {
+  let Icon = Folder
+  if (mime === 'application/pdf') Icon = FileText
+  else if (mime?.startsWith('image/')) Icon = Image
+  else if (mime?.includes('word')) Icon = FileText
+  else if (mime?.includes('spreadsheet') || mime?.includes('excel')) Icon = FileSpreadsheet
+  return (
+    <Icon
+      size={22}
+      strokeWidth={1.75}
+      aria-hidden="true"
+      focusable="false"
+      className="flex-shrink-0"
+      style={{ color: 'var(--lev-navy)' }}
+    />
+  )
 }
 
 /**
@@ -130,9 +145,18 @@ export default function DocumentList({ submissionId, canUpload = false }) {
           onDragLeave={onDragLeave}
           onDrop={onDrop}
           className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-colors mb-4 ${
-            drag ? 'border-blue-400 bg-blue-50' : 'border-gray-200 hover:border-gray-400 bg-gray-50'
+            drag
+              ? 'border-[var(--lev-teal)] bg-[var(--lev-teal-50)]'
+              : 'border-gray-200 hover:border-[var(--lev-teal)] bg-gray-50'
           }`}>
-          <p className="text-2xl mb-1" aria-hidden="true">📎</p>
+          <Paperclip
+            className="mx-auto mb-1"
+            size={28}
+            strokeWidth={1.75}
+            aria-hidden="true"
+            focusable="false"
+            style={{ color: 'var(--lev-navy)' }}
+          />
           <p className="text-sm font-medium text-gray-700">{t('documents.dropZoneTitle')}</p>
           <p className="text-xs text-gray-400 mt-0.5">{t('documents.dropZoneHint')}</p>
 
@@ -150,7 +174,12 @@ export default function DocumentList({ submissionId, canUpload = false }) {
 
       {/* Uploading spinner */}
       {uploading && (
-        <div role="status" aria-live="polite" className="flex items-center gap-2 text-sm text-blue-600 mb-3">
+        <div
+          role="status"
+          aria-live="polite"
+          className="flex items-center gap-2 text-sm mb-3"
+          style={{ color: 'var(--lev-teal-text)' }}
+        >
           <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
             <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"/>
             <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="4" strokeLinecap="round" className="opacity-75"/>
@@ -176,7 +205,7 @@ export default function DocumentList({ submissionId, canUpload = false }) {
           {docs.map(doc => (
             <li key={doc.id}
               className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3 border border-gray-100">
-              <span className="text-xl flex-shrink-0" aria-hidden="true">{mimeIcon(doc.mimeType)}</span>
+              <MimeGlyph mime={doc.mimeType} />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate" title={doc.originalName}>
                   {doc.originalName}
@@ -188,17 +217,25 @@ export default function DocumentList({ submissionId, canUpload = false }) {
               </div>
               <div className="flex gap-1 flex-shrink-0">
                 <button
+                  type="button"
                   onClick={() => handleDownload(doc.id)}
                   aria-label={t('documents.downloadLabel', { name: doc.originalName })}
-                  className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-blue-600 hover:bg-blue-50 transition">
-                  ⬇
+                  className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg transition
+                    hover:bg-[var(--lev-teal-50)]"
+                  style={{ color: 'var(--lev-teal-text)' }}
+                >
+                  <Download size={20} strokeWidth={1.75} aria-hidden="true" focusable="false" />
                 </button>
                 {canUpload && (
                   <button
+                    type="button"
                     onClick={() => handleDelete(doc.id)}
                     aria-label={t('documents.deleteLabel', { name: doc.originalName })}
-                    className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-red-500 hover:bg-red-50 transition">
-                    ✕
+                    className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg transition
+                      hover:bg-[var(--status-danger-50)]"
+                    style={{ color: 'var(--status-danger)' }}
+                  >
+                    <X size={20} strokeWidth={1.75} aria-hidden="true" focusable="false" />
                   </button>
                 )}
               </div>

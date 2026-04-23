@@ -1,12 +1,22 @@
 /**
  * EthicFlow — Institution Settings Page
  * ADMIN manages all system settings; SECRETARY can edit approval templates.
+ * Refactored to use design-system primitives (PageHeader, Card, Tabs,
+ * FormField, Input, Textarea, Button, Badge).
  */
 
 import { useState, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
+import {
+  Building2, Timer, FolderOpen, Mail, FileCheck2, CalendarClock,
+  Check, X as XIcon, Eye, RotateCcw,
+} from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import api, { buildApiUrl } from '../../services/api'
+import {
+  Button, Card, CardHeader, CardBody, CardFooter,
+  PageHeader, FormField, Input, Textarea, Select, Tabs, Badge,
+} from '../../components/ui'
 
 /**
  * Setting groups — controls display order and grouping.
@@ -15,7 +25,7 @@ import api, { buildApiUrl } from '../../services/api'
 const GROUPS = [
   {
     groupKey: 'institutionInfo',
-    icon: '🏛️',
+    icon: Building2,
     fields: [
       { key: 'institution_name_he',  type: 'text' },
       { key: 'institution_name_en',  type: 'text' },
@@ -25,7 +35,7 @@ const GROUPS = [
   },
   {
     groupKey: 'slaThresholds',
-    icon: '⏱️',
+    icon: Timer,
     fields: [
       { key: 'sla_triage_days',   type: 'number', hint: '1–30' },
       { key: 'sla_review_days',   type: 'number', hint: '1–90' },
@@ -34,7 +44,7 @@ const GROUPS = [
   },
   {
     groupKey: 'fileUpload',
-    icon: '📁',
+    icon: FolderOpen,
     fields: [
       { key: 'max_file_size_mb',   type: 'number', hint: 'MB' },
       { key: 'allowed_file_types', type: 'text',   hint: '.pdf,.docx,.jpg' },
@@ -42,7 +52,7 @@ const GROUPS = [
   },
   {
     groupKey: 'emailSettings',
-    icon: '✉️',
+    icon: Mail,
     fields: [
       { key: 'email_sender_name',    type: 'text'  },
       { key: 'email_sender_address', type: 'email' },
@@ -211,6 +221,27 @@ function renderTemplatePreviewText(text, context) {
 }
 
 /**
+ * Inline status toast inside a card footer.
+ * @param {{ toast: {type: 'ok'|'err', msg: string} | null }} props
+ */
+function InlineToast({ toast }) {
+  if (!toast) return <div aria-live="polite" aria-atomic="true" />
+  const ok = toast.type === 'ok'
+  const Icon = ok ? Check : XIcon
+  return (
+    <p
+      role="status"
+      aria-live="polite"
+      className="text-xs font-semibold inline-flex items-center gap-1.5"
+      style={{ color: ok ? 'var(--status-success)' : 'var(--status-danger)' }}
+    >
+      <Icon size={14} strokeWidth={2.25} aria-hidden="true" focusable="false" />
+      {toast.msg}
+    </p>
+  )
+}
+
+/**
  * Renders a single settings group card with its fields.
  * @param {{
  *   group: object,
@@ -220,20 +251,18 @@ function renderTemplatePreviewText(text, context) {
  */
 function SettingsGroup({ group, values, onSave }) {
   const { t } = useTranslation()
+  const GroupIcon = group.icon
 
-  // Local draft state — initialised from current values
   const [draft,   setDraft]   = useState({})
   const [saving,  setSaving]  = useState(false)
-  const [toast,   setToast]   = useState(null)  // { type: 'ok'|'err', msg: string }
+  const [toast,   setToast]   = useState(null)
 
-  // Sync draft when parent values change (e.g. after load)
   useEffect(() => {
     const initial = {}
     group.fields.forEach(f => { initial[f.key] = values[f.key] ?? '' })
     setDraft(initial)
   }, [values, group.fields])
 
-  /** Returns true if any draft value differs from the saved value. */
   const isDirty = group.fields.some(f => (draft[f.key] ?? '') !== (values[f.key] ?? ''))
 
   async function handleSave() {
@@ -255,101 +284,79 @@ function SettingsGroup({ group, values, onSave }) {
   }
 
   return (
-    <section
-      className="bg-white rounded-xl border shadow-sm overflow-hidden"
-      aria-labelledby={`group-${group.groupKey}`}
-    >
-      {/* Group header */}
-      <div className="px-5 py-4 border-b flex items-center gap-3">
-        <span aria-hidden="true" className="text-xl">{group.icon}</span>
-        <h2
-          id={`group-${group.groupKey}`}
-          className="text-sm font-bold"
-          style={{ color: 'var(--lev-navy)' }}
-        >
-          {t(`settings.${group.groupKey}`)}
-        </h2>
-      </div>
-
-      {/* Fields */}
-      <div className="px-5 py-4 space-y-5">
-        {group.fields.map(field => {
-          const inputId = `setting-${field.key}`
-          return (
-            <div key={field.key} className="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-4 md:items-center">
-              <label
-                htmlFor={inputId}
-                className="text-sm font-medium text-gray-700"
-              >
-                {t(`settings.${field.key}`)}
-              </label>
-
-              <div className="md:col-span-2 flex items-center gap-3">
-                {field.type === 'color' ? (
-                  /* Colour picker + hex text input side by side */
-                  <div className="flex items-center gap-2 flex-1">
+    <Card as="section" aria-labelledby={`group-${group.groupKey}`}>
+      <CardHeader
+        title={
+          <span className="inline-flex items-center gap-2">
+            <GroupIcon size={18} strokeWidth={1.75} aria-hidden="true" focusable="false" style={{ color: 'var(--lev-navy)' }} />
+            <span id={`group-${group.groupKey}`}>{t(`settings.${group.groupKey}`)}</span>
+          </span>
+        }
+      />
+      <CardBody>
+        <div className="space-y-5">
+          {group.fields.map(field => (
+            <FormField
+              key={field.key}
+              label={t(`settings.${field.key}`)}
+              hint={field.type !== 'color' ? field.hint : undefined}
+              render={({ inputId, describedBy, invalid }) => (
+                field.type === 'color' ? (
+                  <div className="flex items-center gap-2">
                     <input
                       id={inputId}
                       type="color"
                       value={draft[field.key] || '#1E2A72'}
                       onChange={e => handleChange(field.key, e.target.value)}
-                      className="h-10 w-10 rounded border border-gray-200 cursor-pointer p-0.5"
                       aria-label={t(`settings.${field.key}`)}
+                      style={{
+                        width: 44,
+                        height: 44,
+                        borderRadius: 'var(--radius-md)',
+                        border: '1px solid var(--border-default)',
+                        padding: 2,
+                        cursor: 'pointer',
+                      }}
                     />
-                    <input
-                      type="text"
+                    <Input
                       value={draft[field.key] || ''}
                       onChange={e => handleChange(field.key, e.target.value)}
                       placeholder="#1E2A72"
-                      className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2 font-mono"
-                      style={{ minHeight: '40px', '--tw-ring-color': 'var(--lev-navy)' }}
                       aria-label={`${t(`settings.${field.key}`)} (hex)`}
+                      className="font-mono"
+                      dir="ltr"
                     />
                   </div>
                 ) : (
-                  <input
+                  <Input
                     id={inputId}
                     type={field.type}
                     value={draft[field.key] || ''}
                     onChange={e => handleChange(field.key, e.target.value)}
                     placeholder={field.hint ?? ''}
-                    className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2"
-                    style={{ minHeight: '40px', '--tw-ring-color': 'var(--lev-navy)' }}
+                    aria-describedby={describedBy}
+                    invalid={invalid}
                     min={field.type === 'number' ? 1 : undefined}
-                    aria-label={t(`settings.${field.key}`)}
                   />
-                )}
-
-                {field.hint && field.type !== 'color' && (
-                  <span className="text-xs text-gray-400 shrink-0">{field.hint}</span>
-                )}
-              </div>
-            </div>
-          )
-        })}
-      </div>
-
-      {/* Footer: toast + save button */}
-      <div className="px-5 py-3 border-t bg-gray-50 flex items-center justify-between gap-3">
-        <div aria-live="polite" aria-atomic="true">
-          {toast && (
-            <p className={`text-xs font-semibold ${toast.type === 'ok' ? 'text-green-600' : 'text-red-600'}`}>
-              {toast.type === 'ok' ? '✓ ' : '✗ '}{toast.msg}
-            </p>
-          )}
+                )
+              )}
+            />
+          ))}
         </div>
-        <button
+      </CardBody>
+      <CardFooter>
+        <InlineToast toast={toast} />
+        <Button
+          variant="gold"
           onClick={handleSave}
-          disabled={!isDirty || saving}
-          aria-busy={saving}
-          className="text-sm font-bold text-white px-5 py-2 rounded-lg disabled:opacity-40 transition-opacity"
-          style={{ background: 'var(--lev-navy)', minHeight: '40px' }}
+          disabled={!isDirty}
+          loading={saving}
           aria-label={saving ? t('common.saving') : t('settings.save')}
         >
           {saving ? '…' : t('settings.save')}
-        </button>
-      </div>
-    </section>
+        </Button>
+      </CardFooter>
+    </Card>
   )
 }
 
@@ -499,296 +506,333 @@ function ApprovalTemplateEditor({
   }
 
   return (
-    <section className="bg-white rounded-xl border shadow-sm overflow-hidden" aria-labelledby="approval-template-title">
-      <div className="px-5 py-4 border-b flex items-center justify-between gap-2">
-        <h2 id="approval-template-title" className="text-sm font-bold" style={{ color: 'var(--lev-navy)' }}>
-          {t('settings.approvalTemplate')}
-        </h2>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setLang('he')}
-            className={`px-3 py-1.5 text-xs rounded-md border ${lang === 'he' ? 'bg-sky-100 border-sky-300' : 'bg-white border-gray-200'}`}
-          >
-            {t('settings.template.he')}
-          </button>
-          <button
-            type="button"
-            onClick={() => setLang('en')}
-            className={`px-3 py-1.5 text-xs rounded-md border ${lang === 'en' ? 'bg-sky-100 border-sky-300' : 'bg-white border-gray-200'}`}
-          >
-            {t('settings.template.en')}
-          </button>
-        </div>
-      </div>
-
-      <div className="px-5 py-4 space-y-4">
-        <p className="text-xs text-gray-600">{t('settings.template.description')}</p>
-        <div className="text-xs text-gray-500">
-          <span className="font-semibold">{t('settings.template.placeholders')}</span>
-          <div className="mt-2 flex flex-wrap gap-1">
-            {TEMPLATE_PLACEHOLDERS.map((token) => (
-              <code key={token} className="px-1.5 py-0.5 rounded bg-gray-100 border border-gray-200">{token}</code>
-            ))}
-          </div>
-        </div>
-        <div className="border border-gray-200 rounded-lg p-3 bg-gray-50 space-y-2">
-          <p className="text-xs font-semibold text-gray-700">{t('settings.template.previewSource')}</p>
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => setPreviewSource('sample')}
-              className={`px-3 py-1.5 text-xs rounded-md border ${previewSource === 'sample' ? 'bg-sky-100 border-sky-300' : 'bg-white border-gray-200'}`}
-            >
-              {t('settings.template.previewSample')}
-            </button>
-            <button
-              type="button"
-              onClick={() => setPreviewSource('real')}
-              className={`px-3 py-1.5 text-xs rounded-md border ${previewSource === 'real' ? 'bg-sky-100 border-sky-300' : 'bg-white border-gray-200'}`}
-              disabled={previewSubmissions.length === 0}
-            >
-              {t('settings.template.previewReal')}
-            </button>
-          </div>
-          {previewSource === 'real' && (
-            <div className="space-y-2">
-              <select
-                value={previewSubmissionId}
-                onChange={(e) => onPreviewSubmissionChange(e.target.value)}
-                className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2"
-                style={{ '--tw-ring-color': 'var(--lev-navy)' }}
-              >
-                {previewSubmissions.length === 0 && (
-                  <option value="">{t('settings.template.noApprovedSubmissions')}</option>
-                )}
-                {previewSubmissions.map((sub) => (
-                  <option key={sub.id} value={sub.id}>
-                    {`${sub.applicationId} — ${sub.title}`}
-                  </option>
-                ))}
-              </select>
-              {previewLoading && <p className="text-xs text-gray-500">{t('common.loading')}</p>}
-            </div>
-          )}
-        </div>
-
-        <div className="grid grid-cols-1 gap-3">
-          <label className="text-xs font-semibold text-gray-700">{t('settings.templateFields.docTitle')}</label>
-          <input
-            type="text"
-            value={draft.docTitle}
-            onChange={(e) => updateField('docTitle', e.target.value)}
-            className="text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2"
-            style={{ '--tw-ring-color': 'var(--lev-navy)' }}
+    <Card as="section" aria-labelledby="approval-template-title">
+      <CardHeader
+        title={
+          <span className="inline-flex items-center gap-2">
+            <FileCheck2 size={18} strokeWidth={1.75} aria-hidden="true" focusable="false" style={{ color: 'var(--lev-navy)' }} />
+            <span id="approval-template-title">{t('settings.approvalTemplate')}</span>
+          </span>
+        }
+        actions={
+          <Tabs
+            ariaLabel={t('settings.approvalTemplate')}
+            items={[
+              { key: 'he', label: t('settings.template.he') },
+              { key: 'en', label: t('settings.template.en') },
+            ]}
+            value={lang}
+            onChange={setLang}
+            variant="pills"
           />
+        }
+      />
 
-          <label className="text-xs font-semibold text-gray-700">{t('settings.templateFields.subject')}</label>
-          <input
-            type="text"
-            value={draft.subject}
-            onChange={(e) => updateField('subject', e.target.value)}
-            className="text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2"
-            style={{ '--tw-ring-color': 'var(--lev-navy)' }}
-          />
+      <CardBody>
+        <div className="space-y-4">
+          <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+            {t('settings.template.description')}
+          </p>
 
-          <label className="text-xs font-semibold text-gray-700">{t('settings.templateFields.intro')}</label>
-          <textarea
-            rows={3}
-            value={draft.intro}
-            onChange={(e) => updateField('intro', e.target.value)}
-            className="text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2"
-            style={{ '--tw-ring-color': 'var(--lev-navy)' }}
-          />
-
-          <label className="text-xs font-semibold text-gray-700">{t('settings.templateFields.conditionsTitle')}</label>
-          <input
-            type="text"
-            value={draft.conditionsTitle}
-            onChange={(e) => updateField('conditionsTitle', e.target.value)}
-            className="text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2"
-            style={{ '--tw-ring-color': 'var(--lev-navy)' }}
-          />
-
-          <label className="text-xs font-semibold text-gray-700">{t('settings.templateFields.conditions')}</label>
-          <div className="space-y-2">
-            {draft.conditions.map((condition, index) => (
-              <div key={`${lang}-cond-${index}`} className="flex items-start gap-2">
-                <textarea
-                  rows={2}
-                  value={condition}
-                  onChange={(e) => updateCondition(index, e.target.value)}
-                  className="flex-1 text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2"
-                  style={{ '--tw-ring-color': 'var(--lev-navy)' }}
-                />
-                <button
-                  type="button"
-                  onClick={() => removeCondition(index)}
-                  disabled={draft.conditions.length <= 1}
-                  className="text-xs border border-gray-300 rounded-md px-2 py-1 disabled:opacity-40"
+          <div className="text-xs" style={{ color: 'var(--text-muted)' }}>
+            <span className="font-semibold">{t('settings.template.placeholders')}</span>
+            <div className="mt-2 flex flex-wrap gap-1">
+              {TEMPLATE_PLACEHOLDERS.map((token) => (
+                <code
+                  key={token}
+                  className="px-1.5 py-0.5 font-mono"
+                  style={{
+                    background: 'var(--surface-sunken)',
+                    border: '1px solid var(--border-default)',
+                    borderRadius: 'var(--radius-sm)',
+                    fontSize: 11,
+                  }}
                 >
-                  {t('common.delete')}
-                </button>
-              </div>
-            ))}
-            <button
-              type="button"
-              onClick={addCondition}
-              disabled={draft.conditions.length >= 8}
-              className="text-xs border border-gray-300 rounded-md px-3 py-1.5 disabled:opacity-40"
-            >
-              {t('settings.template.addCondition')}
-            </button>
+                  {token}
+                </code>
+              ))}
+            </div>
           </div>
 
-          <label className="text-xs font-semibold text-gray-700">{t('settings.templateFields.signatureLabel')}</label>
-          <input
-            type="text"
-            value={draft.signatureLabel}
-            onChange={(e) => updateField('signatureLabel', e.target.value)}
-            className="text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2"
-            style={{ '--tw-ring-color': 'var(--lev-navy)' }}
-          />
-
-          <label className="text-xs font-semibold text-gray-700">{t('settings.templateFields.legalFooter')}</label>
-          <textarea
-            rows={2}
-            value={draft.legalFooter}
-            onChange={(e) => updateField('legalFooter', e.target.value)}
-            className="text-sm border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2"
-            style={{ '--tw-ring-color': 'var(--lev-navy)' }}
-          />
-
-          <label className="text-xs font-semibold text-gray-700">{t('settings.template.signatureUpload')}</label>
-          <div className="space-y-2">
-            <input
-              type="file"
-              accept="image/png,image/jpeg"
-              onChange={handleSignatureFileChange}
-              className="text-sm border border-gray-200 rounded-lg px-3 py-2 bg-white"
+          <div
+            className="p-3 space-y-2"
+            style={{
+              border: '1px solid var(--border-default)',
+              borderRadius: 'var(--radius-lg)',
+              background: 'var(--surface-sunken)',
+            }}
+          >
+            <p className="text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>
+              {t('settings.template.previewSource')}
+            </p>
+            <Tabs
+              ariaLabel={t('settings.template.previewSource')}
+              items={[
+                { key: 'sample', label: t('settings.template.previewSample') },
+                { key: 'real', label: t('settings.template.previewReal'), disabled: previewSubmissions.length === 0 },
+              ]}
+              value={previewSource}
+              onChange={setPreviewSource}
+              variant="pills"
             />
-            {signatureDataUrl && (
-              <div className="border border-gray-200 rounded-md p-2 bg-white">
+            {previewSource === 'real' && (
+              <div className="space-y-2">
+                <Select
+                  value={previewSubmissionId}
+                  onChange={(e) => onPreviewSubmissionChange(e.target.value)}
+                  aria-label={t('settings.template.previewReal')}
+                >
+                  {previewSubmissions.length === 0 && (
+                    <option value="">{t('settings.template.noApprovedSubmissions')}</option>
+                  )}
+                  {previewSubmissions.map((sub) => (
+                    <option key={sub.id} value={sub.id}>
+                      {`${sub.applicationId} — ${sub.title}`}
+                    </option>
+                  ))}
+                </Select>
+                {previewLoading && (
+                  <p role="status" className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                    {t('common.loading')}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 gap-3">
+            <FormField
+              label={t('settings.templateFields.docTitle')}
+              render={({ inputId }) => (
+                <Input id={inputId} value={draft.docTitle} onChange={(e) => updateField('docTitle', e.target.value)} />
+              )}
+            />
+            <FormField
+              label={t('settings.templateFields.subject')}
+              render={({ inputId }) => (
+                <Input id={inputId} value={draft.subject} onChange={(e) => updateField('subject', e.target.value)} />
+              )}
+            />
+            <FormField
+              label={t('settings.templateFields.intro')}
+              render={({ inputId }) => (
+                <Textarea id={inputId} rows={3} value={draft.intro} onChange={(e) => updateField('intro', e.target.value)} />
+              )}
+            />
+            <FormField
+              label={t('settings.templateFields.conditionsTitle')}
+              render={({ inputId }) => (
+                <Input id={inputId} value={draft.conditionsTitle} onChange={(e) => updateField('conditionsTitle', e.target.value)} />
+              )}
+            />
+
+            <div>
+              <label className="text-sm font-semibold" style={{ color: 'var(--lev-navy)' }}>
+                {t('settings.templateFields.conditions')}
+              </label>
+              <div className="mt-2 space-y-2">
+                {draft.conditions.map((condition, index) => (
+                  <div key={`${lang}-cond-${index}`} className="flex items-start gap-2">
+                    <Textarea
+                      rows={2}
+                      value={condition}
+                      onChange={(e) => updateCondition(index, e.target.value)}
+                    />
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => removeCondition(index)}
+                      disabled={draft.conditions.length <= 1}
+                    >
+                      {t('common.delete')}
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={addCondition}
+                  disabled={draft.conditions.length >= 8}
+                >
+                  {t('settings.template.addCondition')}
+                </Button>
+              </div>
+            </div>
+
+            <FormField
+              label={t('settings.templateFields.signatureLabel')}
+              render={({ inputId }) => (
+                <Input id={inputId} value={draft.signatureLabel} onChange={(e) => updateField('signatureLabel', e.target.value)} />
+              )}
+            />
+            <FormField
+              label={t('settings.templateFields.legalFooter')}
+              render={({ inputId }) => (
+                <Textarea id={inputId} rows={2} value={draft.legalFooter} onChange={(e) => updateField('legalFooter', e.target.value)} />
+              )}
+            />
+
+            <div>
+              <label className="text-sm font-semibold" style={{ color: 'var(--lev-navy)' }}>
+                {t('settings.template.signatureUpload')}
+              </label>
+              <div className="mt-2 space-y-2">
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg"
+                  onChange={handleSignatureFileChange}
+                  className="text-sm bg-white"
+                  style={{
+                    border: '1px solid var(--border-default)',
+                    borderRadius: 'var(--radius-lg)',
+                    padding: '10px 12px',
+                    minHeight: 44,
+                  }}
+                />
+                {signatureDataUrl && (
+                  <div
+                    className="p-2 bg-white"
+                    style={{ border: '1px solid var(--border-default)', borderRadius: 'var(--radius-md)' }}
+                  >
+                    <img
+                      src={signatureDataUrl}
+                      alt={t('settings.template.signaturePreviewAlt')}
+                      className="max-h-16 object-contain"
+                    />
+                    <Button variant="secondary" size="sm" onClick={clearSignature} className="mt-2">
+                      {t('settings.template.clearSignature')}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div
+            className="p-4"
+            style={{
+              border: '1px solid var(--border-default)',
+              borderRadius: 'var(--radius-lg)',
+              background: 'var(--surface-sunken)',
+            }}
+            dir={lang === 'he' ? 'rtl' : 'ltr'}
+          >
+            <h3 className="text-xs font-bold mb-2" style={{ color: 'var(--text-secondary)' }}>
+              {t('settings.template.previewTitle')}
+            </h3>
+            <p className="text-[11px] mb-3" style={{ color: 'var(--text-muted)' }}>
+              {t('settings.template.previewNote')}
+            </p>
+            <div
+              className="bg-white p-4 space-y-2"
+              style={{ border: '1px solid var(--border-default)', borderRadius: 'var(--radius-md)' }}
+            >
+              <p className="text-[15px] font-bold" style={{ color: 'var(--text-primary)' }}>
+                {renderTemplatePreviewText(draft.docTitle, previewContext)}
+              </p>
+              <p className="text-[12px] font-semibold" style={{ color: 'var(--text-secondary)' }}>
+                {renderTemplatePreviewText(draft.subject, previewContext)}
+              </p>
+              <p className="text-[12px] whitespace-pre-wrap" style={{ color: 'var(--text-secondary)' }}>
+                {renderTemplatePreviewText(draft.intro, previewContext)}
+              </p>
+              <p className="text-[12px] font-semibold" style={{ color: 'var(--text-secondary)' }}>
+                {renderTemplatePreviewText(draft.conditionsTitle, previewContext)}
+              </p>
+              <ul className="list-disc list-inside text-[12px] space-y-1" style={{ color: 'var(--text-secondary)' }}>
+                {draft.conditions.map((line, idx) => (
+                  <li key={`preview-cond-${idx}`}>
+                    {renderTemplatePreviewText(line, previewContext)}
+                  </li>
+                ))}
+              </ul>
+              <p className="text-[12px] font-semibold pt-1" style={{ color: 'var(--text-secondary)' }}>
+                {renderTemplatePreviewText(draft.signatureLabel, previewContext)}
+              </p>
+              {signatureDataUrl && (
                 <img
                   src={signatureDataUrl}
                   alt={t('settings.template.signaturePreviewAlt')}
                   className="max-h-16 object-contain"
                 />
-                <button
-                  type="button"
-                  onClick={clearSignature}
-                  className="mt-2 text-xs border border-gray-300 rounded px-2 py-1"
-                >
-                  {t('settings.template.clearSignature')}
-                </button>
+              )}
+              <p
+                className="text-[11px] pt-2"
+                style={{ color: 'var(--text-muted)', borderTop: '1px solid var(--border-subtle)' }}
+              >
+                {renderTemplatePreviewText(draft.legalFooter, previewContext)}
+              </p>
+            </div>
+          </div>
+
+          <div
+            className="p-3 space-y-2"
+            style={{
+              border: '1px solid var(--border-default)',
+              borderRadius: 'var(--radius-lg)',
+              background: 'var(--surface-sunken)',
+            }}
+          >
+            <p className="text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>
+              {t('settings.template.historyTitle')}
+            </p>
+            {history.length === 0 && (
+              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                {t('settings.template.noHistory')}
+              </p>
+            )}
+            {history.length > 0 && (
+              <div className="space-y-2 max-h-48 overflow-auto">
+                {history.map((entry, idx) => (
+                  <div
+                    key={entry.id || `history-${idx}`}
+                    className="flex items-center justify-between gap-2 p-2 bg-white"
+                    style={{ border: '1px solid var(--border-default)', borderRadius: 'var(--radius-md)' }}
+                  >
+                    <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                      <div>{formatDateForPreview(entry.editedAt || Date.now(), lang)}</div>
+                      <div>{entry.editedByRole || 'UNKNOWN'}</div>
+                    </div>
+                    <Button variant="secondary" size="sm" onClick={() => setDraft(entry.template)}>
+                      {t('settings.template.restoreVersion')}
+                    </Button>
+                  </div>
+                ))}
               </div>
             )}
           </div>
         </div>
+      </CardBody>
 
-        <div className="border border-slate-200 rounded-lg bg-slate-50 p-4" dir={lang === 'he' ? 'rtl' : 'ltr'}>
-          <h3 className="text-xs font-bold mb-2 text-slate-700">{t('settings.template.previewTitle')}</h3>
-          <p className="text-[11px] text-slate-500 mb-3">{t('settings.template.previewNote')}</p>
-          <div className="bg-white border border-slate-200 rounded-md p-4 space-y-2">
-            <p className="text-[15px] font-bold text-slate-800">
-              {renderTemplatePreviewText(draft.docTitle, previewContext)}
-            </p>
-            <p className="text-[12px] font-semibold text-slate-700">
-              {renderTemplatePreviewText(draft.subject, previewContext)}
-            </p>
-            <p className="text-[12px] text-slate-700 whitespace-pre-wrap">
-              {renderTemplatePreviewText(draft.intro, previewContext)}
-            </p>
-            <p className="text-[12px] font-semibold text-slate-700">
-              {renderTemplatePreviewText(draft.conditionsTitle, previewContext)}
-            </p>
-            <ul className="list-disc list-inside text-[12px] text-slate-700 space-y-1">
-              {draft.conditions.map((line, idx) => (
-                <li key={`preview-cond-${idx}`}>
-                  {renderTemplatePreviewText(line, previewContext)}
-                </li>
-              ))}
-            </ul>
-            <p className="text-[12px] font-semibold text-slate-700 pt-1">
-              {renderTemplatePreviewText(draft.signatureLabel, previewContext)}
-            </p>
-            {signatureDataUrl && (
-              <img
-                src={signatureDataUrl}
-                alt={t('settings.template.signaturePreviewAlt')}
-                className="max-h-16 object-contain"
-              />
-            )}
-            <p className="text-[11px] text-slate-500 border-t border-slate-200 pt-2">
-              {renderTemplatePreviewText(draft.legalFooter, previewContext)}
-            </p>
-          </div>
-        </div>
-
-        <div className="border border-gray-200 rounded-lg p-3 bg-gray-50 space-y-2">
-          <p className="text-xs font-semibold text-gray-700">{t('settings.template.historyTitle')}</p>
-          {history.length === 0 && (
-            <p className="text-xs text-gray-500">{t('settings.template.noHistory')}</p>
-          )}
-          {history.length > 0 && (
-            <div className="space-y-2 max-h-48 overflow-auto">
-              {history.map((entry, idx) => (
-                <div key={entry.id || `history-${idx}`} className="flex items-center justify-between gap-2 border border-gray-200 rounded-md p-2 bg-white">
-                  <div className="text-xs text-gray-600">
-                    <div>{formatDateForPreview(entry.editedAt || Date.now(), lang)}</div>
-                    <div>{entry.editedByRole || 'UNKNOWN'}</div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setDraft(entry.template)}
-                    className="text-xs border border-gray-300 rounded-md px-3 py-1.5"
-                  >
-                    {t('settings.template.restoreVersion')}
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="px-5 py-3 border-t bg-gray-50 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-        <div aria-live="polite" aria-atomic="true">
-          {toast && (
-            <p className={`text-xs font-semibold ${toast.type === 'ok' ? 'text-green-600' : 'text-red-600'}`}>
-              {toast.type === 'ok' ? '✓ ' : '✗ '}
-              {toast.msg}
-            </p>
-          )}
-        </div>
-        <div className="flex gap-2">
-          <button
-            type="button"
+      <CardFooter>
+        <InlineToast toast={toast} />
+        <div className="flex flex-wrap gap-2 justify-end ms-auto">
+          <Button
+            variant="secondary"
             onClick={handlePreviewPdf}
-            disabled={previewingPdf}
-            className="text-sm font-semibold border border-gray-300 px-4 py-2 rounded-lg disabled:opacity-50"
+            loading={previewingPdf}
+            leftIcon={<Eye size={16} strokeWidth={1.75} aria-hidden="true" focusable="false" />}
           >
             {previewingPdf ? t('common.loading') : t('settings.template.previewPdf')}
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="secondary"
             onClick={resetToDefault}
-            className="text-sm font-semibold border border-gray-300 px-4 py-2 rounded-lg"
+            leftIcon={<RotateCcw size={16} strokeWidth={1.75} aria-hidden="true" focusable="false" />}
           >
             {t('settings.template.resetDefault')}
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="gold"
             onClick={handleSave}
-            disabled={!isDirty || saving}
-            className="text-sm font-bold text-white px-5 py-2 rounded-lg disabled:opacity-40"
-            style={{ background: 'var(--lev-navy)' }}
+            disabled={!isDirty}
+            loading={saving}
           >
             {saving ? '…' : t('settings.save')}
-          </button>
+          </Button>
         </div>
-      </div>
-    </section>
+      </CardFooter>
+    </Card>
   )
 }
 
@@ -796,7 +840,7 @@ export default function SettingsPage() {
   const { t }    = useTranslation()
   const { user } = useAuth()
 
-  const [values,  setValues]  = useState({})   // keyed map: { key → value }
+  const [values,  setValues]  = useState({})
   const [loading, setLoading] = useState(false)
   const [error,   setError]   = useState(null)
   const [previewSubmissions, setPreviewSubmissions] = useState([])
@@ -819,8 +863,6 @@ export default function SettingsPage() {
   const isAdmin = user?.role === 'ADMIN'
   const canEditTemplate = user?.role === 'ADMIN' || user?.role === 'SECRETARY'
   const canUseCalendarSettings = ['SECRETARY', 'CHAIRMAN', 'REVIEWER', 'ADMIN'].includes(user?.role)
-
-  // ── Fetch all settings (ADMIN + SECRETARY) ─────────
 
   useEffect(() => {
     if (!canEditTemplate) return
@@ -919,8 +961,6 @@ export default function SettingsPage() {
     window.history.replaceState({}, '', nextUrl)
   }, [canUseCalendarSettings, t])
 
-  // ── Save a group — PUT each changed key ──────
-
   /**
    * Saves all fields in a group that have changed vs the current saved values.
    * @param {string} _groupKey - unused, kept for symmetry
@@ -933,7 +973,6 @@ export default function SettingsPage() {
     await Promise.all(
       updates.map(([key, value]) => api.put(`/settings/${key}`, { value }))
     )
-    // Merge saved values into local state
     setValues(prev => ({ ...prev, ...Object.fromEntries(updates) }))
   }
 
@@ -998,76 +1037,91 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="max-w-3xl mx-auto">
+      <PageHeader
+        title={t('settings.title')}
+        subtitle={t('settings.subtitle')}
+        backTo="/dashboard"
+      />
 
-      {/* ── Header band — Lev navy ── */}
-      <div
-        className="px-4 md:px-6 py-5"
-        style={{ background: 'linear-gradient(135deg, var(--lev-navy) 0%, #2d4db5 100%)' }}
-      >
-        <h1 className="text-xl font-bold text-white">{t('settings.title')}</h1>
-        <p className="text-sm mt-0.5" style={{ color: 'rgba(255,255,255,0.8)' }}>
-          {t('settings.subtitle')}
-        </p>
-      </div>
+      {loading && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="flex justify-center py-20 text-sm"
+          style={{ color: 'var(--text-muted)' }}
+        >
+          {t('common.loading')}
+        </div>
+      )}
 
-      {/* ── Content ── */}
-      <div className="flex-1 overflow-auto bg-gray-50 p-4 md:p-6">
-        {loading && (
-          <div className="flex justify-center py-20 text-gray-500 text-sm" role="status" aria-live="polite">
-            {t('common.loading')}
-          </div>
-        )}
+      {error && (
+        <div
+          role="alert"
+          className="mb-4 text-sm"
+          style={{
+            background: 'var(--status-danger-50)',
+            color: 'var(--status-danger)',
+            border: '1px solid var(--status-danger)',
+            borderRadius: 'var(--radius-lg)',
+            padding: '12px 14px',
+          }}
+        >
+          {error}
+        </div>
+      )}
 
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm" role="alert">
-            {error}
-          </div>
-        )}
-
-        {!loading && !error && (
-          <div className="max-w-3xl mx-auto space-y-4">
-            {canUseCalendarSettings && (
-              <section className="bg-white rounded-xl border shadow-sm overflow-hidden" aria-labelledby="calendar-connection-title">
-                <div className="px-5 py-4 border-b flex items-center justify-between gap-3">
-                  <h2 id="calendar-connection-title" className="text-sm font-bold" style={{ color: 'var(--lev-navy)' }}>
-                    {t('settings.calendar.title')}
-                  </h2>
-                  <span className="text-xs px-2 py-1 rounded-full border border-gray-200 bg-gray-50">
+      {!loading && !error && (
+        <div className="space-y-4">
+          {canUseCalendarSettings && (
+            <Card as="section" aria-labelledby="calendar-connection-title">
+              <CardHeader
+                title={
+                  <span className="inline-flex items-center gap-2">
+                    <CalendarClock size={18} strokeWidth={1.75} aria-hidden="true" focusable="false" style={{ color: 'var(--lev-navy)' }} />
+                    <span id="calendar-connection-title">{t('settings.calendar.title')}</span>
+                  </span>
+                }
+                actions={
+                  <Badge tone={calendarStatus.connected ? 'success' : 'neutral'} size="sm">
                     {calendarStatus.connected
                       ? t('settings.calendar.connected')
                       : t('settings.calendar.notConnected')}
-                  </span>
-                </div>
-                <div className="px-5 py-4 space-y-3">
-                  <p className="text-xs text-gray-600">{t('settings.calendar.description')}</p>
+                  </Badge>
+                }
+              />
+              <CardBody>
+                <div className="space-y-3">
+                  <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                    {t('settings.calendar.description')}
+                  </p>
 
                   {calendarLoading && (
-                    <p className="text-sm text-gray-500">{t('common.loading')}</p>
+                    <p role="status" className="text-sm" style={{ color: 'var(--text-muted)' }}>
+                      {t('common.loading')}
+                    </p>
                   )}
 
                   {!calendarLoading && (
                     <>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                        <button
-                          type="button"
+                        <Button
+                          variant="secondary"
                           onClick={() => handleConnect('google')}
                           disabled={calendarBusy}
-                          className="text-sm border border-gray-300 rounded-lg px-4 py-2 min-h-[44px] disabled:opacity-50"
                         >
                           {t('settings.calendar.connectGoogle')}
-                        </button>
-                        <button
-                          type="button"
+                        </Button>
+                        <Button
+                          variant="secondary"
                           onClick={() => handleConnect('microsoft')}
                           disabled={calendarBusy}
-                          className="text-sm border border-gray-300 rounded-lg px-4 py-2 min-h-[44px] disabled:opacity-50"
                         >
                           {t('settings.calendar.connectMicrosoft')}
-                        </button>
+                        </Button>
                       </div>
 
-                      <div className="text-xs text-gray-600 space-y-1">
+                      <div className="text-xs space-y-1" style={{ color: 'var(--text-secondary)' }}>
                         <p>
                           <span className="font-semibold">{t('settings.calendar.activeProvider')}:</span>{' '}
                           {calendarStatus.provider === 'NONE' ? t('settings.calendar.none') : calendarStatus.provider}
@@ -1082,60 +1136,66 @@ export default function SettingsPage() {
                         </p>
                       </div>
 
-                      <label className="flex items-center gap-2 text-sm">
+                      <label className="flex items-center gap-2 text-sm" style={{ color: 'var(--text-primary)' }}>
                         <input
                           type="checkbox"
                           checked={Boolean(calendarStatus.syncEnabled)}
                           onChange={(e) => handleSyncToggle(e.target.checked)}
                           disabled={!calendarStatus.connected || calendarBusy}
-                          className="accent-blue-600 w-4 h-4"
+                          className="w-4 h-4"
                         />
                         <span>{t('settings.calendar.enablePersonalSync')}</span>
                       </label>
 
                       <div className="flex flex-wrap gap-2">
-                        <button
-                          type="button"
+                        <Button
+                          variant="danger"
                           onClick={handleDisconnect}
                           disabled={!calendarStatus.connected || calendarBusy}
-                          className="text-sm border border-red-300 text-red-700 rounded-lg px-4 py-2 min-h-[44px] disabled:opacity-40"
                         >
                           {t('settings.calendar.disconnect')}
-                        </button>
+                        </Button>
                       </div>
                     </>
                   )}
 
                   {calendarMessage && (
-                    <p className="text-xs font-semibold text-blue-700" aria-live="polite">{calendarMessage}</p>
+                    <p
+                      role="status"
+                      aria-live="polite"
+                      className="text-xs font-semibold"
+                      style={{ color: 'var(--status-info)' }}
+                    >
+                      {calendarMessage}
+                    </p>
                   )}
                 </div>
-              </section>
-            )}
+              </CardBody>
+            </Card>
+          )}
 
-            {isAdmin && GROUPS.map(group => (
-              <SettingsGroup
-                key={group.groupKey}
-                group={group}
-                values={values}
-                onSave={handleGroupSave}
-              />
-            ))}
+          {isAdmin && GROUPS.map(group => (
+            <SettingsGroup
+              key={group.groupKey}
+              group={group}
+              values={values}
+              onSave={handleGroupSave}
+            />
+          ))}
 
-            {canEditTemplate && (
-              <ApprovalTemplateEditor
-                values={values}
-                onSave={handleTemplateSave}
-                previewSubmissions={previewSubmissions}
-                previewSubmission={previewSubmission}
-                previewSubmissionId={previewSubmissionId}
-                onPreviewSubmissionChange={setPreviewSubmissionId}
-                previewLoading={previewLoading}
-              />
-            )}
-          </div>
-        )}
-      </div>
+          {canEditTemplate && (
+            <ApprovalTemplateEditor
+              values={values}
+              onSave={handleTemplateSave}
+              previewSubmissions={previewSubmissions}
+              previewSubmission={previewSubmission}
+              previewSubmissionId={previewSubmissionId}
+              onPreviewSubmissionChange={setPreviewSubmissionId}
+              previewLoading={previewLoading}
+            />
+          )}
+        </div>
+      )}
     </div>
   )
 }

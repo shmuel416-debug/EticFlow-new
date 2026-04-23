@@ -50,7 +50,7 @@ export default function FieldPalette({ onAdd }) {
             {t(category.i18nKey)}
           </p>
           <div className="grid grid-cols-3 gap-1.5">
-            {category.items.map(({ type, icon }) => (
+            {category.items.map(({ type, Icon }) => (
               <button
                 key={type}
                 type="button"
@@ -61,12 +61,19 @@ export default function FieldPalette({ onAdd }) {
                 onKeyDown={e => handleKeyDown(e, type)}
                 className="flex flex-col items-center justify-center gap-1 p-2 rounded-lg border
                   border-gray-200 bg-white text-center text-xs text-gray-600 cursor-pointer
-                  transition-all hover:border-[var(--lev-navy)] hover:bg-indigo-50
+                  transition-all hover:border-[var(--lev-navy)] hover:bg-[var(--lev-navy-50)]
                   hover:text-[var(--lev-navy)] active:scale-95 focus-visible:outline-none
                   focus-visible:ring-2 focus-visible:ring-[var(--lev-navy)]"
                 style={{ minHeight: '64px' }}
               >
-                <span className="text-xl" aria-hidden="true">{icon}</span>
+                <Icon
+                  size={20}
+                  strokeWidth={1.75}
+                  aria-hidden="true"
+                  focusable="false"
+                  className="flex-shrink-0"
+                  style={{ color: 'var(--text-secondary)' }}
+                />
                 <span>{t(`secretary.fieldTypes.${type}`)}</span>
               </button>
             ))}

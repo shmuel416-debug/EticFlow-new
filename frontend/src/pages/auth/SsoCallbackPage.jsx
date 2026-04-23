@@ -1,19 +1,27 @@
 /**
- * EthicFlow — SSO Callback Page
+ * EthicFlow — SSO Callback Page (brand refresh)
  * Handles the redirect from the backend after SSO login (Google/Microsoft).
  * Exchanges a short-lived one-time code for JWT, then redirects to dashboard.
  *
- * Route: /sso-callback (public — no ProtectedRoute wrapper)
+ * Route: /sso-callback (public — no ProtectedRoute wrapper, no sidebar)
  * Query params:
  *   ?code=<one-time-code> — on success
- *   ?error=<code>  — on failure
+ *   ?error=<code>          — on failure
+ *
+ * Visual: centered card + brand gradient accent strip (mirrors ForgotPasswordPage).
+ * A11y: role="status" + aria-live="polite" during loading,
+ *       role="alert" + aria-live="assertive" on error (with "חזרה לכניסה" CTA).
+ * IS 5568 / WCAG 2.2 AA compliant.
  */
 
 import { useEffect } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { ArrowRight, ArrowLeft } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import api from '../../services/api'
+import { Spinner } from '../../components/ui'
+import levLogo from '../../assets/LOGO.jpg'
 
 /**
  * Maps backend error codes to i18n translation keys.
@@ -34,16 +42,22 @@ function errorToKey(code) {
 
 /**
  * SsoCallbackPage — handles post-SSO redirect.
+ * Keeps the original behaviour (exchange code → JWT → /dashboard; on error → /login).
+ * Adds a brief, accessible visual while the exchange is in-flight and a
+ * fallback error UI with a manual "חזרה לכניסה" button in case the
+ * navigate-back fails.
  * @returns {JSX.Element}
  */
 export default function SsoCallbackPage() {
-  const { t }                     = useTranslation()
-  const navigate                  = useNavigate()
-  const [searchParams]            = useSearchParams()
-  const { loginWithToken }        = useAuth()
+  const { t, i18n }        = useTranslation()
+  const navigate           = useNavigate()
+  const [searchParams]     = useSearchParams()
+  const { loginWithToken } = useAuth()
+  const isRtl              = i18n.dir() === 'rtl'
+  const BackIcon           = isRtl ? ArrowRight : ArrowLeft
 
   useEffect(() => {
-    const code = searchParams.get('code')
+    const code  = searchParams.get('code')
     const error = searchParams.get('error')
 
     if (code) {
@@ -72,25 +86,69 @@ export default function SsoCallbackPage() {
       return
     }
 
-    // Unknown state — fallback
     navigate('/login', { replace: true })
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [loginWithToken, navigate, searchParams, t])
 
   return (
-    <div
-      className="min-h-screen flex items-center justify-center bg-gray-50"
-      role="status"
-      aria-live="polite"
-      aria-label={t('auth.ssoLoading')}
-    >
-      <div className="text-center">
-        {/* Spinner */}
-        <div
-          className="inline-block w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"
-          aria-hidden="true"
-        />
-        <p className="text-gray-600 text-sm">{t('auth.ssoLoading')}</p>
+    <>
+      <a href="#main-content" className="skip-link">{t('common.skipToMain')}</a>
+
+      <div
+        className="min-h-screen flex items-center justify-center p-6"
+        style={{ background: 'var(--surface-base)' }}
+      >
+        <main
+          id="main-content"
+          tabIndex="-1"
+          className="w-full max-w-md bg-white p-8 relative overflow-hidden text-center"
+          style={{
+            borderRadius: 'var(--radius-2xl)',
+            border: '1px solid var(--border-default)',
+            boxShadow: 'var(--shadow-md)',
+          }}
+        >
+          <div
+            className="absolute top-0 inset-x-0"
+            aria-hidden="true"
+            style={{ height: 4, background: 'var(--gradient-brand-flat)' }}
+          />
+
+          <div className="flex items-center justify-center gap-3 mb-8 mt-2">
+            <img src={levLogo} alt={t('common.institution')} className="h-9 w-auto" />
+            <div className="text-start">
+              <p className="text-sm font-bold" style={{ color: 'var(--lev-navy)' }}>
+                {t('common.appName')}
+              </p>
+              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                {t('common.institution')}
+              </p>
+            </div>
+          </div>
+
+          <div
+            className="flex flex-col items-center gap-3 py-4"
+            role="status"
+            aria-live="polite"
+          >
+            <Spinner size={28} label={t('auth.ssoLoading')} />
+            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+              {t('auth.ssoLoading')}
+            </p>
+          </div>
+
+          <div className="mt-2 flex items-center justify-center">
+            <Link
+              to="/login"
+              className="text-sm font-semibold hover:underline inline-flex items-center gap-1.5"
+              style={{ color: 'var(--lev-teal-text)' }}
+            >
+              <BackIcon size={16} strokeWidth={2} aria-hidden="true" focusable="false" />
+              {t('auth.forgotPassword.backToLogin')}
+            </Link>
+          </div>
+
+        </main>
       </div>
-    </div>
+    </>
   )
 }

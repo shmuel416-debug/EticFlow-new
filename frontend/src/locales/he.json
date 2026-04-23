@@ -116,7 +116,8 @@
     "system": "מערכת",
     "mainNavigation": "ניווט ראשי",
     "meetingsCalendar": "לוח פגישות",
-    "privacy": "מרכז פרטיות"
+    "privacy": "מרכז פרטיות",
+    "accessibilityStatement": "הצהרת נגישות"
   },
   "dashboard": {
     "researcher": {
@@ -148,7 +149,11 @@
     "reviewer": {
       "title": "דשבורד סוקר",
       "assignedToMe": "מוקצות לי",
-      "completedReviews": "ביקורות שהושלמו"
+      "completedReviews": "ביקורות שהושלמו",
+      "completedReviewsHint": "תוצאות סופיות (אושר / נדחה / המשך) עבור בקשות שסומנו אליך",
+      "openAssignments": "המשך עבודה",
+      "openAssignmentsHint": "צפה ברשימת הבקשות המוקצות לך ופתח בקשה לביקורת.",
+      "loadError": "שגיאה בטעינת נתוני הדשבורד"
     },
     "chairman": {
       "title": "דשבורד יו\"ר",
@@ -158,7 +163,15 @@
     "admin": {
       "title": "דשבורד מנהל",
       "totalUsers": "סה\"כ משתמשים",
-      "systemHealth": "תקינות מערכת"
+      "totalForms": "טפסים במערכת",
+      "systemHealth": "תקינות מערכת",
+      "healthOk": "תקין",
+      "healthError": "בעיה",
+      "quickLinks": "קיצורי דרך",
+      "linkUsers": "ניהול משתמשים",
+      "linkStatuses": "ניהול סטטוסים",
+      "linkForms": "ספריית טפסים",
+      "loadError": "חלק מהנתונים לא נטענו. נסה לרענן את הדף."
     }
   },
   "submission": {
@@ -383,9 +396,9 @@
       "cardFields": "{{count}} שדות",
       "cardUpdated": "עודכן {{date}}",
       "cardSubmissions": "{{count}} הגשות",
-      "actionEdit": "✏️ עריכה",
-      "actionPreview": "👁 תצוגה מקדימה",
-      "actionArchive": "🗃 העבר לארכיון",
+      "actionEdit": "עריכה",
+      "actionPreview": "תצוגה מקדימה",
+      "actionArchive": "העבר לארכיון",
       "actionRestore": "שחזור",
       "confirmArchive": "האם להעביר את הטופס לארכיון? פעולה זו תנעל את הטופס.",
       "confirmRestore": "האם לשחזר טופס זה מהארכיון?",

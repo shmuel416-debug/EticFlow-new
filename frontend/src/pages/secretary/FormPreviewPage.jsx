@@ -2,15 +2,18 @@
  * EthicFlow — FormPreviewPage
  * Standalone form preview page for /secretary/forms/:id/preview.
  * Loads form from API and renders it via FormPreview component.
- * IS 5568 / WCAG 2.1 AA. Lev color palette only.
+ * Page shell uses the design system; FormPreview child is untouched.
+ * IS 5568 / WCAG 2.2 AA. Lev color palette only.
  * @module pages/secretary/FormPreviewPage
  */
 
-import { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
-import { useTranslation } from 'react-i18next'
-import api from '../../services/api'
-import FormPreview from '../../components/formBuilder/FormPreview'
+import { useState, useEffect }      from 'react'
+import { useParams, useNavigate }   from 'react-router-dom'
+import { useTranslation }           from 'react-i18next'
+import { AlertTriangle }            from 'lucide-react'
+import api          from '../../services/api'
+import FormPreview  from '../../components/formBuilder/FormPreview'
+import { Button, PageHeader } from '../../components/ui'
 
 /**
  * Loads a published (or draft) form from the API and renders it in preview mode.
@@ -45,23 +48,29 @@ export default function FormPreviewPage() {
   if (loading) {
     return (
       <div className="flex flex-1 items-center justify-center py-24" role="status" aria-live="polite">
-        <p className="text-sm" style={{ color: 'var(--lev-teal-text)' }}>{t('common.loading')}</p>
+        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{t('common.loading')}</p>
       </div>
     )
   }
 
   if (error || !form) {
     return (
-      <div className="flex flex-col items-center justify-center py-24 text-center">
-        <p className="text-3xl mb-3" aria-hidden="true">⚠️</p>
-        <p className="text-sm font-semibold" style={{ color: 'var(--lev-navy)' }}>
+      <div className="flex flex-col items-center justify-center py-24 text-center" role="alert">
+        <AlertTriangle
+          size={40}
+          strokeWidth={1.5}
+          aria-hidden="true"
+          focusable="false"
+          style={{ color: 'var(--status-warning)' }}
+        />
+        <p className="mt-3 text-sm font-semibold" style={{ color: 'var(--lev-navy)' }}>
           {error || t('errors.NOT_FOUND')}
         </p>
-        <button type="button" onClick={() => navigate(-1)}
-          className="mt-4 px-4 py-2 text-sm font-semibold text-white rounded-xl hover:opacity-90"
-          style={{ background: 'var(--lev-navy)', minHeight: '44px' }}>
-          {t('common.back')}
-        </button>
+        <div className="mt-4">
+          <Button variant="primary" onClick={() => navigate(-1)}>
+            {t('common.back')}
+          </Button>
+        </div>
       </div>
     )
   }
@@ -72,31 +81,27 @@ export default function FormPreviewPage() {
     <div className="-m-4 md:-m-6 flex flex-col" style={{ height: 'calc(100vh - 64px)' }}>
 
       {/* Skip link — IS 5568 */}
-      <a href="#preview-main"
+      <a
+        href="#preview-main"
         className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:start-2
           focus:z-[100] focus:px-4 focus:py-2 focus:rounded-lg focus:text-sm
           focus:font-semibold focus:text-white focus:shadow-lg"
-        style={{ background: 'var(--lev-navy)' }}>
+        style={{ background: 'var(--lev-navy)' }}
+      >
         {t('common.skipToMain')}
       </a>
 
-      {/* Page top bar */}
-      <header className="bg-white border-b px-4 py-2.5 flex items-center gap-3 shrink-0">
-        <button type="button"
-          onClick={() => navigate(`/secretary/forms/${id}`)}
-          aria-label={t('secretary.formPreview.backToEditor')}
-          className="flex items-center gap-2 text-sm font-semibold hover:opacity-80 transition-opacity"
-          style={{ color: 'var(--lev-navy)', minHeight: '44px' }}>
-          <span aria-hidden="true" className="text-base">›</span>
-          {t('secretary.formPreview.backToEditor')}
-        </button>
-        <span className="text-gray-300 select-none">|</span>
-        <span className="text-sm font-bold truncate" style={{ color: 'var(--lev-navy)' }}>
-          {form.name}
-        </span>
-      </header>
+      <div
+        className="bg-white px-4 md:px-6 pt-4 md:pt-5 shrink-0"
+        style={{ borderBottom: '1px solid var(--border-default)' }}
+      >
+        <PageHeader
+          title={form.name}
+          subtitle={t('secretary.formPreview.openPreview', 'תצוגה מקדימה של טופס')}
+          backTo={`/secretary/forms/${id}`}
+        />
+      </div>
 
-      {/* Preview */}
       <main id="preview-main" className="flex-1 overflow-hidden">
         <FormPreview
           formName={form.name}

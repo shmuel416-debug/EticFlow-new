@@ -1,12 +1,20 @@
 /**
  * EthicFlow — Status Management Page
  * Admin UI for statuses, transitions, and role-action permissions.
+ * Refactored to use design-system primitives. DnD reorder preserved via up/down.
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import {
+  Plus, Check, Trash2, ArrowUp, ArrowDown, MousePointerClick, ArrowRight,
+} from 'lucide-react'
 import api from '../../services/api'
 import useStatusConfig, { invalidateStatusConfigCache } from '../../hooks/useStatusConfig'
+import {
+  Button, IconButton, Card, CardHeader, CardBody,
+  Badge, PageHeader, Input, Tabs,
+} from '../../components/ui'
 
 const ROLES = ['RESEARCHER', 'SECRETARY', 'REVIEWER', 'CHAIRMAN', 'ADMIN']
 const ACTIONS = ['VIEW', 'EDIT', 'COMMENT', 'UPLOAD_DOC', 'DELETE_DOC', 'VIEW_INTERNAL', 'TRANSITION', 'ASSIGN', 'SUBMIT_REVIEW', 'RECORD_DECISION']
@@ -231,86 +239,226 @@ export default function StatusManagementPage() {
     }
   }
 
+  const tabItems = TABS.map((tab) => ({ key: tab, label: t(`statusManagement.tabs.${tab}`) }))
+
   return (
-    <div className="flex flex-col h-full">
-      <div className="px-4 md:px-6 py-5" style={{ background: 'linear-gradient(135deg, var(--lev-navy) 0%, #2d4db5 100%)' }}>
-        <h1 className="text-xl font-bold text-white">{t('statusManagement.title')}</h1>
-        <p className="text-sm mt-0.5" style={{ color: 'rgba(255,255,255,0.8)' }}>{t('statusManagement.subtitle')}</p>
-      </div>
+    <div className="max-w-6xl mx-auto">
+      <PageHeader
+        title={t('statusManagement.title')}
+        subtitle={t('statusManagement.subtitle')}
+        backTo="/dashboard"
+      />
 
-      <div className="flex-1 overflow-auto bg-gray-50 p-4 md:p-6">
-        <div className="max-w-6xl mx-auto space-y-4">
-          <div className="bg-white rounded-xl border shadow-sm p-2 flex gap-2 overflow-auto" role="tablist" aria-label={t('statusManagement.tabsLabel')}>
-            {TABS.map((tab) => (
-              <button
-                key={tab}
-                type="button"
-                role="tab"
-                aria-selected={activeTab === tab}
-                onClick={() => setActiveTab(tab)}
-                className={`px-4 py-2 rounded-lg text-sm font-semibold min-h-[44px] ${activeTab === tab ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}`}
-              >
-                {t(`statusManagement.tabs.${tab}`)}
-              </button>
-            ))}
+      <div className="space-y-4">
+        <Card>
+          <div className="p-2">
+            <Tabs
+              items={tabItems}
+              value={activeTab}
+              onChange={setActiveTab}
+              variant="pills"
+              ariaLabel={t('statusManagement.tabsLabel')}
+            />
           </div>
+        </Card>
 
-          {error && <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm" role="alert">{error}</div>}
-          {toast && <div className="bg-green-50 border border-green-200 text-green-700 rounded-lg px-4 py-3 text-sm" aria-live="polite">{toast}</div>}
+        {error && (
+          <div
+            role="alert"
+            className="text-sm"
+            style={{
+              background: 'var(--status-danger-50)',
+              color: 'var(--status-danger)',
+              border: '1px solid var(--status-danger)',
+              borderRadius: 'var(--radius-lg)',
+              padding: '12px 14px',
+            }}
+          >
+            {error}
+          </div>
+        )}
 
-          {loading && (
-            <div className="flex justify-center py-16 text-sm text-gray-500">{t('common.loading')}</div>
-          )}
+        {toast && (
+          <div
+            role="status"
+            aria-live="polite"
+            className="text-sm"
+            style={{
+              background: 'var(--status-success-50)',
+              color: 'var(--status-success)',
+              border: '1px solid var(--status-success)',
+              borderRadius: 'var(--radius-lg)',
+              padding: '12px 14px',
+            }}
+          >
+            {toast}
+          </div>
+        )}
 
-          {!loading && activeTab === 'statuses' && (
-            <section className="bg-white rounded-xl border shadow-sm overflow-hidden">
-              <div className="px-4 py-3 border-b flex items-center justify-between">
-                <h2 className="font-semibold text-sm" style={{ color: 'var(--lev-navy)' }}>{t('statusManagement.tabs.statuses')}</h2>
-              </div>
-              <div className="p-4 space-y-3">
-                <div className="grid grid-cols-1 md:grid-cols-7 gap-2">
-                  <input data-testid="status-mgmt-add-code" value={newStatus.code} onChange={(e) => setNewStatus((prev) => ({ ...prev, code: e.target.value }))}
-                    placeholder={t('statusManagement.fields.code')} className="border rounded-lg px-3 py-2 text-sm" />
-                  <input data-testid="status-mgmt-add-label-he" value={newStatus.labelHe} onChange={(e) => setNewStatus((prev) => ({ ...prev, labelHe: e.target.value }))}
-                    placeholder={t('statusManagement.fields.labelHe')} className="border rounded-lg px-3 py-2 text-sm" />
-                  <input data-testid="status-mgmt-add-label-en" value={newStatus.labelEn} onChange={(e) => setNewStatus((prev) => ({ ...prev, labelEn: e.target.value }))}
-                    placeholder={t('statusManagement.fields.labelEn')} className="border rounded-lg px-3 py-2 text-sm" />
-                  <input data-testid="status-mgmt-add-color" type="color" value={newStatus.color} onChange={(e) => setNewStatus((prev) => ({ ...prev, color: e.target.value }))}
-                    className="border rounded-lg px-1 py-1 h-[44px]" />
-                  <label className="text-xs flex items-center gap-2"><input type="checkbox" checked={newStatus.isInitial} onChange={(e) => setNewStatus((prev) => ({ ...prev, isInitial: e.target.checked }))} />{t('statusManagement.fields.isInitial')}</label>
-                  <label className="text-xs flex items-center gap-2"><input type="checkbox" checked={newStatus.isTerminal} onChange={(e) => setNewStatus((prev) => ({ ...prev, isTerminal: e.target.checked }))} />{t('statusManagement.fields.isTerminal')}</label>
-                  <button data-testid="status-mgmt-add-submit" type="button" onClick={handleCreateStatus} disabled={saving} className="rounded-lg bg-blue-700 text-white text-sm px-3 py-2 min-h-[44px]">
+        {loading && (
+          <div
+            role="status"
+            aria-live="polite"
+            className="flex justify-center py-16 text-sm"
+            style={{ color: 'var(--text-muted)' }}
+          >
+            {t('common.loading')}
+          </div>
+        )}
+
+        {!loading && activeTab === 'statuses' && (
+          <Card>
+            <CardHeader title={t('statusManagement.tabs.statuses')} />
+            <CardBody>
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-7 gap-2 items-center">
+                  <Input
+                    data-testid="status-mgmt-add-code"
+                    value={newStatus.code}
+                    onChange={(e) => setNewStatus((prev) => ({ ...prev, code: e.target.value }))}
+                    placeholder={t('statusManagement.fields.code')}
+                    aria-label={t('statusManagement.fields.code')}
+                  />
+                  <Input
+                    data-testid="status-mgmt-add-label-he"
+                    value={newStatus.labelHe}
+                    onChange={(e) => setNewStatus((prev) => ({ ...prev, labelHe: e.target.value }))}
+                    placeholder={t('statusManagement.fields.labelHe')}
+                    aria-label={t('statusManagement.fields.labelHe')}
+                  />
+                  <Input
+                    data-testid="status-mgmt-add-label-en"
+                    value={newStatus.labelEn}
+                    onChange={(e) => setNewStatus((prev) => ({ ...prev, labelEn: e.target.value }))}
+                    placeholder={t('statusManagement.fields.labelEn')}
+                    aria-label={t('statusManagement.fields.labelEn')}
+                  />
+                  <input
+                    data-testid="status-mgmt-add-color"
+                    type="color"
+                    value={newStatus.color}
+                    onChange={(e) => setNewStatus((prev) => ({ ...prev, color: e.target.value }))}
+                    aria-label={t('statusManagement.fields.color')}
+                    style={{
+                      width: '100%',
+                      height: 44,
+                      borderRadius: 'var(--radius-md)',
+                      border: '1px solid var(--border-default)',
+                      padding: 2,
+                      cursor: 'pointer',
+                    }}
+                  />
+                  <label className="text-xs inline-flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+                    <input
+                      type="checkbox"
+                      checked={newStatus.isInitial}
+                      onChange={(e) => setNewStatus((prev) => ({ ...prev, isInitial: e.target.checked }))}
+                      className="w-4 h-4"
+                    />
+                    {t('statusManagement.fields.isInitial')}
+                  </label>
+                  <label className="text-xs inline-flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+                    <input
+                      type="checkbox"
+                      checked={newStatus.isTerminal}
+                      onChange={(e) => setNewStatus((prev) => ({ ...prev, isTerminal: e.target.checked }))}
+                      className="w-4 h-4"
+                    />
+                    {t('statusManagement.fields.isTerminal')}
+                  </label>
+                  <Button
+                    variant="gold"
+                    data-testid="status-mgmt-add-submit"
+                    onClick={handleCreateStatus}
+                    disabled={saving}
+                    leftIcon={<Plus size={18} strokeWidth={2} aria-hidden="true" focusable="false" />}
+                  >
                     {t('statusManagement.addStatus')}
-                  </button>
+                  </Button>
                 </div>
 
-                <div className="overflow-x-auto border rounded-lg">
+                <div
+                  className="overflow-x-auto"
+                  style={{
+                    border: '1px solid var(--border-default)',
+                    borderRadius: 'var(--radius-lg)',
+                  }}
+                >
                   <table className="w-full text-sm">
-                    <thead className="bg-gray-50 text-xs text-gray-500">
-                      <tr>
-                        <th className="px-3 py-2 text-start">{t('statusManagement.fields.code')}</th>
-                        <th className="px-3 py-2 text-start">{t('statusManagement.fields.labelHe')}</th>
-                        <th className="px-3 py-2 text-start">{t('statusManagement.fields.labelEn')}</th>
-                        <th className="px-3 py-2 text-start">{t('statusManagement.fields.color')}</th>
-                        <th className="px-3 py-2 text-start">{t('statusManagement.fields.isTerminal')}</th>
-                        <th className="px-3 py-2 text-start">{t('statusManagement.actions')}</th>
+                    <thead>
+                      <tr style={{ background: 'var(--surface-sunken)' }}>
+                        <th scope="col" className="px-3 py-2 text-start text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>{t('statusManagement.fields.code')}</th>
+                        <th scope="col" className="px-3 py-2 text-start text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>{t('statusManagement.fields.labelHe')}</th>
+                        <th scope="col" className="px-3 py-2 text-start text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>{t('statusManagement.fields.labelEn')}</th>
+                        <th scope="col" className="px-3 py-2 text-start text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>{t('statusManagement.fields.color')}</th>
+                        <th scope="col" className="px-3 py-2 text-start text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>{t('statusManagement.fields.isTerminal')}</th>
+                        <th scope="col" className="px-3 py-2 text-start text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>{t('statusManagement.actions')}</th>
                       </tr>
                     </thead>
                     <tbody>
                       {statuses.map((status, index) => (
-                        <tr key={status.id} className="border-t" data-testid={`status-row-${status.code}`}>
-                          <td className="px-3 py-2 font-mono text-xs">{status.code}</td>
+                        <tr
+                          key={status.id}
+                          data-testid={`status-row-${status.code}`}
+                          style={{ borderTop: '1px solid var(--border-subtle)' }}
+                        >
+                          <td className="px-3 py-2">
+                            <Badge tone="navy" size="sm" className="font-mono">{status.code}</Badge>
+                          </td>
                           <td className="px-3 py-2">{status.labelHe}</td>
                           <td className="px-3 py-2">{status.labelEn}</td>
-                          <td className="px-3 py-2"><span className="inline-block rounded-full w-6 h-6 border" style={{ backgroundColor: status.color }} /></td>
-                          <td className="px-3 py-2">{status.isTerminal ? t('common.yes') : t('common.no')}</td>
+                          <td className="px-3 py-2">
+                            <span
+                              className="inline-block"
+                              aria-label={status.color}
+                              style={{
+                                width: 24,
+                                height: 24,
+                                borderRadius: 'var(--radius-full)',
+                                background: status.color,
+                                border: '1px solid var(--border-default)',
+                              }}
+                            />
+                          </td>
+                          <td className="px-3 py-2">
+                            {status.isTerminal ? (
+                              <Badge tone="success" size="sm">{t('common.yes')}</Badge>
+                            ) : (
+                              <Badge tone="neutral" size="sm">{t('common.no')}</Badge>
+                            )}
+                          </td>
                           <td className="px-3 py-2">
                             <div className="flex flex-wrap gap-1">
-                              <button data-testid={`status-select-${status.code}`} type="button" onClick={() => setSelectedStatusId(status.id)} className="px-2 py-1 border rounded text-xs min-h-[32px]">{t('statusManagement.select')}</button>
-                              <button type="button" onClick={() => handleUpdateStatus(status.id, { ...status, code: status.code })} className="px-2 py-1 border rounded text-xs min-h-[32px]">{t('common.save')}</button>
-                              <button data-testid={`status-delete-${status.code}`} type="button" onClick={() => handleDeleteStatus(status.id)} disabled={status.isSystem} className="px-2 py-1 border rounded text-xs min-h-[32px] disabled:opacity-40">{t('common.delete')}</button>
-                              <button type="button" onClick={() => index > 0 && handleReorder(swapStatusRows(statuses, index, index - 1))} disabled={index === 0} className="px-2 py-1 border rounded text-xs min-h-[32px] disabled:opacity-40">↑</button>
-                              <button type="button" onClick={() => index < statuses.length - 1 && handleReorder(swapStatusRows(statuses, index, index + 1))} disabled={index === statuses.length - 1} className="px-2 py-1 border rounded text-xs min-h-[32px] disabled:opacity-40">↓</button>
+                              <IconButton
+                                icon={MousePointerClick}
+                                label={`${t('statusManagement.select')} ${status.code}`}
+                                onClick={() => setSelectedStatusId(status.id)}
+                                data-testid={`status-select-${status.code}`}
+                              />
+                              <IconButton
+                                icon={Check}
+                                label={`${t('common.save')} ${status.code}`}
+                                onClick={() => handleUpdateStatus(status.id, { ...status, code: status.code })}
+                              />
+                              <IconButton
+                                icon={Trash2}
+                                label={`${t('common.delete')} ${status.code}`}
+                                onClick={() => handleDeleteStatus(status.id)}
+                                disabled={status.isSystem}
+                                data-testid={`status-delete-${status.code}`}
+                              />
+                              <IconButton
+                                icon={ArrowUp}
+                                label={`${t('common.prev')} ${status.code}`}
+                                onClick={() => index > 0 && handleReorder(swapStatusRows(statuses, index, index - 1))}
+                                disabled={index === 0}
+                              />
+                              <IconButton
+                                icon={ArrowDown}
+                                label={`${t('common.next')} ${status.code}`}
+                                onClick={() => index < statuses.length - 1 && handleReorder(swapStatusRows(statuses, index, index + 1))}
+                                disabled={index === statuses.length - 1}
+                              />
                             </div>
                           </td>
                         </tr>
@@ -319,20 +467,27 @@ export default function StatusManagementPage() {
                   </table>
                 </div>
               </div>
-            </section>
-          )}
+            </CardBody>
+          </Card>
+        )}
 
-          {!loading && activeTab === 'transitions' && selectedStatus && (
-            <section className="bg-white rounded-xl border shadow-sm overflow-hidden">
-              <div className="px-4 py-3 border-b">
-                <h2 className="font-semibold text-sm" style={{ color: 'var(--lev-navy)' }}>{t('statusManagement.transitionsFor', { status: selectedStatus.code })}</h2>
-              </div>
-              <div className="p-4 space-y-3">
+        {!loading && activeTab === 'transitions' && selectedStatus && (
+          <Card>
+            <CardHeader title={t('statusManagement.transitionsFor', { status: selectedStatus.code })} />
+            <CardBody>
+              <div className="space-y-3">
                 {statuses.filter((status) => status.id !== selectedStatus.id).map((target) => {
                   const draft = transitionDraft[target.code] || { enabled: false, allowedRoles: [], requireReviewerAssigned: false }
                   return (
-                    <div key={target.id} className="border rounded-lg p-3 space-y-2">
-                      <label className="text-sm font-semibold flex items-center gap-2">
+                    <div
+                      key={target.id}
+                      className="p-3 space-y-2"
+                      style={{
+                        border: '1px solid var(--border-default)',
+                        borderRadius: 'var(--radius-lg)',
+                      }}
+                    >
+                      <label className="text-sm font-semibold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
                         <input
                           type="checkbox"
                           checked={draft.enabled}
@@ -340,8 +495,20 @@ export default function StatusManagementPage() {
                             ...prev,
                             [target.code]: { ...draft, enabled: e.target.checked },
                           }))}
+                          className="w-4 h-4"
                         />
-                        {`${selectedStatus.code} → ${target.code}`}
+                        <span className="inline-flex items-center gap-2">
+                          <Badge tone="navy" size="sm">{selectedStatus.code}</Badge>
+                          <ArrowRight
+                            size={14}
+                            strokeWidth={2}
+                            aria-hidden="true"
+                            focusable="false"
+                            className="shrink-0 rtl:rotate-180"
+                            style={{ color: 'var(--text-muted)' }}
+                          />
+                          <Badge tone="purple" size="sm">{target.code}</Badge>
+                        </span>
                       </label>
                       {draft.enabled && (
                         <div className="space-y-2">
@@ -349,7 +516,15 @@ export default function StatusManagementPage() {
                             {ROLES.map((role) => {
                               const checked = draft.allowedRoles.includes(role)
                               return (
-                                <label key={role} className="text-xs border rounded px-2 py-1 flex items-center gap-1">
+                                <label
+                                  key={role}
+                                  className="text-xs flex items-center gap-1 px-2 py-1"
+                                  style={{
+                                    border: '1px solid var(--border-default)',
+                                    borderRadius: 'var(--radius-md)',
+                                    color: 'var(--text-primary)',
+                                  }}
+                                >
                                   <input
                                     type="checkbox"
                                     checked={checked}
@@ -362,13 +537,14 @@ export default function StatusManagementPage() {
                                           : draft.allowedRoles.filter((item) => item !== role),
                                       },
                                     }))}
+                                    className="w-4 h-4"
                                   />
                                   {t(`roles.${role}`)}
                                 </label>
                               )
                             })}
                           </div>
-                          <label className="text-xs flex items-center gap-2">
+                          <label className="text-xs flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
                             <input
                               type="checkbox"
                               checked={draft.requireReviewerAssigned}
@@ -379,6 +555,7 @@ export default function StatusManagementPage() {
                                   requireReviewerAssigned: e.target.checked,
                                 },
                               }))}
+                              className="w-4 h-4"
                             />
                             {t('statusManagement.requireReviewerAssigned')}
                           </label>
@@ -387,32 +564,45 @@ export default function StatusManagementPage() {
                     </div>
                   )
                 })}
-                <button type="button" onClick={saveTransitions} disabled={saving} className="rounded-lg bg-blue-700 text-white px-4 py-2 text-sm min-h-[44px]">
+                <Button variant="gold" onClick={saveTransitions} loading={saving}>
                   {t('common.save')}
-                </button>
+                </Button>
               </div>
-            </section>
-          )}
+            </CardBody>
+          </Card>
+        )}
 
-          {!loading && activeTab === 'permissions' && selectedStatus && (
-            <section className="bg-white rounded-xl border shadow-sm overflow-hidden">
-              <div className="px-4 py-3 border-b">
-                <h2 className="font-semibold text-sm" style={{ color: 'var(--lev-navy)' }}>{t('statusManagement.permissionsFor', { status: selectedStatus.code })}</h2>
-              </div>
-              <div className="p-4 space-y-3 overflow-x-auto">
-                <table className="w-full text-sm border rounded-lg overflow-hidden">
-                  <thead className="bg-gray-50 text-xs text-gray-500">
-                    <tr>
-                      <th className="px-3 py-2 text-start">{t('statusManagement.action')}</th>
+        {!loading && activeTab === 'permissions' && selectedStatus && (
+          <Card>
+            <CardHeader title={t('statusManagement.permissionsFor', { status: selectedStatus.code })} />
+            <CardBody>
+              <div className="space-y-3 overflow-x-auto">
+                <table
+                  className="w-full text-sm"
+                  style={{
+                    border: '1px solid var(--border-default)',
+                    borderRadius: 'var(--radius-lg)',
+                    overflow: 'hidden',
+                  }}
+                >
+                  <thead>
+                    <tr style={{ background: 'var(--surface-sunken)' }}>
+                      <th scope="col" className="px-3 py-2 text-start text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>
+                        {t('statusManagement.action')}
+                      </th>
                       {ROLES.map((role) => (
-                        <th key={role} className="px-3 py-2 text-start">{t(`roles.${role}`)}</th>
+                        <th key={role} scope="col" className="px-3 py-2 text-start text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>
+                          {t(`roles.${role}`)}
+                        </th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {ACTIONS.map((action) => (
-                      <tr key={action} className="border-t">
-                        <td className="px-3 py-2 text-xs font-semibold">{t(`statusManagement.actionsMap.${action}`)}</td>
+                      <tr key={action} style={{ borderTop: '1px solid var(--border-subtle)' }}>
+                        <td className="px-3 py-2 text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>
+                          {t(`statusManagement.actionsMap.${action}`)}
+                        </td>
                         {ROLES.map((role) => (
                           <td key={`${action}-${role}`} className="px-3 py-2">
                             <input
@@ -422,6 +612,8 @@ export default function StatusManagementPage() {
                                 ...prev,
                                 [`${role}:${action}`]: e.target.checked,
                               }))}
+                              aria-label={`${t(`roles.${role}`)} — ${t(`statusManagement.actionsMap.${action}`)}`}
+                              className="w-4 h-4"
                             />
                           </td>
                         ))}
@@ -429,13 +621,13 @@ export default function StatusManagementPage() {
                     ))}
                   </tbody>
                 </table>
-                <button type="button" onClick={savePermissions} disabled={saving} className="rounded-lg bg-blue-700 text-white px-4 py-2 text-sm min-h-[44px]">
+                <Button variant="gold" onClick={savePermissions} loading={saving}>
                   {t('common.save')}
-                </button>
+                </Button>
               </div>
-            </section>
-          )}
-        </div>
+            </CardBody>
+          </Card>
+        )}
       </div>
     </div>
   )

@@ -89,7 +89,7 @@ export default function FormCanvas({ fields, selectedId, formName, previewLang, 
           {/* Drop zone */}
           <div
             className="border-2 border-dashed border-gray-200 rounded-xl p-5 text-center
-              transition-colors hover:border-[var(--lev-teal)] hover:bg-blue-50/30"
+              transition-colors hover:border-[var(--lev-teal)] hover:bg-[var(--lev-teal-50)]"
             role="region"
             aria-label={t('secretary.formBuilder.dropZone')}
           >

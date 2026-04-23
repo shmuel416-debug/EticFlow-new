@@ -2,13 +2,31 @@
  * EthicFlow — Protocol Sign Page (Public)
  * Standalone page — no sidebar, no authentication required.
  * Accessed via email token link: /protocol/sign/:token
- * Design: Option A — centered card, clean, accessible, mobile-first.
+ *
+ * Visual: centered Card + brand gradient accent strip (same shell as
+ *         ForgotPasswordPage); strong a11y for external signers.
+ * Behaviour unchanged — token fetch, sign, decline flow preserved.
+ * IS 5568 / WCAG 2.2 AA compliant.
  */
 
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import {
+  Signature,
+  CheckCircle2,
+  XCircle,
+  AlertTriangle,
+  ClipboardList,
+  FileText,
+} from 'lucide-react'
 import api from '../../services/api'
+import {
+  Button,
+  Spinner,
+  AccessibleIcon,
+} from '../../components/ui'
+import levLogo from '../../assets/LOGO.jpg'
 
 /**
  * Formats an ISO date as dd/MM/yyyy (he-IL).
@@ -28,15 +46,19 @@ const STATE = {
   ERROR:     'ERROR',
 }
 
+/**
+ * Public protocol signing page — consumed from email token link.
+ * @returns {JSX.Element}
+ */
 export default function ProtocolSignPage() {
   const { t }     = useTranslation()
   const { token } = useParams()
 
-  const [state,     setState]    = useState(STATE.LOADING)
-  const [info,      setInfo]     = useState(null)   // { protocolTitle, meetingDate, signerName, signatureStatus, expired }
-  const [action,    setAction]   = useState(null)   // 'sign' | 'decline'
-  const [submitting,setSubmitting] = useState(false)
-  const [errorMsg,  setErrorMsg] = useState(null)
+  const [state,      setState]       = useState(STATE.LOADING)
+  const [info,       setInfo]        = useState(null)
+  const [action,     setAction]      = useState(null)   // 'sign' | 'decline'
+  const [submitting, setSubmitting]  = useState(false)
+  const [errorMsg,   setErrorMsg]    = useState(null)
 
   // ── Fetch token info ─────────────────────────
 
@@ -93,129 +115,205 @@ export default function ProtocolSignPage() {
   }
 
   return (
-    /* Full-screen centred layout — no sidebar */
-    <div
-      className="min-h-screen bg-gray-100 flex items-center justify-center p-4"
-      dir="rtl"
-    >
-      <a
-        href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:right-4 focus:px-4 focus:py-2 focus:bg-white focus:rounded focus:shadow focus:z-50 focus:text-sm"
-      >
-        {t('common.skipToMain')}
-      </a>
+    <>
+      <a href="#main-content" className="skip-link">{t('common.skipToMain')}</a>
 
-      <main
-        id="main-content"
-        className="bg-white rounded-2xl shadow-lg w-full max-w-sm p-6"
-        aria-label={t('protocols.sign.title')}
+      <div
+        className="min-h-screen flex items-center justify-center p-6"
+        style={{ background: 'var(--surface-base)' }}
+        dir="rtl"
       >
-        {/* Brand header */}
-        <div className="text-center mb-6">
+        <main
+          id="main-content"
+          tabIndex="-1"
+          className="w-full max-w-md bg-white p-8 relative overflow-hidden"
+          style={{
+            borderRadius: 'var(--radius-2xl)',
+            border: '1px solid var(--border-default)',
+            boxShadow: 'var(--shadow-md)',
+          }}
+          aria-label={t('protocols.sign.title')}
+        >
+          {/* Brand accent strip */}
           <div
-            className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3"
-            style={{ background: 'var(--lev-navy)' }}
+            className="absolute top-0 inset-x-0"
             aria-hidden="true"
-          >
-            <span className="text-white text-2xl">📋</span>
+            style={{ height: 4, background: 'var(--gradient-brand-flat)' }}
+          />
+
+          {/* Brand header */}
+          <div className="flex items-center gap-3 mb-6 mt-2">
+            <img src={levLogo} alt={t('common.institution')} className="h-10 w-auto" />
+            <div>
+              <p className="text-sm font-bold" style={{ color: 'var(--lev-navy)' }}>
+                {t('common.appName')}
+              </p>
+              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                {t('protocols.sign.brand')}
+              </p>
+            </div>
           </div>
-          <p className="font-bold text-base" style={{ color: 'var(--lev-navy)' }}>
+
+          <h1 className="text-xl font-bold mb-1" style={{ color: 'var(--lev-navy)' }}>
             {t('protocols.sign.title')}
-          </p>
-          <p className="text-xs text-gray-400 mt-0.5">{t('protocols.sign.brand')}</p>
-        </div>
+          </h1>
 
-        {/* ── Loading ── */}
-        {state === STATE.LOADING && (
-          <div className="text-center text-gray-400 text-sm py-8" role="status" aria-live="polite">
-            {t('common.loading')}
-          </div>
-        )}
+          {/* ── Loading ── */}
+          {state === STATE.LOADING && (
+            <div
+              className="flex flex-col items-center gap-3 py-10"
+              role="status"
+              aria-live="polite"
+            >
+              <Spinner size={28} label={t('common.loading')} />
+              <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                {t('common.loading')}
+              </p>
+            </div>
+          )}
 
-        {/* ── Error ── */}
-        {state === STATE.ERROR && (
-          <div
-            className="bg-red-50 border border-red-200 rounded-xl p-4 text-center"
-            role="alert"
-            aria-live="assertive"
-          >
-            <p className="text-2xl mb-2" aria-hidden="true">⚠️</p>
-            <p className="text-sm text-red-700 font-medium">{errorMsg}</p>
-          </div>
-        )}
+          {/* ── Error ── */}
+          {state === STATE.ERROR && (
+            <div
+              role="alert"
+              aria-live="assertive"
+              className="flex flex-col items-center gap-3 text-sm mt-4"
+              style={{
+                background: 'var(--status-danger-50)',
+                color: 'var(--status-danger)',
+                border: '1px solid var(--status-danger)',
+                borderRadius: 'var(--radius-lg)',
+                padding: '18px 16px',
+              }}
+            >
+              <AlertTriangle size={26} strokeWidth={2} aria-hidden="true" focusable="false" />
+              <span className="font-semibold text-center">{errorMsg}</span>
+            </div>
+          )}
 
-        {/* ── Ready to sign ── */}
-        {state === STATE.READY && info && (
-          <>
-            {/* Protocol info card */}
-            <div className="bg-gray-50 rounded-xl border border-gray-100 p-4 mb-6 space-y-3 text-right">
-              <div>
-                <p className="text-xs text-gray-500">{t('protocols.sign.protocolLabel')}</p>
-                <p className="font-semibold text-sm mt-0.5" style={{ color: 'var(--lev-navy)' }}>
-                  {info.protocolTitle}
-                </p>
-              </div>
-              {info.finalizedAt && (
-                <div>
-                  <p className="text-xs text-gray-500">{t('protocols.sign.dateLabel')}</p>
-                  <p className="text-sm text-gray-700 mt-0.5">{fmtDate(info.finalizedAt)}</p>
+          {/* ── Ready to sign ── */}
+          {state === STATE.READY && info && (
+            <>
+              {/* Protocol details card */}
+              <section
+                className="mt-4 mb-6 p-4 space-y-3"
+                style={{
+                  background: 'var(--surface-sunken)',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: 'var(--radius-xl)',
+                }}
+                aria-label={t('protocols.sign.protocolLabel')}
+              >
+                <div className="flex items-start gap-2">
+                  <AccessibleIcon icon={FileText} size={18} decorative />
+                  <div className="min-w-0">
+                    <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                      {t('protocols.sign.protocolLabel')}
+                    </p>
+                    <p className="font-semibold text-sm mt-0.5" style={{ color: 'var(--lev-navy)' }}>
+                      {info.protocolTitle}
+                    </p>
+                  </div>
                 </div>
-              )}
-              <div className="border-t pt-3">
-                <p className="text-xs text-gray-500">{t('protocols.sign.signerLabel')}</p>
-                <p className="font-bold mt-0.5" style={{ color: 'var(--lev-navy)' }}>
-                  {info.signerName}
-                </p>
+                {info.finalizedAt && (
+                  <div className="flex items-start gap-2">
+                    <AccessibleIcon icon={ClipboardList} size={18} decorative />
+                    <div>
+                      <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                        {t('protocols.sign.dateLabel')}
+                      </p>
+                      <p className="text-sm mt-0.5" style={{ color: 'var(--text-primary)' }}>
+                        {fmtDate(info.finalizedAt)}
+                      </p>
+                    </div>
+                  </div>
+                )}
+                <div
+                  className="pt-3"
+                  style={{ borderTop: '1px solid var(--border-default)' }}
+                >
+                  <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                    {t('protocols.sign.signerLabel')}
+                  </p>
+                  <p className="font-bold mt-0.5" style={{ color: 'var(--lev-navy)' }}>
+                    {info.signerName}
+                  </p>
+                </div>
+              </section>
+
+              {/* Action buttons */}
+              <div className="space-y-3">
+                <Button
+                  variant="gold"
+                  size="lg"
+                  fullWidth
+                  onClick={() => handleAction('sign')}
+                  disabled={submitting}
+                  loading={submitting && action === 'sign'}
+                  leftIcon={<AccessibleIcon icon={Signature} size={18} decorative />}
+                  aria-label={t('protocols.sign.signBtn')}
+                >
+                  {t('protocols.sign.signBtn')}
+                </Button>
+                <Button
+                  variant="danger"
+                  size="md"
+                  fullWidth
+                  onClick={() => handleAction('decline')}
+                  disabled={submitting}
+                  loading={submitting && action === 'decline'}
+                  leftIcon={<AccessibleIcon icon={XCircle} size={18} decorative />}
+                  aria-label={t('protocols.sign.declineBtn')}
+                >
+                  {t('protocols.sign.declineBtn')}
+                </Button>
               </div>
-            </div>
 
-            {/* Action buttons */}
-            <div className="space-y-3">
-              <button
-                onClick={() => handleAction('sign')}
-                disabled={submitting}
-                className="w-full text-white font-bold py-3.5 rounded-2xl flex items-center justify-center gap-2 transition-colors disabled:opacity-60"
-                style={{ background: 'var(--lev-navy)', minHeight: '56px' }}
-                aria-label={t('protocols.sign.signBtn')}
+              <p
+                className="text-center text-xs mt-4"
+                style={{ color: 'var(--text-muted)' }}
               >
-                <span className="text-lg" aria-hidden="true">✓</span>
-                {t('protocols.sign.signBtn')}
-              </button>
-              <button
-                onClick={() => handleAction('decline')}
-                disabled={submitting}
-                className="w-full py-3 rounded-2xl font-semibold text-sm text-red-600 border-2 border-red-100 hover:bg-red-50 transition-colors disabled:opacity-60"
-                style={{ minHeight: '48px' }}
-                aria-label={t('protocols.sign.declineBtn')}
+                {t('protocols.sign.expiry')}
+              </p>
+            </>
+          )}
+
+          {/* ── Confirmed ── */}
+          {state === STATE.CONFIRMED && (
+            <div
+              className="text-center py-6"
+              role="status"
+              aria-live="polite"
+              aria-atomic="true"
+            >
+              <div
+                className="inline-flex items-center justify-center mx-auto mb-3"
+                style={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: 'var(--radius-full)',
+                  background: action === 'sign' ? 'var(--status-success-50)' : 'var(--status-warning-50)',
+                  color: action === 'sign' ? 'var(--status-success)' : 'var(--status-warning)',
+                }}
               >
-                {t('protocols.sign.declineBtn')}
-              </button>
+                <AccessibleIcon
+                  icon={action === 'sign' ? CheckCircle2 : ClipboardList}
+                  size={28}
+                  decorative
+                />
+              </div>
+              <p className="font-bold text-base mb-1" style={{ color: 'var(--lev-navy)' }}>
+                {action === 'sign'
+                  ? t('protocols.sign.confirmedSign')
+                  : t('protocols.sign.confirmedDecline')}
+              </p>
+              <p className="text-xs mt-2" style={{ color: 'var(--text-muted)' }}>
+                {info?.protocolTitle}
+              </p>
             </div>
-
-            <p className="text-center text-xs text-gray-400 mt-4">{t('protocols.sign.expiry')}</p>
-          </>
-        )}
-
-        {/* ── Confirmed ── */}
-        {state === STATE.CONFIRMED && (
-          <div
-            className="text-center py-4"
-            role="status"
-            aria-live="polite"
-            aria-atomic="true"
-          >
-            <p className="text-4xl mb-3" aria-hidden="true">
-              {action === 'sign' ? '✅' : '📝'}
-            </p>
-            <p className="font-bold text-base mb-1" style={{ color: 'var(--lev-navy)' }}>
-              {action === 'sign'
-                ? t('protocols.sign.confirmedSign')
-                : t('protocols.sign.confirmedDecline')}
-            </p>
-            <p className="text-xs text-gray-400 mt-2">{info?.protocolTitle}</p>
-          </div>
-        )}
-      </main>
-    </div>
+          )}
+        </main>
+      </div>
+    </>
   )
 }
