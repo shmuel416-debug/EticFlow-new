@@ -101,7 +101,7 @@ describe('protocols.controller requestSignatures role guards', () => {
       meeting: { title: 'Meeting B' },
     })
     prismaMock.user.findMany.mockResolvedValue([
-      { id: 'u-reviewer', email: 'rev@test.com', fullName: 'Reviewer User', role: 'REVIEWER' },
+      { id: 'u-reviewer', email: 'rev@test.com', fullName: 'Reviewer User', roles: ['RESEARCHER', 'REVIEWER'] },
     ])
     prismaMock.protocolSignature.findMany.mockResolvedValue([])
     prismaMock.protocolSignature.create.mockResolvedValue({ id: 'sig-1' })

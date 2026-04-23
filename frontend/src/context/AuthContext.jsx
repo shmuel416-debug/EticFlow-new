@@ -8,7 +8,10 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import api, { setToken, getToken } from '../services/api'
+import api, { setToken, getToken, setActiveRole as persistActiveRole } from '../services/api'
+
+const ROLE_PRIORITY = ['ADMIN', 'CHAIRMAN', 'SECRETARY', 'REVIEWER', 'RESEARCHER']
+const ACTIVE_ROLE_STORAGE_KEY = 'ef_active_role_ui'
 
 /**
  * Decodes JWT payload without verifying signature.
@@ -29,7 +32,7 @@ const AuthContext = createContext(null)
 
 /**
  * Restores user payload from in-memory/session token storage if valid.
- * @returns {{ id: string, email: string, role: string }|null}
+ * @returns {{ id: string, email: string, roles: string[], activeRole: string }|null}
  */
 function getInitialUserFromToken() {
   const stored = getToken()
@@ -42,7 +45,14 @@ function getInitialUserFromToken() {
     return null
   }
 
-  return { id: payload.id, email: payload.email, role: payload.role }
+  const roles = Array.isArray(payload.roles) && payload.roles.length > 0
+    ? payload.roles
+    : [payload.role || 'RESEARCHER']
+  const preferredRole = localStorage.getItem(ACTIVE_ROLE_STORAGE_KEY)
+  const activeRole = roles.includes(preferredRole)
+    ? preferredRole
+    : (ROLE_PRIORITY.find((role) => roles.includes(role)) || 'RESEARCHER')
+  return { id: payload.id, email: payload.email, roles, activeRole, role: activeRole }
 }
 
 /**
@@ -53,6 +63,19 @@ export function AuthProvider({ children }) {
   const { i18n } = useTranslation()
   const [user, setUser]               = useState(() => getInitialUserFromToken())
   const [loading]                     = useState(false)
+  /**
+   * Sets active role in state and API client.
+   * @param {string} role
+   */
+  const setActiveRole = useCallback((role) => {
+    setUser((prev) => {
+      if (!prev || !prev.roles.includes(role)) return prev
+      return { ...prev, activeRole: role, role }
+    })
+    localStorage.setItem(ACTIVE_ROLE_STORAGE_KEY, role)
+    persistActiveRole(role)
+  }, [])
+
   const [impersonation, setImpersonation] = useState(null) // { originalUser, originalToken }
 
   /** Holds the original token during impersonation so we can restore it. */
@@ -77,6 +100,22 @@ export function AuthProvider({ children }) {
     applyDirection(lang)
   }, [applyDirection])
 
+  /** Global session-expired hook triggered by API interceptor. */
+  useEffect(() => {
+    function onSessionExpired() {
+      setToken(null)
+      setUser(null)
+      setImpersonation(null)
+      originalTokenRef.current = null
+    }
+    window.addEventListener('ef:session-expired', onSessionExpired)
+    return () => window.removeEventListener('ef:session-expired', onSessionExpired)
+  }, [])
+
+  useEffect(() => {
+    persistActiveRole(user?.activeRole || null)
+  }, [user?.activeRole])
+
   /**
    * Authenticates user and stores JWT in memory.
    * @param {string} email
@@ -86,14 +125,20 @@ export function AuthProvider({ children }) {
   async function login(email, password) {
     const { data } = await api.post('/auth/login', { email, password })
     setToken(data.token)
-    setUser(data.user)
+    const roles = Array.isArray(data.user.roles) ? data.user.roles : [data.user.role || 'RESEARCHER']
+    const preferredRole = localStorage.getItem(ACTIVE_ROLE_STORAGE_KEY)
+    const activeRole = roles.includes(preferredRole)
+      ? preferredRole
+      : (ROLE_PRIORITY.find((role) => roles.includes(role)) || 'RESEARCHER')
+    persistActiveRole(activeRole)
+    setUser({ ...data.user, roles, activeRole, role: activeRole })
   }
 
   /**
    * Decodes the payload section of a JWT without verifying the signature.
    * Safe because the server already validated and issued this token.
    * @param {string} token - Signed JWT
-   * @returns {{ id: string, email: string, role: string }}
+   * @returns {{ id: string, email: string, roles?: string[], role?: string }}
    */
   function decodePayload(token) {
     const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
@@ -109,7 +154,15 @@ export function AuthProvider({ children }) {
   function loginWithToken(token) {
     setToken(token)
     const payload = decodePayload(token)
-    setUser({ id: payload.id, email: payload.email, role: payload.role })
+    const roles = Array.isArray(payload.roles) && payload.roles.length > 0
+      ? payload.roles
+      : [payload.role || 'RESEARCHER']
+    const preferredRole = localStorage.getItem(ACTIVE_ROLE_STORAGE_KEY)
+    const activeRole = roles.includes(preferredRole)
+      ? preferredRole
+      : (ROLE_PRIORITY.find((role) => roles.includes(role)) || 'RESEARCHER')
+    persistActiveRole(activeRole)
+    setUser({ id: payload.id, email: payload.email, roles, activeRole, role: activeRole })
   }
 
   /**
@@ -117,6 +170,7 @@ export function AuthProvider({ children }) {
    */
   function logout() {
     setToken(null)
+    persistActiveRole(null)
     setUser(null)
     setImpersonation(null)
     originalTokenRef.current = null
@@ -141,7 +195,10 @@ export function AuthProvider({ children }) {
 
     // Swap to impersonation token + user
     setToken(data.token)
-    setUser(data.user)
+    const roles = Array.isArray(data.user.roles) ? data.user.roles : [data.user.role || 'RESEARCHER']
+    const activeRole = data.user.activeRole || ROLE_PRIORITY.find((role) => roles.includes(role)) || 'RESEARCHER'
+    persistActiveRole(activeRole)
+    setUser({ ...data.user, roles, activeRole, role: activeRole })
   }
 
   /**
@@ -153,6 +210,7 @@ export function AuthProvider({ children }) {
 
     // Restore original token + user
     setToken(originalTokenRef.current)
+    persistActiveRole(impersonation.originalUser?.activeRole || impersonation.originalUser?.role || null)
     setUser(impersonation.originalUser)
     setImpersonation(null)
     originalTokenRef.current = null
@@ -169,6 +227,7 @@ export function AuthProvider({ children }) {
       loginWithToken,
       logout,
       changeLanguage,
+      setActiveRole,
       impersonation,
       isImpersonating,
       startImpersonation,
@@ -183,7 +242,7 @@ export function AuthProvider({ children }) {
  * Hook to access auth context.
  * @returns {{ user: object|null, loading: boolean, login: Function, loginWithToken: Function,
  *   logout: Function, changeLanguage: Function, impersonation: object|null,
- *   isImpersonating: boolean, startImpersonation: Function, stopImpersonation: Function }}
+ *   isImpersonating: boolean, startImpersonation: Function, stopImpersonation: Function, setActiveRole: Function }}
  */
 export function useAuth() {
   const ctx = useContext(AuthContext)

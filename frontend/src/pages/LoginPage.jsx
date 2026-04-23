@@ -58,6 +58,7 @@ function ssoErrorKey(code) {
     sso_no_email: 'auth.ssoFailed',
     sso_state_mismatch: 'auth.ssoFailed',
     account_inactive: 'auth.accountInactive',
+    session_expired: 'auth.sessionExpired',
   }
   return map[code] ?? 'auth.ssoFailed'
 }

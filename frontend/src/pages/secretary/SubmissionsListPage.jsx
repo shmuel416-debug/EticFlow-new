@@ -7,7 +7,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import api from '../../services/api'
 import StatusBadge from '../../components/submissions/StatusBadge'
 import useStatusConfig from '../../hooks/useStatusConfig'
@@ -27,6 +27,7 @@ function formatDate(iso) {
  */
 export default function SubmissionsListPage() {
   const { t }            = useTranslation()
+  const location         = useLocation()
   const { statuses } = useStatusConfig()
   const [submissions,    setSubmissions]    = useState([])
   const [pagination,     setPagination]     = useState({ page: 1, pages: 1, total: 0 })
@@ -35,6 +36,7 @@ export default function SubmissionsListPage() {
   const [search,         setSearch]         = useState('')
   const [statusFilter,   setStatusFilter]   = useState('')
   const [page,           setPage]           = useState(1)
+  const returnPath       = `${location.pathname}${location.search}`
 
   /**
    * Fetches submissions from API with current filters.
@@ -141,6 +143,7 @@ export default function SubmissionsListPage() {
                 <td className="px-4 py-3">
                   <Link
                     to={`/secretary/submissions/${sub.id}`}
+                    state={{ from: returnPath }}
                     data-testid={`secretary-open-submission-${sub.id}`}
                     className="text-xs font-medium hover:underline"
                     style={{ color: 'var(--lev-navy)', minHeight: '44px', display: 'inline-flex', alignItems: 'center' }}

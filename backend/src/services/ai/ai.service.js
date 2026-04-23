@@ -24,7 +24,7 @@ const warnedFallbacks = new Set()
 
 /**
  * Runs an AI analysis on submission data using the active provider.
- * @param {{ title: string, track: string, dataJson: object, documents?: object[] }} submissionData
+ * @param {{ title: string, track: string, dataJson: object, documents?: object[], responseLanguage?: 'he' | 'en' }} submissionData
  * @returns {Promise<object>} Advisory result JSON
  * @throws {Error} If AI_PROVIDER is unknown
  */

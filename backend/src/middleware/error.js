@@ -6,6 +6,7 @@
  */
 
 import { AppError } from '../utils/errors.js'
+import { captureException } from '../services/observability.service.js'
 
 const IS_DEV = process.env.NODE_ENV !== 'production'
 
@@ -35,6 +36,11 @@ function handlePrismaError(err) {
 // eslint-disable-next-line no-unused-vars
 export function errorHandler(err, req, res, _next) {
   if (IS_DEV) console.error('[Error]', err)
+  const context = {
+    requestId: req.requestId,
+    route: req.originalUrl,
+    method: req.method,
+  }
 
   // JSON parse error from Express body-parser
   if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
@@ -44,6 +50,7 @@ export function errorHandler(err, req, res, _next) {
   // Prisma errors
   if (err.code?.startsWith?.('P')) {
     const appErr = handlePrismaError(err)
+    if (appErr.statusCode >= 500) captureException(err, { ...context, statusCode: appErr.statusCode })
     return res.status(appErr.statusCode).json({
       error:   appErr.message,
       code:    appErr.code,
@@ -52,6 +59,7 @@ export function errorHandler(err, req, res, _next) {
 
   // Known AppError
   if (err instanceof AppError) {
+    if (err.statusCode >= 500) captureException(err, { ...context, statusCode: err.statusCode })
     return res.status(err.statusCode).json({
       error:   err.message,
       code:    err.code,
@@ -60,6 +68,7 @@ export function errorHandler(err, req, res, _next) {
   }
 
   // Unknown error — hide details in production
+  captureException(err, { ...context, statusCode: 500 })
   res.status(500).json({
     error:   IS_DEV ? err.message : 'Internal server error',
     code:    'INTERNAL_ERROR',

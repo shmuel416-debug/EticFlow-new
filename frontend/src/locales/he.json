@@ -6,10 +6,12 @@
     "save": "שמור",
     "saving": "שומר...",
     "cancel": "ביטול",
+    "delete": "מחק",
     "back": "חזרה",
     "logout": "יציאה",
     "language": "שפה",
     "notifications": "התראות",
+    "coi": "ניגוד עניינים",
     "settings": "הגדרות",
     "skipToMain": "דלג לתוכן הראשי",
     "error": "שגיאה",
@@ -27,7 +29,19 @@
     "showing": "מציג",
     "of": "מתוך",
     "yes": "כן",
-    "no": "לא"
+    "no": "לא",
+    "ok": "תקין",
+    "completed": "הושלם",
+    "current": "נוכחי",
+    "future": "עתידי",
+    "fullDetails": "פרטים מלאים",
+    "arrowNext": "←"
+  },
+  "language": {
+    "heLabel": "עברית",
+    "heShort": "עב",
+    "enLabel": "English",
+    "enShort": "EN"
   },
   "auth": {
     "login": {
@@ -52,6 +66,7 @@
     "ssoLoading": "מאמת זהות, אנא המתן...",
     "ssoCancelled": "הכניסה בוטלה.",
     "ssoFailed": "אירעה שגיאה בכניסה. נסה שוב.",
+    "sessionExpired": "ההתחברות פגה. יש להתחבר מחדש.",
     "ssoEmailConflict": "קיים חשבון עם כתובת מייל זו. התחבר עם שם משתמש וסיסמה.",
     "accountInactive": "החשבון אינו פעיל. צור קשר עם מנהל המערכת.",
     "forgotPassword": {
@@ -100,7 +115,8 @@
     "statusManagement": "ניהול סטטוסים",
     "system": "מערכת",
     "mainNavigation": "ניווט ראשי",
-    "meetingsCalendar": "לוח פגישות"
+    "meetingsCalendar": "לוח פגישות",
+    "privacy": "מרכז פרטיות"
   },
   "dashboard": {
     "researcher": {
@@ -251,6 +267,9 @@
     "documents": "מסמכים",
     "progressLabel": "שלב {{current}} מתוך {{total}}",
     "fixAndResubmit": "תקן ושלח מחדש",
+    "withdraw": "בטל הגשה",
+    "confirmWithdraw": "האם לבטל את ההגשה? לא ניתן יהיה להמשיך בתהליך הבדיקה.",
+    "withdrawReasonPrompt": "ניתן לציין סיבת ביטול (אופציונלי):",
     "downloadPdf": "הורד אישור (עברית)",
     "downloadPdfEn": "הורד אישור (אנגלית)",
     "steps": {
@@ -498,7 +517,26 @@
       "REJECTED": "ההגשה נדחתה",
       "SLA_WARNING": "אזהרת SLA",
       "SLA_BREACH": "הפרת SLA"
+    },
+    "continuingReview": {
+      "title": "תזכורת לסקירה שנתית",
+      "body": "בקשה מאושרת מתקרבת למועד סקירה שנתית."
     }
+  },
+  "privacy": {
+    "title": "מרכז פרטיות",
+    "subtitle": "ניהול הסכמה, ייצוא נתונים ובקשות מחיקת מידע.",
+    "consentTitle": "הסכמה למדיניות פרטיות",
+    "acceptPolicy": "אני מאשר/ת את מדיניות הפרטיות",
+    "consentSaved": "ההסכמה נשמרה בהצלחה.",
+    "rightsTitle": "זכויות נושא מידע",
+    "exportButton": "ייצוא הנתונים שלי",
+    "exportReady": "קובץ הייצוא מוכן להורדה.",
+    "erasureButton": "שליחת בקשת מחיקה",
+    "erasurePlaceholder": "פרט/י את היקף בקשת המחיקה (אופציונלי)",
+    "requestCreated": "בקשת נושא המידע נוצרה.",
+    "requestsTitle": "בקשות אחרונות",
+    "noRequests": "עדיין לא נשלחו בקשות."
   },
   "roles": {
     "RESEARCHER": "חוקר",
@@ -512,7 +550,33 @@
     "chairman": "יו\"ר",
     "admin": "מנהל",
     "unknown": "לא ידוע",
-    "role": "תפקיד"
+    "role": "תפקיד",
+    "switchActive": "החלף תפקיד פעיל",
+    "actingAs": "פועל כ-"
+  },
+  "coi": {
+    "declare": "הצהר ניגוד עניינים",
+    "scopeLabel": "סוג הניגוד",
+    "reason": "נימוק לניגוד העניינים",
+    "recused": "נמנעו מהצבעה",
+    "blockedReviewer": "חסום עקב COI",
+    "scope": {
+      "submission": "עבור בקשה ספציפית",
+      "user": "עבור חוקר ספציפי",
+      "department": "עבור מחלקה",
+      "global": "כללי"
+    },
+    "fields": {
+      "submissionId": "מזהה בקשה",
+      "userId": "מזהה משתמש",
+      "department": "מחלקה"
+    },
+    "page": {
+      "title": "ניהול ניגוד עניינים",
+      "subtitle": "הצהר ונטרל הקצאות כשיש לך ניגוד עניינים",
+      "list": "הצהרות פעילות",
+      "empty": "אין הצהרות פעילות"
+    }
   },
   "ai": {
     "panelTitle": "ניתוח AI — ייעוצי בלבד",
@@ -525,11 +589,17 @@
     "flags": "תחומי תשומת לב",
     "suggestions": "המלצות לשיפור",
     "analysisDate": "תאריך ניתוח",
+    "analysisLanguage": "שפת ניתוח",
+    "langTag": {
+      "he": "HE",
+      "en": "EN"
+    },
     "coverage": "הניתוח התבסס על {{answers}} תשובות טופס ו-{{documents}} מסמכים מצורפים.",
     "coverageMode": {
       "metadata_only": "כרגע המסמכים נסרקים לפי מטא-דאטה בלבד (שם קובץ/סוג קובץ)."
     },
     "noAnalysis": "לא בוצע ניתוח AI עדיין",
+    "askEnglishQuestion": "האם לענות באנגלית?",
     "run": "הרץ ניתוח AI",
     "rerun": "עדכן ניתוח",
     "running": "מנתח...",
@@ -905,6 +975,7 @@
     "NESTED_IMPERSONATION": "לא ניתן להתחזות כאשר כבר במצב התחזות",
     "CANNOT_IMPERSONATE_ADMIN": "לא ניתן להתחזות לאדמין",
     "ROLE_NOT_ALLOWED": "רק חברי ועדה מורשים לפעולה זו",
-    "USER_INACTIVE": "המשתמש אינו פעיל"
+    "USER_INACTIVE": "המשתמש אינו פעיל",
+    "COI_BLOCKED": "ניגוד עניינים מונע את הפעולה"
   }
 }

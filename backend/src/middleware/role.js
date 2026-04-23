@@ -21,7 +21,7 @@ import { AppError } from '../utils/errors.js'
 export function authorize(...roles) {
   return (req, res, next) => {
     if (!req.user) return next(AppError.unauthorized())
-    if (!roles.includes(req.user.role)) return next(AppError.forbidden())
+    if (!roles.some((role) => req.user.roles?.includes(role))) return next(AppError.forbidden())
     next()
   }
 }
@@ -37,7 +37,7 @@ export function authorizeOwnerOrRoles(...roles) {
   return (req, res, next) => {
     if (!req.user) return next(AppError.unauthorized())
     const isOwner    = req.user.id === req.params.id
-    const hasRole    = roles.includes(req.user.role)
+    const hasRole    = roles.some((role) => req.user.roles?.includes(role))
     if (!isOwner && !hasRole) return next(AppError.forbidden())
     next()
   }

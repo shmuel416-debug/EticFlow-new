@@ -18,6 +18,7 @@ import ResetPasswordPage          from './pages/ResetPasswordPage'
 import SsoCallbackPage            from './pages/auth/SsoCallbackPage'
 import DashboardPage              from './pages/DashboardPage'
 import NotificationsPage          from './pages/NotificationsPage'
+import PrivacyCenterPage          from './pages/PrivacyCenterPage'
 import FormBuilderPage            from './pages/secretary/FormBuilderPage'
 import FormPreviewPage            from './pages/secretary/FormPreviewPage'
 import FormLibraryPage            from './pages/secretary/FormLibraryPage'
@@ -42,6 +43,7 @@ import StatsPage                  from './pages/reports/StatsPage'
 import AuditLogPage               from './pages/reports/AuditLogPage'
 import SettingsPage               from './pages/admin/SettingsPage'
 import StatusManagementPage       from './pages/admin/StatusManagementPage'
+import CoiPage                    from './pages/profile/CoiPage'
 
 export default function App() {
   return (
@@ -67,6 +69,8 @@ export default function App() {
                 <Route path="/settings"      element={<SettingsPage />} />
               </Route>
               <Route path="/notifications"   element={<NotificationsPage />} />
+              <Route path="/profile/coi"     element={<CoiPage />} />
+              <Route path="/privacy"         element={<PrivacyCenterPage />} />
 
               {/* Meetings — SECRETARY, CHAIRMAN, ADMIN */}
               <Route element={<ProtectedRoute roles={['SECRETARY', 'CHAIRMAN', 'ADMIN']} />}>

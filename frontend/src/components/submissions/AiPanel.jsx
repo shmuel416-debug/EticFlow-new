@@ -54,6 +54,7 @@ export default function AiPanel({ submissionId, canRun = false }) {
   const [loading,  setLoading]  = useState(true)
   const [running,  setRunning]  = useState(false)
   const [error,    setError]    = useState('')
+  const [responseLanguage, setResponseLanguage] = useState('he')
 
   /** Loads the latest saved analysis from the API. */
   const loadAnalysis = useCallback(async () => {
@@ -74,7 +75,7 @@ export default function AiPanel({ submissionId, canRun = false }) {
     setRunning(true)
     setError('')
     try {
-      const { data } = await api.post(`/ai/analyze/${submissionId}`)
+      const { data } = await api.post(`/ai/analyze/${submissionId}`, { responseLanguage })
       setAnalysis(data.data)
     } catch {
       setError(t('ai.runError'))
@@ -95,6 +96,11 @@ export default function AiPanel({ submissionId, canRun = false }) {
   const result = analysis?.result
   const coverage = result?.inputCoverage
   const cfg    = result ? (RISK_CONFIG[result.riskLevel] ?? RISK_CONFIG.LOW) : null
+  const resultLanguage = result?.responseLanguage
+    ? result.responseLanguage
+    : /[\u0590-\u05FF]/.test(result?.summary ?? '')
+      ? 'he'
+      : 'en'
 
   return (
     <section aria-label={t('ai.panelLabel')}
@@ -126,6 +132,15 @@ export default function AiPanel({ submissionId, canRun = false }) {
         {/* Analysis result */}
         {result && (
           <>
+            <div className="flex justify-end">
+              <span
+                className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-700"
+                aria-label={t('ai.analysisLanguage')}
+              >
+                {t('ai.analysisLanguage')}: {t(`ai.langTag.${resultLanguage}`)}
+              </span>
+            </div>
+
             {/* Risk badge */}
             <div className="flex items-center gap-3 p-3 rounded-xl border"
               style={{ background: cfg.bg, borderColor: cfg.border }}>
@@ -204,6 +219,15 @@ export default function AiPanel({ submissionId, canRun = false }) {
         {/* Run button */}
         {canRun && (
           <div aria-live="polite" aria-atomic="true">
+            <label className="flex items-center gap-2 text-xs text-gray-600 mb-2">
+              <input
+                type="checkbox"
+                checked={responseLanguage === 'en'}
+                onChange={(event) => setResponseLanguage(event.target.checked ? 'en' : 'he')}
+                className="w-4 h-4 accent-blue-600"
+              />
+              <span>{t('ai.askEnglishQuestion')}</span>
+            </label>
             <button
               onClick={handleRun}
               disabled={running}

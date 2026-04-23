@@ -6,10 +6,12 @@
     "save": "Save",
     "saving": "Saving...",
     "cancel": "Cancel",
+    "delete": "Delete",
     "back": "Back",
     "logout": "Logout",
     "language": "Language",
     "notifications": "Notifications",
+    "coi": "Conflict Of Interest",
     "settings": "Settings",
     "skipToMain": "Skip to main content",
     "error": "Error",
@@ -27,7 +29,19 @@
     "showing": "Showing",
     "of": "of",
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "ok": "On time",
+    "completed": "completed",
+    "current": "current",
+    "future": "upcoming",
+    "fullDetails": "Full details",
+    "arrowNext": "→"
+  },
+  "language": {
+    "heLabel": "Hebrew",
+    "heShort": "HE",
+    "enLabel": "English",
+    "enShort": "EN"
   },
   "auth": {
     "login": {
@@ -52,6 +66,7 @@
     "ssoLoading": "Verifying identity, please wait...",
     "ssoCancelled": "Sign-in was cancelled.",
     "ssoFailed": "An error occurred during sign-in. Please try again.",
+    "sessionExpired": "Your session has expired. Please sign in again.",
     "ssoEmailConflict": "An account with this email already exists. Please sign in with email and password.",
     "accountInactive": "This account is inactive. Please contact your administrator.",
     "forgotPassword": {
@@ -100,7 +115,8 @@
     "statusManagement": "Status Management",
     "system": "System",
     "mainNavigation": "Main Navigation",
-    "meetingsCalendar": "Meetings Calendar"
+    "meetingsCalendar": "Meetings Calendar",
+    "privacy": "Privacy Center"
   },
   "dashboard": {
     "researcher": {
@@ -251,6 +267,9 @@
     "documents": "Documents",
     "progressLabel": "Step {{current}} of {{total}}",
     "fixAndResubmit": "Fix & Resubmit",
+    "withdraw": "Withdraw Submission",
+    "confirmWithdraw": "Withdraw this submission? The review process will stop.",
+    "withdrawReasonPrompt": "You can add a withdrawal reason (optional):",
     "downloadPdf": "Download (Hebrew)",
     "downloadPdfEn": "Download (English)",
     "steps": {
@@ -498,7 +517,26 @@
       "REJECTED": "Submission rejected",
       "SLA_WARNING": "SLA warning",
       "SLA_BREACH": "SLA breach"
+    },
+    "continuingReview": {
+      "title": "Continuing review reminder",
+      "body": "An approved submission is approaching its annual review date."
     }
+  },
+  "privacy": {
+    "title": "Privacy Center",
+    "subtitle": "Manage consent, data export, and erasure requests.",
+    "consentTitle": "Privacy Policy Consent",
+    "acceptPolicy": "I accept the privacy policy",
+    "consentSaved": "Consent saved successfully.",
+    "rightsTitle": "Data Subject Rights",
+    "exportButton": "Export My Data",
+    "exportReady": "Your export file is ready.",
+    "erasureButton": "Submit Erasure Request",
+    "erasurePlaceholder": "Add optional erasure request details",
+    "requestCreated": "Data subject request created.",
+    "requestsTitle": "Recent Requests",
+    "noRequests": "No requests submitted yet."
   },
   "roles": {
     "RESEARCHER": "Researcher",
@@ -512,7 +550,33 @@
     "chairman": "Chairman",
     "admin": "Admin",
     "unknown": "Unknown",
-    "role": "Role"
+    "role": "Role",
+    "switchActive": "Switch active role",
+    "actingAs": "Acting as"
+  },
+  "coi": {
+    "declare": "Declare conflict",
+    "scopeLabel": "Conflict scope",
+    "reason": "Conflict reason",
+    "recused": "Recused attendees",
+    "blockedReviewer": "Blocked due to COI",
+    "scope": {
+      "submission": "Specific submission",
+      "user": "Specific researcher",
+      "department": "Department",
+      "global": "Global"
+    },
+    "fields": {
+      "submissionId": "Submission ID",
+      "userId": "User ID",
+      "department": "Department"
+    },
+    "page": {
+      "title": "Conflict management",
+      "subtitle": "Declare and prevent assignments when you have a conflict",
+      "list": "Active declarations",
+      "empty": "No active declarations"
+    }
   },
   "ai": {
     "panelTitle": "AI Analysis — Advisory Only",
@@ -525,11 +589,17 @@
     "flags": "Areas of concern",
     "suggestions": "Improvement suggestions",
     "analysisDate": "Analysis date",
+    "analysisLanguage": "Analysis language",
+    "langTag": {
+      "he": "HE",
+      "en": "EN"
+    },
     "coverage": "The analysis used {{answers}} form answers and {{documents}} attached documents.",
     "coverageMode": {
       "metadata_only": "Currently, documents are scanned by metadata only (file name/type)."
     },
     "noAnalysis": "No AI analysis has been run yet",
+    "askEnglishQuestion": "Answer in English?",
     "run": "Run AI Analysis",
     "rerun": "Refresh Analysis",
     "running": "Analyzing...",
@@ -905,6 +975,7 @@
     "NESTED_IMPERSONATION": "Cannot impersonate while already impersonating",
     "CANNOT_IMPERSONATE_ADMIN": "Cannot impersonate an Admin",
     "ROLE_NOT_ALLOWED": "Only committee members are allowed to perform this action",
-    "USER_INACTIVE": "The selected user is inactive"
+    "USER_INACTIVE": "The selected user is inactive",
+    "COI_BLOCKED": "A conflict of interest blocks this action"
   }
 }

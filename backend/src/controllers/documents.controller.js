@@ -13,6 +13,7 @@ import prisma   from '../config/database.js'
 import { AppError } from '../utils/errors.js'
 import { validateFile, saveFile, deleteFile, resolvePath } from '../services/storage.service.js'
 import { can as canByStatusPermission } from '../services/status.service.js'
+import { getRequestRole, hasAnyRole } from '../utils/roles.js'
 import path     from 'path'
 import fs       from 'fs'
 
@@ -27,9 +28,10 @@ import fs       from 'fs'
  * @returns {boolean}
  */
 function canAccess(user, submission) {
-  if (['SECRETARY', 'CHAIRMAN', 'ADMIN'].includes(user.role)) return true
-  if (user.role === 'RESEARCHER')  return submission.authorId   === user.id
-  if (user.role === 'REVIEWER')    return submission.reviewerId === user.id
+  const activeRole = user.activeRole ?? 'RESEARCHER'
+  if (hasAnyRole(user, 'SECRETARY', 'CHAIRMAN', 'ADMIN')) return true
+  if (activeRole === 'RESEARCHER')  return submission.authorId   === user.id
+  if (activeRole === 'REVIEWER')    return submission.reviewerId === user.id
   return false
 }
 
@@ -41,9 +43,10 @@ function canAccess(user, submission) {
  * @returns {boolean}
  */
 async function canWrite(user, submission) {
-  if (['SECRETARY', 'ADMIN'].includes(user.role)) return true
-  if (user.role === 'RESEARCHER') {
-    const allowed = await canByStatusPermission('UPLOAD_DOC', submission.status, user.role)
+  const activeRole = user.activeRole ?? 'RESEARCHER'
+  if (hasAnyRole(user, 'SECRETARY', 'ADMIN')) return true
+  if (activeRole === 'RESEARCHER') {
+    const allowed = await canByStatusPermission('UPLOAD_DOC', submission.status, activeRole)
     return submission.authorId === user.id && allowed
   }
   return false
@@ -71,6 +74,7 @@ function sanitizeName(originalName) {
  */
 export async function upload(req, res, next) {
   try {
+    req.user.activeRole = getRequestRole(req)
     const { subId } = req.params
     const files     = req.files   // multer array field "files"
 
@@ -132,6 +136,7 @@ export async function upload(req, res, next) {
  */
 export async function list(req, res, next) {
   try {
+    req.user.activeRole = getRequestRole(req)
     const { subId } = req.params
 
     const submission = await prisma.submission.findUnique({ where: { id: subId } })
@@ -168,6 +173,7 @@ export async function list(req, res, next) {
  */
 export async function download(req, res, next) {
   try {
+    req.user.activeRole = getRequestRole(req)
     const { id } = req.params
 
     const doc = await prisma.document.findUnique({
@@ -210,6 +216,7 @@ export async function download(req, res, next) {
  */
 export async function remove(req, res, next) {
   try {
+    req.user.activeRole = getRequestRole(req)
     const { id } = req.params
 
     const doc = await prisma.document.findUnique({

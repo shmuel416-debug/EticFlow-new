@@ -21,12 +21,17 @@ const DEFAULT_STATUS_CONFIG = [
 ]
 
 const DEFAULT_TRANSITIONS = [
+  { fromCode: 'DRAFT', toCode: 'WITHDRAWN', allowedRoles: ['RESEARCHER', 'SECRETARY', 'ADMIN'], requireReviewerAssigned: false },
+  { fromCode: 'SUBMITTED', toCode: 'WITHDRAWN', allowedRoles: ['RESEARCHER', 'SECRETARY', 'ADMIN'], requireReviewerAssigned: false },
   { fromCode: 'SUBMITTED', toCode: 'IN_TRIAGE', allowedRoles: ['SECRETARY', 'ADMIN'], requireReviewerAssigned: false },
+  { fromCode: 'IN_TRIAGE', toCode: 'WITHDRAWN', allowedRoles: ['SECRETARY', 'ADMIN'], requireReviewerAssigned: false },
   { fromCode: 'IN_TRIAGE', toCode: 'ASSIGNED', allowedRoles: ['SECRETARY', 'ADMIN'], requireReviewerAssigned: true },
+  { fromCode: 'ASSIGNED', toCode: 'WITHDRAWN', allowedRoles: ['SECRETARY', 'ADMIN'], requireReviewerAssigned: false },
   { fromCode: 'ASSIGNED', toCode: 'IN_REVIEW', allowedRoles: ['SECRETARY', 'ADMIN'], requireReviewerAssigned: true },
   { fromCode: 'IN_REVIEW', toCode: 'APPROVED', allowedRoles: ['CHAIRMAN', 'ADMIN'], requireReviewerAssigned: false },
   { fromCode: 'IN_REVIEW', toCode: 'REJECTED', allowedRoles: ['CHAIRMAN', 'ADMIN'], requireReviewerAssigned: false },
   { fromCode: 'IN_REVIEW', toCode: 'PENDING_REVISION', allowedRoles: ['CHAIRMAN', 'ADMIN'], requireReviewerAssigned: false },
+  { fromCode: 'PENDING_REVISION', toCode: 'WITHDRAWN', allowedRoles: ['RESEARCHER', 'SECRETARY', 'ADMIN'], requireReviewerAssigned: false },
   { fromCode: 'PENDING_REVISION', toCode: 'SUBMITTED', allowedRoles: ['SECRETARY', 'ADMIN'], requireReviewerAssigned: false },
 ]
 

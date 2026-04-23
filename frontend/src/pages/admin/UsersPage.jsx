@@ -24,6 +24,17 @@ const ROLE_COLORS = {
 }
 
 /**
+ * Returns normalized user roles array with RESEARCHER enforced.
+ * @param {string[]|undefined} roles
+ * @returns {string[]}
+ */
+function normalizeRoles(roles) {
+  const deduped = [...new Set(Array.isArray(roles) ? roles : ['RESEARCHER'])]
+  if (!deduped.includes('RESEARCHER')) deduped.push('RESEARCHER')
+  return deduped
+}
+
+/**
  * Admin Users management page — list, create, update, deactivate, impersonate.
  * @returns {JSX.Element}
  */
@@ -46,7 +57,7 @@ export default function UsersPage() {
   // Modal state
   const [modalOpen, setModalOpen]   = useState(false)
   const [editUser, setEditUser]     = useState(null) // null = create mode
-  const [formData, setFormData]     = useState({ fullName: '', email: '', role: 'RESEARCHER', department: '', phone: '', password: '' })
+  const [formData, setFormData]     = useState({ fullName: '', email: '', roles: ['RESEARCHER'], department: '', phone: '', password: '' })
   const [formError, setFormError]   = useState(null)
   const [saving, setSaving]         = useState(false)
 
@@ -90,9 +101,10 @@ export default function UsersPage() {
    */
   function openModal(user = null) {
     setEditUser(user)
+    const initialRoles = normalizeRoles(user?.roles ?? (user?.role ? [user.role] : ['RESEARCHER']))
     setFormData(user
-      ? { fullName: user.fullName, email: user.email, role: user.role, department: user.department ?? '', phone: user.phone ?? '', password: '' }
-      : { fullName: '', email: '', role: 'RESEARCHER', department: '', phone: '', password: '' }
+      ? { fullName: user.fullName, email: user.email, roles: initialRoles, department: user.department ?? '', phone: user.phone ?? '', password: '' }
+      : { fullName: '', email: '', roles: ['RESEARCHER'], department: '', phone: '', password: '' }
     )
     setFormError(null)
     setModalOpen(true)
@@ -107,8 +119,9 @@ export default function UsersPage() {
     try {
       const payload = { ...formData }
       if (!payload.password) delete payload.password
+      payload.roles = normalizeRoles(payload.roles)
       if (editUser) {
-        await api.put(`/users/admin/users/${editUser.id}`, { fullName: payload.fullName, role: payload.role, department: payload.department, phone: payload.phone })
+        await api.put(`/users/admin/users/${editUser.id}`, { fullName: payload.fullName, roles: payload.roles, department: payload.department, phone: payload.phone })
       } else {
         await api.post('/users/admin/users', payload)
       }
@@ -244,9 +257,13 @@ export default function UsersPage() {
                     <td className="px-4 py-3 font-medium">{u.fullName}</td>
                     <td className="px-4 py-3 text-gray-600">{u.email}</td>
                     <td className="px-4 py-3">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${ROLE_COLORS[u.role] ?? 'bg-gray-100 text-gray-700'}`}>
-                        {t(`roles.${u.role.toLowerCase()}`)}
-                      </span>
+                      <div className="flex flex-wrap gap-1">
+                        {(u.roles ?? [u.role]).map((role) => (
+                          <span key={`${u.id}-${role}`} className={`px-2 py-0.5 rounded-full text-xs font-semibold ${ROLE_COLORS[role] ?? 'bg-gray-100 text-gray-700'}`}>
+                            {t(`roles.${role.toLowerCase()}`)}
+                          </span>
+                        ))}
+                      </div>
                     </td>
                     <td className="px-4 py-3 text-gray-600">{u.department ?? '—'}</td>
                     <td className="px-4 py-3">
@@ -256,7 +273,7 @@ export default function UsersPage() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        {!isImpersonating && u.role !== 'ADMIN' && u.isActive && (
+                        {!isImpersonating && !(u.roles ?? [u.role]).includes('ADMIN') && u.isActive && (
                           <button
                             onClick={() => handleImpersonate(u)}
                             className="text-xs px-2 py-1 rounded bg-amber-50 text-amber-700 hover:bg-amber-100
@@ -304,12 +321,16 @@ export default function UsersPage() {
                     <p className="font-semibold">{u.fullName}</p>
                     <p className="text-xs text-gray-500">{u.email}</p>
                   </div>
-                  <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${ROLE_COLORS[u.role] ?? 'bg-gray-100 text-gray-700'}`}>
-                    {t(`roles.${u.role.toLowerCase()}`)}
-                  </span>
+                  <div className="flex flex-wrap gap-1">
+                    {(u.roles ?? [u.role]).map((role) => (
+                      <span key={`${u.id}-mobile-${role}`} className={`px-2 py-0.5 rounded-full text-xs font-semibold ${ROLE_COLORS[role] ?? 'bg-gray-100 text-gray-700'}`}>
+                        {t(`roles.${role.toLowerCase()}`)}
+                      </span>
+                    ))}
+                  </div>
                 </div>
                 <div className="flex flex-wrap gap-2 mt-3">
-                  {!isImpersonating && u.role !== 'ADMIN' && u.isActive && (
+                  {!isImpersonating && !(u.roles ?? [u.role]).includes('ADMIN') && u.isActive && (
                     <button onClick={() => handleImpersonate(u)}
                       aria-label={`${t('admin.impersonate')} ${u.fullName}`}
                       className="text-xs px-3 py-2 rounded bg-amber-50 text-amber-700 min-h-[44px]">
@@ -398,19 +419,32 @@ export default function UsersPage() {
               ))}
 
               <div>
-                <label htmlFor="field-role" className="block text-xs font-semibold text-gray-600 mb-1">
+                <label className="block text-xs font-semibold text-gray-600 mb-1">
                   {t('roles.role')} <span className="text-red-500" aria-hidden="true">*</span>
                 </label>
-                <select
-                  id="field-role"
-                  value={formData.role}
-                  onChange={(e) => setFormData(d => ({ ...d, role: e.target.value }))}
-                  aria-required="true"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm min-h-[44px]
-                             focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {ROLES.map(r => <option key={r} value={r}>{t(`roles.${r.toLowerCase()}`)}</option>)}
-                </select>
+                <div className="space-y-2 border border-gray-200 rounded-lg px-3 py-2">
+                  {ROLES.map((role) => {
+                    const checked = formData.roles.includes(role)
+                    const locked = role === 'RESEARCHER'
+                    return (
+                      <label key={role} className="flex items-center gap-2 text-sm text-gray-700">
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          disabled={locked}
+                          onChange={(e) => {
+                            const next = e.target.checked
+                              ? [...formData.roles, role]
+                              : formData.roles.filter((r) => r !== role)
+                            setFormData((d) => ({ ...d, roles: normalizeRoles(next) }))
+                          }}
+                          className="w-4 h-4"
+                        />
+                        <span>{t(`roles.${role.toLowerCase()}`)}</span>
+                      </label>
+                    )
+                  })}
+                </div>
               </div>
             </div>
 

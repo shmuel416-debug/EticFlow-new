@@ -6,7 +6,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 
@@ -48,6 +48,7 @@ const ENTITY_TYPES = ['SUBMISSION', 'USER', 'FORM', 'MEETING', 'PROTOCOL', 'DOCU
 export default function AuditLogPage() {
   const { t }    = useTranslation()
   const navigate = useNavigate()
+  const location = useLocation()
 
   const [logs,      setLogs]      = useState([])
   const [total,     setTotal]     = useState(0)
@@ -60,6 +61,7 @@ export default function AuditLogPage() {
   const [entityTypeFilter, setEntityTypeFilter] = useState('')
   const [dateFromFilter,   setDateFromFilter]   = useState('')
   const [dateToFilter,     setDateToFilter]     = useState('')
+  const backTo = typeof location.state?.from === 'string' ? location.state.from : '/reports'
 
   // ── Fetch ────────────────────────────────────────
 
@@ -115,7 +117,7 @@ export default function AuditLogPage() {
           </p>
         </div>
         <button
-          onClick={() => navigate('/reports')}
+          onClick={() => navigate(backTo)}
           className="text-sm font-semibold px-4 py-2.5 rounded-xl border border-white/30 text-white hover:bg-white/10 transition-colors self-start md:self-auto"
           style={{ minHeight: '44px' }}
           aria-label={t('stats.title')}

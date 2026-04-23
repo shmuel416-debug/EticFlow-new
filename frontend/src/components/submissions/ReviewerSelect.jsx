@@ -12,10 +12,11 @@ import api from '../../services/api'
  * @param {{
  *   value: string,
  *   onChange: (reviewerId: string) => void,
+ *   submissionId?: string,
  *   disabled?: boolean
  * }} props
  */
-export default function ReviewerSelect({ value, onChange, disabled = false }) {
+export default function ReviewerSelect({ value, onChange, submissionId, disabled = false }) {
   const { t }       = useTranslation()
   const [reviewers, setReviewers] = useState([])
   const [loading,   setLoading]   = useState(true)
@@ -24,7 +25,8 @@ export default function ReviewerSelect({ value, onChange, disabled = false }) {
     /** Fetches active reviewers from the API. */
     async function fetchReviewers() {
       try {
-        const { data } = await api.get('/users/reviewers')
+        const query = submissionId ? `?submissionId=${encodeURIComponent(submissionId)}` : ''
+        const { data } = await api.get(`/users/reviewers${query}`)
         setReviewers(data.data ?? [])
       } catch {
         setReviewers([])
@@ -33,7 +35,7 @@ export default function ReviewerSelect({ value, onChange, disabled = false }) {
       }
     }
     fetchReviewers()
-  }, [])
+  }, [submissionId])
 
   return (
     <div className="space-y-1">
@@ -52,7 +54,14 @@ export default function ReviewerSelect({ value, onChange, disabled = false }) {
       >
         <option value="">{loading ? t('common.loading') : t('submission.detail.noReviewer')}</option>
         {reviewers.map((r) => (
-          <option key={r.id} value={r.id}>{r.fullName}</option>
+          <option
+            key={r.id}
+            value={r.id}
+            disabled={r.hasConflict}
+            title={r.hasConflict ? (r.conflictReasons?.[0]?.message || t('errors.COI_BLOCKED')) : undefined}
+          >
+            {r.fullName}{r.hasConflict ? ` — ${t('coi.blockedReviewer')}` : ''}
+          </option>
         ))}
       </select>
     </div>

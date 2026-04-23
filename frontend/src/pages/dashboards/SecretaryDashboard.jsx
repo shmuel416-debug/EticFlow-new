@@ -7,12 +7,12 @@
 
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import api from '../../services/api'
 import StatusBadge from '../../components/submissions/StatusBadge'
 
 /** SLA dot indicator */
-function SlaDot({ slaTracking }) {
+function SlaDot({ slaTracking, labels }) {
   if (!slaTracking) return null
   const now     = new Date()
   const due     = slaTracking.reviewDue || slaTracking.triageDue || slaTracking.revisionDue
@@ -20,12 +20,12 @@ function SlaDot({ slaTracking }) {
   const dayLeft = msLeft ? msLeft / 86400000 : null
 
   if (slaTracking.isBreached || (dayLeft !== null && dayLeft < 0)) {
-    return <span className="w-2.5 h-2.5 rounded-full bg-red-500 inline-block" title="SLA breach" aria-label="SLA הופר" />
+    return <span className="w-2.5 h-2.5 rounded-full bg-red-500 inline-block" title={labels.breach} aria-label={labels.breach} />
   }
   if (dayLeft !== null && dayLeft < 3) {
-    return <span className="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block" title="SLA warning" aria-label="SLA קרוב" />
+    return <span className="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block" title={labels.warning} aria-label={labels.warning} />
   }
-  return <span className="w-2.5 h-2.5 rounded-full bg-green-400 inline-block" title="On time" aria-label="SLA תקין" />
+  return <span className="w-2.5 h-2.5 rounded-full bg-green-400 inline-block" title={labels.onTime} aria-label={labels.onTime} />
 }
 
 /**
@@ -34,10 +34,17 @@ function SlaDot({ slaTracking }) {
  */
 export default function SecretaryDashboard() {
   const { t } = useTranslation()
+  const slaLabels = {
+    breach: t('dashboard.researcher.slaBreach'),
+    warning: t('notifications.types.SLA_WARNING'),
+    onTime: t('common.ok'),
+  }
+  const location = useLocation()
 
   const [stats, setStats]           = useState(null)
   const [loading, setLoading]       = useState(true)
   const [error, setError]           = useState(null)
+  const returnPath = `${location.pathname}${location.search}`
 
   useEffect(() => {
     async function fetchDashboard() {
@@ -126,14 +133,14 @@ export default function SecretaryDashboard() {
                   {stats.recentSubmissions.map(sub => (
                     <tr key={sub.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-4 py-2 font-mono text-xs text-gray-600">
-                        <Link to={`/secretary/submissions/${sub.id}`} className="hover:underline text-blue-600">
+                        <Link to={`/secretary/submissions/${sub.id}`} state={{ from: returnPath }} className="hover:underline text-blue-600">
                           {sub.applicationId}
                         </Link>
                       </td>
                       <td className="px-4 py-2 max-w-xs truncate">{sub.title}</td>
                       <td className="px-4 py-2 text-gray-600">{sub.author?.fullName}</td>
                       <td className="px-4 py-2"><StatusBadge status={sub.status} /></td>
-                      <td className="px-4 py-2"><SlaDot slaTracking={sub.slaTracking} /></td>
+                      <td className="px-4 py-2"><SlaDot slaTracking={sub.slaTracking} labels={slaLabels} /></td>
                     </tr>
                   ))}
                 </tbody>
@@ -143,11 +150,11 @@ export default function SecretaryDashboard() {
             {/* Mobile cards */}
             <div className="md:hidden divide-y divide-gray-50">
               {stats.recentSubmissions.map(sub => (
-                <Link key={sub.id} to={`/secretary/submissions/${sub.id}`}
+                <Link key={sub.id} to={`/secretary/submissions/${sub.id}`} state={{ from: returnPath }}
                   className="block p-4 hover:bg-gray-50">
                   <div className="flex items-start justify-between mb-1">
                     <p className="font-mono text-xs text-gray-500">{sub.applicationId}</p>
-                    <SlaDot slaTracking={sub.slaTracking} />
+                    <SlaDot slaTracking={sub.slaTracking} labels={slaLabels} />
                   </div>
                   <p className="text-sm font-medium truncate">{sub.title}</p>
                   <div className="flex items-center justify-between mt-2">

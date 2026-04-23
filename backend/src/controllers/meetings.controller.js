@@ -37,6 +37,8 @@ async function enqueueUserSyncSafe(payload) {
 }
 import { recordAuditEntry } from '../middleware/audit.js'
 import { COMMITTEE_ROLES } from '../constants/roles.js'
+import { getPrimaryRole, isCommitteeMember } from '../utils/roles.js'
+import { hasConflict } from '../services/coi.service.js'
 
 // ─────────────────────────────────────────────
 // CALENDAR SYNC HELPERS (non-fatal wrappers)
@@ -162,7 +164,7 @@ export async function list(req, res, next) {
         orderBy: { scheduledAt: filter === 'past' ? 'desc' : 'asc' },
         include: {
           _count: { select: { agendaItems: { where: { isActive: true } } } },
-          attendees: { where: { isActive: true }, include: { user: { select: { id: true, fullName: true, role: true } } } },
+          attendees: { where: { isActive: true }, include: { user: { select: { id: true, fullName: true, roles: true } } } },
         },
       }),
       prisma.meeting.count({ where }),
@@ -202,12 +204,12 @@ export async function create(req, res, next) {
     const attendeeUsers = attendeeIds.length > 0
       ? await prisma.user.findMany({
           where:  { id: { in: attendeeIds } },
-          select: { id: true, fullName: true, email: true, role: true, isActive: true },
+          select: { id: true, fullName: true, email: true, roles: true, isActive: true },
         })
       : []
 
     const invalidAttendees = attendeeUsers.filter(
-      (user) => !user.isActive || !COMMITTEE_ROLES.includes(user.role)
+      (user) => !user.isActive || !isCommitteeMember(user)
     )
     if (attendeeIds.length > 0 && (attendeeUsers.length !== attendeeIds.length || invalidAttendees.length > 0)) {
       await recordBlockedRoleAudit(req, res, {
@@ -216,7 +218,7 @@ export async function create(req, res, next) {
           requestedUserIds: attendeeIds,
           invalidUsers: invalidAttendees.map((user) => ({
             id: user.id,
-            role: user.role,
+            role: getPrimaryRole(user),
             isActive: user.isActive,
           })),
         },
@@ -236,7 +238,7 @@ export async function create(req, res, next) {
       },
       include: {
         _count: { select: { agendaItems: true } },
-        attendees: { include: { user: { select: { id: true, fullName: true, role: true } } } },
+        attendees: { include: { user: { select: { id: true, fullName: true, roles: true } } } },
       },
     })
 
@@ -283,13 +285,21 @@ export async function getById(req, res, next) {
           orderBy: { orderIndex: 'asc' },
           include: {
             submission: {
-              select: { id: true, applicationId: true, title: true, status: true, track: true },
+              select: {
+                id: true,
+                applicationId: true,
+                title: true,
+                status: true,
+                track: true,
+                authorId: true,
+                author: { select: { id: true, fullName: true, department: true } },
+              },
             },
           },
         },
         attendees: {
           where:   { isActive: true },
-          include: { user: { select: { id: true, fullName: true, role: true, email: true } } },
+          include: { user: { select: { id: true, fullName: true, roles: true, email: true } } },
         },
       },
     })
@@ -298,10 +308,30 @@ export async function getById(req, res, next) {
       throw new AppError('Meeting not found', 'NOT_FOUND', 404)
     }
 
+    const agendaItems = await Promise.all(
+      (meeting.agendaItems || []).map(async (item) => {
+        const recusedAttendees = []
+        for (const attendee of meeting.attendees || []) {
+          const conflict = await hasConflict(attendee.userId, item.submission)
+          if (conflict.conflict) {
+            recusedAttendees.push({
+              userId: attendee.userId,
+              reasons: conflict.reasons,
+            })
+          }
+        }
+        return {
+          ...item,
+          recusedAttendees,
+        }
+      })
+    )
+
     const syncMap = await getUserSyncMapForMeetings(req.user?.id, [meeting.id])
     res.json({
       data: {
         ...meeting,
+        agendaItems,
         userCalendarSync: syncMap.get(meeting.id) || null,
       },
     })
@@ -498,7 +528,7 @@ export async function addAttendee(req, res, next) {
 
     const [meeting, user] = await Promise.all([
       prisma.meeting.findUnique({ where: { id: meetingId } }),
-      prisma.user.findUnique({ where: { id: userId }, select: { id: true, fullName: true, role: true, email: true, isActive: true } }),
+      prisma.user.findUnique({ where: { id: userId }, select: { id: true, fullName: true, roles: true, email: true, isActive: true } }),
     ])
 
     if (!meeting || !meeting.isActive) throw new AppError('Meeting not found', 'NOT_FOUND', 404)
@@ -509,19 +539,19 @@ export async function addAttendee(req, res, next) {
         meta: {
           endpoint: '/api/meetings/:id/attendees',
           targetUserId: userId,
-          targetRole: user.role,
+          targetRole: getPrimaryRole(user),
           isActive: false,
         },
       })
       throw new AppError('User is inactive', 'USER_INACTIVE', 400)
     }
-    if (!COMMITTEE_ROLES.includes(user.role)) {
+    if (!isCommitteeMember(user)) {
       await recordBlockedRoleAudit(req, res, {
         entityId: meetingId,
         meta: {
           endpoint: '/api/meetings/:id/attendees',
           targetUserId: userId,
-          targetRole: user.role,
+          targetRole: getPrimaryRole(user),
           isActive: true,
         },
       })
@@ -533,7 +563,7 @@ export async function addAttendee(req, res, next) {
       where:  { meetingId_userId: { meetingId, userId } },
       create: { meetingId, userId },
       update: { isActive: true },
-      include: { user: { select: { id: true, fullName: true, role: true, email: true } } },
+      include: { user: { select: { id: true, fullName: true, roles: true, email: true } } },
     })
 
     await enqueueUserSyncSafe({

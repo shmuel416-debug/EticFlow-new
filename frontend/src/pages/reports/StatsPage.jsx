@@ -7,7 +7,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 
@@ -187,11 +187,13 @@ function MonthlyTrendChart({ monthly }) {
 export default function StatsPage() {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
+  const location = useLocation()
 
   const [stats,     setStats]     = useState(null)
   const [loading,   setLoading]   = useState(true)
   const [error,     setError]     = useState(null)
   const [exporting, setExporting] = useState(false)
+  const returnPath = `${location.pathname}${location.search}`
 
   // ── Fetch stats ──────────────────────────────────
 
@@ -272,7 +274,7 @@ export default function StatsPage() {
           </div>
           <div className="flex gap-2">
             <button
-              onClick={() => navigate('/reports/audit-log')}
+              onClick={() => navigate('/reports/audit-log', { state: { from: returnPath } })}
               className="text-sm font-semibold px-4 py-2.5 rounded-xl border border-white/30 text-white hover:bg-white/10 transition-colors"
               style={{ minHeight: '44px' }}
             >

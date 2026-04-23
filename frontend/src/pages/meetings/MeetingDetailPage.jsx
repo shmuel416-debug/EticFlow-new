@@ -8,9 +8,15 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useParams, useNavigate, Link, useLocation } from 'react-router-dom'
 import api from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
+import CoiBadge from '../../components/meetings/CoiBadge'
+
+function getPrimaryRole(user) {
+  const roles = Array.isArray(user?.roles) ? user.roles : (user?.role ? [user.role] : ['RESEARCHER'])
+  return ['ADMIN', 'CHAIRMAN', 'SECRETARY', 'REVIEWER', 'RESEARCHER'].find((role) => roles.includes(role)) || 'RESEARCHER'
+}
 
 /** Format a datetime string */
 function formatDate(dateStr) {
@@ -74,6 +80,7 @@ export default function MeetingDetailPage() {
   const { id }    = useParams()
   const { user }  = useAuth()
   const navigate  = useNavigate()
+  const location  = useLocation()
 
   const [meeting, setMeeting]           = useState(null)
   const [loading, setLoading]           = useState(true)
@@ -100,6 +107,7 @@ export default function MeetingDetailPage() {
   const [savingAttendance, setSavingAttendance] = useState(false)
 
   const canManage = user?.role === 'SECRETARY' || user?.role === 'ADMIN'
+  const backTo = typeof location.state?.from === 'string' ? location.state.from : '/meetings'
 
   /**
    * Fetches full meeting details.
@@ -137,7 +145,7 @@ export default function MeetingDetailPage() {
     if (!canManage) return
     api.get('/users/admin/users?limit=200')
       .then(({ data }) => {
-        setAllUsers((data.data ?? []).filter(u => u.role !== 'RESEARCHER' && u.isActive))
+        setAllUsers((data.data ?? []).filter(u => getPrimaryRole(u) !== 'RESEARCHER' && u.isActive))
       })
       .catch(() => setUsersLoadError(true))
   }, [canManage])
@@ -243,7 +251,7 @@ export default function MeetingDetailPage() {
     if (!window.confirm(t('meetings.confirmCancel'))) return
     try {
       await api.delete(`/meetings/${id}`)
-      navigate('/meetings')
+      navigate(backTo)
     } catch (err) {
       alert(err.message)
     }
@@ -264,7 +272,7 @@ export default function MeetingDetailPage() {
     return (
       <div className="max-w-3xl mx-auto">
         <div role="alert" className="bg-red-50 text-red-700 rounded-lg p-4">{error}</div>
-        <Link to="/meetings" className="text-sm text-blue-600 hover:underline mt-3 inline-block">
+        <Link to={backTo} className="text-sm text-blue-600 hover:underline mt-3 inline-block">
           ← {t('meetings.title')}
         </Link>
       </div>
@@ -286,7 +294,7 @@ export default function MeetingDetailPage() {
   return (
     <div className="max-w-3xl mx-auto">
       {/* Back link */}
-      <Link to="/meetings" className="text-sm text-blue-600 hover:underline mb-4 inline-flex items-center gap-1">
+      <Link to={backTo} className="text-sm text-blue-600 hover:underline mb-4 inline-flex items-center gap-1">
         <span aria-hidden="true">←</span> {t('meetings.title')}
       </Link>
 
@@ -409,6 +417,12 @@ export default function MeetingDetailPage() {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium">{item.submission?.title}</p>
                   <p className="text-xs text-gray-500">{item.submission?.applicationId}</p>
+                  <CoiBadge
+                    names={(item.recusedAttendees || []).map((entry) => {
+                      const attendee = meeting.attendees?.find((row) => row.userId === entry.userId)
+                      return attendee?.user?.fullName || entry.userId
+                    })}
+                  />
                 </div>
                 {item.duration && (
                   <span className="text-xs text-gray-500 flex-shrink-0">{item.duration}'</span>
@@ -455,7 +469,7 @@ export default function MeetingDetailPage() {
                   <option value="">{t('meetings.selectUser')}</option>
                   {uninvitedUsers.map(u => (
                     <option key={u.id} value={u.id}>
-                      {u.fullName} — {t(`roles.${u.role.toLowerCase()}`, u.role)}
+                      {u.fullName} — {t(`roles.${getPrimaryRole(u).toLowerCase()}`, getPrimaryRole(u))}
                     </option>
                   ))}
                 </select>
@@ -489,7 +503,7 @@ export default function MeetingDetailPage() {
                   <p className="text-xs text-gray-500">
                     {attendee.user?.email}
                     <span className="ms-2 bg-gray-100 px-1.5 py-0.5 rounded text-xs">
-                      {t(`roles.${attendee.user?.role?.toLowerCase()}`, attendee.user?.role)}
+                      {t(`roles.${getPrimaryRole(attendee.user).toLowerCase()}`, getPrimaryRole(attendee.user))}
                     </span>
                   </p>
                 </div>

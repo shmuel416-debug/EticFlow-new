@@ -6,7 +6,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import api from '../../services/api'
@@ -39,6 +39,7 @@ function fmtDate(iso) {
 export default function ProtocolsListPage() {
   const { t }    = useTranslation()
   const navigate = useNavigate()
+  const location = useLocation()
   const { user } = useAuth()
 
   const canCreate = ['SECRETARY', 'ADMIN'].includes(user?.role)
@@ -54,6 +55,7 @@ export default function ProtocolsListPage() {
   const [loadingMeetings, setLoadingMeetings] = useState(false)
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState('')
+  const returnPath = `${location.pathname}${location.search}`
 
   // ── Fetch ────────────────────────────────────
 
@@ -312,7 +314,7 @@ export default function ProtocolsListPage() {
               return (
                 <li key={protocol.id} role="listitem">
                   <button
-                    onClick={() => navigate(`/protocols/${protocol.id}`)}
+                    onClick={() => navigate(`/protocols/${protocol.id}`, { state: { from: returnPath } })}
                     className="w-full text-right bg-white rounded-xl border hover:shadow-md transition-shadow p-4 cursor-pointer"
                     aria-label={`${protocol.title} — ${STATUS_LABEL[protocol.status]}`}
                   >

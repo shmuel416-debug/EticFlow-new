@@ -25,6 +25,8 @@ const NAV_ITEMS = [
   { key: 'meetingsCalendar',     icon: '🗓️', path: '/meetings/calendar',      roles: ['SECRETARY','CHAIRMAN','ADMIN'], indent: true },
   { key: 'protocols',            icon: '📋', path: '/protocols',              roles: ['SECRETARY','CHAIRMAN','ADMIN'] },
   { key: 'notifications',        icon: '🔔', path: '/notifications',          roles: ['RESEARCHER','SECRETARY','REVIEWER','CHAIRMAN','ADMIN'] },
+  { key: 'privacy',              icon: '🛡️', path: '/privacy',                roles: ['RESEARCHER','SECRETARY','REVIEWER','CHAIRMAN','ADMIN'] },
+  { key: 'coi',                  icon: '⚠️', path: '/profile/coi',            roles: ['RESEARCHER','SECRETARY','REVIEWER','CHAIRMAN','ADMIN'] },
   { key: 'users',                icon: '👥', path: '/users',                  roles: ['ADMIN'] },
   { key: 'reports',              icon: '📊', path: '/reports',                roles: ['SECRETARY','CHAIRMAN','ADMIN'] },
   { key: 'auditLog',            icon: '🔍', path: '/reports/audit-log',       roles: ['ADMIN'], indent: true },
@@ -40,9 +42,10 @@ export default function Sidebar({ isOpen, onClose }) {
   const { user, logout, isImpersonating, impersonation } = useAuth()
   const navigate = useNavigate()
   const isRtl = i18n.dir() === 'rtl'
+  const activeRole = user?.activeRole || user?.role
 
   const visibleItems = NAV_ITEMS.filter(
-    (item) => user && item.roles.includes(user.role)
+    (item) => user && item.roles.includes(activeRole)
   )
 
   /** Split into main items and settings (last item) */
@@ -199,7 +202,7 @@ export default function Sidebar({ isOpen, onClose }) {
               <p className="text-xs font-semibold truncate" style={{ color: isImpersonating ? '#92400e' : 'var(--lev-navy)' }}>
                 {user?.fullName}
               </p>
-              <p className="text-xs text-gray-600">{t(`roles.${user?.role}`)}</p>
+              <p className="text-xs text-gray-600">{t(`roles.${activeRole?.toLowerCase() ?? 'unknown'}`)}</p>
             </div>
             <button
               onClick={handleLogout}

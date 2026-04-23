@@ -8,7 +8,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import api from '../../services/api'
 import StatusBadge from '../../components/submissions/StatusBadge'
 
@@ -44,7 +44,7 @@ function slaDot(sub) {
  * Compact submission card for the list pane.
  * @param {{ sub: object, selected: boolean, onClick: Function }} props
  */
-function SubCard({ sub, selected, onClick }) {
+function SubCard({ sub, selected, onClick, returnPath }) {
   const { t } = useTranslation()
   const sla = slaDot(sub)
   const urgent = sub.status === 'PENDING_REVISION'
@@ -52,6 +52,7 @@ function SubCard({ sub, selected, onClick }) {
   return (
     <Link
       to={submissionRoute(sub)}
+      state={{ from: returnPath }}
       onClick={onClick}
       className={`w-full text-right rounded-xl p-3 transition-all border text-sm block ${
         selected
@@ -88,7 +89,7 @@ function SubCard({ sub, selected, onClick }) {
  * Timeline detail pane for selected submission.
  * @param {{ sub: object }} props
  */
-function TimelinePane({ sub }) {
+function TimelinePane({ sub, returnPath }) {
   const { t } = useTranslation()
   const currentStep = STATUS_STEP[sub.status] ?? 1
 
@@ -102,10 +103,11 @@ function TimelinePane({ sub }) {
         </div>
         <Link
           to={`/submissions/${sub.id}`}
+          state={{ from: returnPath }}
           className="text-xs font-medium px-3 py-1.5 rounded-lg text-white hover:opacity-90 flex-shrink-0"
           style={{ background: 'var(--lev-teal-text)', minHeight: '36px', display: 'flex', alignItems: 'center' }}
         >
-          פרטים מלאים ←
+          {t('common.fullDetails')} {t('common.arrowNext')}
         </Link>
       </div>
 
@@ -146,7 +148,7 @@ function TimelinePane({ sub }) {
                     'bg-gray-100 text-gray-400'
                   }`}
                   style={done ? { background: 'var(--lev-teal-text)' } : active ? { background: 'var(--lev-navy)', ringColor: 'var(--lev-teal)' } : {}}
-                  aria-label={`${t(`statusPage.steps.${step}`)}${done ? ' — הושלם' : active ? ' — נוכחי' : ' — עתידי'}`}
+                  aria-label={`${t(`statusPage.steps.${step}`)}${done ? ` — ${t('common.completed')}` : active ? ` — ${t('common.current')}` : ` — ${t('common.future')}`}`}
                 >
                   {done ? '✓' : i + 1}
                 </div>
@@ -173,7 +175,7 @@ function TimelinePane({ sub }) {
 
       {/* Action button */}
       {sub.status === 'PENDING_REVISION' && (
-        <Link to={`/submissions/${sub.id}`}
+        <Link to={`/submissions/${sub.id}`} state={{ from: returnPath }}
           className="mt-4 w-full py-2.5 text-sm font-bold text-white rounded-xl text-center hover:opacity-90 transition"
           style={{ background: '#dc2626' }}>
           {t('dashboard.researcher.fixAndResubmit')} →
@@ -195,11 +197,13 @@ function TimelinePane({ sub }) {
  */
 export default function ResearcherDashboard() {
   const { t }    = useTranslation()
+  const location = useLocation()
   const { user } = useAuth()
   const [submissions, setSubmissions] = useState([])
   const [selected,    setSelected]    = useState(null)
   const [loading,     setLoading]     = useState(true)
   const [error,       setError]       = useState('')
+  const returnPath = `${location.pathname}${location.search}`
 
   useEffect(() => {
     /** Loads researcher's own submissions from API. */
@@ -287,14 +291,15 @@ export default function ResearcherDashboard() {
               {submissions.map(sub => (
                 <SubCard key={sub.id} sub={sub}
                   selected={selected?.id === sub.id}
-                  onClick={() => setSelected(sub)} />
+                  onClick={() => setSelected(sub)}
+                  returnPath={returnPath} />
               ))}
             </div>
 
             {/* Timeline pane — desktop */}
             <div className="md:col-span-3 hidden md:block max-h-[360px]">
               {selected
-                ? <TimelinePane sub={selected} />
+                ? <TimelinePane sub={selected} returnPath={returnPath} />
                 : <div className="h-full flex items-center justify-center text-sm text-gray-400">
                     {t('dashboard.researcher.selectToView')}
                   </div>
@@ -304,7 +309,7 @@ export default function ResearcherDashboard() {
             {/* Mobile: show timeline of selected below list */}
             {selected && (
               <div className="md:hidden border-t border-gray-100 col-span-5">
-                <TimelinePane sub={selected} />
+                <TimelinePane sub={selected} returnPath={returnPath} />
               </div>
             )}
           </div>

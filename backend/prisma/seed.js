@@ -31,17 +31,31 @@ const DEFAULT_SUBMISSION_STATUSES = [
 ]
 
 const DEFAULT_TRANSITIONS = [
+  { fromCode: 'DRAFT', toCode: 'WITHDRAWN', allowedRoles: ['RESEARCHER', 'SECRETARY', 'ADMIN'], requireReviewerAssigned: false },
+  { fromCode: 'SUBMITTED', toCode: 'WITHDRAWN', allowedRoles: ['RESEARCHER', 'SECRETARY', 'ADMIN'], requireReviewerAssigned: false },
   { fromCode: 'SUBMITTED', toCode: 'IN_TRIAGE', allowedRoles: ['SECRETARY', 'ADMIN'], requireReviewerAssigned: false },
+  { fromCode: 'IN_TRIAGE', toCode: 'WITHDRAWN', allowedRoles: ['SECRETARY', 'ADMIN'], requireReviewerAssigned: false },
   { fromCode: 'IN_TRIAGE', toCode: 'ASSIGNED', allowedRoles: ['SECRETARY', 'ADMIN'], requireReviewerAssigned: true },
+  { fromCode: 'ASSIGNED', toCode: 'WITHDRAWN', allowedRoles: ['SECRETARY', 'ADMIN'], requireReviewerAssigned: false },
   { fromCode: 'ASSIGNED', toCode: 'IN_REVIEW', allowedRoles: ['SECRETARY', 'ADMIN'], requireReviewerAssigned: true },
   { fromCode: 'IN_REVIEW', toCode: 'APPROVED', allowedRoles: ['CHAIRMAN', 'ADMIN'], requireReviewerAssigned: false },
   { fromCode: 'IN_REVIEW', toCode: 'REJECTED', allowedRoles: ['CHAIRMAN', 'ADMIN'], requireReviewerAssigned: false },
   { fromCode: 'IN_REVIEW', toCode: 'PENDING_REVISION', allowedRoles: ['CHAIRMAN', 'ADMIN'], requireReviewerAssigned: false },
+  { fromCode: 'PENDING_REVISION', toCode: 'WITHDRAWN', allowedRoles: ['RESEARCHER', 'SECRETARY', 'ADMIN'], requireReviewerAssigned: false },
   { fromCode: 'PENDING_REVISION', toCode: 'SUBMITTED', allowedRoles: ['SECRETARY', 'ADMIN'], requireReviewerAssigned: false },
 ]
 
 const STATUS_ACTIONS = ['VIEW', 'EDIT', 'COMMENT', 'UPLOAD_DOC', 'DELETE_DOC', 'VIEW_INTERNAL', 'TRANSITION', 'ASSIGN', 'SUBMIT_REVIEW', 'RECORD_DECISION']
 const ROLES = ['RESEARCHER', 'SECRETARY', 'REVIEWER', 'CHAIRMAN', 'ADMIN']
+
+/**
+ * Returns a primary display role for role arrays.
+ * @param {string[]} roles
+ * @returns {string}
+ */
+function getPrimaryRole(roles) {
+  return roles.find((role) => role !== 'RESEARCHER') ?? 'RESEARCHER'
+}
 
 // ─────────────────────────────────────────────
 // HELPERS
@@ -70,11 +84,11 @@ async function seedUsers() {
   const passwordHash = await hashPassword('123456')
 
   const usersData = [
-    { email: 'researcher@test.com', fullName: 'ד"ר דנה כהן', role: 'RESEARCHER', department: 'ביולוגיה' },
-    { email: 'secretary@test.com',  fullName: 'מיכל לוי',    role: 'SECRETARY',  department: 'מנהל' },
-    { email: 'reviewer@test.com',   fullName: 'פרופ\' אבי גולן', role: 'REVIEWER', department: 'רפואה' },
-    { email: 'chairman@test.com',   fullName: 'פרופ\' שרה מזרחי', role: 'CHAIRMAN', department: 'ועדת אתיקה' },
-    { email: 'admin@test.com',      fullName: 'יוסי ברק',    role: 'ADMIN',      department: 'מערכות מידע' },
+    { email: 'researcher@test.com', fullName: 'ד"ר דנה כהן', roles: ['RESEARCHER'], department: 'ביולוגיה' },
+    { email: 'secretary@test.com',  fullName: 'מיכל לוי',    roles: ['RESEARCHER', 'SECRETARY'],  department: 'מנהל' },
+    { email: 'reviewer@test.com',   fullName: 'פרופ\' אבי גולן', roles: ['RESEARCHER', 'REVIEWER'], department: 'רפואה' },
+    { email: 'chairman@test.com',   fullName: 'פרופ\' שרה מזרחי', roles: ['RESEARCHER', 'CHAIRMAN'], department: 'ועדת אתיקה' },
+    { email: 'admin@test.com',      fullName: 'יוסי ברק',    roles: ['RESEARCHER', 'ADMIN'],      department: 'מערכות מידע' },
   ]
 
   const users = {}
@@ -83,12 +97,12 @@ async function seedUsers() {
     usersData.map((u) =>
       prisma.user.upsert({
         where:  { email: u.email },
-        update: { passwordHash },
+        update: { passwordHash, roles: u.roles },
         create: {
           email:        u.email,
           passwordHash: passwordHash,
           fullName:     u.fullName,
-          role:         u.role,
+          roles:        u.roles,
           department:   u.department,
           authProvider: 'LOCAL',
         },
@@ -96,7 +110,11 @@ async function seedUsers() {
     )
   ).then((results) => {
     results.forEach((user) => {
-      users[user.role] = user
+      const primaryRole = getPrimaryRole(user.roles)
+      users[primaryRole] = user
+      if (user.roles.includes('RESEARCHER') && !users.RESEARCHER) {
+        users.RESEARCHER = user
+      }
     })
   })
 
@@ -222,6 +240,11 @@ async function seedInstitutionSettings() {
     { key: 'sla_review_days',     value: '14',                valueType: 'number' },
     { key: 'sla_revision_days',   value: '30',                valueType: 'number' },
     { key: 'sla_approval_days',   value: '5',                 valueType: 'number' },
+    { key: 'sla_holidays',        value: '[]',                valueType: 'json' },
+    { key: 'timezone',            value: 'Asia/Jerusalem',    valueType: 'string' },
+    { key: 'decision_model',      value: 'IRB_FULL',          valueType: 'string' },
+    { key: 'committee_quorum_min_votes', value: '3',          valueType: 'number' },
+    { key: 'continuing_review_reminder_days', value: '30',     valueType: 'number' },
     {
       key: 'approval_template_he',
       value: JSON.stringify(getDefaultApprovalTemplate('he')),

@@ -20,6 +20,7 @@ import * as statusController from '../controllers/submissions.status.controller.
 import { generateApprovalLetter } from '../services/pdf.service.js'
 import { resolvePath } from '../services/storage.service.js'
 import { AppError } from '../utils/errors.js'
+import { getRequestRole } from '../utils/roles.js'
 import prisma from '../config/database.js'
 import fs from 'fs'
 
@@ -79,6 +80,15 @@ const commentSchema = z.object({
   content:    z.string().min(1).max(5000).transform(stripHtml),
   fieldKey:   z.string().max(100).optional(),
   isInternal: z.boolean().optional(),
+})
+
+const withdrawSchema = z.object({
+  note: z.string().max(2000).transform(stripHtml).optional(),
+})
+
+const voteSchema = z.object({
+  decision: z.enum(['APPROVED', 'REJECTED', 'REVISION_REQUIRED', 'ABSTAIN']),
+  note: z.string().max(2000).transform(stripHtml).optional(),
 })
 
 // ─────────────────────────────────────────────
@@ -184,6 +194,24 @@ router.post(
   statusController.addComment
 )
 
+router.post(
+  '/:id/withdraw',
+  authenticate,
+  authorize('RESEARCHER', 'SECRETARY', 'ADMIN'),
+  validate(withdrawSchema),
+  auditLog('submission.withdrawn', 'Submission'),
+  statusController.withdrawSubmission
+)
+
+router.post(
+  '/:id/votes',
+  authenticate,
+  authorize('REVIEWER', 'SECRETARY', 'CHAIRMAN', 'ADMIN'),
+  validate(voteSchema),
+  auditLog('submission.vote_recorded', 'SubmissionVote'),
+  statusController.recordVote
+)
+
 /**
  * POST /api/submissions/:id/approval-letter
  * Generates (or regenerates) the PDF approval letter for an approved submission
@@ -196,7 +224,7 @@ router.post(
   async (req, res, next) => {
     try {
       const { id }   = req.params
-      const { role } = req.user
+      const role = getRequestRole(req)
 
       // REVIEWER is never allowed
       if (role === 'REVIEWER') {

@@ -25,7 +25,7 @@ const ROLE_DASHBOARDS = {
 export default function DashboardPage() {
   const { user }   = useAuth()
   const { t }      = useTranslation()
-  const Dashboard  = ROLE_DASHBOARDS[user?.role]
+  const Dashboard  = ROLE_DASHBOARDS[user?.activeRole || user?.role]
 
   if (!Dashboard) {
     return (

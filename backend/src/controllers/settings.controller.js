@@ -19,6 +19,7 @@ import {
   normalizeApprovalTemplate,
   validateApprovalTemplatePayload,
 } from '../constants/approvalTemplate.js'
+import { getRequestRole } from '../utils/roles.js'
 
 /** Allowed setting keys to prevent arbitrary key creation via the API. */
 const ADMIN_ONLY_KEYS = new Set([
@@ -75,7 +76,7 @@ function allowedKeysForRole(role) {
  */
 export async function list(req, res, next) {
   try {
-    const permissions = allowedKeysForRole(req.user?.role)
+    const permissions = allowedKeysForRole(getRequestRole(req))
     if (!(permissions?.readKeys instanceof Set) || permissions.readKeys.size === 0) {
       throw new AppError('Forbidden', 'FORBIDDEN', 403)
     }
@@ -150,7 +151,8 @@ export async function update(req, res, next) {
     const { key }   = req.params
     const { value } = req.body
 
-    const permissions = allowedKeysForRole(req.user?.role)
+    const activeRole = getRequestRole(req)
+    const permissions = allowedKeysForRole(activeRole)
     if (!ALLOWED_UPDATE_KEYS.has(key)) {
       throw new AppError(`Unknown setting key: "${key}"`, 'INVALID_SETTING_KEY', 400)
     }
@@ -212,7 +214,7 @@ export async function update(req, res, next) {
         id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         editedAt: new Date().toISOString(),
         editedById: req.user?.id ?? null,
-        editedByRole: req.user?.role ?? null,
+        editedByRole: activeRole ?? null,
         template: previousTemplate,
       }
       const nextHistory = [entry, ...historyList].slice(0, 20)
@@ -243,7 +245,7 @@ export async function update(req, res, next) {
  */
 export async function previewApprovalTemplate(req, res, next) {
   try {
-    const role = req.user?.role
+    const role = getRequestRole(req)
     if (!['ADMIN', 'SECRETARY'].includes(role)) {
       throw new AppError('Forbidden', 'FORBIDDEN', 403)
     }

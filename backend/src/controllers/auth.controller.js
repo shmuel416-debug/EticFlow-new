@@ -13,6 +13,7 @@ import { AppError } from '../utils/errors.js'
 import { sendEmail } from '../services/email/email.service.js'
 import * as microsoftAuth from '../services/auth/microsoft.provider.js'
 import * as googleAuth    from '../services/auth/google.provider.js'
+import { emitAlert } from '../services/observability.service.js'
 
 // ─────────────────────────────────────────────
 // CONSTANTS
@@ -25,21 +26,26 @@ import * as googleAuth    from '../services/auth/google.provider.js'
  */
 const DUMMY_BCRYPT_HASH = '$2b$12$Z8nII1EDprDhFMZYH2.BVOhjlIjGBtStf/OgyisITv/gZJaXF6Y8y'
 const DEFAULT_AUTH_EXCHANGE_TTL_MS = 90 * 1000
+const LOGIN_LOCKOUT_MAX_ATTEMPTS = Math.max(3, parseInt(process.env.LOGIN_LOCKOUT_MAX_ATTEMPTS ?? '8', 10))
+const LOGIN_LOCKOUT_MINUTES = Math.max(5, parseInt(process.env.LOGIN_LOCKOUT_MINUTES ?? '15', 10))
 
 // ─────────────────────────────────────────────
 // HELPERS
 // ─────────────────────────────────────────────
 
 /**
- * Signs a JWT token for a user.
- * @param {{ id: string, email: string, role: string }} user
+ * Signs an access JWT token for a user.
+ * @param {{ id: string, email: string, role?: string, roles?: string[] }} user
  * @returns {string} Signed JWT
  */
-function signToken(user) {
+function signAccessToken(user) {
+  const roles = Array.isArray(user.roles) && user.roles.length > 0
+    ? user.roles
+    : [user.role || 'RESEARCHER']
   return jwt.sign(
-    { id: user.id, email: user.email, role: user.role },
+    { id: user.id, email: user.email, role: roles[0], roles },
     authConfig.jwt.secret,
-    { expiresIn: authConfig.jwt.expiresIn }
+    { expiresIn: authConfig.jwt.expiresIn, keyid: authConfig.jwt.secretVersion }
   )
 }
 
@@ -50,6 +56,92 @@ function signToken(user) {
  */
 function hashToken(rawToken) {
   return crypto.createHash('sha256').update(rawToken).digest('hex')
+}
+
+/**
+ * Parses a duration string like "8h", "7d" into milliseconds.
+ * @param {string} input
+ * @param {number} fallbackMs
+ * @returns {number}
+ */
+function parseDurationToMs(input, fallbackMs) {
+  const match = String(input || '').trim().match(/^(\d+)([smhd])$/i)
+  if (!match) return fallbackMs
+  const value = parseInt(match[1], 10)
+  const unit = match[2].toLowerCase()
+  const factor = { s: 1000, m: 60000, h: 3600000, d: 86400000 }[unit]
+  return value * factor
+}
+
+/**
+ * Saves auth cookies on the response.
+ * @param {import('express').Response} res
+ * @param {string} accessToken
+ * @param {string} refreshToken
+ * @returns {void}
+ */
+function setAuthCookies(res, accessToken, refreshToken) {
+  if (typeof res.cookie !== 'function') return
+  const secure = process.env.NODE_ENV === 'production'
+  res.cookie(authConfig.cookies.accessTokenName, accessToken, {
+    httpOnly: true,
+    secure,
+    sameSite: 'lax',
+    maxAge: parseDurationToMs(authConfig.jwt.expiresIn, 8 * 3600000),
+  })
+  res.cookie(authConfig.cookies.refreshTokenName, refreshToken, {
+    httpOnly: true,
+    secure,
+    sameSite: 'lax',
+    maxAge: parseDurationToMs(authConfig.jwt.refreshExpiresIn, 7 * 86400000),
+  })
+}
+
+/**
+ * Clears auth cookies from the response.
+ * @param {import('express').Response} res
+ * @returns {void}
+ */
+function clearAuthCookies(res) {
+  if (typeof res.clearCookie !== 'function') return
+  res.clearCookie(authConfig.cookies.accessTokenName)
+  res.clearCookie(authConfig.cookies.refreshTokenName)
+}
+
+/**
+ * Creates and stores a refresh token for a user.
+ * @param {string} userId
+ * @param {string|null} replacedBy
+ * @returns {Promise<{ raw: string, hash: string }>}
+ */
+async function issueRefreshToken(userId, replacedBy = null) {
+  const raw = crypto.randomBytes(48).toString('hex')
+  const hash = hashToken(raw)
+  if (!prisma.refreshToken?.create) {
+    return { raw, hash }
+  }
+  await prisma.refreshToken.create({
+    data: {
+      userId,
+      tokenHash: hash,
+      expiresAt: new Date(Date.now() + parseDurationToMs(authConfig.jwt.refreshExpiresIn, 7 * 86400000)),
+      replacedBy,
+    },
+  })
+  return { raw, hash }
+}
+
+/**
+ * Issues access+refresh tokens and writes secure cookies.
+ * @param {import('express').Response} res
+ * @param {{ id: string, email: string, role?: string, roles?: string[] }} user
+ * @returns {Promise<{ accessToken: string, refreshToken: string }>}
+ */
+async function issueSession(res, user) {
+  const accessToken = signAccessToken(user)
+  const refresh = await issueRefreshToken(user.id)
+  setAuthCookies(res, accessToken, refresh.raw)
+  return { accessToken, refreshToken: refresh.raw }
 }
 
 /**
@@ -78,10 +170,10 @@ async function issueAuthExchangeCode(userId) {
 /**
  * Strips sensitive fields from a user record.
  * @param {object} user - Prisma User record
- * @returns {{ id, email, fullName, role, department, phone, createdAt }}
+ * @returns {{ id, email, fullName, roles, department, phone, createdAt }}
  */
 function safeUser(user) {
-  const { passwordHash, resetToken, resetTokenExpiry, externalId, ...safe } = user
+  const { passwordHash, resetToken, resetTokenExpiry, externalId, failedLoginAttempts, lockoutUntil, ...safe } = user
   return safe
 }
 
@@ -142,11 +234,12 @@ export async function register(req, res, next) {
     const passwordHash = await bcrypt.hash(password, authConfig.bcryptRounds)
 
     const user = await prisma.user.create({
-      data: { email, passwordHash, fullName, department, phone, role: 'RESEARCHER' },
+      data: { email, passwordHash, fullName, department, phone, roles: ['RESEARCHER'] },
     })
 
+    const session = await issueSession(res, user)
     res.locals.entityId = user.id
-    res.status(201).json({ user: safeUser(user), token: signToken(user) })
+    res.status(201).json({ user: safeUser(user), token: session.accessToken })
   } catch (err) {
     next(err)
   }
@@ -165,16 +258,43 @@ export async function login(req, res, next) {
     const { email, password } = req.body
 
     const user = await prisma.user.findUnique({ where: { email } })
+    const now = new Date()
+
+    if (user?.lockoutUntil && user.lockoutUntil > now) {
+      return next(new AppError('Account temporarily locked. Please try again later.', 'ACCOUNT_LOCKED', 423))
+    }
 
     // Always run bcrypt — prevents timing-based email enumeration (constant-time)
     const validPassword = await bcrypt.compare(password, user?.passwordHash ?? DUMMY_BCRYPT_HASH)
 
     if (!user || !validPassword || !user.isActive) {
+      if (user?.isActive) {
+        const nextFailedAttempts = (user.failedLoginAttempts ?? 0) + 1
+        const isLocked = nextFailedAttempts >= LOGIN_LOCKOUT_MAX_ATTEMPTS
+        await prisma.user.update({
+          where: { id: user.id },
+          data: {
+            failedLoginAttempts: isLocked ? 0 : nextFailedAttempts,
+            lockoutUntil: isLocked ? new Date(Date.now() + LOGIN_LOCKOUT_MINUTES * 60 * 1000) : null,
+          },
+        })
+        if (isLocked) {
+          return next(new AppError('Account temporarily locked. Please try again later.', 'ACCOUNT_LOCKED', 423))
+        }
+      }
       return next(new AppError('Invalid email or password', 'INVALID_CREDENTIALS', 401))
     }
 
+    if ((user.failedLoginAttempts ?? 0) > 0 || user.lockoutUntil) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { failedLoginAttempts: 0, lockoutUntil: null },
+      })
+    }
+
+    const session = await issueSession(res, user)
     res.locals.entityId = user.id
-    res.json({ user: safeUser(user), token: signToken(user) })
+    res.json({ user: safeUser(user), token: session.accessToken })
   } catch (err) {
     next(err)
   }
@@ -220,8 +340,9 @@ export async function exchangeCode(req, res, next) {
       return next(new AppError('Invalid exchange code user', 'INVALID_EXCHANGE_CODE', 401))
     }
 
+    const session = await issueSession(res, record.user)
     res.locals.entityId = record.user.id
-    res.json({ user: safeUser(record.user), token: signToken(record.user) })
+    res.json({ user: safeUser(record.user), token: session.accessToken })
   } catch (err) {
     next(err)
   }
@@ -231,7 +352,7 @@ export async function exchangeCode(req, res, next) {
  * GET /api/auth/me
  * Returns the authenticated user's profile.
  * Requires authenticate middleware to run first (sets req.user).
- * @param {import('express').Request} req - req.user: { id, email, role }
+ * @param {import('express').Request} req - req.user: { id, email, roles, activeRole }
  * @param {import('express').Response} res
  * @param {import('express').NextFunction} next
  */
@@ -240,6 +361,66 @@ export async function me(req, res, next) {
     const user = await prisma.user.findUnique({ where: { id: req.user.id } })
     if (!user || !user.isActive) return next(AppError.notFound('User'))
     res.json({ user: safeUser(user) })
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
+ * POST /api/auth/refresh
+ * Rotates a refresh token and issues a fresh access token.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
+export async function refreshSession(req, res, next) {
+  try {
+    const rawRefresh = req.cookies?.[authConfig.cookies.refreshTokenName] ?? req.body?.refreshToken
+    if (!rawRefresh) return next(AppError.unauthorized())
+
+    const tokenHash = hashToken(rawRefresh)
+    const now = new Date()
+    const stored = await prisma.refreshToken.findUnique({
+      where: { tokenHash },
+      include: { user: true },
+    })
+    if (!stored || stored.revokedAt || stored.expiresAt <= now || !stored.user?.isActive) {
+      clearAuthCookies(res)
+      return next(AppError.unauthorized())
+    }
+
+    const nextRefresh = await issueRefreshToken(stored.userId, tokenHash)
+    await prisma.refreshToken.update({
+      where: { id: stored.id },
+      data: { revokedAt: now, replacedBy: nextRefresh.hash },
+    })
+
+    const accessToken = signAccessToken(stored.user)
+    setAuthCookies(res, accessToken, nextRefresh.raw)
+    res.json({ token: accessToken, user: safeUser(stored.user) })
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
+ * POST /api/auth/logout
+ * Revokes current refresh token and clears auth cookies.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
+export async function logoutSession(req, res, next) {
+  try {
+    const rawRefresh = req.cookies?.[authConfig.cookies.refreshTokenName] ?? req.body?.refreshToken
+    if (rawRefresh) {
+      await prisma.refreshToken.updateMany({
+        where: { tokenHash: hashToken(rawRefresh), revokedAt: null },
+        data: { revokedAt: new Date() },
+      })
+    }
+    clearAuthCookies(res)
+    res.status(204).send()
   } catch (err) {
     next(err)
   }
@@ -345,7 +526,7 @@ async function findOrCreateMicrosoftUser({ externalId, email, fullName }) {
 
   // First-time SSO — create as RESEARCHER
   const user = await prisma.user.create({
-    data: { email, fullName, externalId, authProvider: 'MICROSOFT', role: 'RESEARCHER', isActive: true, passwordHash: null },
+    data: { email, fullName, externalId, authProvider: 'MICROSOFT', roles: ['RESEARCHER'], isActive: true, passwordHash: null },
   })
   return { user, conflict: false }
 }
@@ -378,7 +559,7 @@ async function findOrCreateGoogleUser({ externalId, email, fullName }) {
   }
 
   const user = await prisma.user.create({
-    data: { email, fullName, externalId, authProvider: 'GOOGLE', role: 'RESEARCHER', isActive: true, passwordHash: null },
+    data: { email, fullName, externalId, authProvider: 'GOOGLE', roles: ['RESEARCHER'], isActive: true, passwordHash: null },
   })
   return { user, conflict: false }
 }
@@ -410,6 +591,7 @@ export async function googleRedirect(req, res, next) {
     res.redirect(authUrl)
   } catch (err) {
     console.error('[Auth/Google] redirect error:', err.message)
+    emitAlert('sso.google.redirect_failed', { message: err.message, requestId: req.requestId })
     const frontendUrl = safeFrontendFallbackUrl()
     res.redirect(`${frontendUrl}/login?error=sso_failed`)
   }
@@ -454,6 +636,7 @@ export async function googleCallback(req, res, next) {
     res.redirect(`${frontendUrl}/sso-callback?code=${exchangeCode}`)
   } catch (err) {
     console.error('[Auth/Google] callback error:', err.message)
+    emitAlert('sso.google.callback_failed', { message: err.message, requestId: req.requestId })
     const fallbackUrl = safeFrontendFallbackUrl()
     res.redirect(`${fallbackUrl}/login?error=sso_failed`)
   }
@@ -483,6 +666,7 @@ export async function microsoftRedirect(req, res, next) {
     res.redirect(authUrl)
   } catch (err) {
     console.error('[Auth/Microsoft] redirect error:', err.message)
+    emitAlert('sso.microsoft.redirect_failed', { message: err.message, requestId: req.requestId })
     const frontendUrl = safeFrontendFallbackUrl()
     res.redirect(`${frontendUrl}/login?error=sso_failed`)
   }
@@ -533,6 +717,7 @@ export async function microsoftCallback(req, res, next) {
     res.redirect(`${frontendUrl}/sso-callback?code=${exchangeCode}`)
   } catch (err) {
     console.error('[Auth/Microsoft] callback error:', err.message)
+    emitAlert('sso.microsoft.callback_failed', { message: err.message, requestId: req.requestId })
     const fallbackUrl = safeFrontendFallbackUrl()
     res.redirect(`${fallbackUrl}/login?error=sso_failed`)
   }

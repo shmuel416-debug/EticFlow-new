@@ -8,9 +8,14 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import api from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
+
+function getPrimaryRole(user) {
+  const roles = Array.isArray(user?.roles) ? user.roles : (user?.role ? [user.role] : ['RESEARCHER'])
+  return ['ADMIN', 'CHAIRMAN', 'SECRETARY', 'REVIEWER', 'RESEARCHER'].find((role) => roles.includes(role)) || 'RESEARCHER'
+}
 
 /** Format a date string for display */
 function formatDate(dateStr) {
@@ -125,7 +130,7 @@ function AttendeePicker({ users, selected, onChange, loadError, t }) {
             className="accent-blue-600 w-4 h-4"
           />
           <span className="flex-1 truncate">{u.fullName}</span>
-          <span className="text-xs text-gray-400 flex-shrink-0">{t(`roles.${u.role.toLowerCase()}`, u.role)}</span>
+          <span className="text-xs text-gray-400 flex-shrink-0">{t(`roles.${getPrimaryRole(u).toLowerCase()}`, getPrimaryRole(u))}</span>
         </label>
       ))}
     </div>
@@ -161,7 +166,7 @@ function CreateMeetingModal({ onClose, onCreated, t }) {
         // Fallback: fetch all and filter client-side
         api.get('/users/admin/users?limit=200')
           .then(({ data }) => setUsers(
-            (data.data ?? []).filter(u => u.role !== 'RESEARCHER' && u.isActive)
+            (data.data ?? []).filter(u => getPrimaryRole(u) !== 'RESEARCHER' && u.isActive)
           ))
           .catch(() => setUsersLoadError(true))
       })
@@ -303,12 +308,14 @@ function CreateMeetingModal({ onClose, onCreated, t }) {
 export default function MeetingsPage() {
   const { t }    = useTranslation()
   const { user } = useAuth()
+  const location = useLocation()
 
   const [meetings, setMeetings]     = useState([])
   const [loading, setLoading]       = useState(true)
   const [error, setError]           = useState(null)
   const [filter, setFilter]         = useState('upcoming')
   const [showCreate, setShowCreate] = useState(false)
+  const returnPath = `${location.pathname}${location.search}`
 
   const canManage = user?.role === 'SECRETARY' || user?.role === 'ADMIN'
 
@@ -346,6 +353,7 @@ export default function MeetingsPage() {
         <div className="flex items-center gap-2">
           <Link
             to="/meetings/calendar"
+            state={{ from: returnPath }}
             data-testid="meetings-open-calendar"
             className="px-4 py-2 rounded-lg border border-gray-200 text-sm font-semibold min-h-[44px] inline-flex items-center"
           >
@@ -422,6 +430,7 @@ export default function MeetingsPage() {
             <Link
               key={meeting.id}
               to={`/meetings/${meeting.id}`}
+              state={{ from: returnPath }}
               data-testid={`meetings-row-${meeting.id}`}
               className="block bg-white rounded-xl border border-gray-100 p-4 hover:shadow-md
                          transition-shadow focus-visible:ring-2 focus-visible:ring-blue-500"

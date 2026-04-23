@@ -22,7 +22,6 @@ const ALLOWED = {
 }
 
 const MAX_BYTES = 20 * 1024 * 1024 // 20 MB
-const warnedProviders = new Set()
 
 /**
  * Validates file size and magic bytes.
@@ -78,21 +77,16 @@ function resolvePathLocal(storagePath) {
 
 /**
  * Resolves storage provider behavior.
- * Currently local storage is fully implemented; other configured providers
- * gracefully fall back to local until dedicated provider modules are added.
+ * Fails fast when a non-local provider is configured but not implemented.
  * @returns {'local'}
  */
 function getActiveProvider() {
   const provider = getStorageProvider()
   if (provider === 'local') return 'local'
 
-  if (!warnedProviders.has(provider)) {
-    warnedProviders.add(provider)
-    console.warn(
-      `[Storage] Provider "${provider}" is configured but not implemented yet. Falling back to "local".`
-    )
-  }
-  return 'local'
+  throw new Error(
+    `[Storage] Provider "${provider}" is not implemented. Configure STORAGE_PROVIDER=local or implement "${provider}" provider.`
+  )
 }
 
 /**
@@ -105,7 +99,7 @@ function getActiveProvider() {
 export async function saveFile(subId, filename, buffer) {
   const provider = getActiveProvider()
   if (provider === 'local') return saveFileLocal(subId, filename, buffer)
-  return saveFileLocal(subId, filename, buffer)
+  throw new Error(`[Storage] Unsupported provider "${provider}"`)
 }
 
 /**
@@ -116,7 +110,7 @@ export async function saveFile(subId, filename, buffer) {
 export async function deleteFile(storagePath) {
   const provider = getActiveProvider()
   if (provider === 'local') return deleteFileLocal(storagePath)
-  return deleteFileLocal(storagePath)
+  throw new Error(`[Storage] Unsupported provider "${provider}"`)
 }
 
 /**
@@ -127,5 +121,5 @@ export async function deleteFile(storagePath) {
 export function resolvePath(storagePath) {
   const provider = getActiveProvider()
   if (provider === 'local') return resolvePathLocal(storagePath)
-  return resolvePathLocal(storagePath)
+  throw new Error(`[Storage] Unsupported provider "${provider}"`)
 }

@@ -76,3 +76,15 @@ export const registerLimiter = rateLimit({
   legacyHeaders:   false,
   handler:         rateLimitHandler,
 })
+
+/**
+ * AI analysis limiter — prevents abuse and runaway cost.
+ * Default: 20 requests per hour per IP.
+ */
+export const aiAnalysisLimiter = rateLimit({
+  windowMs: parseInt(process.env.AI_RATE_LIMIT_WINDOW_MS ?? String(60 * 60 * 1000), 10),
+  max: parseInt(process.env.AI_RATE_LIMIT_MAX ?? '20', 10),
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: rateLimitHandler,
+})

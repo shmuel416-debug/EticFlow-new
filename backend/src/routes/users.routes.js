@@ -30,7 +30,7 @@ const VALID_ROLES = ['RESEARCHER', 'SECRETARY', 'REVIEWER', 'CHAIRMAN', 'ADMIN']
 
 const listQuerySchema = z.object({
   search: z.string().max(200).optional(),
-  role:   z.enum(VALID_ROLES).optional(),
+  role:   z.string().max(200).optional(),
   status: z.enum(['active', 'inactive']).optional(),
   page:   z.string().regex(/^\d+$/).optional(),
   limit:  z.string().regex(/^\d+$/).optional(),
@@ -39,7 +39,7 @@ const listQuerySchema = z.object({
 const createSchema = z.object({
   email:      z.string().email(),
   fullName:   z.string().min(2).max(200),
-  role:       z.enum(VALID_ROLES),
+  roles:      z.array(z.enum(VALID_ROLES)).min(1).default(['RESEARCHER']),
   department: z.string().max(200).optional(),
   phone:      z.string().max(50).optional(),
   password:   z.string().min(8).max(100).optional(),
@@ -47,13 +47,17 @@ const createSchema = z.object({
 
 const updateSchema = z.object({
   fullName:   z.string().min(2).max(200).optional(),
-  role:       z.enum(VALID_ROLES).optional(),
+  roles:      z.array(z.enum(VALID_ROLES)).min(1).optional(),
   department: z.string().max(200).optional(),
   phone:      z.string().max(50).optional(),
 })
 
 const impersonateParamSchema = z.object({
   userId: z.string().uuid(),
+})
+
+const reviewersQuerySchema = z.object({
+  submissionId: z.string().uuid().optional(),
 })
 
 // ─────────────────────────────────────────────
@@ -64,6 +68,7 @@ router.get(
   '/reviewers',
   authenticate,
   authorize('SECRETARY', 'CHAIRMAN', 'ADMIN'),
+  validateQuery(reviewersQuerySchema),
   controller.listReviewers
 )
 

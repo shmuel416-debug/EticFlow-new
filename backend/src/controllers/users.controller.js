@@ -17,6 +17,8 @@ import prisma      from '../config/database.js'
 import authConfig  from '../config/auth.js'
 import { AppError } from '../utils/errors.js'
 import { COMMITTEE_ROLES } from '../constants/roles.js'
+import { getPrimaryRole, hasRole } from '../utils/roles.js'
+import { mapReviewerConflicts } from '../services/coi.service.js'
 
 // ─────────────────────────────────────────────
 // HELPERS
@@ -30,6 +32,17 @@ import { COMMITTEE_ROLES } from '../constants/roles.js'
 function safeUser(user) {
   const { passwordHash, resetToken, resetTokenExpiry, ...safe } = user
   return safe
+}
+
+/**
+ * Ensures a role array always includes RESEARCHER and has unique values.
+ * @param {string[]|undefined} roles
+ * @returns {string[]}
+ */
+function normalizeRoles(roles) {
+  const deduped = [...new Set((roles ?? []).filter(Boolean))]
+  if (!deduped.includes('RESEARCHER')) deduped.push('RESEARCHER')
+  return deduped
 }
 
 // ─────────────────────────────────────────────
@@ -46,12 +59,15 @@ function safeUser(user) {
 export async function listReviewers(req, res, next) {
   try {
     const reviewers = await prisma.user.findMany({
-      where:   { role: 'REVIEWER', isActive: true },
-      select:  { id: true, fullName: true, email: true, department: true },
+      where:   { roles: { has: 'REVIEWER' }, isActive: true },
+      select:  { id: true, fullName: true, email: true, department: true, roles: true },
       orderBy: { fullName: 'asc' },
     })
-
-    res.json({ data: reviewers })
+    const submissionId = typeof req.query.submissionId === 'string' ? req.query.submissionId : ''
+    const data = submissionId
+      ? await mapReviewerConflicts(reviewers, submissionId)
+      : reviewers.map((reviewer) => ({ ...reviewer, hasConflict: false, conflictReasons: [] }))
+    res.json({ data })
   } catch (err) {
     next(err)
   }
@@ -69,9 +85,9 @@ export async function listSigners(req, res, next) {
     const signers = await prisma.user.findMany({
       where: {
         isActive: true,
-        role: { in: COMMITTEE_ROLES },
+        roles: { hasSome: COMMITTEE_ROLES },
       },
-      select: { id: true, fullName: true, email: true, role: true },
+      select: { id: true, fullName: true, email: true, roles: true },
       orderBy: { fullName: 'asc' },
     })
 
@@ -107,7 +123,10 @@ export async function listAll(req, res, next) {
         { department: { contains: search, mode: 'insensitive' } },
       ]
     }
-    if (role)                   where.role     = role
+    if (role) {
+      const rolesFilter = String(role).split(',').map((item) => item.trim()).filter(Boolean)
+      where.roles = rolesFilter.length > 1 ? { hasSome: rolesFilter } : { has: rolesFilter[0] }
+    }
     if (status === 'active')    where.isActive = true
     if (status === 'inactive')  where.isActive = false
 
@@ -118,7 +137,7 @@ export async function listAll(req, res, next) {
         take,
         orderBy: { createdAt: 'desc' },
         select: {
-          id: true, fullName: true, email: true, role: true,
+          id: true, fullName: true, email: true, roles: true,
           department: true, phone: true, authProvider: true,
           isActive: true, createdAt: true, updatedAt: true,
         },
@@ -148,7 +167,8 @@ export async function listAll(req, res, next) {
  */
 export async function create(req, res, next) {
   try {
-    const { email, fullName, role, department, phone, password } = req.body
+    const { email, fullName, roles = ['RESEARCHER'], department, phone, password } = req.body
+    const normalizedRoles = normalizeRoles(roles)
 
     const existing = await prisma.user.findUnique({ where: { email } })
     if (existing) {
@@ -160,7 +180,7 @@ export async function create(req, res, next) {
       : null
 
     const user = await prisma.user.create({
-      data: { email, fullName, role, department, phone, passwordHash, authProvider: 'LOCAL' },
+      data: { email, fullName, roles: normalizedRoles, department, phone, passwordHash, authProvider: 'LOCAL' },
     })
 
     res.locals.entityId = user.id
@@ -184,7 +204,8 @@ export async function create(req, res, next) {
 export async function update(req, res, next) {
   try {
     const { id } = req.params
-    const { fullName, role, department, phone } = req.body
+    const { fullName, roles, department, phone } = req.body
+    const normalizedRoles = roles ? normalizeRoles(roles) : undefined
 
     const user = await prisma.user.findUnique({ where: { id } })
     if (!user || !user.isActive) {
@@ -193,7 +214,7 @@ export async function update(req, res, next) {
 
     const updated = await prisma.user.update({
       where: { id },
-      data:  { fullName, role, department, phone },
+      data:  { fullName, roles: normalizedRoles, department, phone },
     })
 
     res.json({ data: safeUser(updated) })
@@ -259,12 +280,13 @@ export async function impersonate(req, res, next) {
     if (!target || !target.isActive) {
       throw new AppError('User not found', 'NOT_FOUND', 404)
     }
-    if (target.role === 'ADMIN') {
+    if (hasRole(target, 'ADMIN')) {
       throw new AppError('Cannot impersonate an Admin user', 'CANNOT_IMPERSONATE_ADMIN', 403)
     }
 
+    const activeRole = getPrimaryRole(target)
     const token = jwt.sign(
-      { id: target.id, email: target.email, role: target.role, impersonatedBy: req.user.id },
+      { id: target.id, email: target.email, roles: target.roles, activeRole, impersonatedBy: req.user.id },
       authConfig.jwt.secret,
       { expiresIn: '1h' },
     )
@@ -273,7 +295,8 @@ export async function impersonate(req, res, next) {
       id:         target.id,
       email:      target.email,
       fullName:   target.fullName,
-      role:       target.role,
+      roles:      target.roles,
+      activeRole,
       department: target.department,
     }
 

@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useParams, Link, useNavigate } from 'react-router-dom'
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom'
 import api from '../../services/api'
 import StatusBadge from '../../components/submissions/StatusBadge'
 import FormAnswersViewer from '../../components/submissions/FormAnswersViewer'
@@ -20,9 +20,11 @@ export default function ReviewDetailPage() {
   const { t }        = useTranslation()
   const { id }       = useParams()
   const navigate     = useNavigate()
+  const location     = useLocation()
   const [submission, setSubmission] = useState(null)
   const [loading,    setLoading]    = useState(true)
   const [error,      setError]      = useState('')
+  const backTo       = typeof location.state?.from === 'string' ? location.state.from : '/reviewer/assignments'
 
   /**
    * Loads submission data.
@@ -42,7 +44,7 @@ export default function ReviewDetailPage() {
 
   /** Navigates back to assignments after successful review. */
   function handleReviewSuccess() {
-    navigate('/reviewer/assignments')
+    navigate(backTo)
   }
 
   if (loading) return <div className="p-8 text-center text-gray-400">{t('common.loading')}</div>
@@ -54,12 +56,16 @@ export default function ReviewDetailPage() {
   return (
     <main id="main-content" className="p-4 md:p-6 max-w-5xl mx-auto space-y-6">
       <div>
-        <Link to="/reviewer/assignments" className="text-sm hover:underline mb-2 inline-flex items-center gap-1"
+        <Link to={backTo} className="text-sm hover:underline mb-2 inline-flex items-center gap-1"
           style={{ color: 'var(--lev-navy)' }}>
           ← {t('submission.detail.backToList')}
         </Link>
         <div>
-          <Link to={`/reviewer/assignments/${id}/diff`} data-testid="open-review-diff" className="text-sm hover:underline inline-flex items-center gap-1"
+          <Link
+            to={`/reviewer/assignments/${id}/diff`}
+            state={{ from: `${location.pathname}${location.search}` }}
+            data-testid="open-review-diff"
+            className="text-sm hover:underline inline-flex items-center gap-1"
             style={{ color: 'var(--lev-teal-text)' }}>
             {t('reviewer.diff.openDiff')}
           </Link>

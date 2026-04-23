@@ -10,6 +10,20 @@
 import prisma              from '../config/database.js'
 import { analyzeSubmission } from '../services/ai/ai.service.js'
 import { AppError }        from '../utils/errors.js'
+import { getRequestRole } from '../utils/roles.js'
+
+/** Allowed response language values for AI narrative fields. */
+const RESPONSE_LANGUAGES = ['he', 'en']
+
+/**
+ * Returns a safe response language for AI analysis.
+ * Defaults to Hebrew when the client does not provide a valid value.
+ * @param {unknown} requestedLanguage
+ * @returns {'he' | 'en'}
+ */
+function resolveResponseLanguage(requestedLanguage) {
+  return RESPONSE_LANGUAGES.includes(requestedLanguage) ? requestedLanguage : 'he'
+}
 
 // ─────────────────────────────────────────────
 // RUN ANALYSIS
@@ -25,6 +39,7 @@ import { AppError }        from '../utils/errors.js'
 export async function runAnalysis(req, res, next) {
   try {
     const { subId } = req.params
+    const responseLanguage = resolveResponseLanguage(req.body?.responseLanguage)
 
     const submission = await prisma.submission.findUnique({
       where:   { id: subId },
@@ -43,7 +58,8 @@ export async function runAnalysis(req, res, next) {
     }
 
     // Access control: researchers see only own, reviewers see assigned
-    const { role, id: userId } = req.user
+    const role = getRequestRole(req)
+    const { id: userId } = req.user
     if (role === 'RESEARCHER' && submission.authorId !== userId) {
       throw new AppError('Forbidden', 'FORBIDDEN', 403)
     }
@@ -66,6 +82,7 @@ export async function runAnalysis(req, res, next) {
       track:    submission.track,
       dataJson: latestData,
       documents: documentContext,
+      responseLanguage,
     })
 
     // Persist result
@@ -74,7 +91,7 @@ export async function runAnalysis(req, res, next) {
         submissionId: subId,
         requestedBy:  userId,
         provider:     process.env.AI_PROVIDER ?? 'mock',
-        prompt:       `analyze:${submission.applicationId}:answers+documents(${documentContext.length})`,
+        prompt:       `analyze:${submission.applicationId}:answers+documents(${documentContext.length}):lang(${responseLanguage})`,
         resultJson,
       },
     })
@@ -104,7 +121,8 @@ export async function getLatest(req, res, next) {
       throw new AppError('Submission not found', 'NOT_FOUND', 404)
     }
 
-    const { role, id: userId } = req.user
+    const role = getRequestRole(req)
+    const { id: userId } = req.user
     if (role === 'RESEARCHER' && submission.authorId !== userId) {
       throw new AppError('Forbidden', 'FORBIDDEN', 403)
     }

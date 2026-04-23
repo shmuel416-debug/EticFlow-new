@@ -11,7 +11,7 @@ import { Link } from 'react-router-dom'
 import api from '../../services/api'
 
 /** SLA indicator dot */
-function SlaDot({ slaTracking }) {
+function SlaDot({ slaTracking, labels }) {
   if (!slaTracking) return null
   const now     = new Date()
   const due     = slaTracking.reviewDue || slaTracking.triageDue || slaTracking.revisionDue
@@ -19,16 +19,16 @@ function SlaDot({ slaTracking }) {
   const dayLeft = msLeft ? msLeft / 86400000 : null
 
   if (slaTracking.isBreached || (dayLeft !== null && dayLeft < 0)) {
-    return <span className="w-2 h-2 rounded-full bg-red-500 inline-block flex-shrink-0" title="SLA breach" aria-label="SLA הופר" />
+    return <span className="w-2 h-2 rounded-full bg-red-500 inline-block flex-shrink-0" title={labels.breach} aria-label={labels.breach} />
   }
   if (dayLeft !== null && dayLeft < 3) {
-    return <span className="w-2 h-2 rounded-full bg-amber-400 inline-block flex-shrink-0" title="SLA warning" aria-label="SLA קרוב" />
+    return <span className="w-2 h-2 rounded-full bg-amber-400 inline-block flex-shrink-0" title={labels.warning} aria-label={labels.warning} />
   }
-  return <span className="w-2 h-2 rounded-full bg-green-400 inline-block flex-shrink-0" title="On time" aria-label="SLA תקין" />
+  return <span className="w-2 h-2 rounded-full bg-green-400 inline-block flex-shrink-0" title={labels.onTime} aria-label={labels.onTime} />
 }
 
 /** Kanban column card */
-function KanbanCard({ submission, linkPrefix }) {
+function KanbanCard({ submission, linkPrefix, slaLabels }) {
   return (
     <Link
       to={`${linkPrefix}/${submission.id}`}
@@ -37,7 +37,7 @@ function KanbanCard({ submission, linkPrefix }) {
       aria-label={submission.applicationId}
     >
       <div className="flex items-start gap-2 mb-1">
-        <SlaDot slaTracking={submission.slaTracking} />
+        <SlaDot slaTracking={submission.slaTracking} labels={slaLabels} />
         <p className="font-mono text-xs text-gray-500 flex-shrink-0">{submission.applicationId}</p>
       </div>
       <p className="text-sm font-medium text-gray-900 line-clamp-2 mb-1">{submission.title}</p>
@@ -52,6 +52,11 @@ function KanbanCard({ submission, linkPrefix }) {
  */
 export default function ChairmanDashboard() {
   const { t } = useTranslation()
+  const slaLabels = {
+    breach: t('dashboard.researcher.slaBreach'),
+    warning: t('notifications.types.SLA_WARNING'),
+    onTime: t('common.ok'),
+  }
 
   const [inReview, setInReview]     = useState([])
   const [approved, setApproved]     = useState([])
@@ -149,7 +154,7 @@ export default function ChairmanDashboard() {
                   <p className="text-xs text-gray-400 text-center py-4">{t('submission.list.empty')}</p>
                 )}
                 {col.items.map(sub => (
-                  <KanbanCard key={sub.id} submission={sub} linkPrefix={col.link} />
+                  <KanbanCard key={sub.id} submission={sub} linkPrefix={col.link} slaLabels={slaLabels} />
                 ))}
               </div>
             </section>

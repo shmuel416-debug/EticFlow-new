@@ -11,6 +11,7 @@ import {
   invalidateStatusCache,
   listStatuses,
 } from '../services/status.service.js'
+import { getRequestRole } from '../utils/roles.js'
 
 const SYSTEM_CODES = new Set(['DRAFT', 'SUBMITTED', 'APPROVED', 'REJECTED'])
 
@@ -51,11 +52,12 @@ async function assertInitialInvariant(statusId, nextIsInitial) {
  */
 export async function getStatusConfig(req, res, next) {
   try {
+    const activeRole = getRequestRole(req)
     const statuses = await listStatuses()
     const transitionsByFromCode = {}
 
     for (const status of statuses) {
-      const allowed = await getAllowedTransitions(status.code, req.user.role, null)
+      const allowed = await getAllowedTransitions(status.code, activeRole, null)
       transitionsByFromCode[status.code] = allowed.transitions
     }
 
@@ -420,11 +422,12 @@ export async function updateStatusPermissions(req, res, next) {
  */
 export async function getAllowedActions(req, res, next) {
   try {
+    const activeRole = getRequestRole(req)
     const statusCode = String(req.query.status || '').trim().toUpperCase()
     const actions = ['VIEW', 'EDIT', 'COMMENT', 'UPLOAD_DOC', 'DELETE_DOC', 'VIEW_INTERNAL', 'TRANSITION', 'ASSIGN', 'SUBMIT_REVIEW', 'RECORD_DECISION']
     const result = {}
     for (const action of actions) {
-      result[action] = await can(action, statusCode, req.user.role)
+      result[action] = await can(action, statusCode, activeRole)
     }
     res.json({ data: result })
   } catch (err) {

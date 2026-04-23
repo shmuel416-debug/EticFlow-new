@@ -5,7 +5,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import api from '../../services/api'
 
 /**
@@ -99,6 +99,7 @@ function getDensityClass(count) {
  */
 export default function MeetingsCalendarPage() {
   const { t } = useTranslation()
+  const location = useLocation()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [meetings, setMeetings] = useState([])
@@ -106,6 +107,8 @@ export default function MeetingsCalendarPage() {
   const [selectedDay, setSelectedDay] = useState(() => dateKey(new Date()))
   const [statusFilter, setStatusFilter] = useState('all')
   const [rangeFilter, setRangeFilter] = useState('all')
+  const returnPath = `${location.pathname}${location.search}`
+  const backToMeetings = typeof location.state?.from === 'string' ? location.state.from : '/meetings'
 
   /**
    * Loads all meetings for calendar rendering.
@@ -184,7 +187,7 @@ export default function MeetingsCalendarPage() {
         <h1 className="text-xl font-bold" style={{ color: 'var(--lev-navy)' }}>
           {t('meetings.calendarTitle')}
         </h1>
-        <Link to="/meetings" className="text-sm font-medium hover:underline" style={{ color: 'var(--lev-teal-text)' }}>
+        <Link to={backToMeetings} className="text-sm font-medium hover:underline" style={{ color: 'var(--lev-teal-text)' }}>
           {t('meetings.backToMeetings')}
         </Link>
       </div>
@@ -336,6 +339,7 @@ export default function MeetingsCalendarPage() {
             <Link
               key={meeting.id}
               to={`/meetings/${meeting.id}`}
+              state={{ from: returnPath }}
               data-testid={`calendar-day-meeting-${meeting.id}`}
               className="block rounded-lg border border-gray-200 p-3 hover:bg-gray-50"
             >

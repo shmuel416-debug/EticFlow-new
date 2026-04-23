@@ -6,7 +6,7 @@
 
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import api from '../../services/api'
 import StatusBadge from '../../components/submissions/StatusBadge'
 
@@ -25,9 +25,11 @@ function formatDate(iso) {
  */
 export default function AssignmentsPage() {
   const { t }           = useTranslation()
+  const location        = useLocation()
   const [submissions,   setSubmissions]   = useState([])
   const [loading,       setLoading]       = useState(true)
   const [error,         setError]         = useState('')
+  const returnPath      = `${location.pathname}${location.search}`
 
   useEffect(() => {
     /** Fetches assigned submissions for the current reviewer. */
@@ -79,6 +81,7 @@ export default function AssignmentsPage() {
                 <td className="px-4 py-3 text-gray-500">{formatDate(sub.submittedAt)}</td>
                 <td className="px-4 py-3">
                   <Link to={`/reviewer/assignments/${sub.id}`}
+                    state={{ from: returnPath }}
                     data-testid={`reviewer-open-assignment-${sub.id}`}
                     className="text-xs font-medium hover:underline"
                     style={{ color: 'var(--lev-navy)', minHeight: '44px', display: 'inline-flex', alignItems: 'center' }}>

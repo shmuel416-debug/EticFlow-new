@@ -1,0 +1,7 @@
+location             = "westeurope"
+project_name         = "ethicflow"
+environment          = "prod"
+admin_username       = "azureuser"
+admin_ssh_public_key = "ssh-ed25519 AAAA... replace_me"
+vm_size              = "Standard_B2s"
+ssh_allowed_cidrs    = ["203.0.113.10/32"]

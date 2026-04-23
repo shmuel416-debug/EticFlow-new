@@ -48,6 +48,10 @@ const exchangeCodeSchema = z.object({
   code: z.string().regex(/^[a-f0-9]{64}$/i, 'Invalid exchange code format'),
 })
 
+const refreshSchema = z.object({
+  refreshToken: z.string().min(1).optional(),
+})
+
 router.post(
   '/register',
   registerLimiter,
@@ -85,6 +89,18 @@ router.post(
   validate(exchangeCodeSchema),
   auditLog('auth.sso.exchange', 'User'),
   controller.exchangeCode
+)
+
+router.post(
+  '/refresh',
+  validate(refreshSchema),
+  controller.refreshSession
+)
+
+router.post(
+  '/logout',
+  validate(refreshSchema),
+  controller.logoutSession
 )
 
 // Microsoft SSO — no body validation needed (query params handled in controller)

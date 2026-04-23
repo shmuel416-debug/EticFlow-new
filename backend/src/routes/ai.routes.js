@@ -9,6 +9,7 @@
 import { Router }    from 'express'
 import { authenticate } from '../middleware/auth.js'
 import { auditLog }     from '../middleware/audit.js'
+import { aiAnalysisLimiter } from '../middleware/rateLimit.js'
 import * as controller  from '../controllers/ai.controller.js'
 
 const router = Router()
@@ -16,6 +17,7 @@ const router = Router()
 router.post(
   '/analyze/:subId',
   authenticate,
+  aiAnalysisLimiter,
   auditLog('ai.analysis_requested', 'AIAnalysis'),
   controller.runAnalysis
 )

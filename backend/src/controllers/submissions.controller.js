@@ -11,6 +11,7 @@
 
 import prisma from '../config/database.js'
 import { AppError } from '../utils/errors.js'
+import { getRequestRole, hasAnyRole } from '../utils/roles.js'
 
 // ─────────────────────────────────────────────
 // HELPERS
@@ -18,14 +19,15 @@ import { AppError } from '../utils/errors.js'
 
 /**
  * Builds a Prisma `where` clause based on the requester's role.
- * @param {{ id: string, role: string }} user
+ * @param {{ id: string, roles: string[] }} user
+ * @param {string} activeRole
  * @param {object} [extra={}] - Additional where conditions to merge
  * @returns {object} Prisma where clause
  */
-function roleFilter(user, extra = {}) {
+function roleFilter(user, activeRole, extra = {}) {
   const base = { isActive: true }
-  if (user.role === 'RESEARCHER') base.authorId  = user.id
-  if (user.role === 'REVIEWER')   base.reviewerId = user.id
+  if (activeRole === 'RESEARCHER') base.authorId  = user.id
+  if (activeRole === 'REVIEWER')   base.reviewerId = user.id
   // Merge: if extra has OR (search), wrap everything in AND to avoid conflict
   if (extra.OR) {
     const { OR, ...rest } = extra
@@ -88,6 +90,7 @@ function paginate(data, total, page, limit) {
  */
 export async function list(req, res, next) {
   try {
+    const activeRole = getRequestRole(req)
     const page  = Math.max(1, parseInt(req.query.page  ?? '1',  10))
     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit ?? '20', 10)))
     const skip  = (page - 1) * limit
@@ -107,7 +110,7 @@ export async function list(req, res, next) {
         { applicationId: { contains: req.query.search, mode: 'insensitive' } },
       ]
     }
-    const where = roleFilter(req.user, extra)
+    const where = roleFilter(req.user, activeRole, extra)
 
     const [submissions, total] = await Promise.all([
       prisma.submission.findMany({
@@ -140,7 +143,8 @@ export async function list(req, res, next) {
  */
 export async function getById(req, res, next) {
   try {
-    const where = roleFilter(req.user, { id: req.params.id })
+    const activeRole = getRequestRole(req)
+    const where = roleFilter(req.user, activeRole, { id: req.params.id })
 
     const submission = await prisma.submission.findFirst({
       where,
@@ -152,10 +156,10 @@ export async function getById(req, res, next) {
         comments: {
           where: {
             isActive:   true,
-            ...(req.user.role === 'RESEARCHER' ? { isInternal: false } : {}),
+            ...(activeRole === 'RESEARCHER' ? { isInternal: false } : {}),
           },
           orderBy: { createdAt: 'asc' },
-          include: { author: { select: { id: true, fullName: true, role: true } } },
+          include: { author: { select: { id: true, fullName: true, roles: true } } },
         },
         slaTracking: true,
       },
@@ -235,6 +239,7 @@ export async function create(req, res, next) {
  */
 export async function update(req, res, next) {
   try {
+    const activeRole = getRequestRole(req)
     const existing = await prisma.submission.findFirst({
       where:   { id: req.params.id, isActive: true },
       include: { versions: { orderBy: { versionNum: 'desc' }, take: 1 } },
@@ -243,11 +248,11 @@ export async function update(req, res, next) {
 
     // Only owner or privileged roles can edit
     const isOwner = existing.authorId === req.user.id
-    const canEdit = ['SECRETARY', 'ADMIN'].includes(req.user.role)
+    const canEdit = hasAnyRole(req.user, 'SECRETARY', 'ADMIN')
     if (!isOwner && !canEdit) return next(AppError.forbidden())
 
     // Only DRAFT submissions can be edited by researcher
-    if (req.user.role === 'RESEARCHER' && existing.status !== 'DRAFT') {
+    if (activeRole === 'RESEARCHER' && existing.status !== 'DRAFT') {
       return next(new AppError('Only draft submissions can be edited', 'SUBMISSION_NOT_DRAFT', 400))
     }
 

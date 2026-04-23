@@ -6,7 +6,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useParams, Link, useNavigate } from 'react-router-dom'
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom'
 import api from '../../services/api'
 import StatusBadge from '../../components/submissions/StatusBadge'
 import FormAnswersViewer from '../../components/submissions/FormAnswersViewer'
@@ -25,11 +25,13 @@ export default function SubmissionDecisionPage() {
   const { t }        = useTranslation()
   const { id }       = useParams()
   const navigate     = useNavigate()
+  const location     = useLocation()
   const [submission, setSubmission] = useState(null)
   const [loading,    setLoading]    = useState(true)
   const [deciding,   setDeciding]   = useState(false)
   const [note,       setNote]       = useState('')
   const [error,      setError]      = useState('')
+  const backTo       = typeof location.state?.from === 'string' ? location.state.from : '/chairman/queue'
 
   /**
    * Fetches submission from API.
@@ -58,7 +60,7 @@ export default function SubmissionDecisionPage() {
     setError('')
     try {
       await api.patch(`/submissions/${id}/decision`, { decision, note: note.trim() || undefined })
-      navigate('/chairman/queue')
+      navigate(backTo)
     } catch (err) {
       setError(t(`errors.${err.code}`, t('errors.SERVER_ERROR')))
       setDeciding(false)
@@ -74,7 +76,7 @@ export default function SubmissionDecisionPage() {
   return (
     <main id="main-content" className="p-4 md:p-6 max-w-5xl mx-auto space-y-6">
       <div>
-        <Link to="/chairman/queue" className="text-sm hover:underline mb-2 inline-flex items-center gap-1"
+        <Link to={backTo} className="text-sm hover:underline mb-2 inline-flex items-center gap-1"
           style={{ color: 'var(--lev-navy)' }}>
           ← {t('submission.detail.backToList')}
         </Link>

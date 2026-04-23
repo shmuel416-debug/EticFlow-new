@@ -12,9 +12,9 @@ const ALGO = 'aes-256-gcm'
  * @returns {Buffer}
  */
 function getEncryptionKey() {
-  const source = process.env.CALENDAR_TOKEN_ENCRYPTION_KEY || process.env.JWT_SECRET || ''
+  const source = process.env.CALENDAR_TOKEN_ENCRYPTION_KEY || ''
   if (!source) {
-    throw new Error('Missing CALENDAR_TOKEN_ENCRYPTION_KEY (or JWT_SECRET fallback) for token encryption')
+    throw new Error('Missing CALENDAR_TOKEN_ENCRYPTION_KEY for token encryption')
   }
   return crypto.createHash('sha256').update(source).digest()
 }

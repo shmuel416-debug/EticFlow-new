@@ -30,10 +30,11 @@ const onBlur  = e => { if (!e.target.dataset.error) e.target.style.borderColor =
  * @param {{ id: string, label: string, required: boolean }} props
  */
 function FieldLabel({ id, label, required }) {
+  const { t } = useTranslation()
   return (
     <label htmlFor={id} className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--lev-navy)' }}>
       {label}
-      {required && <span aria-label="שדה חובה" className="ms-0.5" style={{ color: 'var(--lev-purple)' }}>*</span>}
+      {required && <span aria-label={t('common.requiredField')} className="ms-0.5" style={{ color: 'var(--lev-purple)' }}>*</span>}
     </label>
   )
 }

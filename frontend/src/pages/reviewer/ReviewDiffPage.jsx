@@ -5,7 +5,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useLocation, useParams } from 'react-router-dom'
 import api from '../../services/api'
 
 /**
@@ -128,6 +128,7 @@ function renderValueCell(value, other, side) {
 export default function ReviewDiffPage() {
   const { t } = useTranslation()
   const { id } = useParams()
+  const location = useLocation()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [submission, setSubmission] = useState(null)
@@ -137,6 +138,7 @@ export default function ReviewDiffPage() {
   const [activeGroup, setActiveGroup] = useState('all')
   const [hideNoise, setHideNoise] = useState(true)
   const [searchText, setSearchText] = useState('')
+  const backTo = typeof location.state?.from === 'string' ? location.state.from : `/reviewer/assignments/${id}`
 
   useEffect(() => {
     /**
@@ -209,7 +211,7 @@ export default function ReviewDiffPage() {
   return (
     <main id="main-content" className="max-w-6xl mx-auto p-4 md:p-6">
       <div className="mb-4 flex items-center justify-between gap-3 flex-wrap">
-        <Link to={`/reviewer/assignments/${id}`} className="text-sm font-medium hover:underline" style={{ color: 'var(--lev-teal-text)' }}>
+        <Link to={backTo} className="text-sm font-medium hover:underline" style={{ color: 'var(--lev-teal-text)' }}>
           {t('reviewer.diff.backToAssignment')}
         </Link>
         <h1 className="text-lg md:text-xl font-bold" style={{ color: 'var(--lev-navy)' }}>

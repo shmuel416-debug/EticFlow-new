@@ -6,7 +6,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useLocation } from 'react-router-dom'
 import api from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
 import StatusBadge from '../../components/submissions/StatusBadge'
@@ -18,21 +18,12 @@ import DocumentList from '../../components/submissions/DocumentList'
 import AiPanel from '../../components/submissions/AiPanel'
 
 /**
- * Determines the back-link path based on user role.
- * @param {string} role
- * @returns {string}
- */
-function backPath(role) {
-  if (role === 'CHAIRMAN' || role === 'ADMIN') return '/chairman/queue'
-  return '/secretary/submissions'
-}
-
-/**
  * Shared submission detail page for staff roles.
  */
 export default function SubmissionDetailPage() {
   const { t }            = useTranslation()
   const { id }           = useParams()
+  const location         = useLocation()
   const { user }         = useAuth()
   const [submission,     setSubmission]     = useState(null)
   const [loading,        setLoading]        = useState(true)
@@ -112,6 +103,7 @@ export default function SubmissionDetailPage() {
 
   const latestVersion = submission?.versions?.slice(-1)[0]
   const canAssign     = ['SECRETARY','ADMIN'].includes(user?.role) && ['IN_TRIAGE','ASSIGNED'].includes(submission?.status)
+  const backTo        = typeof location.state?.from === 'string' ? location.state.from : '/secretary/submissions'
 
   /**
    * Generates and downloads the approval letter PDF.
@@ -139,7 +131,7 @@ export default function SubmissionDetailPage() {
     <main id="main-content" className="p-4 md:p-6 max-w-5xl mx-auto space-y-6">
       {/* Back + header */}
       <div>
-        <Link to={backPath(user?.role)} className="text-sm hover:underline mb-2 inline-flex items-center gap-1"
+        <Link to={backTo} className="text-sm hover:underline mb-2 inline-flex items-center gap-1"
           style={{ color: 'var(--lev-navy)' }}>
           ← {t('submission.detail.backToList')}
         </Link>
@@ -209,6 +201,7 @@ export default function SubmissionDetailPage() {
               <ReviewerSelect
                 value={assigningId}
                 onChange={setAssigningId}
+                submissionId={submission?.id}
                 disabled={transitioning}
               />
               <button

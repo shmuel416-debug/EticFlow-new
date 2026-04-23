@@ -7,7 +7,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useLocation } from 'react-router-dom'
 import api from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
 import StatusBadge from '../../components/submissions/StatusBadge'
@@ -48,6 +48,7 @@ function SlaIndicator({ sla, nowMs }) {
 export default function SubmissionStatusPage() {
   const { t }        = useTranslation()
   const { id }       = useParams()
+  const location     = useLocation()
   const { user }     = useAuth()
   const [submission, setSubmission] = useState(null)
   const [loading,    setLoading]    = useState(true)
@@ -55,7 +56,9 @@ export default function SubmissionStatusPage() {
   const LOCKED = ['SUBMITTED','IN_TRIAGE','ASSIGNED','IN_REVIEW','APPROVED','REJECTED','WITHDRAWN']
   const [activeTab,  setActiveTab]  = useState('answers')
   const [pdfLoading, setPdfLoading] = useState(null) // 'he' | 'en' | null
+  const [withdrawing, setWithdrawing] = useState(false)
   const [nowMs] = useState(() => Date.now())
+  const backTo = typeof location.state?.from === 'string' ? location.state.from : '/dashboard'
 
   /** Loads submission from API. */
   const load = useCallback(async () => {
@@ -98,6 +101,24 @@ export default function SubmissionStatusPage() {
     }
   }
 
+  /**
+   * Withdraws the current submission after user confirmation.
+   * @returns {Promise<void>}
+   */
+  async function handleWithdraw() {
+    if (!window.confirm(t('statusPage.confirmWithdraw'))) return
+    const note = window.prompt(t('statusPage.withdrawReasonPrompt')) ?? ''
+    setWithdrawing(true)
+    try {
+      await api.post(`/submissions/${id}/withdraw`, { note: note.trim() || undefined })
+      await load()
+    } catch {
+      setError(t('errors.SERVER_ERROR'))
+    } finally {
+      setWithdrawing(false)
+    }
+  }
+
   if (loading) return <div className="py-20 text-center text-gray-400">{t('common.loading')}</div>
   if (error)   return <div className="py-20 text-center text-red-600" role="alert">{error}</div>
 
@@ -109,7 +130,7 @@ export default function SubmissionStatusPage() {
     <main id="main-content" className="max-w-3xl mx-auto space-y-5 p-4 md:p-6">
 
       {/* Back link */}
-      <Link to="/dashboard" className="inline-flex items-center gap-1 text-sm hover:underline"
+      <Link to={backTo} className="inline-flex items-center gap-1 text-sm hover:underline"
         style={{ color: 'var(--lev-teal-text)' }}>
         ← {t('statusPage.backToDashboard')}
       </Link>
@@ -146,6 +167,17 @@ export default function SubmissionStatusPage() {
             style={{ background: '#dc2626' }}>
             {t('statusPage.fixAndResubmit')} →
           </Link>
+        )}
+        {['DRAFT', 'SUBMITTED', 'IN_TRIAGE', 'PENDING_REVISION'].includes(submission.status) && (
+          <button
+            type="button"
+            onClick={handleWithdraw}
+            disabled={withdrawing}
+            className="mt-3 w-full py-2.5 text-sm font-bold rounded-xl border border-red-300 text-red-700 hover:bg-red-50 disabled:opacity-50"
+            style={{ minHeight: '44px' }}
+          >
+            {withdrawing ? t('common.loading') : t('statusPage.withdraw')}
+          </button>
         )}
         {submission.status === 'APPROVED' && user?.role !== 'REVIEWER' && (
           <div className="mt-4 flex gap-2">

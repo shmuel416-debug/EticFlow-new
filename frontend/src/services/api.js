@@ -10,6 +10,7 @@ import axios from 'axios'
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api',
   timeout: 10000,
+  withCredentials: true,
 })
 
 /**
@@ -37,7 +38,9 @@ export function buildApiUrl(path) {
  * Token is stored in the module-level variable set by setToken().
  */
 const SESSION_KEY = 'ef_session'
+const ACTIVE_ROLE_KEY = 'ef_active_role'
 let _token = null
+let _activeRole = null
 
 /**
  * Sets the JWT token in memory AND sessionStorage.
@@ -67,12 +70,51 @@ export function getToken() {
   return _token
 }
 
+/**
+ * Sets active role in memory and sessionStorage.
+ * @param {string|null} role
+ */
+export function setActiveRole(role) {
+  _activeRole = role || null
+  if (_activeRole) {
+    sessionStorage.setItem(ACTIVE_ROLE_KEY, _activeRole)
+  } else {
+    sessionStorage.removeItem(ACTIVE_ROLE_KEY)
+  }
+}
+
+/**
+ * Returns active role from memory/sessionStorage.
+ * @returns {string|null}
+ */
+export function getActiveRole() {
+  if (!_activeRole) {
+    const stored = sessionStorage.getItem(ACTIVE_ROLE_KEY)
+    if (stored) _activeRole = stored
+  }
+  return _activeRole
+}
+
 api.interceptors.request.use((config) => {
-  if (_token) {
-    config.headers.Authorization = `Bearer ${_token}`
+  const token = getToken()
+  const activeRole = getActiveRole()
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+  }
+  if (activeRole) {
+    config.headers['X-Active-Role'] = activeRole
   }
   return config
 })
+
+function handleSessionExpired() {
+  setToken(null)
+  setActiveRole(null)
+  window.dispatchEvent(new CustomEvent('ef:session-expired'))
+  if (!window.location.pathname.startsWith('/login')) {
+    window.location.assign('/login?error=session_expired')
+  }
+}
 
 /**
  * Response interceptor — normalizes error shape to { message, code }.
@@ -80,12 +122,40 @@ api.interceptors.request.use((config) => {
  */
 api.interceptors.response.use(
   (res) => res,
-  (err) => {
+  async (err) => {
+    const status = err.response?.status || 0
+    const originalRequest = err.config || {}
+    const requestUrl = String(originalRequest.url || '')
+    const isAuthRefresh = requestUrl.includes('/auth/refresh')
+    const isAuthLogin = requestUrl.includes('/auth/login')
+
+    if (status === 401 && !originalRequest._retry && !isAuthRefresh && !isAuthLogin) {
+      originalRequest._retry = true
+      try {
+        const refresh = await axios.post(
+          buildApiUrl('/auth/refresh'),
+          {},
+          { withCredentials: true }
+        )
+        const refreshedToken = refresh.data?.token
+        if (refreshedToken) {
+          setToken(refreshedToken)
+          originalRequest.headers = originalRequest.headers || {}
+          originalRequest.headers.Authorization = `Bearer ${refreshedToken}`
+          return api(originalRequest)
+        }
+      } catch {
+        handleSessionExpired()
+      }
+    } else if (status === 401 && isAuthRefresh) {
+      handleSessionExpired()
+    }
+
     const data = err.response?.data
     const normalized = {
       message: data?.error || 'SERVER_ERROR',
       code:    data?.code  || 'SERVER_ERROR',
-      status:  err.response?.status || 0,
+      status,
     }
     return Promise.reject(normalized)
   }

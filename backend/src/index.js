@@ -13,8 +13,11 @@ import prisma from './config/database.js'
 import { logActiveProviders } from './config/services.js'
 import { errorHandler } from './middleware/error.js'
 import { apiLimiter } from './middleware/rateLimit.js'
+import { attachRequestContext } from './middleware/request-context.js'
 import { startSlaCron }    from './jobs/sla.cron.js'
 import { startCalendarSyncCron } from './jobs/calendar-sync.cron.js'
+import { startContinuingReviewCron } from './jobs/continuing-review.cron.js'
+import { initializeObservability } from './services/observability.service.js'
 import healthRouter        from './routes/health.routes.js'
 import authRouter          from './routes/auth.routes.js'
 import formsRouter         from './routes/forms.routes.js'
@@ -28,6 +31,8 @@ import protocolsRouter, { publicSignRouter } from './routes/protocols.routes.js'
 import reportsRouter, { auditLogsRouter } from './routes/reports.routes.js'
 import settingsRouter      from './routes/settings.routes.js'
 import calendarRouter      from './routes/calendar.routes.js'
+import coiRouter           from './routes/coi.routes.js'
+import privacyRouter       from './routes/privacy.routes.js'
 import { statusesRouter, adminStatusesRouter } from './routes/statuses.routes.js'
 
 const app  = express()
@@ -56,7 +61,9 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true }))
 app.use(cookieParser())
-app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'))
+app.use(attachRequestContext)
+morgan.token('requestId', (req) => req.requestId || '-')
+app.use(morgan(':method :url :status :response-time ms req_id=:requestId'))
 
 // ─────────────────────────────────────────────
 // ROUTES
@@ -78,6 +85,8 @@ app.use('/api/reports',     reportsRouter)
 app.use('/api/audit-logs',  auditLogsRouter)
 app.use('/api/settings',    settingsRouter)
 app.use('/api/calendar',    calendarRouter)
+app.use('/api/coi',         coiRouter)
+app.use('/api/privacy',     privacyRouter)
 app.use('/api/statuses',    statusesRouter)
 app.use('/api/admin/statuses', adminStatusesRouter)
 
@@ -110,8 +119,10 @@ async function start() {
     console.log(`🚀 EthicFlow API running on http://localhost:${PORT}`)
     console.log(`   Environment: ${process.env.NODE_ENV ?? 'development'}`)
     logActiveProviders()
+    initializeObservability()
     startSlaCron()
     startCalendarSyncCron()
+    startContinuingReviewCron()
   })
 }
 

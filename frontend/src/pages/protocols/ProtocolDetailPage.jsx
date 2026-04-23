@@ -7,7 +7,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react'
-import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
+import { useParams, useSearchParams, useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import api from '../../services/api'
@@ -42,11 +42,13 @@ export default function ProtocolDetailPage() {
   const { id }   = useParams()
   const [search] = useSearchParams()
   const navigate = useNavigate()
+  const location = useLocation()
   const { user } = useAuth()
 
   const meetingId = search.get('meetingId')   // Set when creating new protocol
   const isNew     = !id || id === 'new'
   const canEdit   = ['SECRETARY', 'ADMIN'].includes(user?.role)
+  const backTo    = typeof location.state?.from === 'string' ? location.state.from : '/protocols'
 
   const [protocol,       setProtocol]       = useState(null)
   const [title,          setTitle]          = useState('')
@@ -64,11 +66,11 @@ export default function ProtocolDetailPage() {
 
   const fetchProtocol = useCallback(async () => {
     if (isNew) {
-      if (!meetingId) { navigate('/protocols'); return }
+      if (!meetingId) { navigate(backTo); return }
       setLoading(true)
       try {
         const res = await api.post('/protocols', { meetingId })
-        navigate(`/protocols/${res.data.data.id}`, { replace: true })
+        navigate(`/protocols/${res.data.data.id}`, { replace: true, state: location.state })
       } catch (err) {
         showToast(err.message, 'error')
         setLoading(false)
@@ -91,7 +93,7 @@ export default function ProtocolDetailPage() {
     } finally {
       setLoading(false)
     }
-  }, [id, isNew, meetingId, navigate, t])
+  }, [backTo, id, isNew, meetingId, navigate, location.state, t])
 
   useEffect(() => { fetchProtocol() }, [fetchProtocol])
 
@@ -230,7 +232,7 @@ export default function ProtocolDetailPage() {
       <div className="bg-white border-b px-4 md:px-6 py-3 flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <button
-            onClick={() => navigate('/protocols')}
+            onClick={() => navigate(backTo)}
             className="text-sm text-gray-400 hover:text-gray-700 transition-colors"
             style={{ minHeight: '44px', minWidth: '44px' }}
             aria-label={t('protocols.backToList')}

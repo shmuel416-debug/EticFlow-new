@@ -6,7 +6,7 @@
 
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import api from '../../services/api'
 import StatusBadge from '../../components/submissions/StatusBadge'
 import useStatusConfig from '../../hooks/useStatusConfig'
@@ -20,6 +20,7 @@ function submissionRoute(sub) {
 
 export default function ResearcherSubmissionsListPage() {
   const { t } = useTranslation()
+  const location = useLocation()
   const navigate = useNavigate()
   const { statuses } = useStatusConfig()
 
@@ -30,6 +31,7 @@ export default function ResearcherSubmissionsListPage() {
   const [statusFilter, setStatusFilter] = useState('ALL')
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
+  const returnPath = `${location.pathname}${location.search}`
 
   useEffect(() => {
     let cancelled = false
@@ -133,6 +135,7 @@ export default function ResearcherSubmissionsListPage() {
             <Link
               key={sub.id}
               to={submissionRoute(sub)}
+              state={{ from: returnPath }}
               className="block p-4 border rounded-xl hover:shadow-md transition-shadow bg-white"
               style={{ borderColor: '#e5e7eb' }}
             >

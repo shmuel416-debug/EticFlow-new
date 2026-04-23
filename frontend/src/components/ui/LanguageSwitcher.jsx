@@ -11,15 +11,15 @@ import { useAuth } from '../../context/AuthContext'
  * @param {{ className?: string }} props
  */
 export default function LanguageSwitcher({ className = '' }) {
-  const { i18n }         = useTranslation()
+  const { i18n, t }      = useTranslation()
   const { changeLanguage } = useAuth()
   const lang             = i18n.language
 
   return (
-    <div className={`flex gap-2 ${className}`} role="group" aria-label="בחירת שפה / Language">
+    <div className={`flex gap-2 ${className}`} role="group" aria-label={t('common.language')}>
       {[
-        { code: 'he', label: 'עברית', display: 'עב' },
-        { code: 'en', label: 'English', display: 'EN' },
+        { code: 'he', label: t('language.heLabel'), display: t('language.heShort') },
+        { code: 'en', label: t('language.enLabel'), display: t('language.enShort') },
       ].map(({ code, label, display }) => {
         const isActive = lang === code
         return (

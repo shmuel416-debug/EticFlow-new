@@ -27,6 +27,13 @@ enum Role {
   ADMIN
 }
 
+enum ConflictScope {
+  SUBMISSION
+  USER
+  DEPARTMENT
+  GLOBAL
+}
+
 enum AuthProvider {
   LOCAL
   MICROSOFT
@@ -120,6 +127,25 @@ enum SlaPhase {
   COMPLETED
 }
 
+enum DataSubjectRequestType {
+  ACCESS
+  ERASURE
+}
+
+enum DataSubjectRequestStatus {
+  OPEN
+  IN_PROGRESS
+  COMPLETED
+  REJECTED
+}
+
+enum CommitteeVoteDecision {
+  APPROVED
+  REJECTED
+  REVISION_REQUIRED
+  ABSTAIN
+}
+
 // ─────────────────────────────────────────────
 // 1. USER
 // ─────────────────────────────────────────────
@@ -129,7 +155,7 @@ model User {
   email             String       @unique
   passwordHash      String?      @map("password_hash")       // NULL for SSO users
   fullName          String       @map("full_name")
-  role              Role         @default(RESEARCHER)
+  roles             Role[]       @default([RESEARCHER])
   department        String?
   phone             String?
   authProvider      AuthProvider @default(LOCAL) @map("auth_provider")
@@ -142,6 +168,8 @@ model User {
   calendarEmail       String?      @map("calendar_email")
   resetToken        String?      @map("reset_token")
   resetTokenExpiry  DateTime?    @map("reset_token_expiry")
+  failedLoginAttempts Int        @default(0) @map("failed_login_attempts")
+  lockoutUntil      DateTime?    @map("lockout_until")
   isActive          Boolean      @default(true) @map("is_active")
   createdAt         DateTime     @default(now()) @map("created_at")
   updatedAt         DateTime     @updatedAt @map("updated_at")
@@ -153,11 +181,17 @@ model User {
   notifications     Notification[]
   auditLogs         AuditLog[]
   authExchangeCodes AuthExchangeCode[]
+  refreshTokens     RefreshToken[]
   meetingAttendees  MeetingAttendee[]
   meetingCalendarSyncs MeetingCalendarSync[]
   protocolSignatures ProtocolSignature[]
   uploadedDocuments Document[]         @relation("DocumentUploader")
   aiAnalyses        AIAnalysis[]
+  privacyConsents   PrivacyConsent[]
+  dsrRequests       DataSubjectRequest[]
+  submissionVotes   SubmissionVote[]
+  declaredConflicts ConflictDeclaration[] @relation("ConflictDeclarer")
+  targetConflicts   ConflictDeclaration[] @relation("ConflictTargetUser")
 
   @@map("users")
 }
@@ -181,6 +215,22 @@ model AuthExchangeCode {
   @@index([expiresAt])
   @@index([userId, createdAt])
   @@map("auth_exchange_codes")
+}
+
+model RefreshToken {
+  id         String   @id @default(uuid())
+  tokenHash  String   @unique @map("token_hash")
+  userId     String   @map("user_id")
+  expiresAt  DateTime @map("expires_at")
+  revokedAt  DateTime? @map("revoked_at")
+  replacedBy String?  @map("replaced_by")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, createdAt])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
 }
 
 // ─────────────────────────────────────────────
@@ -237,6 +287,8 @@ model Submission {
   agendaItems  MeetingAgendaItem[]
   documents    Document[]
   statusConfig SubmissionStatus @relation("SubmissionStatusRelation", fields: [status], references: [code])
+  committeeVotes SubmissionVote[]
+  conflictDeclarations ConflictDeclaration[] @relation("ConflictTargetSubmission")
 
   @@map("submissions")
 }
@@ -625,4 +677,76 @@ model Document {
   uploadedBy User?       @relation("DocumentUploader", fields: [uploadedById], references: [id])
 
   @@map("documents")
+}
+
+model PrivacyConsent {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  consentType String   @map("consent_type")
+  policyVersion String @map("policy_version")
+  accepted    Boolean
+  ipAddress   String?  @map("ip_address")
+  userAgent   String?  @map("user_agent")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, createdAt])
+  @@map("privacy_consents")
+}
+
+model DataSubjectRequest {
+  id          String                  @id @default(uuid())
+  userId      String                  @map("user_id")
+  type        DataSubjectRequestType
+  status      DataSubjectRequestStatus @default(OPEN)
+  details     String?
+  requestedAt DateTime                @default(now()) @map("requested_at")
+  resolvedAt  DateTime?               @map("resolved_at")
+  resolutionNote String?              @map("resolution_note")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId, requestedAt])
+  @@map("data_subject_requests")
+}
+
+model SubmissionVote {
+  id           String                @id @default(uuid())
+  submissionId String                @map("submission_id")
+  voterId      String                @map("voter_id")
+  decision     CommitteeVoteDecision
+  note         String?
+  createdAt    DateTime              @default(now()) @map("created_at")
+  updatedAt    DateTime              @updatedAt @map("updated_at")
+
+  submission Submission @relation(fields: [submissionId], references: [id])
+  voter      User       @relation(fields: [voterId], references: [id])
+
+  @@unique([submissionId, voterId])
+  @@index([submissionId, createdAt])
+  @@map("submission_votes")
+}
+
+model ConflictDeclaration {
+  id                 String        @id @default(uuid())
+  declarerId         String        @map("declarer_id")
+  scope              ConflictScope
+  targetSubmissionId String?       @map("target_submission_id")
+  targetUserId       String?       @map("target_user_id")
+  targetDepartment   String?       @map("target_department")
+  reason             String
+  isActive           Boolean       @default(true) @map("is_active")
+  declaredAt         DateTime      @default(now()) @map("declared_at")
+  updatedAt          DateTime      @updatedAt @map("updated_at")
+
+  declarer           User          @relation("ConflictDeclarer", fields: [declarerId], references: [id])
+  targetSubmission   Submission?   @relation("ConflictTargetSubmission", fields: [targetSubmissionId], references: [id])
+  targetUser         User?         @relation("ConflictTargetUser", fields: [targetUserId], references: [id])
+
+  @@index([declarerId, isActive])
+  @@index([targetSubmissionId, isActive])
+  @@index([targetUserId, isActive])
+  @@index([scope, isActive])
+  @@map("conflict_declarations")
 }

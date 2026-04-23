@@ -74,7 +74,7 @@ describe('meetings.controller attendee role guards', () => {
 
   test('create rejects attendeeIds containing RESEARCHER role', async () => {
     prismaMock.user.findMany.mockResolvedValue([
-      { id: 'u-researcher', fullName: 'Research User', email: 'r@test.com', role: 'RESEARCHER', isActive: true },
+      { id: 'u-researcher', fullName: 'Research User', email: 'r@test.com', roles: ['RESEARCHER'], isActive: true },
     ])
 
     const { req, res, next } = makeContext({
@@ -100,7 +100,7 @@ describe('meetings.controller attendee role guards', () => {
     prismaMock.user.findUnique.mockResolvedValue({
       id: 'u-secretary',
       fullName: 'Inactive Secretary',
-      role: 'SECRETARY',
+      roles: ['RESEARCHER', 'SECRETARY'],
       email: 'sec@test.com',
       isActive: false,
     })
@@ -124,7 +124,7 @@ describe('meetings.controller attendee role guards', () => {
     prismaMock.user.findUnique.mockResolvedValue({
       id: 'u-researcher',
       fullName: 'Research User',
-      role: 'RESEARCHER',
+      roles: ['RESEARCHER'],
       email: 'r@test.com',
       isActive: true,
     })
@@ -148,7 +148,7 @@ describe('meetings.controller attendee role guards', () => {
     prismaMock.user.findUnique.mockResolvedValue({
       id: 'u-reviewer',
       fullName: 'Reviewer User',
-      role: 'REVIEWER',
+      roles: ['RESEARCHER', 'REVIEWER'],
       email: 'rev@test.com',
       isActive: true,
     })
@@ -158,7 +158,7 @@ describe('meetings.controller attendee role guards', () => {
       user: {
         id: 'u-reviewer',
         fullName: 'Reviewer User',
-        role: 'REVIEWER',
+        roles: ['RESEARCHER', 'REVIEWER'],
         email: 'rev@test.com',
       },
     })

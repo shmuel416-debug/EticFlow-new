@@ -20,6 +20,6 @@ export function startSlaCron() {
     } catch (err) {
       console.error('[SLA] Cron failed:', err.message)
     }
-  })
-  console.log('⏰ SLA cron scheduled (daily midnight)')
+  }, { timezone: 'Asia/Jerusalem' })
+  console.log('⏰ SLA cron scheduled (daily midnight, Asia/Jerusalem)')
 }

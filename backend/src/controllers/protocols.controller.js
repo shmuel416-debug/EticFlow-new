@@ -20,6 +20,8 @@ import { sendEmail } from '../services/email/email.service.js'
 import { generateProtocolPdf } from '../services/pdf.service.js'
 import { recordAuditEntry } from '../middleware/audit.js'
 import { COMMITTEE_ROLES } from '../constants/roles.js'
+import { getPrimaryRole } from '../utils/roles.js'
+import { hasConflict } from '../services/coi.service.js'
 
 /** Token validity window in hours. */
 const TOKEN_TTL_HOURS = 72
@@ -90,7 +92,7 @@ export async function list(req, res, next) {
           meeting:    { select: { id: true, title: true, scheduledAt: true } },
           signatures: {
             where: { isActive: true },
-            include: { user: { select: { id: true, fullName: true, role: true } } },
+            include: { user: { select: { id: true, fullName: true, roles: true } } },
           },
         },
       }),
@@ -190,7 +192,7 @@ export async function getById(req, res, next) {
         },
         signatures: {
           where:   { isActive: true },
-          include: { user: { select: { id: true, fullName: true, role: true, email: true } } },
+          include: { user: { select: { id: true, fullName: true, roles: true, email: true } } },
         },
         documents: {
           where:   { isActive: true },
@@ -318,9 +320,9 @@ export async function requestSignatures(req, res, next) {
       where: {
         id: { in: signerIds },
         isActive: true,
-        role: { in: COMMITTEE_ROLES },
+        roles: { hasSome: COMMITTEE_ROLES },
       },
-      select: { id: true, email: true, fullName: true, role: true },
+      select: { id: true, email: true, fullName: true, roles: true },
     })
     if (signers.length !== signerIds.length) {
       const allowedSignerIds = new Set(signers.map((signer) => signer.id))
@@ -329,6 +331,7 @@ export async function requestSignatures(req, res, next) {
         endpoint: '/api/protocols/:id/request-signatures',
         requestedSignerIds: signerIds,
         blockedSignerIds,
+        resolvedRoles: signers.map((signer) => ({ id: signer.id, role: getPrimaryRole(signer) })),
       })
       throw new AppError(
         'One or more users are not eligible to sign (must be committee members, active)',
@@ -527,7 +530,31 @@ export async function getPdf(req, res, next) {
     const protocol = await prisma.protocol.findUnique({
       where:   { id },
       include: {
-        meeting:    { select: { title: true, scheduledAt: true } },
+        meeting: {
+          select: {
+            title: true,
+            scheduledAt: true,
+            attendees: {
+              where: { isActive: true },
+              include: { user: { select: { id: true, fullName: true } } },
+            },
+            agendaItems: {
+              where: { isActive: true },
+              include: {
+                submission: {
+                  select: {
+                    id: true,
+                    applicationId: true,
+                    title: true,
+                    authorId: true,
+                    author: { select: { id: true, fullName: true, department: true } },
+                  },
+                },
+              },
+              orderBy: { orderIndex: 'asc' },
+            },
+          },
+        },
         signatures: {
           where:   { isActive: true },
           include: { user: { select: { fullName: true } } },
@@ -538,7 +565,37 @@ export async function getPdf(req, res, next) {
       throw new AppError('Protocol not found', 'NOT_FOUND', 404)
     }
 
-    const { storagePath } = await generateProtocolPdf(protocol, lang)
+    const recusalLines = []
+    for (const item of protocol.meeting?.agendaItems || []) {
+      const names = []
+      for (const attendee of protocol.meeting?.attendees || []) {
+        const conflict = await hasConflict(attendee.userId, item.submission)
+        if (conflict.conflict) {
+          names.push(attendee.user?.fullName || attendee.userId)
+        }
+      }
+      if (names.length > 0) {
+        recusalLines.push(`${item.submission?.applicationId || item.submission?.id}: ${names.join(', ')}`)
+      }
+    }
+
+    const recusalHeading = lang === 'en'
+      ? 'Members Recused Due To Conflict Of Interest'
+      : 'חברים שנעדרו מהדיון בשל ניגוד עניינים'
+    const recusalContent = recusalLines.length > 0
+      ? recusalLines.join('\n')
+      : (lang === 'en' ? 'No recusals were recorded.' : 'לא נרשמו היעדרויות עקב ניגוד עניינים.')
+
+    const baseSections = Array.isArray(protocol.contentJson?.sections) ? protocol.contentJson.sections : []
+    const contentJson = {
+      ...protocol.contentJson,
+      sections: [
+        ...baseSections.filter((section) => section?.heading !== recusalHeading),
+        { heading: recusalHeading, content: recusalContent },
+      ],
+    }
+
+    const { storagePath } = await generateProtocolPdf({ ...protocol, contentJson }, lang)
 
     res.locals.entityId = id
     res.download(storagePath, `protocol-${lang}-${id}.pdf`)

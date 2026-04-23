@@ -42,6 +42,11 @@ coverage/
 .nyc_output/
 tmp_*.txt
 tmp_*.mjs
+tmp_*.json
+tmp_*.pdf
+tmp_*.exe
+frontend/playwright-report/
+frontend/test-results/
 
 # Prisma
 backend/prisma/migrations/**/migration_lock.toml
