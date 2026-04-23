@@ -39,6 +39,13 @@ describe('users.controller listReviewers multi-role', () => {
         department: 'Bio',
         roles: ['RESEARCHER', 'REVIEWER'],
       },
+      {
+        id: 'u-2',
+        fullName: 'Chair Reviewer',
+        email: 'chair@test.com',
+        department: 'Ethics',
+        roles: ['RESEARCHER', 'CHAIRMAN'],
+      },
     ])
     coiServiceMock.mapReviewerConflicts.mockImplementation(async (rows) =>
       rows.map((row) => ({ ...row, hasConflict: false, conflictReasons: [] }))
@@ -48,13 +55,23 @@ describe('users.controller listReviewers multi-role', () => {
   test('includes multi-role reviewer in default list', async () => {
     const { req, res, next } = makeContext()
     await listReviewers(req, res, next)
+    expect(prismaMock.user.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({
+        isActive: true,
+        roles: { hasSome: ['REVIEWER', 'CHAIRMAN'] },
+      }),
+    }))
     expect(res.json).toHaveBeenCalledWith({
-      data: [
+      data: expect.arrayContaining([
         expect.objectContaining({
           id: 'u-1',
           roles: expect.arrayContaining(['RESEARCHER', 'REVIEWER']),
         }),
-      ],
+        expect.objectContaining({
+          id: 'u-2',
+          roles: expect.arrayContaining(['RESEARCHER', 'CHAIRMAN']),
+        }),
+      ]),
     })
     expect(next).not.toHaveBeenCalled()
   })

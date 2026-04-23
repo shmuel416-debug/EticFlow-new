@@ -170,7 +170,7 @@ router.patch(
 router.patch(
   '/:id/review',
   authenticate,
-  authorize('REVIEWER'),
+  authorize('REVIEWER', 'CHAIRMAN'),
   validate(reviewSchema),
   auditLog('submission.review_submitted', 'Submission'),
   statusController.submitReview

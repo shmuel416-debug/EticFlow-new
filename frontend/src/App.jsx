@@ -97,7 +97,7 @@ export default function App() {
               </Route>
 
               {/* Reviewer */}
-              <Route element={<ProtectedRoute roles={['REVIEWER']} />}>
+              <Route element={<ProtectedRoute roles={['REVIEWER', 'CHAIRMAN']} />}>
                 <Route path="/reviewer/assignments"      element={<AssignmentsPage />} />
                 <Route path="/reviewer/assignments/:id"  element={<ReviewDetailPage />} />
                 <Route path="/reviewer/assignments/:id/diff" element={<ReviewDiffPage />} />

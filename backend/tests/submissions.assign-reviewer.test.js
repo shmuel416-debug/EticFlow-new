@@ -96,4 +96,28 @@ describe('submissions.status assignReviewer', () => {
     expect(res.json).toHaveBeenCalledWith({ submission: expect.any(Object) })
     expect(next).not.toHaveBeenCalled()
   })
+
+  test('accepts chairman as reviewer assignee', async () => {
+    prismaMock.user.findFirst.mockResolvedValue({
+      id: 'chair-1',
+      roles: ['RESEARCHER', 'CHAIRMAN'],
+      isActive: true,
+    })
+    coiServiceMock.hasConflict.mockResolvedValue({ conflict: false, reasons: [] })
+
+    const { req, res, next } = makeContext()
+    req.body.reviewerId = 'chair-1'
+    await assignReviewer(req, res, next)
+
+    expect(prismaMock.user.findFirst).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({
+        id: 'chair-1',
+        isActive: true,
+        roles: { hasSome: ['REVIEWER', 'CHAIRMAN'] },
+      }),
+    }))
+    expect(prismaMock.submission.update).toHaveBeenCalledTimes(1)
+    expect(res.json).toHaveBeenCalledWith({ submission: expect.any(Object) })
+    expect(next).not.toHaveBeenCalled()
+  })
 })

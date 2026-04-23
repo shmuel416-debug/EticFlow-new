@@ -84,7 +84,7 @@ function paginate(data, total, page, limit) {
 /**
  * GET /api/submissions
  * Lists submissions filtered by role, with optional status filter and pagination.
- * @param {import('express').Request} req - query: { status?, page?, limit? }
+ * @param {import('express').Request} req - query: { status?, statuses?, search?, assignedToMe?, page?, limit? }
  * @param {import('express').Response} res
  * @param {import('express').NextFunction} next
  */
@@ -109,6 +109,9 @@ export async function list(req, res, next) {
         { title:         { contains: req.query.search, mode: 'insensitive' } },
         { applicationId: { contains: req.query.search, mode: 'insensitive' } },
       ]
+    }
+    if (req.query.assignedToMe === 'true' && hasAnyRole(req.user, 'REVIEWER', 'CHAIRMAN')) {
+      extra.reviewerId = req.user.id
     }
     const where = roleFilter(req.user, activeRole, extra)
 

@@ -35,7 +35,7 @@ export default function AssignmentsPage() {
     /** Fetches assigned submissions for the current reviewer. */
     async function fetchAssignments() {
       try {
-        const { data } = await api.get('/submissions?status=ASSIGNED')
+        const { data } = await api.get('/submissions?status=ASSIGNED&assignedToMe=true')
         setSubmissions(data.data)
       } catch {
         setError(t('reviewer.assignments.loadError'))

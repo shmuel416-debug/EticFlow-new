@@ -51,7 +51,7 @@ function normalizeRoles(roles) {
 
 /**
  * GET /api/users/reviewers
- * Returns all active REVIEWER users for the assignment dropdown.
+ * Returns active users eligible for reviewer assignment.
  * @param {import('express').Request}  req
  * @param {import('express').Response} res
  * @param {import('express').NextFunction} next
@@ -59,7 +59,7 @@ function normalizeRoles(roles) {
 export async function listReviewers(req, res, next) {
   try {
     const reviewers = await prisma.user.findMany({
-      where:   { roles: { has: 'REVIEWER' }, isActive: true },
+      where:   { roles: { hasSome: ['REVIEWER', 'CHAIRMAN'] }, isActive: true },
       select:  { id: true, fullName: true, email: true, department: true, roles: true },
       orderBy: { fullName: 'asc' },
     })

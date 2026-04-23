@@ -82,7 +82,7 @@ export async function assignReviewer(req, res, next) {
     }
 
     const reviewer = await prisma.user.findFirst({
-      where: { id: req.body.reviewerId, roles: { has: 'REVIEWER' }, isActive: true },
+      where: { id: req.body.reviewerId, roles: { hasSome: ['REVIEWER', 'CHAIRMAN'] }, isActive: true },
     })
     if (!reviewer) return next(AppError.notFound('Reviewer'))
 
@@ -120,7 +120,8 @@ export async function submitReview(req, res, next) {
     const activeRole = getRequestRole(req)
     const sub = await findOrFail(req.params.id)
     const allowedSubmitReview = await can('SUBMIT_REVIEW', sub.status, activeRole)
-    if (!allowedSubmitReview) return next(AppError.forbidden())
+    const assignedChairman = activeRole === 'CHAIRMAN' && sub.reviewerId === req.user.id
+    if (!allowedSubmitReview && !assignedChairman) return next(AppError.forbidden())
 
     if (sub.status !== 'ASSIGNED') {
       return next(new AppError('Submission must be ASSIGNED to submit a review', 'INVALID_TRANSITION', 400))
