@@ -186,13 +186,14 @@ export default function ProtocolsListPage() {
   }
 
   return (
-    <div className="p-4 md:p-6 space-y-4">
+    <div className="p-4 md:p-6 space-y-4 min-w-0 max-w-full">
       <PageHeader
         title={t('protocols.title')}
         subtitle={t('protocols.subtitle')}
         actions={
           canCreate ? (
             <Button
+              className="w-full min-[600px]:w-auto"
               variant="gold"
               onClick={handleOpenCreateModal}
               leftIcon={<FilePlus2 size={18} strokeWidth={1.75} aria-hidden="true" focusable="false" />}
@@ -209,6 +210,7 @@ export default function ProtocolsListPage() {
         value={filter}
         onChange={setFilter}
         variant="pills"
+        scrollable
         ariaLabel={t('protocols.title')}
       />
 
@@ -253,7 +255,7 @@ export default function ProtocolsListPage() {
       )}
 
       {!loading && !error && protocols.length > 0 && (
-        <ul className="space-y-3 max-w-3xl mx-auto" role="list">
+        <ul className="space-y-3 w-full max-w-3xl mx-auto min-w-0" role="list">
           {protocols.map(protocol => {
             const { signed, total: sigTotal } = sigProgress(protocol.signatures)
             const pct = sigTotal > 0 ? Math.round((signed / sigTotal) * 100) : 0
@@ -265,7 +267,7 @@ export default function ProtocolsListPage() {
                 <button
                   type="button"
                   onClick={() => navigate(`/protocols/${protocol.id}`, { state: { from: returnPath } })}
-                  className="w-full text-right bg-white p-4 transition hover:shadow-md"
+                  className="w-full text-start bg-white p-4 transition hover:shadow-md"
                   style={{
                     borderRadius: 'var(--radius-2xl)',
                     border: '1px solid var(--border-default)',
@@ -274,7 +276,7 @@ export default function ProtocolsListPage() {
                   }}
                   aria-label={label}
                 >
-                  <div className="flex items-start justify-between gap-4">
+                  <div className="flex flex-col gap-3 min-[500px]:flex-row min-[500px]:items-start min-[500px]:justify-between min-[500px]:gap-4">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <AccessibleIcon icon={FileText} size={14} decorative style={{ color: 'var(--text-muted)' }} />
@@ -283,34 +285,33 @@ export default function ProtocolsListPage() {
                         </Badge>
                       </div>
                       <h2
-                        className="font-semibold text-sm truncate"
+                        className="font-semibold text-sm break-words [overflow-wrap:anywhere] min-[500px]:line-clamp-2"
                         style={{ color: 'var(--lev-navy)' }}
                       >
                         {protocol.title}
                       </h2>
-                      <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                      <p className="text-xs mt-0.5 break-words" style={{ color: 'var(--text-muted)' }}>
                         {t('protocols.meeting')}: {protocol.meeting?.title}
                         {protocol.meeting?.scheduledAt && ` • ${fmtDate(protocol.meeting.scheduledAt)}`}
                       </p>
                     </div>
 
                     <div
-                      className="shrink-0 text-left min-w-[88px]"
+                      className="shrink-0 w-full min-[500px]:w-auto min-[500px]:min-w-[88px] min-[500px]:text-end border-t min-[500px]:border-0 border-[color:var(--border-subtle)] pt-2 min-[500px]:pt-0"
                       aria-label={`${t('protocols.signatures')}: ${signed}/${sigTotal}`}
                     >
                       <div className="text-xs mb-1" style={{ color: 'var(--text-muted)' }}>
                         {t('protocols.signatures')}
                       </div>
                       {sigTotal > 0 ? (
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5 min-[500px]:justify-end">
                           <div
-                            className="overflow-hidden"
+                            className="overflow-hidden min-[500px]:w-16 flex-1 min-[500px]:flex-none max-w-[12rem] min-[500px]:max-w-none"
                             role="progressbar"
                             aria-valuenow={signed}
                             aria-valuemin={0}
                             aria-valuemax={sigTotal}
                             style={{
-                              width: 64,
                               height: 6,
                               borderRadius: 'var(--radius-full)',
                               background: 'var(--surface-sunken)',
@@ -326,7 +327,7 @@ export default function ProtocolsListPage() {
                             />
                           </div>
                           <span
-                            className="inline-flex items-center gap-0.5 text-xs font-semibold tabular-nums"
+                            className="inline-flex items-center gap-0.5 text-xs font-semibold tabular-nums shrink-0"
                             style={{
                               color: protocol.status === 'SIGNED'
                                 ? 'var(--status-success)'

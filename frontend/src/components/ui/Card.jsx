@@ -41,7 +41,7 @@ export default function Card({
 export function CardHeader({ title, subtitle, actions, className = '', children }) {
   return (
     <div
-      className={`flex items-start justify-between gap-4 px-5 py-4 ${className}`}
+      className={`flex flex-col gap-2 min-[500px]:flex-row min-[500px]:items-start min-[500px]:justify-between min-[500px]:gap-4 px-5 py-4 ${className}`}
       style={{ borderBottom: '1px solid var(--border-subtle)' }}
     >
       <div className="min-w-0">
@@ -57,7 +57,11 @@ export function CardHeader({ title, subtitle, actions, className = '', children 
         )}
         {children}
       </div>
-      {actions && <div className="flex items-center gap-2 flex-shrink-0">{actions}</div>}
+      {actions && (
+        <div className="flex w-full min-w-0 min-[500px]:w-auto min-[500px]:shrink-0 flex-wrap items-center justify-end gap-2">
+          {actions}
+        </div>
+      )}
     </div>
   )
 }

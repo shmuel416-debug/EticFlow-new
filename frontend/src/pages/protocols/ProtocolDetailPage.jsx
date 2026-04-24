@@ -257,57 +257,64 @@ export default function ProtocolDetailPage() {
   const totalSig    = protocol?.signatures?.length ?? 0
 
   const headerActions = (
-    <div className="flex items-center gap-2 flex-wrap">
+    <div className="flex w-full min-w-0 flex-col gap-2 min-[600px]:flex-row min-[600px]:flex-wrap min-[600px]:items-center min-[600px]:justify-end">
       {protocol?.status && (
-        <Badge tone={statusTone(protocol.status)} size="md">
+        <Badge className="w-fit" tone={statusTone(protocol.status)} size="md">
           {STATUS_LABEL[protocol.status]}
         </Badge>
       )}
-      {canEdit && isDraft && (
-        <>
+      <div className="grid w-full min-w-0 grid-cols-1 min-[420px]:grid-cols-2 gap-2 min-[600px]:flex min-[600px]:w-auto min-[600px]:flex-wrap min-[600px]:justify-end">
+        {canEdit && isDraft && (
+          <>
+            <Button
+              className="w-full min-[600px]:w-auto"
+              variant="secondary"
+              onClick={handleSave}
+              loading={saving}
+              disabled={saving}
+              leftIcon={<AccessibleIcon icon={Save} size={16} decorative />}
+            >
+              {t('protocols.save')}
+            </Button>
+            <Button
+              className="w-full min-[600px]:w-auto"
+              variant="gold"
+              onClick={handleFinalize}
+              loading={finalizing}
+              disabled={finalizing}
+              leftIcon={<AccessibleIcon icon={FileCheck2} size={16} decorative />}
+            >
+              {t('protocols.finalize')}
+            </Button>
+          </>
+        )}
+        {canEdit && isPending && (
           <Button
-            variant="secondary"
-            onClick={handleSave}
-            loading={saving}
-            disabled={saving}
-            leftIcon={<AccessibleIcon icon={Save} size={16} decorative />}
-          >
-            {t('protocols.save')}
-          </Button>
-          <Button
+            className="w-full min-[600px]:w-auto min-[420px]:col-span-2 min-[600px]:col-auto"
             variant="gold"
-            onClick={handleFinalize}
-            loading={finalizing}
-            disabled={finalizing}
-            leftIcon={<AccessibleIcon icon={FileCheck2} size={16} decorative />}
+            onClick={openSignModal}
+            leftIcon={<AccessibleIcon icon={Signature} size={16} decorative />}
           >
-            {t('protocols.finalize')}
+            {t('protocols.requestSignatures')}
           </Button>
-        </>
-      )}
-      {canEdit && isPending && (
+        )}
         <Button
-          variant="gold"
-          onClick={openSignModal}
-          leftIcon={<AccessibleIcon icon={Signature} size={16} decorative />}
+          className="w-full min-[600px]:w-auto"
+          variant="secondary"
+          onClick={() => handlePdf('he')}
+          leftIcon={<AccessibleIcon icon={Download} size={16} decorative />}
         >
-          {t('protocols.requestSignatures')}
+          {t('protocols.downloadPdf')}
         </Button>
-      )}
-      <Button
-        variant="secondary"
-        onClick={() => handlePdf('he')}
-        leftIcon={<AccessibleIcon icon={Download} size={16} decorative />}
-      >
-        {t('protocols.downloadPdf')}
-      </Button>
-      <Button
-        variant="ghost"
-        onClick={() => handlePdf('en')}
-        leftIcon={<AccessibleIcon icon={Download} size={16} decorative />}
-      >
-        {t('protocols.downloadPdfEn')}
-      </Button>
+        <Button
+          className="w-full min-[600px]:w-auto"
+          variant="ghost"
+          onClick={() => handlePdf('en')}
+          leftIcon={<AccessibleIcon icon={Download} size={16} decorative />}
+        >
+          {t('protocols.downloadPdfEn')}
+        </Button>
+      </div>
     </div>
   )
 
@@ -316,7 +323,7 @@ export default function ProtocolDetailPage() {
   if (protocol?.meeting?.scheduledAt) subtitleParts.push(fmtDate(protocol.meeting.scheduledAt))
 
   return (
-    <div className="max-w-6xl mx-auto">
+    <div className="max-w-6xl mx-auto px-4 py-4 md:px-6 min-w-0">
       {/* ── Toast ── */}
       {toast && (
         <div
@@ -352,7 +359,7 @@ export default function ProtocolDetailPage() {
       <div className="grid grid-cols-1 md:grid-cols-[1fr_300px] gap-4">
 
         {/* Editor column */}
-        <div className="space-y-4">
+        <div className="space-y-4 min-w-0">
           {/* Title card */}
           <Card>
             <CardBody>
@@ -379,6 +386,7 @@ export default function ProtocolDetailPage() {
                 canEdit && isDraft
                   ? (
                     <Button
+                      className="w-full min-[500px]:w-auto shrink-0"
                       variant="ghost"
                       size="sm"
                       onClick={addSection}

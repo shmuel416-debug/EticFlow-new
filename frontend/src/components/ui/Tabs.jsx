@@ -25,6 +25,7 @@ import React, { useState, useRef, useCallback } from 'react'
  * @param {(key:string) => void} [props.onChange]
  * @param {'pills'|'underline'} [props.variant='pills']
  * @param {string} [props.ariaLabel]
+ * @param {boolean} [props.scrollable] - one row + horizontal scroll (narrow screens / many tabs)
  * @returns {JSX.Element}
  */
 export default function Tabs({
@@ -35,6 +36,7 @@ export default function Tabs({
   variant = 'pills',
   ariaLabel = 'Tabs',
   className = '',
+  scrollable = false,
 }) {
   const [inner, setInner] = useState(defaultValue ?? items[0]?.key)
   const active = value ?? inner
@@ -61,7 +63,14 @@ export default function Tabs({
     <div
       role="tablist"
       aria-label={ariaLabel}
-      className={`flex items-center gap-2 flex-wrap ${variant === 'underline' ? 'border-b' : ''} ${className}`}
+      className={[
+        'flex items-center gap-2',
+        scrollable
+          ? 'flex-nowrap overflow-x-auto overflow-y-hidden overscroll-x-contain min-w-0 max-w-full pb-0.5 -mx-0.5 px-0.5 [scrollbar-width:thin] touch-pan-x'
+          : 'flex-wrap',
+        variant === 'underline' ? 'border-b' : '',
+        className,
+      ].filter(Boolean).join(' ')}
       style={variant === 'underline' ? { borderColor: 'var(--border-default)' } : undefined}
     >
       {items.map((item, idx) => {
@@ -88,7 +97,7 @@ export default function Tabs({
             disabled={item.disabled}
             onClick={() => handleSelect(item.key)}
             onKeyDown={(e) => handleKey(e, idx)}
-            className={base}
+            className={`${base} ${scrollable ? 'shrink-0' : ''}`}
             style={{
               minHeight: 40,
               padding: variant === 'pills' ? '6px 14px' : '10px 6px',

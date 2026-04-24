@@ -959,6 +959,7 @@
     "deleted": "Status deleted",
     "actions": "Actions",
     "select": "Select",
+    "selectStatusContext": "Status to edit (transitions and permissions)",
     "transitionsFor": "Transitions from {{status}}",
     "permissionsFor": "Permissions for {{status}}",
     "requireReviewerAssigned": "Requires assigned reviewer",

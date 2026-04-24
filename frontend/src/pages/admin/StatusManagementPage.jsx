@@ -13,12 +13,48 @@ import api from '../../services/api'
 import useStatusConfig, { invalidateStatusConfigCache } from '../../hooks/useStatusConfig'
 import {
   Button, IconButton, Card, CardHeader, CardBody,
-  Badge, PageHeader, Input, Tabs,
+  Badge, PageHeader, Input, Tabs, Select,
 } from '../../components/ui'
 
 const ROLES = ['RESEARCHER', 'SECRETARY', 'REVIEWER', 'CHAIRMAN', 'ADMIN']
 const ACTIONS = ['VIEW', 'EDIT', 'COMMENT', 'UPLOAD_DOC', 'DELETE_DOC', 'VIEW_INTERNAL', 'TRANSITION', 'ASSIGN', 'SUBMIT_REVIEW', 'RECORD_DECISION']
 const TABS = ['statuses', 'transitions', 'permissions']
+
+/**
+ * @param {string} [lng]
+ * @returns {boolean}
+ */
+function isHebrewUILanguage(lng) {
+  return lng === 'he' || (typeof lng === 'string' && lng.startsWith('he'))
+}
+
+/**
+ * Select / list line: code + primary label for UI language, secondary after middle dot.
+ * @param {{ code: string, labelHe?: string|null, labelEn?: string|null }} s
+ * @param {string} lng
+ * @returns {string}
+ */
+function formatStatusOptionDisplay(s, lng) {
+  const isHe = isHebrewUILanguage(lng)
+  const primary = (isHe ? s.labelHe : s.labelEn)?.trim() || ''
+  const secondary = (isHe ? s.labelEn : s.labelHe)?.trim() || ''
+  const main = primary || secondary || '—'
+  const extra = primary && secondary && primary !== secondary ? ` · ${secondary}` : ''
+  return `${s.code} — ${main}${extra}`
+}
+
+/**
+ * Single localized label for badges / hints (UI language first, then fallback).
+ * @param {{ labelHe?: string|null, labelEn?: string|null }} s
+ * @param {string} lng
+ * @returns {string}
+ */
+function statusLocalizedName(s, lng) {
+  const isHe = isHebrewUILanguage(lng)
+  const a = (isHe ? s.labelHe : s.labelEn)?.trim() || ''
+  const b = (isHe ? s.labelEn : s.labelHe)?.trim() || ''
+  return a || b || ''
+}
 
 /**
  * Builds an empty status form object.
@@ -54,7 +90,8 @@ function swapStatusRows(list, fromIndex, toIndex) {
 }
 
 export default function StatusManagementPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const isHeUI = isHebrewUILanguage(i18n.language)
   const statusConfig = useStatusConfig()
   const [activeTab, setActiveTab] = useState('statuses')
   const [loading, setLoading] = useState(true)
@@ -242,7 +279,7 @@ export default function StatusManagementPage() {
   const tabItems = TABS.map((tab) => ({ key: tab, label: t(`statusManagement.tabs.${tab}`) }))
 
   return (
-    <div className="max-w-6xl mx-auto">
+    <div className="max-w-6xl mx-auto px-4 py-4 md:px-6 min-w-0">
       <PageHeader
         title={t('statusManagement.title')}
         subtitle={t('statusManagement.subtitle')}
@@ -251,16 +288,43 @@ export default function StatusManagementPage() {
 
       <div className="space-y-4">
         <Card>
-          <div className="p-2">
+          <div className="p-2 min-w-0">
             <Tabs
               items={tabItems}
               value={activeTab}
               onChange={setActiveTab}
               variant="pills"
+              scrollable
               ariaLabel={t('statusManagement.tabsLabel')}
             />
           </div>
         </Card>
+
+        {!loading && (activeTab === 'transitions' || activeTab === 'permissions') && statuses.length > 0 && (
+          <Card>
+            <CardBody className="py-3 sm:py-4">
+              <label
+                className="block text-sm font-semibold mb-2"
+                style={{ color: 'var(--text-primary)' }}
+                htmlFor="status-mgmt-context-select"
+              >
+                {t('statusManagement.selectStatusContext')}
+              </label>
+              <Select
+                id="status-mgmt-context-select"
+                value={selectedStatusId}
+                onChange={(e) => setSelectedStatusId(e.target.value)}
+                aria-label={t('statusManagement.selectStatusContext')}
+              >
+                {statuses.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {formatStatusOptionDisplay(s, i18n.language)}
+                  </option>
+                ))}
+              </Select>
+            </CardBody>
+          </Card>
+        )}
 
         {error && (
           <div
@@ -311,28 +375,54 @@ export default function StatusManagementPage() {
             <CardHeader title={t('statusManagement.tabs.statuses')} />
             <CardBody>
               <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-7 gap-2 items-center">
+                <div className="flex flex-col gap-2 sm:grid sm:grid-cols-2 md:grid-cols-7 md:gap-2 md:items-end">
                   <Input
                     data-testid="status-mgmt-add-code"
+                    dir="ltr"
                     value={newStatus.code}
                     onChange={(e) => setNewStatus((prev) => ({ ...prev, code: e.target.value }))}
                     placeholder={t('statusManagement.fields.code')}
                     aria-label={t('statusManagement.fields.code')}
                   />
-                  <Input
-                    data-testid="status-mgmt-add-label-he"
-                    value={newStatus.labelHe}
-                    onChange={(e) => setNewStatus((prev) => ({ ...prev, labelHe: e.target.value }))}
-                    placeholder={t('statusManagement.fields.labelHe')}
-                    aria-label={t('statusManagement.fields.labelHe')}
-                  />
-                  <Input
-                    data-testid="status-mgmt-add-label-en"
-                    value={newStatus.labelEn}
-                    onChange={(e) => setNewStatus((prev) => ({ ...prev, labelEn: e.target.value }))}
-                    placeholder={t('statusManagement.fields.labelEn')}
-                    aria-label={t('statusManagement.fields.labelEn')}
-                  />
+                  {isHeUI ? (
+                    <>
+                      <Input
+                        data-testid="status-mgmt-add-label-he"
+                        dir="rtl"
+                        value={newStatus.labelHe}
+                        onChange={(e) => setNewStatus((prev) => ({ ...prev, labelHe: e.target.value }))}
+                        placeholder={t('statusManagement.fields.labelHe')}
+                        aria-label={t('statusManagement.fields.labelHe')}
+                      />
+                      <Input
+                        data-testid="status-mgmt-add-label-en"
+                        dir="ltr"
+                        value={newStatus.labelEn}
+                        onChange={(e) => setNewStatus((prev) => ({ ...prev, labelEn: e.target.value }))}
+                        placeholder={t('statusManagement.fields.labelEn')}
+                        aria-label={t('statusManagement.fields.labelEn')}
+                      />
+                    </>
+                  ) : (
+                    <>
+                      <Input
+                        data-testid="status-mgmt-add-label-en"
+                        dir="ltr"
+                        value={newStatus.labelEn}
+                        onChange={(e) => setNewStatus((prev) => ({ ...prev, labelEn: e.target.value }))}
+                        placeholder={t('statusManagement.fields.labelEn')}
+                        aria-label={t('statusManagement.fields.labelEn')}
+                      />
+                      <Input
+                        data-testid="status-mgmt-add-label-he"
+                        dir="rtl"
+                        value={newStatus.labelHe}
+                        onChange={(e) => setNewStatus((prev) => ({ ...prev, labelHe: e.target.value }))}
+                        placeholder={t('statusManagement.fields.labelHe')}
+                        aria-label={t('statusManagement.fields.labelHe')}
+                      />
+                    </>
+                  )}
                   <input
                     data-testid="status-mgmt-add-color"
                     type="color"
@@ -366,30 +456,37 @@ export default function StatusManagementPage() {
                     />
                     {t('statusManagement.fields.isTerminal')}
                   </label>
-                  <Button
-                    variant="gold"
-                    data-testid="status-mgmt-add-submit"
-                    onClick={handleCreateStatus}
-                    disabled={saving}
-                    leftIcon={<Plus size={18} strokeWidth={2} aria-hidden="true" focusable="false" />}
-                  >
-                    {t('statusManagement.addStatus')}
-                  </Button>
+                  <div className="md:col-span-1 sm:col-span-2 max-md:pt-1">
+                    <Button
+                      variant="gold"
+                      className="w-full sm:w-auto"
+                      data-testid="status-mgmt-add-submit"
+                      onClick={handleCreateStatus}
+                      disabled={saving}
+                      leftIcon={<Plus size={18} strokeWidth={2} aria-hidden="true" focusable="false" />}
+                    >
+                      {t('statusManagement.addStatus')}
+                    </Button>
+                  </div>
                 </div>
 
                 <div
-                  className="overflow-x-auto"
+                  className="min-w-0 max-w-full overflow-x-auto overscroll-x-contain touch-pan-x -mx-1 px-1"
                   style={{
                     border: '1px solid var(--border-default)',
                     borderRadius: 'var(--radius-lg)',
                   }}
                 >
-                  <table className="w-full text-sm">
+                  <table className="w-full min-w-[520px] text-sm">
                     <thead>
                       <tr style={{ background: 'var(--surface-sunken)' }}>
                         <th scope="col" className="px-3 py-2 text-start text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>{t('statusManagement.fields.code')}</th>
-                        <th scope="col" className="px-3 py-2 text-start text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>{t('statusManagement.fields.labelHe')}</th>
-                        <th scope="col" className="px-3 py-2 text-start text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>{t('statusManagement.fields.labelEn')}</th>
+                        <th scope="col" className="px-3 py-2 text-start text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>
+                          {isHeUI ? t('statusManagement.fields.labelHe') : t('statusManagement.fields.labelEn')}
+                        </th>
+                        <th scope="col" className="px-3 py-2 text-start text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>
+                          {isHeUI ? t('statusManagement.fields.labelEn') : t('statusManagement.fields.labelHe')}
+                        </th>
                         <th scope="col" className="px-3 py-2 text-start text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>{t('statusManagement.fields.color')}</th>
                         <th scope="col" className="px-3 py-2 text-start text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>{t('statusManagement.fields.isTerminal')}</th>
                         <th scope="col" className="px-3 py-2 text-start text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>{t('statusManagement.actions')}</th>
@@ -405,8 +502,8 @@ export default function StatusManagementPage() {
                           <td className="px-3 py-2">
                             <Badge tone="navy" size="sm" className="font-mono">{status.code}</Badge>
                           </td>
-                          <td className="px-3 py-2">{status.labelHe}</td>
-                          <td className="px-3 py-2">{status.labelEn}</td>
+                          <td className="px-3 py-2" dir={isHeUI ? 'rtl' : 'ltr'}>{isHeUI ? status.labelHe : status.labelEn}</td>
+                          <td className="px-3 py-2" dir={isHeUI ? 'ltr' : 'rtl'}>{isHeUI ? status.labelEn : status.labelHe}</td>
                           <td className="px-3 py-2">
                             <span
                               className="inline-block"
@@ -487,7 +584,7 @@ export default function StatusManagementPage() {
                         borderRadius: 'var(--radius-lg)',
                       }}
                     >
-                      <label className="text-sm font-semibold flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+                      <label className="text-sm font-semibold flex items-start sm:items-center gap-2" style={{ color: 'var(--text-primary)' }}>
                         <input
                           type="checkbox"
                           checked={draft.enabled}
@@ -495,10 +592,19 @@ export default function StatusManagementPage() {
                             ...prev,
                             [target.code]: { ...draft, enabled: e.target.checked },
                           }))}
-                          className="w-4 h-4"
+                          className="w-4 h-4 mt-0.5 sm:mt-0 shrink-0"
                         />
-                        <span className="inline-flex items-center gap-2">
+                        <span className="inline-flex flex-wrap items-center gap-2 min-w-0">
                           <Badge tone="navy" size="sm">{selectedStatus.code}</Badge>
+                          {statusLocalizedName(selectedStatus, i18n.language) ? (
+                            <span
+                              className="text-xs font-normal"
+                              dir={isHeUI ? 'rtl' : 'ltr'}
+                              style={{ color: 'var(--text-muted)' }}
+                            >
+                              ({statusLocalizedName(selectedStatus, i18n.language)})
+                            </span>
+                          ) : null}
                           <ArrowRight
                             size={14}
                             strokeWidth={2}
@@ -508,6 +614,15 @@ export default function StatusManagementPage() {
                             style={{ color: 'var(--text-muted)' }}
                           />
                           <Badge tone="purple" size="sm">{target.code}</Badge>
+                          {statusLocalizedName(target, i18n.language) ? (
+                            <span
+                              className="text-xs font-normal min-w-0"
+                              dir={isHeUI ? 'rtl' : 'ltr'}
+                              style={{ color: 'var(--text-muted)' }}
+                            >
+                              ({statusLocalizedName(target, i18n.language)})
+                            </span>
+                          ) : null}
                         </span>
                       </label>
                       {draft.enabled && (
@@ -576,9 +691,9 @@ export default function StatusManagementPage() {
           <Card>
             <CardHeader title={t('statusManagement.permissionsFor', { status: selectedStatus.code })} />
             <CardBody>
-              <div className="space-y-3 overflow-x-auto">
+              <div className="space-y-3 min-w-0 max-w-full overflow-x-auto overscroll-x-contain touch-pan-x -mx-1 px-1">
                 <table
-                  className="w-full text-sm"
+                  className="w-full min-w-[640px] text-sm"
                   style={{
                     border: '1px solid var(--border-default)',
                     borderRadius: 'var(--radius-lg)',

@@ -959,6 +959,7 @@
     "deleted": "הסטטוס נמחק",
     "actions": "פעולות",
     "select": "בחר",
+    "selectStatusContext": "סטטוס לעריכה (מעברים והרשאות)",
     "transitionsFor": "מעברים מ-{{status}}",
     "permissionsFor": "הרשאות עבור {{status}}",
     "requireReviewerAssigned": "דורש סוקר מוקצה",
