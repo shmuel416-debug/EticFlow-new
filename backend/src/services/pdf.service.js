@@ -25,8 +25,45 @@ import {
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-/** Path to Unicode fonts bundled with this service (used by PDFKit for protocols). */
+/** Path to Unicode fonts bundled with this service. */
 const FONTS_DIR = path.join(__dirname, 'fonts')
+
+/**
+ * Loads a font file as a base64 string for HTML @font-face embedding.
+ * @param {string} fontPath
+ * @returns {string}
+ */
+function loadFontFileBase64(fontPath) {
+  try {
+    if (!existsSync(fontPath)) return ''
+    return readFileSync(fontPath).toString('base64')
+  } catch {
+    return ''
+  }
+}
+
+const ARIAL_REGULAR_B64 = loadFontFileBase64(path.join(FONTS_DIR, 'Arial.ttf'))
+const ARIAL_BOLD_B64    = loadFontFileBase64(path.join(FONTS_DIR, 'Arial-Bold.ttf'))
+
+/**
+ * Generates @font-face CSS declarations embedding the bundled Arial fonts.
+ * @returns {string}
+ */
+function fontFaceCss() {
+  if (!ARIAL_REGULAR_B64) return ''
+  return `
+@font-face {
+  font-family: 'Arial';
+  font-weight: 400;
+  src: url('data:font/truetype;base64,${ARIAL_REGULAR_B64}') format('truetype');
+}
+${ARIAL_BOLD_B64 ? `@font-face {
+  font-family: 'Arial';
+  font-weight: 700;
+  src: url('data:font/truetype;base64,${ARIAL_BOLD_B64}') format('truetype');
+}` : ''}
+`
+}
 
 /** Output directories for generated PDFs. */
 const GENERATED_DIR          = path.resolve('uploads', 'generated', 'approval')
@@ -243,13 +280,19 @@ function applyTemplateTokens(text, context) {
 // HTML TEMPLATES
 // ─────────────────────────────────────────────
 
-/** Shared CSS for both letter variants. */
-const BASE_CSS = `
+/**
+ * Returns shared CSS for both letter variants, with embedded Arial fonts.
+ * @returns {string}
+ */
+function buildBaseCss() {
+  return `
+${fontFaceCss()}
 * { margin: 0; padding: 0; box-sizing: border-box; }
 @page { size: A4; margin: 0; }
 body {
-  font-size: 11pt;
-  line-height: 1.65;
+  font-family: 'Arial', 'Arial Hebrew', sans-serif;
+  font-size: 14pt;
+  line-height: 1.7;
   color: #1e293b;
   background: white;
 }
@@ -372,15 +415,11 @@ hr.light  { border: none; border-top: 1px solid #e2e8f0; margin: 12px 0; }
   color: #94a3b8;
 }
 `
+}
 
 /**
  * Builds the Hebrew (RTL) approval letter HTML.
- * Key RTL rules applied:
- *  - `dir="rtl"` on <html> — browser BiDi algorithm handles all text direction
- *  - Heebo font loaded via <link> (Google Fonts); Noto Sans Hebrew as fallback
- *  - Labels written as "מספר בקשה:" (colon at end = LEFT side in RTL display)
- *  - LTR values (IDs, dates) wrapped in <bdi> to isolate from RTL context
- *  - No `flex-direction: row-reverse` — RTL flex already arranges right-to-left
+ * Uses embedded Arial fonts so Puppeteer renders correctly without network access.
  * @param {object} submission
  * @param {ReturnType<typeof getDefaultApprovalTemplate>} template
  * @param {Record<string, string>} templateContext
@@ -408,24 +447,27 @@ function buildHeHtml(submission, template, templateContext, signatureDataUrl = '
 <head>
 <meta charset="utf-8">
 <style>
-${BASE_CSS}
+${buildBaseCss()}
 body {
-  font-family: 'Rubik', 'Assistant', 'Arial', 'Noto Sans Hebrew', sans-serif;
+  font-family: 'Arial', 'Arial Hebrew', sans-serif;
   direction: rtl;
-  font-size: 12pt;
+  font-size: 14pt;
   line-height: 1.85;
 }
-/* Details rows: in RTL flex, first child is on the RIGHT (label), second on LEFT (value) */
+/* Details rows: in RTL flex, label is on the right, value on the left */
 .details-row .label { white-space: nowrap; }
 .details-row .value { flex: 1; text-align: start; }
 /* Bullet is on the right in RTL */
 .conditions-list li { padding-right: 20px; }
 .conditions-list li::before { content: '•'; position: absolute; right: 0; color: #1e3a5f; font-weight: bold; }
-.doc-title h2 { font-size: 18pt; }
-.body-text { font-size: 11.5pt; line-height: 1.9; }
-.details-row { padding: 10px 0; font-size: 10.5pt; }
-.conditions-list li { font-size: 11pt; line-height: 1.75; }
-.sig-label { font-size: 11pt; }
+.doc-title h2 { font-size: 18pt; font-weight: bold; }
+.body-text { font-size: 14pt; line-height: 1.9; }
+.details-row { padding: 10px 0; font-size: 13pt; }
+.conditions-title { font-weight: bold; font-size: 14pt; }
+.conditions-list li { font-size: 13pt; line-height: 1.75; }
+.subject { font-size: 14pt; font-weight: bold; }
+.sig-label { font-size: 13pt; font-weight: bold; }
+h1, h2, h3, strong, .to-label { font-weight: bold; }
 </style>
 </head>
 <body>
@@ -540,11 +582,24 @@ function buildEnHtml(submission, template, templateContext, signatureDataUrl = '
 <head>
 <meta charset="utf-8">
 <style>
-${BASE_CSS}
-body { font-family: Arial, Helvetica, sans-serif; direction: ltr; }
+${buildBaseCss()}
+body {
+  font-family: 'Arial', sans-serif;
+  direction: ltr;
+  font-size: 14pt;
+  line-height: 1.75;
+}
 .conditions-list li { padding-left: 18px; }
 .conditions-list li::before { content: '•'; position: absolute; left: 0; color: #1e3a5f; font-weight: bold; }
-.details-row .label { min-width: 130px; }
+.details-row .label { min-width: 140px; }
+.doc-title h2 { font-size: 18pt; font-weight: bold; }
+.body-text { font-size: 14pt; }
+.details-row { font-size: 13pt; }
+.conditions-title { font-weight: bold; font-size: 14pt; }
+.conditions-list li { font-size: 13pt; }
+.subject { font-size: 14pt; font-weight: bold; }
+.sig-label { font-size: 13pt; font-weight: bold; }
+h1, h2, h3, strong, .to-label { font-weight: bold; }
 </style>
 </head>
 <body>
@@ -644,7 +699,7 @@ async function renderHtmlToPdf(html, outputPath) {
   })
   try {
     const page = await browser.newPage()
-    await page.setContent(html, { waitUntil: 'networkidle2', timeout: 30000 })
+    await page.setContent(html, { waitUntil: 'domcontentloaded', timeout: 30000 })
     await page.pdf({
       path:            outputPath,
       format:          'A4',

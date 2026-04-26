@@ -122,13 +122,19 @@ export default function SubmissionDetailPage() {
         { responseType: 'blob' }
       )
       const url  = URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }))
-      const link = document.createElement('a')
-      link.href     = url
-      link.download = `approval-letter-${lang}-${submission.applicationId}.pdf`
-      document.body.appendChild(link)
-      link.click()
-      link.remove()
-      URL.revokeObjectURL(url)
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+      if (isIOS) {
+        window.open(url, '_blank')
+        setTimeout(() => URL.revokeObjectURL(url), 10000)
+      } else {
+        const link = document.createElement('a')
+        link.href     = url
+        link.download = `approval-letter-${lang}-${submission.applicationId}.pdf`
+        document.body.appendChild(link)
+        link.click()
+        link.remove()
+        URL.revokeObjectURL(url)
+      }
     } catch {
       setError(t('statusPage.pdfError'))
     } finally {
