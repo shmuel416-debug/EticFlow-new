@@ -1,13 +1,12 @@
 /**
  * EthicFlow — SubmitPage (Researcher)
- * Researcher fills and submits a dynamic form loaded from /api/forms/active.
- * Refreshed to Lev design system: PageHeader + Card primitives + Button/IconButton.
- * IS 5568 / WCAG 2.2 AA. Lev palette only via CSS vars. Mobile-first.
+ * Loads a published form via /api/forms/available, or the submission’s own form
+ * when editing a draft. Multiple published forms show a chooser; optional ?formId=.
  * @module pages/researcher/SubmitPage
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
-import { useNavigate, useParams }                    from 'react-router-dom'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { useNavigate, useParams, useSearchParams }  from 'react-router-dom'
 import { useTranslation }                            from 'react-i18next'
 import {
   CheckCircle2,
@@ -221,18 +220,100 @@ function SuccessScreen({ applicationId }) {
 
 /* ── Main page ───────────────────────────── */
 /**
- * SubmitPage — loads active form, renders fields, posts submission.
+ * Chooser: multiple published forms — accessible radio list + continue.
+ * @param {{ options: { id: string, name: string, nameEn: string, version: number }[], value: string, onChange: (id: string) => void, onConfirm: () => void, loading: boolean }} props
+ */
+function FormChooser({ options, value, onChange, onConfirm, loading }) {
+  const { t } = useTranslation()
+  return (
+    <Card as="section" aria-labelledby="form-chooser-title">
+      <CardHeader
+        title={(
+          <span id="form-chooser-title">{t('submission.submit.selectFormTitle')}</span>
+        )}
+      />
+      <CardBody>
+        <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
+          {t('submission.submit.selectFormDescription')}
+        </p>
+        <fieldset>
+          <legend className="sr-only">{t('submission.submit.selectFormFieldset')}</legend>
+          <ul className="space-y-3" role="radiogroup" aria-label={t('submission.submit.selectFormFieldset')}>
+            {options.map(f => {
+              const id = `form-opt-${f.id}`
+              const checked = value === f.id
+              return (
+                <li key={f.id} className="list-none">
+                  <label
+                    htmlFor={id}
+                    className="flex items-start gap-3 cursor-pointer rounded-lg border p-3 transition-shadow focus-within:ring-2 focus-within:ring-offset-1"
+                    style={{
+                      borderColor: checked ? 'var(--lev-navy)' : 'var(--border-default)',
+                      background:   checked ? 'var(--surface-sunken)' : 'var(--surface-raised)',
+                    }}
+                  >
+                    <input
+                      id={id}
+                      name="submission-form"
+                      type="radio"
+                      className="mt-0.5 shrink-0 h-4 w-4"
+                      value={f.id}
+                      checked={checked}
+                      onChange={() => onChange(f.id)}
+                    />
+                    <span className="min-w-0">
+                      <span className="font-semibold block" style={{ color: 'var(--text-primary)' }}>
+                        {f.name}
+                      </span>
+                      {f.nameEn
+                        ? (
+                          <span className="text-xs block mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                            {f.nameEn}
+                          </span>
+                        )
+                        : null}
+                      <span className="text-xs mt-1 block" style={{ color: 'var(--text-muted)' }}>
+                        {t('submission.submit.selectFormVersion', { n: f.version ?? 1 })}
+                      </span>
+                    </span>
+                  </label>
+                </li>
+              )
+            })}
+          </ul>
+        </fieldset>
+        <div className="mt-5 flex flex-wrap gap-2">
+          <Button
+            variant="gold"
+            onClick={onConfirm}
+            disabled={!value || loading}
+            loading={loading}
+          >
+            {t('submission.submit.selectFormConfirm')}
+          </Button>
+        </div>
+      </CardBody>
+    </Card>
+  )
+}
+
+/**
+ * SubmitPage — loads published form(s), renders fields, posts submission.
  * @returns {JSX.Element}
  */
 export default function SubmitPage() {
   const { t, i18n } = useTranslation()
   const navigate    = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const { id: editId } = useParams()          // present on /submissions/:id/edit
+  const formIdFromQuery = searchParams.get('formId') || ''
   const lang        = i18n.language === 'en' ? 'en' : 'he'
   const isRtl       = i18n.dir() === 'rtl'
   const SubmitArrow = isRtl ? ArrowLeft : ArrowRight
 
   const [formMeta,    setFormMeta]    = useState(null)
+  const [availableList, setAvailableList] = useState(null)
+  const [selectedFormId, setSelectedFormId] = useState('')
   const [loading,     setLoading]     = useState(true)
   const [loadError,   setLoadError]   = useState('')
   const [values,      setValues]      = useState({})
@@ -247,24 +328,104 @@ export default function SubmitPage() {
 
   const fields = useMemo(() => formMeta?.schemaJson?.fields ?? [], [formMeta])
 
-  /* Load active form, then load existing submission data if editing */
+  const lastEditIdRef = useRef(editId)
+
+  /* Load: edit → submission + embedded form; new → /forms/available; multi → picker or ?formId= */
   useEffect(() => {
     let cancelled = false
-    async function load() {
-      try {
-        const { data: formData } = await api.get('/forms/active')
-        if (cancelled) return
-        setFormMeta(formData.form ?? null)
+    const wasEdit = lastEditIdRef.current
+    lastEditIdRef.current = editId
+    const leftEditRoute = Boolean(wasEdit) && !editId
 
-        if (editId) {
+    async function run() {
+      if (leftEditRoute) {
+        setFormMeta(null)
+        setValues({})
+        setAvailableList(null)
+      }
+
+      if (editId) {
+        setLoading(true)
+        setLoadError('')
+        try {
           const { data: subData } = await api.get(`/submissions/${editId}`)
-          if (!cancelled) {
-            const existing = subData.submission ?? subData
-            const vers     = existing.versions ?? []
-            const latest   = (vers[vers.length - 1] ?? vers[0])?.dataJson ?? {}
-            setValues(latest)
-            setSubmissionId(editId)
+          if (cancelled) return
+          const existing = subData.submission ?? subData
+          const fc       = existing.formConfig
+          if (!fc || fc.schemaJson === undefined) {
+            setLoadError(t('submission.submit.formLoadError'))
+            return
           }
+          setFormMeta({
+            id:         fc.id,
+            name:       fc.name,
+            nameEn:     fc.nameEn,
+            version:    fc.version,
+            schemaJson: fc.schemaJson,
+          })
+          const vers   = existing.versions ?? []
+          const latest = (vers[vers.length - 1] ?? vers[0])?.dataJson ?? {}
+          setValues(latest)
+          setSubmissionId(editId)
+        } catch {
+          if (!cancelled) setLoadError(t('submission.submit.formLoadError'))
+        } finally {
+          if (!cancelled) setLoading(false)
+        }
+        return
+      }
+
+      if (!formMeta && availableList && availableList.length > 0 && !formIdFromQuery) {
+        if (!cancelled) setLoading(false)
+        return
+      }
+
+      if (formMeta) {
+        if (formIdFromQuery && formMeta.id !== formIdFromQuery) {
+          setFormMeta(null)
+          setValues({})
+          return
+        }
+        if (formIdFromQuery && formMeta.id === formIdFromQuery) {
+          if (!cancelled) setLoading(false)
+          return
+        }
+        if (!formIdFromQuery) {
+          if (!cancelled) setLoading(false)
+          return
+        }
+      }
+
+      setLoading(true)
+      setLoadError('')
+
+      try {
+        const { data: avData } = await api.get('/forms/available')
+        if (cancelled) return
+        const list = avData.forms ?? []
+        if (list.length === 0) {
+          setLoadError(t('submission.submit.noActiveForm'))
+          return
+        }
+        if (list.length === 1) {
+          const { data: fullData } = await api.get(`/forms/available/${list[0].id}`)
+          if (cancelled) return
+          setFormMeta(fullData.form ?? null)
+          setAvailableList(null)
+          return
+        }
+        if (formIdFromQuery && list.some(f => f.id === formIdFromQuery)) {
+          const { data: fullData } = await api.get(`/forms/available/${formIdFromQuery}`)
+          if (cancelled) return
+          setFormMeta(fullData.form ?? null)
+          setAvailableList(null)
+          return
+        }
+        if (!formIdFromQuery) {
+          setAvailableList(list)
+          setSelectedFormId(list[0]?.id ?? '')
+        } else {
+          setLoadError(t('submission.submit.formLoadError'))
         }
       } catch {
         if (!cancelled) setLoadError(t('submission.submit.formLoadError'))
@@ -272,9 +433,16 @@ export default function SubmitPage() {
         if (!cancelled) setLoading(false)
       }
     }
-    load()
+
+    run()
     return () => { cancelled = true }
-  }, [t, editId])
+  }, [t, editId, formIdFromQuery, formMeta, availableList])
+
+  const handleConfirmFormChoice = useCallback(() => {
+    if (!selectedFormId) return
+    setLoadError('')
+    setSearchParams({ formId: selectedFormId }, { replace: true })
+  }, [selectedFormId, setSearchParams])
 
   const handleChange = useCallback((id, val) => {
     setValues(prev => ({ ...prev, [id]: val }))
@@ -385,6 +553,41 @@ export default function SubmitPage() {
   }
 
   if (successId) return <SuccessScreen applicationId={successId} />
+
+  const showChooser = !editId && !formMeta && availableList && availableList.length > 0
+    && !formIdFromQuery
+
+  if (showChooser) {
+    return (
+      <div className="p-4 md:p-6">
+        <PageHeader
+          title={t('submission.submit.pageTitle')}
+          backTo="/dashboard"
+          backLabel={t('submission.submit.backToDashboard')}
+        />
+        {loadError ? (
+          <div
+            className="mb-4 rounded-lg border p-3 text-sm font-medium"
+            role="alert"
+            style={{
+              borderColor: 'var(--status-danger)',
+              color:         'var(--status-danger)',
+              background:    'var(--status-danger-50)',
+            }}
+          >
+            {loadError}
+          </div>
+        ) : null}
+        <FormChooser
+          options={availableList}
+          value={selectedFormId}
+          onChange={setSelectedFormId}
+          onConfirm={handleConfirmFormChoice}
+          loading={loading}
+        />
+      </div>
+    )
+  }
 
   if (loadError || !formMeta) {
     return (

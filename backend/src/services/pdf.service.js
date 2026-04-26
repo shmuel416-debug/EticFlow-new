@@ -281,10 +281,26 @@ function applyTemplateTokens(text, context) {
 // ─────────────────────────────────────────────
 
 /**
+ * Returns institution primary color from settings, or the default brand hex.
+ * @returns {Promise<string>}
+ */
+async function getInstitutionPrimaryColorHex() {
+  const row = await prisma.institutionSetting.findUnique({
+    where:  { key: 'primary_color' },
+    select: { value: true },
+  })
+  const v = String(row?.value ?? '').trim()
+  if (/^#[0-9A-Fa-f]{6}$/.test(v)) return v
+  return BRAND_PRIMARY
+}
+
+/**
  * Returns shared CSS for both letter variants, with embedded Arial fonts.
+ * @param {string} [brandPrimary=BRAND_PRIMARY] - header / accent color (e.g. #1e2a72)
  * @returns {string}
  */
-function buildBaseCss() {
+function buildBaseCss(brandPrimary = BRAND_PRIMARY) {
+  const subTitle = 'rgba(255,255,255,0.88)'
   return `
 ${fontFaceCss()}
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -298,7 +314,7 @@ body {
 }
 .page { width: 210mm; min-height: 297mm; }
 .header {
-  background: ${BRAND_PRIMARY};
+  background: ${brandPrimary};
   color: white;
   padding: 20px 40px;
 }
@@ -313,7 +329,7 @@ body {
   height: 42px;
   border-radius: 10px;
   background: #ffffff;
-  color: ${BRAND_PRIMARY};
+  color: ${brandPrimary};
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -332,7 +348,7 @@ body {
   object-fit: contain;
 }
 .header h1 { font-size: 20pt; font-weight: bold; letter-spacing: 1px; }
-.header .subtitle { font-size: 10pt; color: ${BRAND_ACCENT}; margin-top: 4px; }
+.header .subtitle { font-size: 10pt; color: ${subTitle}; margin-top: 4px; }
 .header .doc-type { font-size: 8pt; color: #cbd5e1; margin-top: 2px; }
 .institution-line {
   margin-top: 8px;
@@ -345,14 +361,14 @@ body {
 }
 .content { padding: 28px 40px; }
 .doc-title { text-align: center; margin-bottom: 14px; }
-.doc-title h2 { font-size: 16pt; font-weight: bold; color: #1e3a5f; }
+.doc-title h2 { font-size: 16pt; font-weight: bold; color: ${brandPrimary}; }
 .date-row { text-align: center; color: #64748b; font-size: 9.5pt; margin-bottom: 12px; }
-hr.strong { border: none; border-top: 1.5px solid #1e3a5f; margin: 12px 0; }
+hr.strong { border: none; border-top: 1.5px solid ${brandPrimary}; margin: 12px 0; }
 hr.light  { border: none; border-top: 1px solid #e2e8f0; margin: 12px 0; }
 .addressee { margin-bottom: 12px; font-size: 11pt; }
-.addressee .to-label { font-weight: bold; color: #1e3a5f; }
+.addressee .to-label { font-weight: bold; color: ${brandPrimary}; }
 .addressee .email { color: #64748b; font-size: 9.5pt; margin-top: 2px; }
-.subject { font-weight: bold; color: #1e3a5f; font-size: 11pt; margin-bottom: 8px; }
+.subject { font-weight: bold; color: ${brandPrimary}; font-size: 11pt; margin-bottom: 8px; }
 .body-text { font-size: 10.5pt; margin-bottom: 14px; line-height: 1.7; color: #374151; }
 .details-box {
   border: 1px solid #cbd5e1;
@@ -372,7 +388,7 @@ hr.light  { border: none; border-top: 1px solid #e2e8f0; margin: 12px 0; }
 .details-row:last-child { border-bottom: none; }
 .details-row .label { color: #64748b; font-weight: bold; font-size: 8.5pt; white-space: nowrap; }
 .details-row .value { color: #1e293b; font-weight: bold; flex: 1; }
-.conditions-title { font-weight: bold; color: #1e3a5f; font-size: 11pt; margin-bottom: 8px; }
+.conditions-title { font-weight: bold; color: ${brandPrimary}; font-size: 11pt; margin-bottom: 8px; }
 .conditions-list { list-style: none; padding: 0; }
 .conditions-list li {
   padding: 5px 0;
@@ -383,7 +399,7 @@ hr.light  { border: none; border-top: 1px solid #e2e8f0; margin: 12px 0; }
 }
 .signature-section { text-align: center; margin-top: 36px; }
 .sig-line { border-top: 1px solid #94a3b8; width: 280px; margin: 0 auto 8px; }
-.sig-label { color: #1e293b; font-weight: bold; font-size: 10pt; }
+.sig-label { color: ${brandPrimary}; font-weight: bold; font-size: 10pt; }
 .signature-grid {
   margin-top: 16px;
   display: grid;
@@ -423,9 +439,11 @@ hr.light  { border: none; border-top: 1px solid #e2e8f0; margin: 12px 0; }
  * @param {object} submission
  * @param {ReturnType<typeof getDefaultApprovalTemplate>} template
  * @param {Record<string, string>} templateContext
+ * @param {string} [signatureDataUrl='']
+ * @param {string} [brandPrimary='#1e3a5f'] - institution primary / header color
  * @returns {string}
  */
-function buildHeHtml(submission, template, templateContext, signatureDataUrl = '') {
+function buildHeHtml(submission, template, templateContext, signatureDataUrl = '', brandPrimary = BRAND_PRIMARY) {
   const today        = fmtDate(new Date())
   const approvedDate = fmtDate(submission.updatedAt)
   const expiryDate   = validUntil(submission.updatedAt, 'he')
@@ -447,7 +465,7 @@ function buildHeHtml(submission, template, templateContext, signatureDataUrl = '
 <head>
 <meta charset="utf-8">
 <style>
-${buildBaseCss()}
+${buildBaseCss(brandPrimary)}
 body {
   font-family: 'Arial', 'Arial Hebrew', sans-serif;
   direction: rtl;
@@ -459,7 +477,7 @@ body {
 .details-row .value { flex: 1; text-align: start; }
 /* Bullet is on the right in RTL */
 .conditions-list li { padding-right: 20px; }
-.conditions-list li::before { content: '•'; position: absolute; right: 0; color: #1e3a5f; font-weight: bold; }
+.conditions-list li::before { content: '•'; position: absolute; right: 0; color: ${brandPrimary}; font-weight: bold; }
 .doc-title h2 { font-size: 18pt; font-weight: bold; }
 .body-text { font-size: 14pt; line-height: 1.9; }
 .details-row { padding: 10px 0; font-size: 13pt; }
@@ -558,9 +576,11 @@ h1, h2, h3, strong, .to-label { font-weight: bold; }
  * @param {object} submission
  * @param {ReturnType<typeof getDefaultApprovalTemplate>} template
  * @param {Record<string, string>} templateContext
+ * @param {string} [signatureDataUrl='']
+ * @param {string} [brandPrimary='#1e3a5f']
  * @returns {string}
  */
-function buildEnHtml(submission, template, templateContext, signatureDataUrl = '') {
+function buildEnHtml(submission, template, templateContext, signatureDataUrl = '', brandPrimary = BRAND_PRIMARY) {
   const today        = fmtDateEn(new Date())
   const approvedDate = fmtDateEn(submission.updatedAt)
   const expiryDate   = validUntil(submission.updatedAt, 'en')
@@ -582,7 +602,7 @@ function buildEnHtml(submission, template, templateContext, signatureDataUrl = '
 <head>
 <meta charset="utf-8">
 <style>
-${buildBaseCss()}
+${buildBaseCss(brandPrimary)}
 body {
   font-family: 'Arial', sans-serif;
   direction: ltr;
@@ -590,7 +610,7 @@ body {
   line-height: 1.75;
 }
 .conditions-list li { padding-left: 18px; }
-.conditions-list li::before { content: '•'; position: absolute; left: 0; color: #1e3a5f; font-weight: bold; }
+.conditions-list li::before { content: '•'; position: absolute; left: 0; color: ${brandPrimary}; font-weight: bold; }
 .details-row .label { min-width: 140px; }
 .doc-title h2 { font-size: 18pt; font-weight: bold; }
 .body-text { font-size: 14pt; }
@@ -931,10 +951,11 @@ export async function generateApprovalLetter(submissionId, lang = 'he') {
 
   const template = await getStoredApprovalTemplate(safeLang)
   const signatureDataUrl = await getStoredChairmanSignature()
+  const brandPrimary = await getInstitutionPrimaryColorHex()
   const templateContext = buildApprovalTemplateContext(safeLang, submission)
   const html = safeLang === 'he'
-    ? buildHeHtml(submission, template, templateContext, signatureDataUrl)
-    : buildEnHtml(submission, template, templateContext, signatureDataUrl)
+    ? buildHeHtml(submission, template, templateContext, signatureDataUrl, brandPrimary)
+    : buildEnHtml(submission, template, templateContext, signatureDataUrl, brandPrimary)
   try {
     await renderHtmlToPdf(html, absPath)
   } catch (err) {
@@ -983,10 +1004,11 @@ export async function generateApprovalLetterPreview(submissionId, lang = 'he', t
   const submission = await getApprovalSubmission(submissionId)
   const template = validateApprovalTemplatePayload(templateInput, safeLang)
   const signatureDataUrl = await getStoredChairmanSignature()
+  const brandPrimary = await getInstitutionPrimaryColorHex()
   const templateContext = buildApprovalTemplateContext(safeLang, submission)
   const html = safeLang === 'he'
-    ? buildHeHtml(submission, template, templateContext, signatureDataUrl)
-    : buildEnHtml(submission, template, templateContext, signatureDataUrl)
+    ? buildHeHtml(submission, template, templateContext, signatureDataUrl, brandPrimary)
+    : buildEnHtml(submission, template, templateContext, signatureDataUrl, brandPrimary)
 
   const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'ef-approval-preview-'))
   const filename = `approval-template-preview-${safeLang}.pdf`

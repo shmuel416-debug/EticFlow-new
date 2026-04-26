@@ -530,9 +530,41 @@ function ApprovalTemplateEditor({
 
       <CardBody>
         <div className="space-y-4">
+          <p className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>
+            {t('settings.template.downloadContext')}
+          </p>
           <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
             {t('settings.template.description')}
           </p>
+          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+            {t('settings.template.logoLinkHint')}
+          </p>
+          {!String(values.institution_logo_url ?? '').trim() && (
+            <p
+              className="text-xs rounded-lg border p-2"
+              role="status"
+              style={{
+                borderColor: 'var(--status-warning)',
+                color:         'var(--status-warning)',
+                background:    'var(--surface-sunken)',
+              }}
+            >
+              {t('settings.template.missingLogoWarning')}
+            </p>
+          )}
+          {!String(signatureDataUrl ?? '').trim() && (
+            <p
+              className="text-xs rounded-lg border p-2"
+              role="status"
+              style={{
+                borderColor: 'var(--status-warning)',
+                color:         'var(--status-warning)',
+                background:    'var(--surface-sunken)',
+              }}
+            >
+              {t('settings.template.missingSignatureWarning')}
+            </p>
+          )}
 
           <div className="text-xs" style={{ color: 'var(--text-muted)' }}>
             <span className="font-semibold">{t('settings.template.placeholders')}</span>

@@ -2,6 +2,8 @@
  * EthicFlow — Forms Routes
  * GET    /api/forms            — list all forms          (SECRETARY, ADMIN)
  * GET    /api/forms/active     — get active form         (all authenticated)
+ * GET    /api/forms/available  — list published+active   (all authenticated, metadata)
+ * GET    /api/forms/available/:id — published+active by id (all authenticated, full)
  * GET    /api/forms/:id        — get single form         (SECRETARY, ADMIN)
  * POST   /api/forms            — create draft form       (SECRETARY, ADMIN)
  * PUT    /api/forms/:id        — update draft schema     (SECRETARY, ADMIN)
@@ -56,6 +58,18 @@ router.get(
   '/active',
   authenticate,
   controller.getActive
+)
+
+router.get(
+  '/available',
+  authenticate,
+  controller.listAvailable
+)
+
+router.get(
+  '/available/:id',
+  authenticate,
+  controller.getAvailableById
 )
 
 router.get(

@@ -268,7 +268,12 @@
       "declarationText": "אני מצהיר/ה כי כל המידע שמסרתי הוא מדויק ומלא, ואני מתחייב/ת לעמוד בכל דרישות ועדת האתיקה של המרכז האקדמי לב.",
       "declarationAccept": "אני מאשר/ת את הצהרת החוקר",
       "signatureHint": "חתימה דיגיטלית תופעל בשלב מאוחר יותר",
-      "sampleOption": "אפשרות {{n}}"
+      "sampleOption": "אפשרות {{n}}",
+      "selectFormTitle": "בחירת סוג בקשה",
+      "selectFormDescription": "קיימים מספר טפסי הגשה. בחר/י את הטופס המתאים לבקשה.",
+      "selectFormFieldset": "טופס להגשה",
+      "selectFormConfirm": "המשך",
+      "selectFormVersion": "גרסה {{n}}"
     }
   },
   "statusPage": {
@@ -901,6 +906,10 @@
       "syncDisabledSuccess": "סנכרון אישי הושבת"
     },
     "template": {
+      "downloadContext": "מסמך PDF זה זהה למה שהחוקר מוריד אחרי אישור הסופי (למשל ממסך סטטוס הבקשה).",
+      "logoLinkHint": "הלוגו מוגדר ב\"פרטי המוסד\" (כתובת URL של הלוגו).",
+      "missingLogoWarning": "לא הוגדר לוגו מוסד. במסמך יוצג שם הטקסט בלבד בראש הדף.",
+      "missingSignatureWarning": "לא הועלתה תמונת חתימת יו״ר. ב-PDF יופיעו רק שורות חתימה ללא תמונה.",
       "description": "אפשר לערוך את שדות הטמפלט הבאים. ניתן להשתמש במשתנים מוכנים בתוך הטקסט.",
       "placeholders": "משתנים זמינים:",
       "he": "עברית",

@@ -77,6 +77,51 @@ export async function getActive(req, res, next) {
 }
 
 /**
+ * GET /api/forms/available
+ * Lists all published, active forms (metadata only) for researchers and form pickers.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
+export async function listAvailable(req, res, next) {
+  try {
+    const forms = await prisma.formConfig.findMany({
+      where:   { isPublished: true, isActive: true },
+      orderBy: { publishedAt: 'desc' },
+      select:  {
+        id: true, name: true, nameEn: true, version: true, publishedAt: true, isActive: true, isPublished: true,
+      },
+    })
+    res.json({ forms: forms.map(withStatus) })
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
+ * GET /api/forms/available/:id
+ * Returns a full form only if it is published and active.
+ * @param {import('express').Request} req - params: { id }
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
+export async function getAvailableById(req, res, next) {
+  try {
+    const form = await prisma.formConfig.findFirst({
+      where: {
+        id:          req.params.id,
+        isPublished: true,
+        isActive:    true,
+      },
+    })
+    if (!form) return next(AppError.notFound('Form'))
+    res.json({ form: withStatus(form) })
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
  * GET /api/forms/:id
  * Returns a single form by ID. SECRETARY and ADMIN only.
  * @param {import('express').Request} req - params: { id }

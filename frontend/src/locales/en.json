@@ -268,7 +268,12 @@
       "declarationText": "I declare that all information I have provided is accurate and complete, and I commit to complying with all requirements of the Lev Academic Center Ethics Committee.",
       "declarationAccept": "I confirm the researcher declaration",
       "signatureHint": "Digital signature will be enabled at a later stage",
-      "sampleOption": "Option {{n}}"
+      "sampleOption": "Option {{n}}",
+      "selectFormTitle": "Choose application type",
+      "selectFormDescription": "More than one submission form is available. Select the form that matches your request.",
+      "selectFormFieldset": "Submission form",
+      "selectFormConfirm": "Continue",
+      "selectFormVersion": "Version {{n}}"
     }
   },
   "statusPage": {
@@ -901,6 +906,10 @@
       "syncDisabledSuccess": "Personal sync disabled"
     },
     "template": {
+      "downloadContext": "This PDF matches what the researcher downloads after final approval (e.g. from the submission status page).",
+      "logoLinkHint": "The institution logo is set under “Institution details” (logo URL).",
+      "missingLogoWarning": "No institution logo is set. The document header will show text only.",
+      "missingSignatureWarning": "No chair signature image is uploaded. The PDF will show signature lines only.",
       "description": "You can edit the following template fields. Use built-in placeholders inside text.",
       "placeholders": "Available placeholders:",
       "he": "Hebrew",
