@@ -233,7 +233,7 @@ export default function FormBuilderPage() {
     isDirty,
     previewLang, setPreviewLang,
     addField,    removeField,   duplicateField,
-    selectField, updateField,   reorderFields,
+    selectField, updateField,   reorderFields, moveField,
   } = useFormBuilder()
 
   const [formId,           setFormId]           = useState(routeId ?? null)
@@ -439,6 +439,7 @@ export default function FormBuilderPage() {
                 formName={formName}     previewLang={previewLang}
                 onSelect={(id) => { selectField(id); setMobileTab('settings') }}
                 onRemove={removeField}  onDuplicate={duplicateField}
+                onMoveField={moveField}
                 onPreviewLangChange={setPreviewLang}
               />
             )}
@@ -456,6 +457,7 @@ export default function FormBuilderPage() {
               formName={formName}       previewLang={previewLang}
               onSelect={selectField}    onRemove={removeField}
               onDuplicate={duplicateField}
+              onMoveField={moveField}
               onPreviewLangChange={setPreviewLang}
             />
           </main>

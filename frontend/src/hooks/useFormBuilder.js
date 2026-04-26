@@ -79,6 +79,18 @@ export default function useFormBuilder(initialName = '', initialNameEn = '') {
     setIsDirty(true)
   }, [])
 
+  /** Keyboard-accessible nudge: move field by delta (-1 up, +1 down) */
+  const moveField = useCallback((id, delta) => {
+    setFields(prev => {
+      const idx = prev.findIndex(f => f.id === id)
+      if (idx === -1) return prev
+      const nextIdx = idx + delta
+      if (nextIdx < 0 || nextIdx >= prev.length) return prev
+      return arrayMove(prev, idx, nextIdx)
+    })
+    setIsDirty(true)
+  }, [])
+
   return {
     formName,    setFormName,
     formNameEn,  setFormNameEn,
@@ -89,6 +101,6 @@ export default function useFormBuilder(initialName = '', initialNameEn = '') {
     isDirty,     setIsDirty,
     previewLang, setPreviewLang,
     addField,    removeField,   duplicateField,
-    selectField, updateField,   reorderFields,
+    selectField, updateField,   reorderFields, moveField,
   }
 }

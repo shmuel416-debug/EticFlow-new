@@ -6,6 +6,7 @@
  */
 
 import { useTranslation } from 'react-i18next'
+import { User } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 
 /**
@@ -26,7 +27,7 @@ export default function ImpersonationBanner() {
       className="bg-amber-400 text-amber-900 flex items-center justify-between px-4 py-2 min-h-[44px] sticky top-0 z-50 border-b-2 border-amber-500"
     >
       <div className="flex items-center gap-2 text-sm font-medium">
-        <span aria-hidden="true">👤</span>
+        <User size={18} strokeWidth={1.75} className="shrink-0" aria-hidden="true" focusable="false" />
         <span>
           {t('admin.impersonationBanner', {
             name: user?.fullName ?? user?.email ?? '',
@@ -37,9 +38,9 @@ export default function ImpersonationBanner() {
 
       <button
         onClick={stopImpersonation}
-        className="bg-amber-900 text-amber-50 px-3 py-1 rounded text-sm font-semibold
+        className="bg-amber-900 text-amber-50 px-3 py-2 rounded text-sm font-semibold
                    hover:bg-amber-800 focus-visible:ring-2 focus-visible:ring-amber-900
-                   focus-visible:ring-offset-2 min-h-[36px] min-w-[44px] transition-colors"
+                   focus-visible:ring-offset-2 min-h-[44px] min-w-[44px] transition-colors"
         aria-label={t('admin.stopImpersonation')}
       >
         {t('admin.stopImpersonation')}

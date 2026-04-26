@@ -7,6 +7,7 @@
 
 import { useEffect, useRef } from 'react'
 import { useTranslation }     from 'react-i18next'
+import { Rocket }             from 'lucide-react'
 
 /**
  * @param {{
@@ -47,8 +48,9 @@ export default function PublishDialog({ isOpen, onConfirm, onClose }) {
         aria-describedby="publish-dialog-body"
         className="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl"
       >
-        <h2 id="publish-dialog-title" className="text-base font-bold mb-2" style={{ color: 'var(--lev-navy)' }}>
-          🚀 {t('secretary.formBuilder.publishConfirmTitle')}
+        <h2 id="publish-dialog-title" className="text-base font-bold mb-2 flex items-center gap-2" style={{ color: 'var(--lev-navy)' }}>
+          <Rocket size={20} strokeWidth={1.75} className="shrink-0 text-gray-600" aria-hidden="true" focusable="false" />
+          {t('secretary.formBuilder.publishConfirmTitle')}
         </h2>
         <p id="publish-dialog-body" className="text-sm text-gray-600 mb-5">
           {t('secretary.formBuilder.publishConfirmBody')}

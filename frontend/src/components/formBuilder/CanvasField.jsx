@@ -8,19 +8,31 @@
 import { useTranslation }             from 'react-i18next'
 import { useSortable }                from '@dnd-kit/sortable'
 import { CSS }                        from '@dnd-kit/utilities'
-import { Copy, X }                    from 'lucide-react'
+import { Copy, X, GripVertical, ChevronUp, ChevronDown } from 'lucide-react'
 import { FIELD_TYPE_COLOR }           from './fieldTypes'
 
 /**
  * @param {{
- *   field:      object,
- *   isSelected: boolean,
- *   onSelect:   (id: string) => void,
- *   onRemove:   (id: string) => void,
- *   onDuplicate:(id: string) => void,
+ *   field:       object,
+ *   fieldIndex:  number,
+ *   fieldCount:  number,
+ *   isSelected:  boolean,
+ *   onSelect:    (id: string) => void,
+ *   onRemove:    (id: string) => void,
+ *   onDuplicate: (id: string) => void,
+ *   onMoveField: (id: string, delta: number) => void,
  * }} props
  */
-export default function CanvasField({ field, isSelected, onSelect, onRemove, onDuplicate }) {
+export default function CanvasField({
+  field,
+  fieldIndex,
+  fieldCount,
+  isSelected,
+  onSelect,
+  onRemove,
+  onDuplicate,
+  onMoveField,
+}) {
   const { t } = useTranslation()
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
@@ -58,14 +70,15 @@ export default function CanvasField({ field, isSelected, onSelect, onRemove, onD
       {/* Header row */}
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          {/* Drag handle */}
+          {/* Drag handle (pointer); keyboard reorder: buttons below */}
           <span
             {...attributes}
             {...listeners}
-            className="text-gray-300 cursor-grab active:cursor-grabbing text-sm select-none"
-            aria-hidden="true"
+            className="inline-flex items-center justify-center text-gray-400 cursor-grab active:cursor-grabbing select-none rounded hover:bg-gray-100"
+            style={{ minWidth: 36, minHeight: 36 }}
+            aria-label={t('secretary.formBuilder.dragHandleLabel')}
           >
-            ⠿⠿
+            <GripVertical size={18} strokeWidth={1.75} aria-hidden="true" focusable="false" />
           </span>
 
           {/* Type badge */}
@@ -86,17 +99,37 @@ export default function CanvasField({ field, isSelected, onSelect, onRemove, onD
 
         {/* Actions */}
         <div
-          className="flex gap-1"
+          className="flex gap-1 flex-wrap justify-end"
           role="group"
           aria-label={t('secretary.formBuilder.fieldActionsAriaLabel', { label: displayLabel })}
           onClick={e => e.stopPropagation()}
         >
           <button
             type="button"
+            onClick={() => onMoveField?.(field.id, -1)}
+            disabled={fieldIndex <= 0}
+            aria-label={t('secretary.formBuilder.fieldMoveUp')}
+            className="inline-flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors disabled:opacity-40 disabled:pointer-events-none"
+            style={{ minWidth: 44, minHeight: 44 }}
+          >
+            <ChevronUp size={18} strokeWidth={1.75} aria-hidden="true" focusable="false" />
+          </button>
+          <button
+            type="button"
+            onClick={() => onMoveField?.(field.id, 1)}
+            disabled={fieldIndex >= fieldCount - 1}
+            aria-label={t('secretary.formBuilder.fieldMoveDown')}
+            className="inline-flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors disabled:opacity-40 disabled:pointer-events-none"
+            style={{ minWidth: 44, minHeight: 44 }}
+          >
+            <ChevronDown size={18} strokeWidth={1.75} aria-hidden="true" focusable="false" />
+          </button>
+          <button
+            type="button"
             onClick={() => onDuplicate(field.id)}
             aria-label={t('secretary.formBuilder.fieldDuplicate')}
             className="inline-flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded transition-colors"
-            style={{ minWidth: 36, minHeight: 36 }}
+            style={{ minWidth: 44, minHeight: 44 }}
           >
             <Copy size={16} strokeWidth={1.75} aria-hidden="true" focusable="false" />
           </button>
@@ -105,7 +138,7 @@ export default function CanvasField({ field, isSelected, onSelect, onRemove, onD
             onClick={() => onRemove(field.id)}
             aria-label={t('secretary.formBuilder.fieldDelete')}
             className="inline-flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-            style={{ minWidth: 36, minHeight: 36 }}
+            style={{ minWidth: 44, minHeight: 44 }}
           >
             <X size={16} strokeWidth={1.75} aria-hidden="true" focusable="false" />
           </button>

@@ -6,6 +6,7 @@
  */
 
 import { useTranslation }                          from 'react-i18next'
+import { FileText }                                from 'lucide-react'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import CanvasField                                 from './CanvasField'
 
@@ -18,10 +19,11 @@ import CanvasField                                 from './CanvasField'
  *   onSelect:             (id: string) => void,
  *   onRemove:             (id: string) => void,
  *   onDuplicate:          (id: string) => void,
+ *   onMoveField:          (id: string, delta: number) => void,
  *   onPreviewLangChange:  (lang: 'he' | 'en') => void,
  * }} props
  */
-export default function FormCanvas({ fields, selectedId, formName, previewLang, onSelect, onRemove, onDuplicate, onPreviewLangChange }) {
+export default function FormCanvas({ fields, selectedId, formName, previewLang, onSelect, onRemove, onDuplicate, onMoveField, onPreviewLangChange }) {
   const { t } = useTranslation()
 
   return (
@@ -29,9 +31,10 @@ export default function FormCanvas({ fields, selectedId, formName, previewLang, 
 
       {/* Sub-toolbar */}
       <div className="bg-white border-b px-5 py-2.5 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          <FileText size={16} strokeWidth={1.75} aria-hidden="true" focusable="false" style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
           <span className="text-xs font-semibold" style={{ color: 'var(--lev-navy)' }}>
-            📄 {t('secretary.formBuilder.canvasHint')}
+            {t('secretary.formBuilder.canvasHint')}
           </span>
         </div>
         {/* Language toggle for preview */}
@@ -73,14 +76,17 @@ export default function FormCanvas({ fields, selectedId, formName, previewLang, 
           {/* Sortable field list */}
           <SortableContext items={fields.map(f => f.id)} strategy={verticalListSortingStrategy}>
             <div className="space-y-2 mb-3">
-              {fields.map(field => (
+              {fields.map((field, fieldIndex) => (
                 <CanvasField
                   key={field.id}
                   field={field}
+                  fieldIndex={fieldIndex}
+                  fieldCount={fields.length}
                   isSelected={field.id === selectedId}
                   onSelect={onSelect}
                   onRemove={onRemove}
                   onDuplicate={onDuplicate}
+                  onMoveField={onMoveField}
                 />
               ))}
             </div>

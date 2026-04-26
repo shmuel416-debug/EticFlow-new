@@ -31,6 +31,7 @@ import {
   Spinner,
   Badge,
   EmptyState,
+  MobileStickyBar,
 } from '../../components/ui'
 
 /* ── Summary sidebar ─────────────────────── */
@@ -447,8 +448,87 @@ export default function SubmitPage() {
     </div>
   )
 
+  /**
+   * @param {{ withTestIds?: boolean, className?: string }} opts
+   */
+  function renderSubmitActions(opts = {}) {
+    const { withTestIds = false, className = '' } = opts
+    return (
+      <>
+        <Button
+          variant="secondary"
+          onClick={handleSaveDraft}
+          disabled={submitting || savingDraft}
+          loading={savingDraft}
+          leftIcon={
+            draftSaved ? (
+              <CheckCircle2
+                size={16}
+                strokeWidth={1.75}
+                aria-hidden="true"
+                focusable="false"
+              />
+            ) : (
+              <Save
+                size={16}
+                strokeWidth={1.75}
+                aria-hidden="true"
+                focusable="false"
+              />
+            )
+          }
+          {...(withTestIds ? { 'data-testid': 'submit-save-draft' } : {})}
+          className={`flex-1 min-[480px]:flex-none ${className}`.trim()}
+          style={
+            draftSaved
+              ? {
+                  color: 'var(--status-success)',
+                  borderColor: 'var(--status-success)',
+                }
+              : undefined
+          }
+        >
+          {draftSaved
+            ? t('submission.submit.draftSaved')
+            : savingDraft
+              ? t('common.loading')
+              : t('submission.submit.saveDraft')}
+        </Button>
+
+        <Button
+          variant="gold"
+          onClick={handleSubmit}
+          disabled={submitting}
+          loading={submitting}
+          leftIcon={
+            <Send
+              size={16}
+              strokeWidth={1.75}
+              aria-hidden="true"
+              focusable="false"
+            />
+          }
+          rightIcon={
+            <SubmitArrow
+              size={16}
+              strokeWidth={1.75}
+              aria-hidden="true"
+              focusable="false"
+            />
+          }
+          {...(withTestIds ? { 'data-testid': 'submit-final-submit' } : {})}
+          className={`flex-1 min-[480px]:flex-none ${className}`.trim()}
+        >
+          {submitting
+            ? t('submission.submit.submitting')
+            : t('submission.submit.submitBtn')}
+        </Button>
+      </>
+    )
+  }
+
   return (
-    <div className="p-4 md:p-6">
+    <div className="p-4 md:p-6 pb-28 md:pb-6">
       <a href="#submit-form" className="skip-link">
         {t('common.skipToMain')}
       </a>
@@ -513,74 +593,8 @@ export default function SubmitPage() {
             </Section>
           ))}
 
-          <div className="flex flex-wrap gap-3 pt-1">
-            <Button
-              variant="secondary"
-              onClick={handleSaveDraft}
-              disabled={submitting || savingDraft}
-              loading={savingDraft}
-              leftIcon={
-                draftSaved ? (
-                  <CheckCircle2
-                    size={16}
-                    strokeWidth={1.75}
-                    aria-hidden="true"
-                    focusable="false"
-                  />
-                ) : (
-                  <Save
-                    size={16}
-                    strokeWidth={1.75}
-                    aria-hidden="true"
-                    focusable="false"
-                  />
-                )
-              }
-              data-testid="submit-save-draft"
-              style={
-                draftSaved
-                  ? {
-                      color: 'var(--status-success)',
-                      borderColor: 'var(--status-success)',
-                    }
-                  : undefined
-              }
-            >
-              {draftSaved
-                ? t('submission.submit.draftSaved')
-                : savingDraft
-                  ? t('common.loading')
-                  : t('submission.submit.saveDraft')}
-            </Button>
-
-            <Button
-              variant="gold"
-              onClick={handleSubmit}
-              disabled={submitting}
-              loading={submitting}
-              leftIcon={
-                <Send
-                  size={16}
-                  strokeWidth={1.75}
-                  aria-hidden="true"
-                  focusable="false"
-                />
-              }
-              rightIcon={
-                <SubmitArrow
-                  size={16}
-                  strokeWidth={1.75}
-                  aria-hidden="true"
-                  focusable="false"
-                />
-              }
-              data-testid="submit-final-submit"
-            >
-              {submitting
-                ? t('submission.submit.submitting')
-                : t('submission.submit.submitBtn')}
-            </Button>
-
+          <div className="hidden md:flex flex-wrap items-center gap-3 pt-1">
+            {renderSubmitActions({ withTestIds: true })}
             {draftSaved && (
               <Badge tone="success" size="md">
                 {t('submission.submit.draftSaved')}
@@ -592,6 +606,10 @@ export default function SubmitPage() {
         {/* Summary sidebar */}
         <SummarySidebar fields={fields} values={values} errors={errors} />
       </div>
+
+      <MobileStickyBar>
+        {renderSubmitActions({ withTestIds: false })}
+      </MobileStickyBar>
     </div>
   )
 }
