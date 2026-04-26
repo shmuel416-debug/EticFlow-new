@@ -78,10 +78,27 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Check if E2E role secrets are configured
+        id: e2e-check
+        run: |
+          if [ -n "$E2E_RESEARCHER_EMAIL" ]; then
+            echo "configured=true" >> $GITHUB_OUTPUT
+          else
+            echo "configured=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          E2E_RESEARCHER_EMAIL: ${{ secrets.E2E_RESEARCHER_EMAIL }}
+
+      - name: Skip E2E (role secrets not configured)
+        if: steps.e2e-check.outputs.configured == 'false'
+        run: echo "⚠️  E2E role credentials not configured — skipping role-based E2E tests. Add E2E_* secrets in GitHub → Settings → Secrets to enable."
+
       - name: Install Playwright browsers
+        if: steps.e2e-check.outputs.configured == 'true'
         run: npx playwright install --with-deps chromium
 
-      - name: Run Playwright core E2E
+      - name: Run Playwright core E2E (strict)
+        if: steps.e2e-check.outputs.configured == 'true'
         env:
           E2E_BASE_URL: ${{ secrets.E2E_BASE_URL || 'http://127.0.0.1:4173' }}
           E2E_API_URL: ${{ secrets.E2E_API_URL || 'https://frontend-eticflow-dev.up.railway.app/api' }}
