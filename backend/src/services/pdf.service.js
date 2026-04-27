@@ -673,30 +673,40 @@ async function renderHtmlToPdf(html, outputPath) {
 
 /**
  * Fallback renderer for approval letters when Puppeteer is unavailable.
- * Uses PDFKit directly to avoid runtime Chromium dependencies.
+ * Uses PDFKit directly. Layout and section order match design A / HTML renderer.
  * @param {object} submission
  * @param {'he'|'en'} lang
  * @param {string} outputPath
  * @param {ReturnType<typeof getDefaultApprovalTemplate>} template
  * @param {Record<string, string>} templateContext
+ * @param {string} [signatureDataUrl='']
+ * @param {string} [brandPrimary='#1e3a5f']
  * @returns {Promise<void>}
  */
-async function renderApprovalFallbackPdf(submission, lang, outputPath, template, templateContext, signatureDataUrl = '') {
-  const safeLang  = lang === 'en' ? 'en' : 'he'
-  const doc       = new PDFDocument({ size: 'A4', margins: { top: 56, bottom: 56, left: 56, right: 56 } })
-  const track     = trackLabel(submission.track)
-  const todayHe   = fmtDate(new Date())
-  const todayEn   = fmtDateEn(new Date())
-  const approvedHe = fmtDate(submission.updatedAt)
-  const approvedEn = fmtDateEn(submission.updatedAt)
-  const validHe    = validUntil(submission.updatedAt, 'he')
-  const validEn    = validUntil(submission.updatedAt, 'en')
-  const institution = safeLang === 'he' ? INSTITUTION_NAME_HE : INSTITUTION_NAME_EN
-  const docTitle = applyTemplateTokens(template.docTitle, templateContext)
-  const subject = applyTemplateTokens(template.subject, templateContext)
-  const intro = applyTemplateTokens(template.intro, templateContext)
+async function renderApprovalFallbackPdf(
+  submission,
+  lang,
+  outputPath,
+  template,
+  templateContext,
+  signatureDataUrl = '',
+  brandPrimary = BRAND_PRIMARY,
+) {
+  const safeLang     = lang === 'en' ? 'en' : 'he'
+  const doc          = new PDFDocument({ size: 'A4', margins: { top: 56, bottom: 56, left: 56, right: 56 } })
+  const track        = trackLabel(submission.track)
+  const todayHe      = fmtDate(new Date())
+  const todayEn      = fmtDateEn(new Date())
+  const approvedHe   = fmtDate(submission.updatedAt)
+  const approvedEn   = fmtDateEn(submission.updatedAt)
+  const validHe      = validUntil(submission.updatedAt, 'he')
+  const validEn      = validUntil(submission.updatedAt, 'en')
+  const institution  = safeLang === 'he' ? INSTITUTION_NAME_HE : INSTITUTION_NAME_EN
+  const docTitle     = applyTemplateTokens(template.docTitle, templateContext)
+  const subject      = applyTemplateTokens(template.subject, templateContext)
+  const intro        = applyTemplateTokens(template.intro, templateContext)
   const conditionsTitle = applyTemplateTokens(template.conditionsTitle, templateContext)
-  const legalFooter = applyTemplateTokens(template.legalFooter, templateContext)
+  const legalFooter  = applyTemplateTokens(template.legalFooter, templateContext)
   const signatureLabel = applyTemplateTokens(template.signatureLabel, templateContext)
   const conditionLines = template.conditions
     .map((line) => applyTemplateTokens(line, templateContext))
@@ -713,155 +723,220 @@ async function renderApprovalFallbackPdf(submission, lang, outputPath, template,
     // Continue with built-in fonts if custom fonts are unavailable.
   }
 
-  const baseFont = safeLang === 'he' && hasArial ? 'Arial' : 'Helvetica'
-  const boldFont = safeLang === 'he' && hasArial ? 'Arial-Bold' : 'Helvetica-Bold'
-  const textAlign = safeLang === 'he' ? 'right' : 'left'
-  const leftX = doc.page.margins.left
-  const rightX = doc.page.width - doc.page.margins.right
+  const baseFont   = safeLang === 'he' && hasArial ? 'Arial' : 'Helvetica'
+  const boldFont   = safeLang === 'he' && hasArial ? 'Arial-Bold' : 'Helvetica-Bold'
+  const textAlign  = safeLang === 'he' ? 'right' : 'left'
+  const leftX      = doc.page.margins.left
+  const rightX     = doc.page.width - doc.page.margins.right
+  const contentW   = rightX - leftX
+  const pageW      = doc.page.width
 
+  // ── Header band (design A) ─────────────────────────────────
   doc.save()
-  doc.rect(0, 0, doc.page.width, 104).fill(BRAND_PRIMARY)
+  doc.rect(0, 0, pageW, 104).fill(brandPrimary)
   doc.restore()
+
   let drewImageLogo = false
   if (PDF_LOGO_IMAGE_PATH) {
     try {
-      doc.image(PDF_LOGO_IMAGE_PATH, leftX, 24, { fit: [38, 38], align: 'center', valign: 'center' })
+      const logoX = safeLang === 'he' ? rightX - 42 : leftX
+      doc.image(PDF_LOGO_IMAGE_PATH, logoX, 24, { width: 40, height: 40 })
       drewImageLogo = true
     } catch {
       drewImageLogo = false
     }
   }
   if (!drewImageLogo) {
-    doc.roundedRect(leftX, 24, 38, 38, 10).fill('#ffffff')
-    doc.font(boldFont).fontSize(11).fillColor(BRAND_PRIMARY).text(
+    const bx = safeLang === 'he' ? rightX - 44 : leftX
+    doc.roundedRect(bx, 24, 40, 40, 10).fill('#ffffff')
+    doc.font(boldFont).fontSize(12).fillColor(brandPrimary).text(
       safeLang === 'he' ? 'וע' : 'EF',
-      leftX + 9,
-      35,
+      bx + 10,
+      36,
       { width: 20, align: 'center' }
     )
   }
   if (INSTITUTION_LOGO_IMAGE_PATH) {
     try {
-      doc.image(INSTITUTION_LOGO_IMAGE_PATH, rightX - 34, 28, { fit: [26, 26], align: 'center', valign: 'center' })
+      const ix = safeLang === 'he' ? leftX : rightX - 30
+      doc.image(INSTITUTION_LOGO_IMAGE_PATH, ix, 28, { fit: [26, 26], align: 'center', valign: 'center' })
     } catch {
       // Keep PDF generation resilient if institution logo is invalid.
     }
   }
-  doc.font(boldFont).fontSize(22).fillColor('#ffffff').text(
-    safeLang === 'he' ? 'מערכת ועדת אתיקה' : 'EthicFlow',
-    leftX + 48,
-    28,
-    { width: 320, align: 'left' }
-  )
-  doc.font(baseFont).fontSize(10).fillColor(BRAND_ACCENT).text(
-    safeLang === 'he' ? 'מערכת ניהול ועדת אתיקה' : 'Ethics Committee Management System',
-    leftX + 48,
-    56,
-    { width: 360, align: 'left' }
-  )
-  doc.font(baseFont).fontSize(9).fillColor('#cbd5e1').text(
-    safeLang === 'he' ? `הופק: ${todayHe}` : `Generated: ${todayEn}`,
-    rightX - 180,
-    30,
-    { width: 180, align: 'right' }
-  )
-  doc.font(baseFont).fontSize(9.2).fillColor('#e2e8f0').text(institution, leftX + 48, 70, { width: 330, align: 'left' })
 
-  doc.y = 132
-  doc.font(boldFont).fontSize(17).fillColor(BRAND_PRIMARY).text(
-    docTitle,
-    leftX,
-    doc.y,
-    { width: rightX - leftX, align: textAlign }
-  )
-  doc.moveDown(0.45)
-  doc.font(baseFont).fontSize(10).fillColor('#475569').text(
-    safeLang === 'he' ? `תאריך הנפקה: ${todayHe}` : `Issue Date: ${todayEn}`,
-    { align: textAlign }
-  )
-  doc.moveDown(0.8)
-
-  const boxY = doc.y
-  doc.roundedRect(leftX, boxY, rightX - leftX, 116, 8).fillAndStroke('#f8fafc', '#cbd5e1')
-  doc.y = boxY + 10
-  doc.font(boldFont).fontSize(11).fillColor('#0f172a')
   if (safeLang === 'he') {
-    doc.text(`מספר בקשה: ${submission.applicationId}`, { align: textAlign })
-    doc.text(`כותרת מחקר: ${submission.title}`, { align: textAlign })
-    doc.text(`סוג מסלול: ${track.he}`, { align: textAlign })
-    doc.text(`תאריך אישור: ${approvedHe}`, { align: textAlign })
-    doc.text(`תוקף עד: ${validHe}`, { align: textAlign })
+    doc.font(boldFont).fontSize(20).fillColor('#ffffff').text('מערכת ועדת אתיקה', leftX, 26, {
+      width: contentW,
+      align: 'right',
+    })
+    doc.font(baseFont).fontSize(9.5).fillColor('#e2e8f0').text(
+      `מערכת ניהול ועדת אתיקה — ${institution}`,
+      leftX,
+      52,
+      { width: contentW, align: 'right' }
+    )
+    doc.font(baseFont).fontSize(9).fillColor('#cbd5e1').text(`הופק: ${todayHe}`, leftX, 78, {
+      width: contentW,
+      align: 'left',
+    })
   } else {
-    doc.text(`Application ID: ${submission.applicationId}`, { align: textAlign })
-    doc.text(`Research Title: ${submission.title}`, { align: textAlign })
-    doc.text(`Track: ${track.en}`, { align: textAlign })
-    doc.text(`Approved At: ${approvedEn}`, { align: textAlign })
-    doc.text(`Valid Until: ${validEn}`, { align: textAlign })
+    const textInset = leftX + 52
+    doc.font(boldFont).fontSize(20).fillColor('#ffffff').text('EthicFlow', textInset, 26, {
+      width: contentW - 52,
+      align: 'left',
+    })
+    doc.font(baseFont).fontSize(9.5).fillColor('#e2e8f0').text(
+      `Ethics Committee Management System — ${institution}`,
+      textInset,
+      52,
+      { width: contentW - 52, align: 'left' }
+    )
+    doc.font(baseFont).fontSize(9).fillColor('#cbd5e1').text(`Generated: ${todayEn}`, leftX, 78, {
+      width: contentW,
+      align: 'right',
+    })
   }
 
-  doc.y = boxY + 132
-  doc.font(baseFont).fontSize(10.5).fillColor('#334155').text(
-    subject,
-    { align: textAlign }
+  // ── Body (same order as HTML: title → issue date → addressee → subject → intro → details → conditions → researcher → signature → footer)
+  doc.y = 118
+  doc.font(boldFont).fontSize(17).fillColor(brandPrimary).text(docTitle, {
+    width: contentW,
+    align: 'center',
+  })
+  doc.moveDown(0.35)
+  doc.font(baseFont).fontSize(10).fillColor('#64748b').text(
+    safeLang === 'he' ? `תאריך הנפקה: ${todayHe}` : `Issue date: ${todayEn}`,
+    { width: contentW, align: 'center' }
   )
-  doc.moveDown(0.4)
-  doc.text(
-    intro,
-    { align: textAlign }
-  )
+  doc.moveDown(0.5)
+  const hrY = doc.y
+  doc.moveTo(leftX, hrY).lineTo(rightX, hrY).lineWidth(1.5).strokeColor(brandPrimary).stroke()
+  doc.moveDown(0.65)
+
+  doc.font(boldFont).fontSize(11).fillColor(brandPrimary).text(safeLang === 'he' ? 'לכבוד,' : 'Dear,', {
+    width: contentW,
+    align: textAlign,
+  })
+  doc.font(baseFont).fontSize(11).fillColor('#1e293b').text(submission.author.fullName ?? '', {
+    width: contentW,
+    align: textAlign,
+  })
+  doc.font(baseFont).fontSize(9.5).fillColor('#64748b').text(submission.author.email ?? '', {
+    width: contentW,
+    align: textAlign,
+  })
+  doc.moveDown(0.55)
+
+  doc.font(boldFont).fontSize(12).fillColor(brandPrimary).text(subject, { width: contentW, align: textAlign })
+  doc.moveDown(0.35)
+  doc.font(baseFont).fontSize(11.5).fillColor('#374151').text(intro, {
+    width: contentW,
+    align: textAlign,
+    lineGap: 2,
+  })
+  doc.moveDown(0.65)
+
+  const rowsHe = [
+    ['מספר בקשה:', `${submission.applicationId}`],
+    ['כותרת המחקר:', submission.title ?? ''],
+    ['סוג מסלול:', track.he],
+    ['תאריך אישור:', approvedHe],
+    ['תוקף האישור עד:', validHe],
+  ]
+  const rowsEn = [
+    ['Application No.:', `${submission.applicationId}`],
+    ['Research Title:', submission.title ?? ''],
+    ['Review Track:', track.en],
+    ['Approval Date:', approvedEn],
+    ['Valid Until:', validEn],
+  ]
+  const rowPairs    = safeLang === 'he' ? rowsHe : rowsEn
+  const detailLines = rowPairs.map(([lbl, val]) => `${lbl} ${val}`)
+  const detailsTop  = doc.y
+  const detailsH    = detailLines.length * 16 + 20
+  doc.roundedRect(leftX, detailsTop, contentW, detailsH, 8).fillAndStroke('#f8fafc', '#cbd5e1')
+  doc.font(boldFont).fontSize(10).fillColor('#0f172a')
+  doc.text(detailLines.join('\n'), leftX + 10, detailsTop + 8, {
+    width:   contentW - 20,
+    align:   textAlign,
+    lineGap: 3,
+  })
+  doc.y = detailsTop + detailsH + 14
+  const hr2Y = doc.y
+  doc.moveTo(leftX, hr2Y).lineTo(rightX, hr2Y).lineWidth(1).strokeColor('#e2e8f0').stroke()
   doc.moveDown(0.6)
-  doc.font(boldFont).fontSize(10.6).fillColor(BRAND_PRIMARY).text(
-    conditionsTitle,
-    { align: textAlign }
-  )
+
+  doc.font(boldFont).fontSize(12).fillColor(brandPrimary).text(conditionsTitle, {
+    width: contentW,
+    align: textAlign,
+  })
   doc.moveDown(0.25)
-  doc.font(baseFont).fontSize(10.6).fillColor('#334155')
+  doc.font(baseFont).fontSize(11).fillColor('#374151')
   for (const line of conditionLines) {
-    doc.text(safeLang === 'he' ? `• ${line}` : `• ${line}`, { align: textAlign })
+    doc.text(safeLang === 'he' ? `• ${line}` : `• ${line}`, { width: contentW, align: textAlign })
   }
-  doc.moveDown(0.6)
+  doc.moveDown(0.5)
   doc.text(
     safeLang === 'he'
       ? `חוקר/ת: ${submission.author.fullName} (${submission.author.email})`
       : `Researcher: ${submission.author.fullName} (${submission.author.email})`,
-    { align: textAlign }
+    { width: contentW, align: textAlign }
   )
-  doc.moveDown(0.5)
-  doc.text(
-    safeLang === 'he'
-      ? 'המסמך הופק אוטומטית על ידי מערכת ועדת אתיקה.'
-      : 'This document was generated automatically by EthicFlow.',
-    { align: textAlign }
-  )
-  doc.moveDown(0.4)
-  doc.fontSize(9.1).fillColor('#64748b').text(legalFooter, { align: textAlign })
-  doc.moveDown(1.4)
+  doc.moveDown(0.9)
 
-  doc.strokeColor('#94a3b8').lineWidth(1).moveTo(leftX + 110, doc.y).lineTo(rightX - 110, doc.y).stroke()
-  doc.moveDown(0.4)
-  doc.font(boldFont).fontSize(10).fillColor('#1e293b').text(
-    signatureLabel,
-    { align: 'center' }
-  )
   const signatureBuffer = imageBufferFromDataUrl(signatureDataUrl)
   if (signatureBuffer) {
     try {
-      doc.moveDown(0.3)
-      doc.image(signatureBuffer, leftX + 170, doc.y, { fit: [180, 60], align: 'center', valign: 'center' })
-      doc.moveDown(3.4)
+      const imgW = 180
+      const ix   = leftX + (contentW - imgW) / 2
+      doc.image(signatureBuffer, ix, doc.y, { width: imgW, height: 56 })
+      doc.y += 64
     } catch {
       // Keep resilient when signature image decode/render fails.
     }
   }
-  doc.moveDown(0.8)
-  doc.font(baseFont).fontSize(9.5).fillColor('#475569')
+
+  const sigLineY = doc.y + 6
+  const sigHalf  = 130
+  doc.moveTo(leftX + (contentW / 2 - sigHalf), sigLineY).lineTo(leftX + (contentW / 2 + sigHalf), sigLineY).lineWidth(1).strokeColor('#94a3b8').stroke()
+  doc.y = sigLineY + 12
+  doc.font(boldFont).fontSize(11).fillColor(brandPrimary).text(signatureLabel, {
+    width: contentW,
+    align: 'center',
+  })
+  doc.moveDown(0.55)
+
+  const boxGap = 16
+  const boxW   = (contentW - boxGap) / 2
+  const boxH   = 56
+  const boxY   = doc.y
+  doc.roundedRect(leftX, boxY, boxW, boxH, 6).stroke('#cbd5e1')
+  doc.roundedRect(leftX + boxW + boxGap, boxY, boxW, boxH, 6).stroke('#cbd5e1')
+  doc.font(baseFont).fontSize(9).fillColor('#64748b')
   if (safeLang === 'he') {
-    doc.text('חתימה: ____________________', { align: 'center' })
-    doc.text('תאריך חתימה: ________________', { align: 'center' })
+    doc.text('תאריך חתימה', leftX + 10, boxY + 8, { width: boxW - 20, align: 'right' })
+    doc.text('חתימה', leftX + boxW + boxGap + 10, boxY + 8, { width: boxW - 20, align: 'right' })
   } else {
-    doc.text('Signature: ____________________', { align: 'center' })
-    doc.text('Date: _________________________', { align: 'center' })
+    doc.text('Signature', leftX + 10, boxY + 8)
+    doc.text('Date signed', leftX + boxW + boxGap + 10, boxY + 8)
   }
+  const innerLineY = boxY + 40
+  doc.moveTo(leftX + 10, innerLineY).lineTo(leftX + boxW - 10, innerLineY).strokeColor('#94a3b8').stroke()
+  doc.moveTo(leftX + boxW + boxGap + 10, innerLineY).lineTo(rightX - 10, innerLineY).strokeColor('#94a3b8').stroke()
+
+  doc.y = boxY + boxH + 22
+  doc.font(baseFont).fontSize(8).fillColor('#94a3b8')
+  if (legalFooter) {
+    doc.text(legalFooter, { width: contentW, align: 'center', lineGap: 2 })
+    doc.moveDown(0.25)
+  }
+  doc.text(
+    safeLang === 'he'
+      ? `מסמך זה הופק אוטומטית על ידי מערכת ועדת אתיקה • ${institution} • ${todayHe} • מס׳ בקשה: ${submission.applicationId}`
+      : `This document was generated automatically by EthicFlow • ${institution} • ${todayEn} • Ref: ${submission.applicationId}`,
+    { width: contentW, align: 'center', lineGap: 2 }
+  )
 
   await streamToFile(doc, outputPath)
 }
@@ -902,7 +977,7 @@ export async function generateApprovalLetter(submissionId, lang = 'he') {
     console.warn(
       `[PDF] Puppeteer render failed for approval letter (${safeLang}), using fallback renderer: ${err?.message ?? err}`
     )
-    await renderApprovalFallbackPdf(submission, safeLang, absPath, template, templateContext, signatureDataUrl)
+    await renderApprovalFallbackPdf(submission, safeLang, absPath, template, templateContext, signatureDataUrl, brandPrimary)
   }
 
   const stat     = await fs.stat(absPath)
@@ -958,7 +1033,7 @@ export async function generateApprovalLetterPreview(submissionId, lang = 'he', t
       await renderHtmlToPdf(html, outputPath)
     } catch (err) {
       console.warn(`[PDF] Preview Puppeteer render failed (${safeLang}), using fallback: ${err?.message ?? err}`)
-      await renderApprovalFallbackPdf(submission, safeLang, outputPath, template, templateContext, signatureDataUrl)
+      await renderApprovalFallbackPdf(submission, safeLang, outputPath, template, templateContext, signatureDataUrl, brandPrimary)
     }
     const buffer = await fs.readFile(outputPath)
     return { buffer, filename }
@@ -1171,3 +1246,6 @@ export async function generateProtocolPdf(protocol, lang = 'he') {
 
   return { docId: dbDoc.id, storagePath }
 }
+
+/** Exported for tests and optional HTML previews. */
+export { buildHeHtml, buildEnHtml }
