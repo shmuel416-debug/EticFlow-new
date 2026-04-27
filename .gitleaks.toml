@@ -1,0 +1,7 @@
+title = "EticFlow Gitleaks Config"
+
+[allowlist]
+description = "Ignore Claude Code tool allowlists and test fixtures"
+paths = [
+  '''.claude/''',
+]
