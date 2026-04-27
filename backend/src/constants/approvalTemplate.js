@@ -81,7 +81,7 @@ export function getDefaultApprovalTemplate(lang) {
     docTitle: 'אישור ועדת אתיקה',
     subject: 'הנדון: אישור ועדת אתיקה למחקר',
     intro:
-      'ועדת האתיקה בדקה את בקשתך ושמחה לאשר את ביצוע המחקר המפורט להלן, בכפוף לתנאים הנקובים בהחלטה.',
+      'ועדת האתיקה בדקה את בקשתך לאשר את ביצוע המחקר המפורט להלן, בכפוף לתנאים הנקובים בהחלטה.',
     conditionsTitle: 'תנאי האישור:',
     conditions: DEFAULT_CONDITIONS_HE,
     signatureLabel: 'יו"ר ועדת האתיקה',
