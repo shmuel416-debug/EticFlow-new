@@ -350,11 +350,23 @@ body {
   print-color-adjust: exact;
   direction: rtl;
 }
-/* Avoid flex in PDF: Chromium often mis-orders / overlaps Hebrew in the header band. */
+/* inline-block layout avoids Chromium flex mis-ordering of Hebrew glyphs in print. */
 .brand-row { direction: rtl; text-align: right; }
+.logo-badge {
+  display: inline-block;
+  vertical-align: middle;
+  width: 44px; height: 44px; line-height: 44px;
+  border-radius: 10px;
+  background: white;
+  color: ${brandPrimary};
+  text-align: center;
+  font-weight: 900; font-size: 14pt;
+  margin-left: 14px;
+}
+.brand-text { display: inline-block; vertical-align: middle; }
 .brand-name { font-size: 20pt; font-weight: bold; letter-spacing: 0.5px; text-align: right; }
 .header-sub { font-size: 9.5pt; color: rgba(255,255,255,0.82); margin-top: 6px; text-align: right; }
-.header-date { font-size: 9pt; color: #cbd5e1; margin-top: 8px; text-align: left; direction: rtl; }
+.header-date { font-size: 9pt; color: #cbd5e1; margin-top: 8px; text-align: left; }
 .content {
   padding: 30px 40px;
   direction: rtl;
@@ -378,38 +390,33 @@ hr.light { border-color: #e2e8f0; border-width: 1px; }
   padding: 4px 16px;
   margin: 16px 0;
   direction: rtl;
-  text-align: right;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
 }
-/* CSS grid (not <table>): Chromium PDF often breaks RTL table column order. */
-.details-grid {
-  display: grid;
-  grid-template-columns: minmax(130px, 38%) 1fr;
-  column-gap: 10px;
-  direction: rtl;
-  font-size: 11pt;
+/* <table> with explicit column widths — reliable in Chromium print for RTL. */
+.details-table {
   width: 100%;
+  border-collapse: collapse;
+  font-size: 11pt;
+  direction: rtl;
 }
-.details-row { display: contents; }
-.details-grid .lbl {
+.details-table tr + tr td { border-top: 1px solid #e2e8f0; }
+.details-table td { padding: 9px 4px; vertical-align: baseline; }
+.details-table .lbl {
   color: #475569;
   font-weight: bold;
   white-space: nowrap;
+  width: 38%;
   font-size: 10pt;
-  padding: 9px 4px;
-  border-top: 1px solid #e2e8f0;
   text-align: right;
 }
-.details-grid .val {
+.details-table .val {
   color: #0f172a;
   font-weight: bold;
-  padding: 9px 4px;
-  padding-inline-start: 8px;
-  border-top: 1px solid #e2e8f0;
+  padding-right: 14px;
   text-align: right;
   word-break: break-word;
 }
-.details-row:first-child .lbl,
-.details-row:first-child .val { border-top: none; }
 .conditions-title { font-weight: bold; color: ${brandPrimary}; font-size: 12pt; margin-bottom: 8px; text-align: right; }
 .conditions-list {
   list-style: none;
@@ -438,20 +445,22 @@ hr.light { border-color: #e2e8f0; border-width: 1px; }
 .signature-section { text-align: center; margin-top: 32px; direction: rtl; }
 .sig-line { border-top: 1px solid #94a3b8; width: 260px; margin: 0 auto 8px; }
 .sig-label { color: ${brandPrimary}; font-weight: bold; font-size: 11pt; }
-.signature-grid {
+/* sig-fields: use table layout — grid can mis-render in some Chromium print versions. */
+.sig-fields {
   margin-top: 14px;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 16px 0;
   direction: rtl;
 }
-.signature-box {
+.sig-fields td {
   border: 1px solid #cbd5e1;
   border-radius: 6px;
   padding: 10px 12px;
   min-height: 60px;
+  vertical-align: top;
   text-align: right;
-  direction: rtl;
+  width: 50%;
 }
 .sig-img {
   max-height: 52px;
@@ -459,11 +468,9 @@ hr.light { border-color: #e2e8f0; border-width: 1px; }
   object-fit: contain;
   display: block;
   margin: 4px 0 8px;
-  margin-inline-start: 0;
-  margin-inline-end: auto;
 }
 .box-label { color: #64748b; font-size: 9pt; margin-bottom: 12px; }
-.box-line { border-top: 1px solid #94a3b8; }
+.box-line { border-top: 1px solid #94a3b8; margin-top: 8px; }
 .footer {
   margin-top: 28px;
   padding-top: 10px;
@@ -483,10 +490,11 @@ h1, h2, h3, strong, .to-label { font-weight: bold; }
 <div class="page">
   <div class="header">
     <div class="brand-row">
-      <div>
+      <span class="logo-badge">א</span>
+      <span class="brand-text">
         <div class="brand-name">מערכת ועדת אתיקה</div>
         <div class="header-sub">מערכת ניהול ועדת אתיקה &mdash; ${institution}</div>
-      </div>
+      </span>
     </div>
     <div class="header-date">הופק: ${ltr(escapeHtml(today))}</div>
   </div>
@@ -502,13 +510,13 @@ h1, h2, h3, strong, .to-label { font-weight: bold; }
     <div class="subject">${subject}</div>
     <p class="body-text">${intro}</p>
     <div class="details-box">
-      <div class="details-grid">
-        <div class="details-row"><div class="lbl">מספר בקשה:</div><div class="val">${ltr(escapeHtml(submission.applicationId))}</div></div>
-        <div class="details-row"><div class="lbl">כותרת המחקר:</div><div class="val">${escapeHtml(titleDisplay)}</div></div>
-        <div class="details-row"><div class="lbl">סוג מסלול:</div><div class="val">${escapeHtml(track.he)}</div></div>
-        <div class="details-row"><div class="lbl">תאריך אישור:</div><div class="val">${ltr(escapeHtml(approvedDate))}</div></div>
-        <div class="details-row"><div class="lbl">תוקף האישור עד:</div><div class="val">${ltr(escapeHtml(expiryDate))}</div></div>
-      </div>
+      <table class="details-table">
+        <tr><td class="lbl">מספר בקשה:</td><td class="val">${ltr(escapeHtml(submission.applicationId))}</td></tr>
+        <tr><td class="lbl">כותרת המחקר:</td><td class="val">${escapeHtml(titleDisplay)}</td></tr>
+        <tr><td class="lbl">סוג מסלול:</td><td class="val">${escapeHtml(track.he)}</td></tr>
+        <tr><td class="lbl">תאריך אישור:</td><td class="val">${ltr(escapeHtml(approvedDate))}</td></tr>
+        <tr><td class="lbl">תוקף האישור עד:</td><td class="val">${ltr(escapeHtml(expiryDate))}</td></tr>
+      </table>
     </div>
     <hr class="light">
     <div class="conditions-title">${conditionsTitle}</div>
@@ -522,14 +530,16 @@ h1, h2, h3, strong, .to-label { font-weight: bold; }
     <div class="signature-section">
       <div class="sig-line"></div>
       <div class="sig-label">${signatureLabel}</div>
-      <div class="signature-grid">
-        <div class="signature-box">
-          <div class="box-label">חתימה</div>
-          ${signatureDataUrl ? `<img src="${signatureDataUrl}" alt="" class="sig-img">` : ''}
-          <div class="box-line"></div>
-        </div>
-        <div class="signature-box"><div class="box-label">תאריך חתימה</div><div class="box-line"></div></div>
-      </div>
+      <table class="sig-fields">
+        <tr>
+          <td>
+            <div class="box-label">חתימה</div>
+            ${signatureDataUrl ? `<img src="${signatureDataUrl}" alt="" class="sig-img">` : ''}
+            <div class="box-line"></div>
+          </td>
+          <td><div class="box-label">תאריך חתימה</div><div class="box-line"></div></td>
+        </tr>
+      </table>
     </div>
     <div class="footer">
       ${legalFooter ? `<div class="footer-legal">${legalFooter}</div>` : ''}
@@ -641,17 +651,25 @@ hr.light { border-color: #e2e8f0; border-width: 1px; }
 .signature-section { text-align: center; margin-top: 32px; }
 .sig-line { border-top: 1px solid #94a3b8; width: 260px; margin: 0 auto 8px; }
 .sig-label { color: ${brandPrimary}; font-weight: bold; font-size: 11pt; }
-.signature-grid {
+.sig-fields {
   margin-top: 14px;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 16px 0;
   direction: ltr;
 }
-.signature-box { border: 1px solid #cbd5e1; border-radius: 6px; padding: 10px 12px; min-height: 60px; text-align: left; }
-.sig-img { max-height: 52px; max-width: 100%; object-fit: contain; display: block; margin: 4px auto 8px; }
+.sig-fields td {
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 10px 12px;
+  min-height: 60px;
+  vertical-align: top;
+  text-align: left;
+  width: 50%;
+}
+.sig-img { max-height: 52px; max-width: 100%; object-fit: contain; display: block; margin: 4px 0 8px; }
 .box-label { color: #64748b; font-size: 9pt; margin-bottom: 12px; }
-.box-line { border-top: 1px solid #94a3b8; }
+.box-line { border-top: 1px solid #94a3b8; margin-top: 8px; }
 .footer { margin-top: 28px; padding-top: 10px; border-top: 1px solid #e2e8f0; text-align: center; font-size: 8pt; color: #94a3b8; line-height: 1.6; }
 .footer-legal { margin-bottom: 6px; }
 h1, h2, h3, strong, .to-label { font-weight: bold; }
@@ -700,14 +718,16 @@ h1, h2, h3, strong, .to-label { font-weight: bold; }
     <div class="signature-section">
       <div class="sig-line"></div>
       <div class="sig-label">${signatureLabel}</div>
-      <div class="signature-grid">
-        <div class="signature-box">
-          <div class="box-label">Signature</div>
-          ${signatureDataUrl ? `<img src="${signatureDataUrl}" alt="" class="sig-img">` : ''}
-          <div class="box-line"></div>
-        </div>
-        <div class="signature-box"><div class="box-label">Date signed</div><div class="box-line"></div></div>
-      </div>
+      <table class="sig-fields">
+        <tr>
+          <td>
+            <div class="box-label">Signature</div>
+            ${signatureDataUrl ? `<img src="${signatureDataUrl}" alt="" class="sig-img">` : ''}
+            <div class="box-line"></div>
+          </td>
+          <td><div class="box-label">Date signed</div><div class="box-line"></div></td>
+        </tr>
+      </table>
     </div>
     <div class="footer">
       ${legalFooter ? `<div class="footer-legal">${legalFooter}</div>` : ''}
