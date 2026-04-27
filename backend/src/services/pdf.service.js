@@ -460,110 +460,128 @@ function buildHeHtml(submission, template, templateContext, signatureDataUrl = '
     .filter(Boolean)
   const institution  = escapeHtml(INSTITUTION_NAME_HE)
 
+  /** Wraps LTR content (dates, IDs, emails) in a bidi-isolated span. */
+  const ltr = (str) => `<span style="direction:ltr;unicode-bidi:isolate;display:inline-block">${str}</span>`
+
   return `<!DOCTYPE html>
 <html dir="rtl" lang="he">
 <head>
 <meta charset="utf-8">
 <style>
-${buildBaseCss(brandPrimary)}
+${fontFaceCss()}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+@page { size: A4; margin: 0; }
 body {
   font-family: 'Arial', 'Arial Hebrew', sans-serif;
   direction: rtl;
-  font-size: 14pt;
-  line-height: 1.85;
+  font-size: 13pt;
+  line-height: 1.8;
+  color: #1e293b;
+  background: white;
 }
-/* Details rows: in RTL flex, label is on the right, value on the left */
-.details-row .label { white-space: nowrap; }
-.details-row .value { flex: 1; text-align: start; }
-/* Bullet is on the right in RTL */
-.conditions-list li { padding-right: 20px; }
-.conditions-list li::before { content: '•'; position: absolute; right: 0; color: ${brandPrimary}; font-weight: bold; }
-.doc-title h2 { font-size: 18pt; font-weight: bold; }
-.body-text { font-size: 14pt; line-height: 1.9; }
-.details-row { padding: 10px 0; font-size: 13pt; }
-.conditions-title { font-weight: bold; font-size: 14pt; }
-.conditions-list li { font-size: 13pt; line-height: 1.75; }
-.subject { font-size: 14pt; font-weight: bold; }
-.sig-label { font-size: 13pt; font-weight: bold; }
+.page { width: 210mm; min-height: 297mm; }
+.header {
+  background: ${brandPrimary};
+  color: white;
+  padding: 22px 36px 16px;
+}
+.brand-name { font-size: 20pt; font-weight: bold; letter-spacing: 0.5px; }
+.header-sub { font-size: 9.5pt; color: rgba(255,255,255,0.82); margin-top: 5px; }
+${INSTITUTION_LOGO_HTML_SRC ? '.institution-logo { width:26px; height:26px; object-fit:contain; vertical-align:middle; margin-left:6px; }' : ''}
+${PDF_LOGO_HTML_SRC ? '.logo-image { width:44px; height:44px; object-fit:contain; vertical-align:middle; margin-left:12px; }' : ''}
+.header-date { font-size: 9pt; color: #cbd5e1; margin-top: 8px; text-align: left; }
+.content { padding: 28px 40px; }
+.doc-title { text-align: center; margin-bottom: 4px; }
+.doc-title h2 { font-size: 17pt; font-weight: bold; color: ${brandPrimary}; }
+.issue-date { text-align: center; color: #64748b; font-size: 10pt; margin-bottom: 18px; }
+hr { border: none; border-top: 1.5px solid ${brandPrimary}; margin: 14px 0; }
+hr.light { border-color: #e2e8f0; border-width: 1px; }
+.addressee { margin-bottom: 12px; font-size: 11pt; }
+.to-label { font-weight: bold; color: ${brandPrimary}; }
+.email { color: #64748b; font-size: 9.5pt; margin-top: 2px; }
+.subject { font-weight: bold; color: ${brandPrimary}; font-size: 12pt; margin-bottom: 8px; }
+.body-text { font-size: 11.5pt; color: #374151; line-height: 1.85; margin-bottom: 14px; }
+.details-box {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #f8fafc;
+  padding: 4px 16px;
+  margin: 14px 0;
+}
+.details-table { width: 100%; border-collapse: collapse; font-size: 11pt; }
+.details-table tr + tr td { border-top: 1px solid #e2e8f0; }
+.details-table td { padding: 9px 4px; vertical-align: baseline; }
+.details-table .lbl { color: #475569; font-weight: bold; white-space: nowrap; width: 1%; font-size: 10pt; }
+.details-table .val { color: #0f172a; font-weight: bold; padding-right: 14px; }
+.conditions-title { font-weight: bold; color: ${brandPrimary}; font-size: 12pt; margin-bottom: 8px; }
+.conditions-list { list-style: none; padding: 0; margin-bottom: 14px; }
+.conditions-list li {
+  font-size: 11pt; color: #374151; padding: 4px 0;
+  display: flex; align-items: baseline; gap: 8px; direction: rtl;
+}
+.conditions-list li::before { content: '•'; color: ${brandPrimary}; font-weight: bold; flex-shrink: 0; }
+.signature-section { text-align: center; margin-top: 32px; }
+.sig-line { border-top: 1px solid #94a3b8; width: 260px; margin: 0 auto 8px; }
+.sig-label { color: ${brandPrimary}; font-weight: bold; font-size: 11pt; }
+.signature-grid { margin-top: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.signature-box { border: 1px solid #cbd5e1; border-radius: 6px; padding: 10px 12px; min-height: 60px; text-align: right; }
+.box-label { color: #64748b; font-size: 9pt; margin-bottom: 12px; }
+.box-line { border-top: 1px solid #94a3b8; }
+.footer { margin-top: 28px; padding-top: 10px; border-top: 1px solid #e2e8f0; text-align: center; font-size: 8pt; color: #94a3b8; line-height: 1.6; }
 h1, h2, h3, strong, .to-label { font-weight: bold; }
 </style>
 </head>
 <body>
 <div class="page">
   <div class="header">
-    <div class="brand-row">
-      ${PDF_LOGO_HTML_SRC
-        ? `<img src="${PDF_LOGO_HTML_SRC}" alt="EthicFlow logo" class="logo-image">`
-        : '<span class="logo-badge" aria-hidden="true">וע</span>'}
-      <h1>מערכת ועדת אתיקה</h1>
+    <div>
+      ${PDF_LOGO_HTML_SRC ? `<img src="${PDF_LOGO_HTML_SRC}" alt="" class="logo-image">` : ''}
+      ${INSTITUTION_LOGO_HTML_SRC ? `<img src="${INSTITUTION_LOGO_HTML_SRC}" alt="" class="institution-logo">` : ''}
+      <span class="brand-name">מערכת ועדת אתיקה</span>
     </div>
-    <div class="subtitle">מערכת ניהול ועדת אתיקה</div>
-    <div class="institution-line">
-      ${INSTITUTION_LOGO_HTML_SRC
-        ? `<img src="${INSTITUTION_LOGO_HTML_SRC}" alt="Institution logo" class="institution-logo">`
-        : ''}
-      <span>${institution}</span>
-    </div>
-    <div class="doc-type">מכתב אישור ועדת אתיקה</div>
+    <div class="header-sub">מערכת ניהול ועדת אתיקה &mdash; ${institution}</div>
+    <div class="header-date">הופק: ${ltr(today)}</div>
   </div>
   <div class="content">
     <div class="doc-title"><h2>${docTitle}</h2></div>
-    <div class="date-row">תאריך הנפקה: <bdi>${today}</bdi></div>
-    <hr class="strong">
+    <div class="issue-date">תאריך הנפקה: ${ltr(today)}</div>
+    <hr>
     <div class="addressee">
       <div class="to-label">לכבוד,</div>
       <div>${escapeHtml(submission.author.fullName)}</div>
-      <div class="email"><bdi>${escapeHtml(submission.author.email)}</bdi></div>
+      <div class="email">${ltr(escapeHtml(submission.author.email))}</div>
     </div>
     <div class="subject">${subject}</div>
-    <div class="body-text">
-      ${intro}
-    </div>
+    <div class="body-text">${intro}</div>
     <div class="details-box">
-      <div class="details-row">
-        <span class="label">מספר בקשה:</span>
-        <span class="value"><bdi>${escapeHtml(submission.applicationId)}</bdi></span>
-      </div>
-      <div class="details-row">
-        <span class="label">כותרת המחקר:</span>
-        <span class="value">${escapeHtml(titleDisplay)}</span>
-      </div>
-      <div class="details-row">
-        <span class="label">סוג מסלול:</span>
-        <span class="value">${escapeHtml(track.he)}</span>
-      </div>
-      <div class="details-row">
-        <span class="label">תאריך אישור:</span>
-        <span class="value"><bdi>${approvedDate}</bdi></span>
-      </div>
-      <div class="details-row">
-        <span class="label">תוקף האישור עד:</span>
-        <span class="value"><bdi>${expiryDate}</bdi></span>
-      </div>
+      <table class="details-table">
+        <tr><td class="lbl">מספר בקשה:</td><td class="val">${ltr(escapeHtml(submission.applicationId))}</td></tr>
+        <tr><td class="lbl">כותרת המחקר:</td><td class="val">${escapeHtml(titleDisplay)}</td></tr>
+        <tr><td class="lbl">סוג מסלול:</td><td class="val">${escapeHtml(track.he)}</td></tr>
+        <tr><td class="lbl">תאריך אישור:</td><td class="val">${ltr(approvedDate)}</td></tr>
+        <tr><td class="lbl">תוקף האישור עד:</td><td class="val">${ltr(expiryDate)}</td></tr>
+      </table>
     </div>
     <hr class="light">
     <div class="conditions-title">${conditionsTitle}</div>
     <ul class="conditions-list">
       ${conditionLines.map((line) => `<li>${line}</li>`).join('')}
     </ul>
+    <p style="font-size:11pt;color:#374151;margin-bottom:6px;">
+      חוקר/ת: ${escapeHtml(submission.author.fullName)} (${ltr(escapeHtml(submission.author.email))})
+    </p>
     <div class="signature-section">
       ${signatureDataUrl ? `<img src="${signatureDataUrl}" alt="חתימת יו״ר ועדת האתיקה" style="max-height:70px;max-width:200px;object-fit:contain;margin:0 auto 10px;display:block;">` : ''}
       <div class="sig-line"></div>
       <div class="sig-label">${signatureLabel}</div>
       <div class="signature-grid">
-        <div class="signature-box">
-          <div class="box-label">חתימה</div>
-          <div class="box-line"></div>
-        </div>
-        <div class="signature-box">
-          <div class="box-label">תאריך חתימה</div>
-          <div class="box-line"></div>
-        </div>
+        <div class="signature-box"><div class="box-label">חתימה</div><div class="box-line"></div></div>
+        <div class="signature-box"><div class="box-label">תאריך חתימה</div><div class="box-line"></div></div>
       </div>
     </div>
     <div class="footer">
       ${legalFooter}<br>
-      מסמך זה הופק אוטומטית על ידי מערכת ועדת אתיקה &bull; ${institution} &bull; <bdi>${today}</bdi> &bull; מס׳ בקשה: <bdi>${escapeHtml(submission.applicationId)}</bdi>
+      מסמך זה הופק אוטומטית על ידי מערכת ועדת אתיקה &bull; ${institution} &bull; ${ltr(today)} &bull; מס׳ בקשה: ${ltr(escapeHtml(submission.applicationId))}
     </div>
   </div>
 </div>
