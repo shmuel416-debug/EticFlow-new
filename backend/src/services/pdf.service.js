@@ -321,11 +321,11 @@ function buildHeHtml(submission, template, templateContext, signatureDataUrl = '
     .filter(Boolean)
   const institution  = escapeHtml(INSTITUTION_NAME_HE)
 
-  /** Wraps LTR content (dates, IDs, emails) in a bidi-isolated span. */
-  const ltr = (str) => `<span style="direction:ltr;unicode-bidi:isolate;display:inline-block">${str}</span>`
+  /** Bidi-isolated LTR span (dates, IDs, emails) — matches design A `.ltr-val`. */
+  const ltr = (str) => `<span class="ltr-val">${str}</span>`
 
   return `<!DOCTYPE html>
-<html dir="rtl" lang="he">
+<html dir="rtl" lang="he-IL">
 <head>
 <meta charset="utf-8">
 <style>
@@ -340,66 +340,146 @@ body {
   color: #1e293b;
   background: white;
 }
-.page { width: 210mm; min-height: 297mm; }
+#ef-doc-root { direction: rtl; unicode-bidi: isolate; width: 100%; min-height: 100%; }
+.page { width: 210mm; min-height: 297mm; direction: rtl; }
 .header {
   background: ${brandPrimary};
   color: white;
   padding: 24px 36px 18px;
-}
-.brand-row {
-  display: flex;
-  align-items: center;
-  gap: 14px;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
   direction: rtl;
 }
-.brand-name { font-size: 20pt; font-weight: bold; letter-spacing: 0.5px; }
-.header-sub { font-size: 9.5pt; color: rgba(255,255,255,0.82); margin-top: 6px; }
-${INSTITUTION_LOGO_HTML_SRC ? '.institution-logo { width:28px; height:28px; object-fit:contain; flex-shrink:0; }' : ''}
-${PDF_LOGO_HTML_SRC ? '.logo-image { width:44px; height:44px; object-fit:contain; flex-shrink:0; }' : ''}
-.header-date { font-size: 9pt; color: #cbd5e1; margin-top: 8px; text-align: left; }
-.content { padding: 30px 40px; }
-.doc-title { text-align: center; margin-bottom: 4px; }
+/* Avoid flex in PDF: Chromium often mis-orders / overlaps Hebrew in the header band. */
+.brand-row { direction: rtl; text-align: right; }
+.brand-name { font-size: 20pt; font-weight: bold; letter-spacing: 0.5px; text-align: right; }
+.header-sub { font-size: 9.5pt; color: rgba(255,255,255,0.82); margin-top: 6px; text-align: right; }
+.header-date { font-size: 9pt; color: #cbd5e1; margin-top: 8px; text-align: left; direction: rtl; }
+.content {
+  padding: 30px 40px;
+  direction: rtl;
+  text-align: right;
+}
+.doc-title { text-align: center; margin-bottom: 4px; direction: rtl; }
 .doc-title h2 { font-size: 17pt; font-weight: bold; color: ${brandPrimary}; }
-.issue-date { text-align: center; color: #64748b; font-size: 10pt; margin-bottom: 20px; }
+.issue-date { text-align: center; color: #64748b; font-size: 10pt; margin-bottom: 20px; direction: rtl; }
+.ltr-val { direction: ltr; display: inline-block; unicode-bidi: isolate; }
 hr { border: none; border-top: 1.5px solid ${brandPrimary}; margin: 14px 0; }
 hr.light { border-color: #e2e8f0; border-width: 1px; }
-.addressee { margin-bottom: 14px; font-size: 11pt; }
+.addressee { margin-bottom: 14px; font-size: 11pt; direction: rtl; text-align: right; }
 .to-label { font-weight: bold; color: ${brandPrimary}; }
-.email { color: #64748b; font-size: 9.5pt; margin-top: 2px; }
-.subject { font-weight: bold; color: ${brandPrimary}; font-size: 12pt; margin-bottom: 8px; }
-.body-text { font-size: 11.5pt; color: #374151; line-height: 1.85; margin-bottom: 14px; }
+.email { color: #64748b; font-size: 9.5pt; margin-top: 2px; direction: rtl; text-align: right; }
+.subject { font-weight: bold; color: ${brandPrimary}; font-size: 12pt; margin-bottom: 8px; text-align: right; }
+.body-text { font-size: 11.5pt; color: #374151; line-height: 1.85; margin-bottom: 14px; text-align: right; }
 .details-box {
   border: 1px solid #cbd5e1;
   border-radius: 8px;
   background: #f8fafc;
   padding: 4px 16px;
   margin: 16px 0;
+  direction: rtl;
+  text-align: right;
 }
-.details-table { width: 100%; border-collapse: collapse; font-size: 11pt; }
-.details-table tr + tr td { border-top: 1px solid #e2e8f0; }
-.details-table td { padding: 9px 4px; vertical-align: baseline; }
-.details-table .lbl { color: #475569; font-weight: bold; white-space: nowrap; width: 1%; font-size: 10pt; }
-.details-table .val { color: #0f172a; font-weight: bold; padding-right: 14px; }
-.conditions-title { font-weight: bold; color: ${brandPrimary}; font-size: 12pt; margin-bottom: 8px; }
-.conditions-list { list-style: none; padding: 0; margin-bottom: 14px; }
+/* CSS grid (not <table>): Chromium PDF often breaks RTL table column order. */
+.details-grid {
+  display: grid;
+  grid-template-columns: minmax(130px, 38%) 1fr;
+  column-gap: 10px;
+  direction: rtl;
+  font-size: 11pt;
+  width: 100%;
+}
+.details-row { display: contents; }
+.details-grid .lbl {
+  color: #475569;
+  font-weight: bold;
+  white-space: nowrap;
+  font-size: 10pt;
+  padding: 9px 4px;
+  border-top: 1px solid #e2e8f0;
+  text-align: right;
+}
+.details-grid .val {
+  color: #0f172a;
+  font-weight: bold;
+  padding: 9px 4px;
+  padding-inline-start: 8px;
+  border-top: 1px solid #e2e8f0;
+  text-align: right;
+  word-break: break-word;
+}
+.details-row:first-child .lbl,
+.details-row:first-child .val { border-top: none; }
+.conditions-title { font-weight: bold; color: ${brandPrimary}; font-size: 12pt; margin-bottom: 8px; text-align: right; }
+.conditions-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 14px 0;
+  direction: rtl;
+  text-align: right;
+}
+/* PDF-safe bullets: flex ::before is unreliable in headless Chrome print. */
 .conditions-list li {
-  font-size: 11pt; color: #374151; padding: 4px 0;
-  display: flex; align-items: baseline; gap: 8px; direction: rtl;
+  font-size: 11pt;
+  color: #374151;
+  padding: 4px 1.1em 4px 0;
+  position: relative;
+  text-align: right;
+  direction: rtl;
 }
-.conditions-list li::before { content: '•'; color: ${brandPrimary}; font-weight: bold; flex-shrink: 0; }
-.signature-section { text-align: center; margin-top: 32px; }
+.conditions-list li::before {
+  content: '•';
+  color: ${brandPrimary};
+  font-weight: bold;
+  position: absolute;
+  right: 0;
+  top: 0.35em;
+}
+.signature-section { text-align: center; margin-top: 32px; direction: rtl; }
 .sig-line { border-top: 1px solid #94a3b8; width: 260px; margin: 0 auto 8px; }
 .sig-label { color: ${brandPrimary}; font-weight: bold; font-size: 11pt; }
-.signature-grid { margin-top: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.signature-box { border: 1px solid #cbd5e1; border-radius: 6px; padding: 10px 12px; min-height: 60px; text-align: right; }
+.signature-grid {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  direction: rtl;
+}
+.signature-box {
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 10px 12px;
+  min-height: 60px;
+  text-align: right;
+  direction: rtl;
+}
+.sig-img {
+  max-height: 52px;
+  max-width: 100%;
+  object-fit: contain;
+  display: block;
+  margin: 4px 0 8px;
+  margin-inline-start: 0;
+  margin-inline-end: auto;
+}
 .box-label { color: #64748b; font-size: 9pt; margin-bottom: 12px; }
 .box-line { border-top: 1px solid #94a3b8; }
-.footer { margin-top: 28px; padding-top: 10px; border-top: 1px solid #e2e8f0; text-align: center; font-size: 8pt; color: #94a3b8; line-height: 1.6; }
+.footer {
+  margin-top: 28px;
+  padding-top: 10px;
+  border-top: 1px solid #e2e8f0;
+  text-align: center;
+  font-size: 8pt;
+  color: #94a3b8;
+  line-height: 1.6;
+  direction: rtl;
+}
 .footer-legal { margin-bottom: 6px; }
 h1, h2, h3, strong, .to-label { font-weight: bold; }
 </style>
 </head>
 <body>
+<div id="ef-doc-root" dir="rtl" lang="he-IL">
 <div class="page">
   <div class="header">
     <div class="brand-row">
@@ -407,14 +487,12 @@ h1, h2, h3, strong, .to-label { font-weight: bold; }
         <div class="brand-name">מערכת ועדת אתיקה</div>
         <div class="header-sub">מערכת ניהול ועדת אתיקה &mdash; ${institution}</div>
       </div>
-      ${PDF_LOGO_HTML_SRC ? `<img src="${PDF_LOGO_HTML_SRC}" alt="" class="logo-image">` : ''}
-      ${INSTITUTION_LOGO_HTML_SRC ? `<img src="${INSTITUTION_LOGO_HTML_SRC}" alt="" class="institution-logo">` : ''}
     </div>
-    <div class="header-date">הופק: ${ltr(today)}</div>
+    <div class="header-date">הופק: ${ltr(escapeHtml(today))}</div>
   </div>
   <div class="content">
     <div class="doc-title"><h2>${docTitle}</h2></div>
-    <div class="issue-date">תאריך הנפקה: ${ltr(today)}</div>
+    <div class="issue-date">תאריך הנפקה: ${ltr(escapeHtml(today))}</div>
     <hr>
     <div class="addressee">
       <div class="to-label">לכבוד,</div>
@@ -424,36 +502,41 @@ h1, h2, h3, strong, .to-label { font-weight: bold; }
     <div class="subject">${subject}</div>
     <p class="body-text">${intro}</p>
     <div class="details-box">
-      <table class="details-table">
-        <tr><td class="lbl">מספר בקשה:</td><td class="val">${ltr(escapeHtml(submission.applicationId))}</td></tr>
-        <tr><td class="lbl">כותרת המחקר:</td><td class="val">${escapeHtml(titleDisplay)}</td></tr>
-        <tr><td class="lbl">סוג מסלול:</td><td class="val">${escapeHtml(track.he)}</td></tr>
-        <tr><td class="lbl">תאריך אישור:</td><td class="val">${ltr(approvedDate)}</td></tr>
-        <tr><td class="lbl">תוקף האישור עד:</td><td class="val">${ltr(expiryDate)}</td></tr>
-      </table>
+      <div class="details-grid">
+        <div class="details-row"><div class="lbl">מספר בקשה:</div><div class="val">${ltr(escapeHtml(submission.applicationId))}</div></div>
+        <div class="details-row"><div class="lbl">כותרת המחקר:</div><div class="val">${escapeHtml(titleDisplay)}</div></div>
+        <div class="details-row"><div class="lbl">סוג מסלול:</div><div class="val">${escapeHtml(track.he)}</div></div>
+        <div class="details-row"><div class="lbl">תאריך אישור:</div><div class="val">${ltr(escapeHtml(approvedDate))}</div></div>
+        <div class="details-row"><div class="lbl">תוקף האישור עד:</div><div class="val">${ltr(escapeHtml(expiryDate))}</div></div>
+      </div>
     </div>
     <hr class="light">
     <div class="conditions-title">${conditionsTitle}</div>
     <ul class="conditions-list">
       ${conditionLines.map((line) => `<li>${line}</li>`).join('')}
     </ul>
-    <p style="font-size:11pt;color:#374151;margin-bottom:6px;">
-      חוקר/ת: ${escapeHtml(submission.author.fullName)} (${ltr(escapeHtml(submission.author.email))})
+    <p style="font-size:11pt;color:#374151;margin-bottom:6px;direction:rtl;text-align:right;">
+      חוקר/ת: ${escapeHtml(submission.author.fullName)}<br>
+      (<span class="ltr-val">${escapeHtml(submission.author.email)}</span>)
     </p>
     <div class="signature-section">
-      ${signatureDataUrl ? `<img src="${signatureDataUrl}" alt="חתימת יו״ר ועדת האתיקה" style="max-height:70px;max-width:200px;object-fit:contain;margin:0 auto 10px;display:block;">` : ''}
       <div class="sig-line"></div>
       <div class="sig-label">${signatureLabel}</div>
       <div class="signature-grid">
-        <div class="signature-box"><div class="box-label">חתימה</div><div class="box-line"></div></div>
+        <div class="signature-box">
+          <div class="box-label">חתימה</div>
+          ${signatureDataUrl ? `<img src="${signatureDataUrl}" alt="" class="sig-img">` : ''}
+          <div class="box-line"></div>
+        </div>
         <div class="signature-box"><div class="box-label">תאריך חתימה</div><div class="box-line"></div></div>
       </div>
     </div>
     <div class="footer">
       ${legalFooter ? `<div class="footer-legal">${legalFooter}</div>` : ''}
-      מסמך זה הופק אוטומטית על ידי מערכת ועדת אתיקה &bull; ${institution} &bull; ${ltr(today)} &bull; מס׳ בקשה: ${ltr(escapeHtml(submission.applicationId))}
+      מסמך זה הופק אוטומטית על ידי מערכת ועדת אתיקה &bull; ${institution} &bull; ${ltr(escapeHtml(today))} &bull; מס׳ בקשה: ${ltr(escapeHtml(submission.applicationId))}
     </div>
   </div>
+</div>
 </div>
 </body>
 </html>`
@@ -484,10 +567,7 @@ function buildEnHtml(submission, template, templateContext, signatureDataUrl = '
     .map((line) => escapeHtml(applyTemplateTokens(line, templateContext)))
     .filter(Boolean)
   const institution  = escapeHtml(INSTITUTION_NAME_EN)
-
-  const brandMark = PDF_LOGO_HTML_SRC
-    ? `<img src="${PDF_LOGO_HTML_SRC}" alt="" class="logo-image">`
-    : '<div class="logo-badge" aria-hidden="true">EF</div>'
+  const ltrEn        = (safe) => `<span class="ltr-val">${safe}</span>`
 
   return `<!DOCTYPE html>
 <html dir="ltr" lang="en">
@@ -510,6 +590,8 @@ body {
   background: ${brandPrimary};
   color: white;
   padding: 24px 36px 18px;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
 }
 .brand-row {
   display: flex;
@@ -519,22 +601,12 @@ body {
 }
 .brand-name { font-size: 20pt; font-weight: bold; letter-spacing: 0.5px; }
 .header-sub { font-size: 9.5pt; color: rgba(255,255,255,0.82); margin-top: 6px; }
-.logo-badge {
-  width: 44px; height: 44px;
-  border-radius: 10px;
-  background: white;
-  color: ${brandPrimary};
-  display: flex; align-items: center; justify-content: center;
-  font-weight: 900; font-size: 14pt;
-  flex-shrink: 0;
-}
-${INSTITUTION_LOGO_HTML_SRC ? '.institution-logo { width:28px; height:28px; object-fit:contain; flex-shrink:0; }' : ''}
-${PDF_LOGO_HTML_SRC ? '.logo-image { width:44px; height:44px; object-fit:contain; flex-shrink:0; }' : ''}
 .header-date { font-size: 9pt; color: #cbd5e1; margin-top: 8px; text-align: right; }
 .content { padding: 30px 40px; }
 .doc-title { text-align: center; margin-bottom: 4px; }
 .doc-title h2 { font-size: 17pt; font-weight: bold; color: ${brandPrimary}; }
 .issue-date { text-align: center; color: #64748b; font-size: 10pt; margin-bottom: 20px; }
+.ltr-val { direction: ltr; display: inline-block; unicode-bidi: isolate; }
 hr { border: none; border-top: 1.5px solid ${brandPrimary}; margin: 14px 0; }
 hr.light { border-color: #e2e8f0; border-width: 1px; }
 .addressee { margin-bottom: 14px; font-size: 11pt; }
@@ -549,7 +621,12 @@ hr.light { border-color: #e2e8f0; border-width: 1px; }
   padding: 4px 16px;
   margin: 16px 0;
 }
-.details-table { width: 100%; border-collapse: collapse; font-size: 11pt; }
+.details-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11pt;
+  direction: ltr;
+}
 .details-table tr + tr td { border-top: 1px solid #e2e8f0; }
 .details-table td { padding: 9px 4px; vertical-align: baseline; }
 .details-table .lbl { color: #475569; font-weight: bold; white-space: nowrap; width: 1%; font-size: 10pt; }
@@ -564,8 +641,15 @@ hr.light { border-color: #e2e8f0; border-width: 1px; }
 .signature-section { text-align: center; margin-top: 32px; }
 .sig-line { border-top: 1px solid #94a3b8; width: 260px; margin: 0 auto 8px; }
 .sig-label { color: ${brandPrimary}; font-weight: bold; font-size: 11pt; }
-.signature-grid { margin-top: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.signature-grid {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  direction: ltr;
+}
 .signature-box { border: 1px solid #cbd5e1; border-radius: 6px; padding: 10px 12px; min-height: 60px; text-align: left; }
+.sig-img { max-height: 52px; max-width: 100%; object-fit: contain; display: block; margin: 4px auto 8px; }
 .box-label { color: #64748b; font-size: 9pt; margin-bottom: 12px; }
 .box-line { border-top: 1px solid #94a3b8; }
 .footer { margin-top: 28px; padding-top: 10px; border-top: 1px solid #e2e8f0; text-align: center; font-size: 8pt; color: #94a3b8; line-height: 1.6; }
@@ -581,14 +665,12 @@ h1, h2, h3, strong, .to-label { font-weight: bold; }
         <div class="brand-name">EthicFlow</div>
         <div class="header-sub">Ethics Committee Management System &mdash; ${institution}</div>
       </div>
-      ${brandMark}
-      ${INSTITUTION_LOGO_HTML_SRC ? `<img src="${INSTITUTION_LOGO_HTML_SRC}" alt="" class="institution-logo">` : ''}
     </div>
-    <div class="header-date">Generated: ${today}</div>
+    <div class="header-date">Generated: ${escapeHtml(today)}</div>
   </div>
   <div class="content">
     <div class="doc-title"><h2>${docTitle}</h2></div>
-    <div class="issue-date">Issue date: ${today}</div>
+    <div class="issue-date">Issue date: ${escapeHtml(today)}</div>
     <hr>
     <div class="addressee">
       <div class="to-label">Dear,</div>
@@ -612,20 +694,24 @@ h1, h2, h3, strong, .to-label { font-weight: bold; }
       ${conditionLines.map((line) => `<li>${line}</li>`).join('')}
     </ul>
     <p style="font-size:11pt;color:#374151;margin-bottom:6px;">
-      Researcher: ${escapeHtml(submission.author.fullName)} (${escapeHtml(submission.author.email)})
+      Researcher: ${escapeHtml(submission.author.fullName)}<br>
+      (${ltrEn(escapeHtml(submission.author.email))})
     </p>
     <div class="signature-section">
-      ${signatureDataUrl ? `<img src="${signatureDataUrl}" alt="Chairperson signature" style="max-height:70px;max-width:200px;object-fit:contain;margin:0 auto 10px;display:block;">` : ''}
       <div class="sig-line"></div>
       <div class="sig-label">${signatureLabel}</div>
       <div class="signature-grid">
-        <div class="signature-box"><div class="box-label">Signature</div><div class="box-line"></div></div>
+        <div class="signature-box">
+          <div class="box-label">Signature</div>
+          ${signatureDataUrl ? `<img src="${signatureDataUrl}" alt="" class="sig-img">` : ''}
+          <div class="box-line"></div>
+        </div>
         <div class="signature-box"><div class="box-label">Date signed</div><div class="box-line"></div></div>
       </div>
     </div>
     <div class="footer">
       ${legalFooter ? `<div class="footer-legal">${legalFooter}</div>` : ''}
-      This document was generated automatically by EthicFlow &bull; ${institution} &bull; ${today} &bull; Ref: ${escapeHtml(submission.applicationId)}
+      This document was generated automatically by EthicFlow &bull; ${institution} &bull; ${escapeHtml(today)} &bull; Ref: ${escapeHtml(submission.applicationId)}
     </div>
   </div>
 </div>
@@ -646,9 +732,11 @@ h1, h2, h3, strong, .to-label { font-weight: bold; }
  */
 async function renderHtmlToPdf(html, outputPath) {
   const isLinux = process.platform === 'linux'
+  const executablePath =
+    process.env.PUPPETEER_EXECUTABLE_PATH?.trim() || puppeteer.executablePath()
   const browser = await puppeteer.launch({
-    headless: 'new',
-    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+    headless: true,
+    executablePath,
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',
@@ -659,12 +747,25 @@ async function renderHtmlToPdf(html, outputPath) {
   })
   try {
     const page = await browser.newPage()
-    await page.setContent(html, { waitUntil: 'load', timeout: 30000 })
+    // A4-ish viewport stabilizes RTL/grid layout in print (Chromium quirk).
+    await page.setViewport({ width: 794, height: 1123, deviceScaleFactor: 1 })
+    await page.setContent(html, { waitUntil: 'load', timeout: 60000 })
+    await page
+      .evaluate(async () => {
+        try {
+          await document.fonts.ready
+        } catch {
+          /* ignore */
+        }
+      })
+      .catch(() => {})
+    await page.emulateMediaType('print')
     await page.pdf({
-      path:            outputPath,
-      format:          'A4',
-      printBackground: true,
-      margin:          { top: '0', right: '0', bottom: '0', left: '0' },
+      path:               outputPath,
+      format:             'A4',
+      printBackground:    true,
+      preferCSSPageSize:  false,
+      margin:             { top: '0', right: '0', bottom: '0', left: '0' },
     })
   } finally {
     await browser.close()
@@ -736,35 +837,6 @@ async function renderApprovalFallbackPdf(
   doc.rect(0, 0, pageW, 104).fill(brandPrimary)
   doc.restore()
 
-  let drewImageLogo = false
-  if (PDF_LOGO_IMAGE_PATH) {
-    try {
-      const logoX = safeLang === 'he' ? rightX - 42 : leftX
-      doc.image(PDF_LOGO_IMAGE_PATH, logoX, 24, { width: 40, height: 40 })
-      drewImageLogo = true
-    } catch {
-      drewImageLogo = false
-    }
-  }
-  if (!drewImageLogo) {
-    const bx = safeLang === 'he' ? rightX - 44 : leftX
-    doc.roundedRect(bx, 24, 40, 40, 10).fill('#ffffff')
-    doc.font(boldFont).fontSize(12).fillColor(brandPrimary).text(
-      safeLang === 'he' ? 'וע' : 'EF',
-      bx + 10,
-      36,
-      { width: 20, align: 'center' }
-    )
-  }
-  if (INSTITUTION_LOGO_IMAGE_PATH) {
-    try {
-      const ix = safeLang === 'he' ? leftX : rightX - 30
-      doc.image(INSTITUTION_LOGO_IMAGE_PATH, ix, 28, { fit: [26, 26], align: 'center', valign: 'center' })
-    } catch {
-      // Keep PDF generation resilient if institution logo is invalid.
-    }
-  }
-
   if (safeLang === 'he') {
     doc.font(boldFont).fontSize(20).fillColor('#ffffff').text('מערכת ועדת אתיקה', leftX, 26, {
       width: contentW,
@@ -781,16 +853,16 @@ async function renderApprovalFallbackPdf(
       align: 'left',
     })
   } else {
-    const textInset = leftX + 52
+    const textInset = leftX
     doc.font(boldFont).fontSize(20).fillColor('#ffffff').text('EthicFlow', textInset, 26, {
-      width: contentW - 52,
+      width: contentW,
       align: 'left',
     })
     doc.font(baseFont).fontSize(9.5).fillColor('#e2e8f0').text(
       `Ethics Committee Management System — ${institution}`,
       textInset,
       52,
-      { width: contentW - 52, align: 'left' }
+      { width: contentW, align: 'left' }
     )
     doc.font(baseFont).fontSize(9).fillColor('#cbd5e1').text(`Generated: ${todayEn}`, leftX, 78, {
       width: contentW,
@@ -879,23 +951,13 @@ async function renderApprovalFallbackPdf(
   doc.moveDown(0.5)
   doc.text(
     safeLang === 'he'
-      ? `חוקר/ת: ${submission.author.fullName} (${submission.author.email})`
-      : `Researcher: ${submission.author.fullName} (${submission.author.email})`,
+      ? `חוקר/ת: ${submission.author.fullName}\n(${submission.author.email})`
+      : `Researcher: ${submission.author.fullName}\n(${submission.author.email})`,
     { width: contentW, align: textAlign }
   )
   doc.moveDown(0.9)
 
   const signatureBuffer = imageBufferFromDataUrl(signatureDataUrl)
-  if (signatureBuffer) {
-    try {
-      const imgW = 180
-      const ix   = leftX + (contentW - imgW) / 2
-      doc.image(signatureBuffer, ix, doc.y, { width: imgW, height: 56 })
-      doc.y += 64
-    } catch {
-      // Keep resilient when signature image decode/render fails.
-    }
-  }
 
   const sigLineY = doc.y + 6
   const sigHalf  = 130
@@ -909,7 +971,7 @@ async function renderApprovalFallbackPdf(
 
   const boxGap = 16
   const boxW   = (contentW - boxGap) / 2
-  const boxH   = 56
+  const boxH   = signatureBuffer ? 68 : 56
   const boxY   = doc.y
   doc.roundedRect(leftX, boxY, boxW, boxH, 6).stroke('#cbd5e1')
   doc.roundedRect(leftX + boxW + boxGap, boxY, boxW, boxH, 6).stroke('#cbd5e1')
@@ -921,7 +983,15 @@ async function renderApprovalFallbackPdf(
     doc.text('Signature', leftX + 10, boxY + 8)
     doc.text('Date signed', leftX + boxW + boxGap + 10, boxY + 8)
   }
-  const innerLineY = boxY + 40
+  if (signatureBuffer) {
+    try {
+      const imgBoxX = safeLang === 'he' ? leftX + boxW + boxGap + 8 : leftX + 8
+      doc.image(signatureBuffer, imgBoxX, boxY + 20, { fit: [boxW - 16, 36], align: 'center', valign: 'center' })
+    } catch {
+      // Resilient when signature image decode/render fails.
+    }
+  }
+  const innerLineY = boxY + boxH - 12
   doc.moveTo(leftX + 10, innerLineY).lineTo(leftX + boxW - 10, innerLineY).strokeColor('#94a3b8').stroke()
   doc.moveTo(leftX + boxW + boxGap + 10, innerLineY).lineTo(rightX - 10, innerLineY).strokeColor('#94a3b8').stroke()
 
@@ -1012,7 +1082,7 @@ export async function generateApprovalLetter(submissionId, lang = 'he') {
  * @param {string} submissionId
  * @param {'he'|'en'} lang
  * @param {unknown} templateInput
- * @returns {Promise<{ buffer: Buffer, filename: string }>}
+ * @returns {Promise<{ buffer: Buffer, filename: string, renderer: 'puppeteer' | 'pdfkit' }>}
  */
 export async function generateApprovalLetterPreview(submissionId, lang = 'he', templateInput) {
   const safeLang = lang === 'en' ? 'en' : 'he'
@@ -1028,15 +1098,17 @@ export async function generateApprovalLetterPreview(submissionId, lang = 'he', t
   const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'ef-approval-preview-'))
   const filename = `approval-template-preview-${safeLang}.pdf`
   const outputPath = path.join(tmpDir, filename)
+  let renderer = 'puppeteer'
   try {
     try {
       await renderHtmlToPdf(html, outputPath)
     } catch (err) {
+      renderer = 'pdfkit'
       console.warn(`[PDF] Preview Puppeteer render failed (${safeLang}), using fallback: ${err?.message ?? err}`)
       await renderApprovalFallbackPdf(submission, safeLang, outputPath, template, templateContext, signatureDataUrl, brandPrimary)
     }
     const buffer = await fs.readFile(outputPath)
-    return { buffer, filename }
+    return { buffer, filename, renderer }
   } finally {
     await fs.rm(tmpDir, { recursive: true, force: true }).catch(() => {})
   }

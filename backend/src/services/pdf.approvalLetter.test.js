@@ -37,11 +37,19 @@ describe('approval letter HTML (design A)', () => {
       '#1e3a5f'
     )
     expect(html).toContain('class="brand-row"')
-    expect(html).toContain('class="details-table"')
+    expect(html).toContain('class="details-grid"')
+    expect(html).toContain('id="ef-doc-root"')
     expect(html).toContain('כותרת המחקר:')
     expect(html).toContain('תוקף האישור עד:')
     expect(html).toContain('signature-grid')
     expect(html).toMatch(/<p class="body-text">/)
+    expect(html).toContain('חוקר/ת:')
+    expect(html).toContain('<br>')
+    expect(html).toContain('class="ltr-val"')
+    const sigImg = html.indexOf('class="sig-img"')
+    if (sigImg !== -1) {
+      expect(html.indexOf('box-label">חתימה')).toBeLessThan(sigImg)
+    }
   })
 
   it('English HTML includes design A structure', () => {

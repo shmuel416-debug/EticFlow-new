@@ -251,9 +251,11 @@ export async function previewApprovalTemplate(req, res, next) {
     }
     const safeLang = req.body?.lang === 'en' ? 'en' : 'he'
     const { submissionId, template } = req.body
-    const { buffer, filename } = await generateApprovalLetterPreview(submissionId, safeLang, template)
+    const { buffer, filename, renderer } = await generateApprovalLetterPreview(submissionId, safeLang, template)
 
     res.locals.entityId = submissionId
+    res.setHeader('X-EticFlow-Pdf-Renderer', renderer)
+    res.setHeader('Cache-Control', 'no-store')
     res.setHeader('Content-Type', 'application/pdf')
     res.setHeader('Content-Disposition', `inline; filename="${filename}"`)
     res.setHeader('Content-Length', buffer.length)
