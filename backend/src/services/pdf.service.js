@@ -707,6 +707,7 @@ h1, h2, h3, strong, .to-label { font-weight: bold; }
  * @returns {Promise<void>}
  */
 async function renderHtmlToPdf(html, outputPath) {
+  const isLinux = process.platform === 'linux'
   const browser = await puppeteer.launch({
     headless: 'new',
     executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
@@ -714,12 +715,13 @@ async function renderHtmlToPdf(html, outputPath) {
       '--no-sandbox',
       '--disable-setuid-sandbox',
       '--disable-dev-shm-usage',
-      '--disable-gpu',
+      // --disable-gpu breaks Hebrew RTL glyph shaping on Windows/Mac; only needed on headless Linux
+      ...(isLinux ? ['--disable-gpu'] : []),
     ],
   })
   try {
     const page = await browser.newPage()
-    await page.setContent(html, { waitUntil: 'domcontentloaded', timeout: 30000 })
+    await page.setContent(html, { waitUntil: 'load', timeout: 30000 })
     await page.pdf({
       path:            outputPath,
       format:          'A4',
