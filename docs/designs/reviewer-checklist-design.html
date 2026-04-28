@@ -1,0 +1,1327 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EthicFlow — Reviewer Checklist Design Options</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Heebo', sans-serif; }
+
+    /* Tab navigation */
+    .surface-btn { padding: 10px 20px; border-bottom: 3px solid transparent; cursor: pointer; font-weight: 500; color: #6b7280; transition: all 0.2s; }
+    .surface-btn.active { border-bottom-color: #1e3a5f; color: #1e3a5f; font-weight: 700; }
+    .option-btn { padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; background: #f3f4f6; color: #374151; transition: all 0.2s; }
+    .option-btn.active { background: #1e3a5f; color: white; }
+
+    .surface-content { display: none; }
+    .surface-content.active { display: block; }
+    .option-content { display: none; }
+    .option-content.active { display: block; }
+
+    /* Sidebar simulation */
+    .sidebar { background: #1e3a5f; width: 220px; min-height: 600px; flex-shrink: 0; }
+    .sidebar-item { padding: 10px 16px; color: #cbd5e1; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 8px; }
+    .sidebar-item:hover { background: rgba(255,255,255,0.08); }
+    .sidebar-item.active { background: rgba(255,255,255,0.15); color: white; border-right: 3px solid #60a5fa; }
+    .sidebar-sub { padding: 8px 16px 8px 32px; color: #94a3b8; font-size: 12px; cursor: pointer; }
+    .sidebar-sub:hover { color: #cbd5e1; }
+    .sidebar-sub.active { color: #93c5fd; }
+
+    /* Status badges */
+    .badge-green { background: #dcfce7; color: #15803d; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+    .badge-amber { background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+    .badge-red { background: #fee2e2; color: #991b1b; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+    .badge-blue { background: #dbeafe; color: #1e40af; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+    .badge-gray { background: #f3f4f6; color: #4b5563; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+
+    /* Checklist specific */
+    .adequate-btn { border: 2px solid #e5e7eb; border-radius: 6px; padding: 6px 14px; font-size: 13px; cursor: pointer; transition: all 0.15s; }
+    .adequate-btn:hover { border-color: #16a34a; color: #16a34a; }
+    .adequate-btn.selected-adequate { border-color: #16a34a; background: #dcfce7; color: #15803d; font-weight: 600; }
+    .inadequate-btn { border: 2px solid #e5e7eb; border-radius: 6px; padding: 6px 14px; font-size: 13px; cursor: pointer; transition: all 0.15s; }
+    .inadequate-btn:hover { border-color: #dc2626; color: #dc2626; }
+    .inadequate-btn.selected-inadequate { border-color: #dc2626; background: #fee2e2; color: #991b1b; font-weight: 600; }
+
+    .radio-adequate { accent-color: #16a34a; width: 16px; height: 16px; cursor: pointer; }
+    .radio-inadequate { accent-color: #dc2626; width: 16px; height: 16px; cursor: pointer; }
+    .radio-yes { accent-color: #1e3a5f; width: 16px; height: 16px; cursor: pointer; }
+    .radio-no { accent-color: #6b7280; width: 16px; height: 16px; cursor: pointer; }
+    .radio-problem { accent-color: #dc2626; width: 16px; height: 16px; cursor: pointer; }
+
+    /* Progress bar */
+    .progress-bar { height: 6px; background: #e5e7eb; border-radius: 3px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, #1e3a5f, #3b82f6); border-radius: 3px; transition: width 0.3s; }
+
+    /* Tree items */
+    .tree-item { padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; display: flex; align-items: center; gap: 6px; }
+    .tree-item:hover { background: #f3f4f6; }
+    .tree-item.selected { background: #dbeafe; color: #1e40af; }
+    .tree-sub { padding: 6px 12px 6px 28px; border-radius: 6px; cursor: pointer; font-size: 12px; display: flex; align-items: center; gap: 6px; color: #6b7280; }
+    .tree-sub:hover { background: #f9fafb; color: #374151; }
+    .tree-sub.selected { background: #eff6ff; color: #1e40af; }
+
+    .drag-handle { color: #9ca3af; cursor: grab; font-size: 16px; line-height: 1; }
+
+    /* Mobile frame */
+    .mobile-frame { border: 8px solid #1f2937; border-radius: 36px; overflow: hidden; width: 375px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+
+    .sticky-progress { position: sticky; top: 0; z-index: 10; background: white; border-bottom: 1px solid #e5e7eb; }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+  <!-- Top Nav -->
+  <div class="sticky top-0 bg-white border-b z-50 shadow-sm">
+    <div class="max-w-7xl mx-auto px-6">
+      <div class="flex items-center gap-2 py-3 border-b border-gray-100">
+        <span class="text-xs text-gray-400">EthicFlow — Reviewer Checklist — Sprint 14</span>
+        <span class="text-xs text-gray-300">|</span>
+        <span class="text-xs text-blue-600 font-medium">3 design options × 2 surfaces</span>
+      </div>
+      <div class="flex items-center gap-6 mt-1">
+        <div class="flex items-center gap-1">
+          <span class="text-xs font-bold text-gray-500 ml-3">משטח:</span>
+          <button class="surface-btn active" onclick="showSurface('admin', this)">🛠 ניהול תבנית (אדמין)</button>
+          <button class="surface-btn" onclick="showSurface('reviewer', this)">✅ צ'קליסט סוקר</button>
+        </div>
+        <div class="flex items-center gap-2 mr-auto">
+          <span class="text-xs font-bold text-gray-500 ml-2">עיצוב:</span>
+          <button class="option-btn active" id="opt-a" onclick="showOption('a', this)">A — Minimal</button>
+          <button class="option-btn" id="opt-b" onclick="showOption('b', this)">B — Structured</button>
+          <button class="option-btn" id="opt-c" onclick="showOption('c', this)">C — Compact</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       SURFACE: ADMIN TEMPLATE EDITOR
+       ═══════════════════════════════════════════════════════ -->
+  <div id="surface-admin" class="surface-content active p-6">
+
+    <!-- ─── OPTION A: Admin — Clean & Minimal ─── -->
+    <div id="admin-a" class="option-content active">
+      <div class="mb-4">
+        <h2 class="text-lg font-bold text-gray-800">A — ניהול תבנית: נקי ומינימלי</h2>
+        <p class="text-sm text-gray-500">עץ שטוח בצד + פאנל עריכה רחב. כרטיסיות בולטות לסקציות, עריכה ב-place.</p>
+      </div>
+      <div class="grid grid-cols-3 gap-6">
+        <!-- Desktop -->
+        <div class="col-span-2">
+          <p class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wide">💻 Desktop</p>
+          <div class="rounded-xl overflow-hidden border border-gray-200 shadow-lg bg-white" style="min-height:680px;">
+            <!-- App Header -->
+            <div class="bg-white border-b px-6 py-3 flex items-center gap-4">
+              <div class="w-8 h-8 rounded-lg bg-blue-900 flex items-center justify-center text-white font-bold text-sm">E</div>
+              <span class="font-bold text-gray-800 text-sm">EthicFlow</span>
+              <span class="text-gray-300 mx-1">|</span>
+              <span class="text-sm text-gray-500">ניהול צ'קליסט סוקר</span>
+              <div class="mr-auto flex items-center gap-2">
+                <span class="badge-amber">טיוטה</span>
+                <span class="text-xs text-gray-400">גרסה 1</span>
+                <button class="bg-blue-900 text-white text-xs px-4 py-1.5 rounded-lg font-medium hover:bg-blue-800">פרסם תבנית</button>
+              </div>
+            </div>
+            <div class="flex" style="height:640px;">
+              <!-- Sidebar -->
+              <div class="sidebar">
+                <div class="p-4 border-b border-white/10">
+                  <p class="text-xs text-blue-300 font-medium mb-1">תבניות פעילות</p>
+                  <div class="bg-white/10 rounded-lg px-3 py-2 text-white text-sm font-medium">Standard 2026 ✓</div>
+                </div>
+                <div class="sidebar-item active">📋 ניהול צ'קליסט</div>
+                <div class="sidebar-sub active">↳ עריכת תבנית</div>
+                <div class="sidebar-sub">↳ היסטוריית גרסאות</div>
+                <div class="sidebar-item">📊 סטטיסטיקות</div>
+                <div class="sidebar-item">⚙️ הגדרות</div>
+              </div>
+              <!-- Main area -->
+              <div class="flex-1 flex overflow-hidden">
+                <!-- Tree panel -->
+                <div class="w-64 border-l bg-gray-50 overflow-y-auto p-3">
+                  <div class="flex items-center justify-between mb-3">
+                    <span class="text-xs font-bold text-gray-500 uppercase">מבנה התבנית</span>
+                    <button class="text-xs text-blue-700 font-medium hover:underline">+ סקציה</button>
+                  </div>
+
+                  <!-- Section A -->
+                  <div class="mb-2">
+                    <div class="tree-item selected font-medium text-sm">
+                      <span class="drag-handle">⠿</span>
+                      <span class="w-5 h-5 rounded bg-blue-900 text-white text-xs flex items-center justify-center flex-shrink-0">א</span>
+                      אישור מסמכים
+                    </div>
+                    <div class="mr-4 mt-1 space-y-0.5">
+                      <div class="tree-sub">שם המחקר בעברית ובאנגלית</div>
+                      <div class="tree-sub">פרוטוקול המחקר</div>
+                      <div class="tree-sub selected">שאלון המחקר</div>
+                      <div class="tree-sub">נוסח טופס הסכמה מדעת</div>
+                      <div class="tree-sub text-blue-600 hover:text-blue-700">+ הוסף פריט</div>
+                    </div>
+                  </div>
+
+                  <!-- Section B -->
+                  <div class="mb-2">
+                    <div class="tree-item font-medium text-sm">
+                      <span class="drag-handle">⠿</span>
+                      <span class="w-5 h-5 rounded bg-amber-600 text-white text-xs flex items-center justify-center flex-shrink-0">ב</span>
+                      בעיות אתיות
+                    </div>
+                  </div>
+
+                  <!-- Section C -->
+                  <div class="mb-2">
+                    <div class="tree-item font-medium text-sm">
+                      <span class="drag-handle">⠿</span>
+                      <span class="w-5 h-5 rounded bg-purple-600 text-white text-xs flex items-center justify-center flex-shrink-0">ג</span>
+                      סיכום ואישור
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Editor panel -->
+                <div class="flex-1 p-6 overflow-y-auto">
+                  <div class="flex items-center gap-2 mb-5">
+                    <span class="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded">פריט נבחר</span>
+                    <span class="font-semibold text-gray-800">שאלון המחקר</span>
+                  </div>
+
+                  <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <label class="block text-xs font-medium text-gray-500 mb-1">תווית (עברית)</label>
+                      <input class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" value="שאלון המחקר" />
+                    </div>
+                    <div>
+                      <label class="block text-xs font-medium text-gray-500 mb-1">Label (English)</label>
+                      <input dir="ltr" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" value="Research Questionnaire" />
+                    </div>
+                  </div>
+
+                  <div class="mb-4">
+                    <label class="block text-xs font-medium text-gray-500 mb-1">טקסט עזרה (tooltip)</label>
+                    <textarea class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" rows="2">יש לוודא כי השאלון כולל פתיח, שאלות רגישות מסומנות, וזכויות המרואיין מוגדרות בבירור</textarea>
+                  </div>
+
+                  <div class="grid grid-cols-3 gap-4 mb-4">
+                    <div>
+                      <label class="block text-xs font-medium text-gray-500 mb-1">סוג תשובה (לסקציה)</label>
+                      <select class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white">
+                        <option selected>מספק / לא מספק</option>
+                        <option>כן / לא</option>
+                        <option>כן / לא (כן=בעיה)</option>
+                      </select>
+                    </div>
+                    <div class="flex flex-col gap-2 mt-1">
+                      <label class="flex items-center gap-2 text-sm cursor-pointer">
+                        <input type="checkbox" checked class="rounded" /> חובה למלא
+                      </label>
+                      <label class="flex items-center gap-2 text-sm cursor-pointer">
+                        <input type="checkbox" checked class="rounded" /> דרוש פרטים אם שלילי
+                      </label>
+                    </div>
+                    <div>
+                      <label class="block text-xs font-medium text-gray-500 mb-1">תנאי (conditional)</label>
+                      <select class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white">
+                        <option selected>ללא תנאי</option>
+                        <option>תלוי בפריט אחר</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="flex gap-3 pt-4 border-t">
+                    <button class="bg-blue-900 text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-800">שמור שינויים</button>
+                    <button class="border border-gray-200 text-sm px-4 py-2 rounded-lg text-gray-600 hover:bg-gray-50">בטל</button>
+                    <button class="mr-auto text-red-500 text-sm hover:text-red-700">🗑 מחק פריט</button>
+                  </div>
+
+                  <div class="mt-6 pt-4 border-t">
+                    <p class="text-xs font-bold text-gray-400 uppercase mb-3">תצוגה מקדימה של הפריט</p>
+                    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      <div class="flex items-start gap-3">
+                        <div class="flex-1 text-sm text-gray-700">שאלון המחקר</div>
+                        <div class="flex gap-2">
+                          <span class="adequate-btn selected-adequate text-xs">מספק ✓</span>
+                          <span class="inadequate-btn text-xs">לא מספק</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Mobile -->
+        <div>
+          <p class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wide">📱 Mobile (375px)</p>
+          <div class="mobile-frame mx-auto">
+            <div class="bg-white" style="min-height:600px;">
+              <div class="bg-blue-900 px-4 py-3 flex items-center gap-3">
+                <span class="text-white text-sm font-bold">☰</span>
+                <span class="text-white text-sm font-medium">עריכת תבנית</span>
+                <span class="mr-auto badge-amber text-xs">טיוטה</span>
+              </div>
+              <!-- Tabs -->
+              <div class="flex border-b text-xs font-medium">
+                <button class="flex-1 py-2.5 text-blue-900 border-b-2 border-blue-900">מבנה</button>
+                <button class="flex-1 py-2.5 text-gray-400">עריכה</button>
+                <button class="flex-1 py-2.5 text-gray-400">פרסום</button>
+              </div>
+              <div class="p-3 space-y-2">
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                  <div class="flex items-center gap-2 mb-2">
+                    <span class="w-5 h-5 rounded bg-blue-900 text-white text-xs flex items-center justify-center">א</span>
+                    <span class="text-sm font-semibold text-gray-800">אישור מסמכים</span>
+                    <span class="mr-auto text-xs text-gray-400">23 פריטים</span>
+                  </div>
+                  <div class="space-y-1 mr-6">
+                    <div class="text-xs text-gray-600 flex items-center gap-1">· שם המחקר</div>
+                    <div class="text-xs text-blue-700 font-medium flex items-center gap-1">· שאלון המחקר ✏️</div>
+                    <div class="text-xs text-gray-600 flex items-center gap-1">· פרוטוקול...</div>
+                  </div>
+                </div>
+                <div class="bg-white border border-gray-200 rounded-lg p-3">
+                  <div class="flex items-center gap-2">
+                    <span class="w-5 h-5 rounded bg-amber-600 text-white text-xs flex items-center justify-center">ב</span>
+                    <span class="text-sm font-medium text-gray-700">בעיות אתיות</span>
+                    <span class="mr-auto text-xs text-gray-400">5 פריטים</span>
+                  </div>
+                </div>
+                <div class="bg-white border border-gray-200 rounded-lg p-3">
+                  <div class="flex items-center gap-2">
+                    <span class="w-5 h-5 rounded bg-purple-600 text-white text-xs flex items-center justify-center">ג</span>
+                    <span class="text-sm font-medium text-gray-700">סיכום ואישור</span>
+                    <span class="mr-auto text-xs text-gray-400">2 פריטים</span>
+                  </div>
+                </div>
+                <button class="w-full border-2 border-dashed border-gray-200 rounded-lg py-3 text-sm text-gray-400 hover:border-blue-300 hover:text-blue-600">+ הוסף סקציה</button>
+              </div>
+              <div class="fixed bottom-0 w-full bg-white border-t p-3" style="position:sticky;">
+                <button class="w-full bg-blue-900 text-white py-2.5 rounded-lg text-sm font-medium">פרסם תבנית</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /admin-a -->
+
+    <!-- ─── OPTION B: Admin — Bold & Structured ─── -->
+    <div id="admin-b" class="option-content">
+      <div class="mb-4">
+        <h2 class="text-lg font-bold text-gray-800">B — ניהול תבנית: מובנה ומודגש</h2>
+        <p class="text-sm text-gray-500">header navy עם metadata. סקציות כ-accordion cards. עריכת פריטים בתוך drawer צדי.</p>
+      </div>
+      <div class="grid grid-cols-3 gap-6">
+        <div class="col-span-2">
+          <p class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wide">💻 Desktop</p>
+          <div class="rounded-xl overflow-hidden border border-gray-200 shadow-lg bg-white" style="min-height:680px;">
+            <!-- Navy header -->
+            <div style="background: linear-gradient(135deg,#1e3a5f,#2563eb);" class="px-6 py-5 text-white">
+              <div class="flex items-end justify-between">
+                <div>
+                  <div class="flex items-center gap-2 mb-1">
+                    <span class="text-xs bg-white/20 px-2 py-0.5 rounded-full">צ'קליסט סוקר</span>
+                    <span class="text-xs bg-amber-400 text-amber-900 px-2 py-0.5 rounded-full font-medium">טיוטה · גרסה 1</span>
+                  </div>
+                  <h1 class="text-xl font-bold">Standard Ethics Checklist 2026</h1>
+                  <p class="text-blue-200 text-sm mt-0.5">3 סקציות · 30 פריטים · עודכן לאחרונה: היום</p>
+                </div>
+                <div class="flex gap-2">
+                  <button class="bg-white/10 border border-white/20 text-white text-sm px-4 py-2 rounded-lg hover:bg-white/20">שכפל</button>
+                  <button class="bg-white text-blue-900 text-sm px-5 py-2 rounded-lg font-bold hover:bg-blue-50">📢 פרסם</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex" style="height:560px;">
+              <div class="sidebar w-48">
+                <div class="sidebar-item active">📋 תבנית פעילה</div>
+                <div class="sidebar-sub active">↳ עריכה</div>
+                <div class="sidebar-sub">↳ גרסאות</div>
+                <div class="sidebar-item">🕑 היסטוריה</div>
+              </div>
+
+              <!-- Accordion editor -->
+              <div class="flex-1 overflow-y-auto p-5" style="direction:rtl;">
+                <!-- Section A accordion -->
+                <div class="border border-gray-200 rounded-xl mb-3 overflow-hidden">
+                  <div class="bg-blue-50 border-b border-blue-100 px-4 py-3 flex items-center gap-3 cursor-pointer">
+                    <span class="w-7 h-7 rounded-lg bg-blue-900 text-white text-sm flex items-center justify-center font-bold">א</span>
+                    <div class="flex-1">
+                      <span class="font-semibold text-gray-800 text-sm">אישור המסמכים והפרטים שצורפו</span>
+                      <span class="text-xs text-gray-400 mr-2">23 פריטים · סוג: מספק/לא מספק</span>
+                    </div>
+                    <span class="badge-blue text-xs">ADEQUACY</span>
+                    <button class="text-xs text-blue-700 hover:underline">+ פריט</button>
+                    <span class="text-gray-400">▲</span>
+                  </div>
+                  <div class="divide-y">
+                    <div class="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50">
+                      <span class="drag-handle text-lg">⠿</span>
+                      <span class="text-sm flex-1 text-gray-700">שם המחקר בעברית ובאנגלית</span>
+                      <span class="badge-blue text-xs ml-2">חובה</span>
+                      <button class="text-xs text-gray-400 hover:text-blue-700 px-2">✏️</button>
+                      <button class="text-xs text-gray-300 hover:text-red-500">🗑</button>
+                    </div>
+                    <div class="flex items-center gap-3 px-4 py-2.5 bg-blue-50 border-r-4 border-blue-600">
+                      <span class="drag-handle text-lg">⠿</span>
+                      <span class="text-sm flex-1 text-blue-800 font-medium">שאלון המחקר — בעריכה</span>
+                      <span class="badge-blue text-xs ml-2">חובה</span>
+                      <button class="text-xs text-blue-700 px-2 font-medium">✏️ עורך</button>
+                    </div>
+                    <div class="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50">
+                      <span class="drag-handle text-lg">⠿</span>
+                      <span class="text-sm flex-1 text-gray-700">נוסח טופס הסכמה מדעת</span>
+                      <span class="badge-blue text-xs ml-2">חובה</span>
+                      <button class="text-xs text-gray-400 hover:text-blue-700 px-2">✏️</button>
+                      <button class="text-xs text-gray-300 hover:text-red-500">🗑</button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Section B accordion — collapsed -->
+                <div class="border border-gray-200 rounded-xl mb-3 overflow-hidden">
+                  <div class="bg-amber-50 px-4 py-3 flex items-center gap-3 cursor-pointer">
+                    <span class="w-7 h-7 rounded-lg bg-amber-600 text-white text-sm flex items-center justify-center font-bold">ב</span>
+                    <div class="flex-1">
+                      <span class="font-semibold text-gray-800 text-sm">בעיות אתיות פוטנציאליות</span>
+                      <span class="text-xs text-gray-400 mr-2">5 פריטים · כן=בעיה</span>
+                    </div>
+                    <span class="badge-red text-xs">YES_NO_PROBLEM</span>
+                    <span class="text-gray-400">▼</span>
+                  </div>
+                </div>
+
+                <!-- Section C -->
+                <div class="border border-gray-200 rounded-xl mb-3 overflow-hidden">
+                  <div class="bg-purple-50 px-4 py-3 flex items-center gap-3 cursor-pointer">
+                    <span class="w-7 h-7 rounded-lg bg-purple-700 text-white text-sm flex items-center justify-center font-bold">ג</span>
+                    <div class="flex-1">
+                      <span class="font-semibold text-gray-800 text-sm">סיכום ואישור</span>
+                      <span class="text-xs text-gray-400 mr-2">2 פריטים מותנים</span>
+                    </div>
+                    <span class="badge-gray text-xs">YES_NO</span>
+                    <span class="text-gray-400">▼</span>
+                  </div>
+                </div>
+
+                <button class="w-full border-2 border-dashed border-gray-200 rounded-xl py-3 text-sm text-gray-400 hover:border-blue-300 hover:text-blue-600 transition-colors">+ הוסף סקציה חדשה</button>
+              </div>
+
+              <!-- Right drawer — item editor -->
+              <div class="w-72 border-r bg-gray-50 p-4 overflow-y-auto">
+                <div class="flex items-center gap-2 mb-4 pb-3 border-b">
+                  <span class="text-sm font-bold text-gray-700">עריכת פריט</span>
+                  <button class="mr-auto text-gray-400 hover:text-gray-600">✕</button>
+                </div>
+                <div class="space-y-3">
+                  <div>
+                    <label class="block text-xs font-medium text-gray-500 mb-1">תווית עברית</label>
+                    <input class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm" value="שאלון המחקר" />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-500 mb-1">Label English</label>
+                    <input dir="ltr" class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm" value="Research Questionnaire" />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-medium text-gray-500 mb-1">טקסט עזרה</label>
+                    <textarea class="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-xs resize-none" rows="3">יש לוודא שהשאלון כולל פתיח, שאלות רגישות וזכויות מרואיין</textarea>
+                  </div>
+                  <div class="space-y-2 pt-1">
+                    <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" checked class="rounded" /> חובה</label>
+                    <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" checked class="rounded" /> דרוש פרטים אם שלילי</label>
+                  </div>
+                  <button class="w-full bg-blue-900 text-white text-sm py-2 rounded-lg font-medium mt-2">שמור</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Mobile B admin -->
+        <div>
+          <p class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wide">📱 Mobile</p>
+          <div class="mobile-frame mx-auto">
+            <div style="background:linear-gradient(135deg,#1e3a5f,#2563eb);" class="px-4 py-4 text-white">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="text-sm">☰</span>
+                <span class="text-xs bg-amber-400 text-amber-900 px-2 py-0.5 rounded-full font-medium">טיוטה</span>
+              </div>
+              <div class="text-base font-bold">Standard 2026</div>
+              <div class="text-blue-200 text-xs">3 סקציות · 30 פריטים</div>
+            </div>
+            <div class="p-3 space-y-2">
+              <div class="border border-blue-200 rounded-xl overflow-hidden">
+                <div class="bg-blue-50 px-3 py-2.5 flex items-center gap-2">
+                  <span class="w-6 h-6 rounded bg-blue-900 text-white text-xs flex items-center justify-center font-bold">א</span>
+                  <span class="text-sm font-medium flex-1">אישור מסמכים</span>
+                  <span class="text-xs text-gray-400">23 ▲</span>
+                </div>
+                <div class="divide-y">
+                  <div class="flex items-center gap-2 px-3 py-2">
+                    <span class="text-xs flex-1 text-gray-600">שם המחקר</span>
+                    <button class="text-xs text-blue-700">✏️</button>
+                  </div>
+                  <div class="flex items-center gap-2 px-3 py-2 bg-blue-50">
+                    <span class="text-xs flex-1 text-blue-700 font-medium">שאלון המחקר ✏️</span>
+                  </div>
+                </div>
+              </div>
+              <div class="border border-amber-200 rounded-xl">
+                <div class="bg-amber-50 px-3 py-2.5 flex items-center gap-2">
+                  <span class="w-6 h-6 rounded bg-amber-600 text-white text-xs flex items-center justify-center font-bold">ב</span>
+                  <span class="text-sm font-medium flex-1">בעיות אתיות</span>
+                  <span class="text-xs text-gray-400">5 ▼</span>
+                </div>
+              </div>
+              <button class="w-full bg-blue-900 text-white py-2.5 rounded-xl text-sm font-bold mt-2">📢 פרסם תבנית</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /admin-b -->
+
+    <!-- ─── OPTION C: Admin — Compact & Efficient ─── -->
+    <div id="admin-c" class="option-content">
+      <div class="mb-4">
+        <h2 class="text-lg font-bold text-gray-800">C — ניהול תבנית: קומפקטי ויעיל</h2>
+        <p class="text-sm text-gray-500">ממשק 3-חלונות: עץ פריטים + טבלת פריטים + עורך inline. לכוח-משתמש.</p>
+      </div>
+      <div class="grid grid-cols-3 gap-6">
+        <div class="col-span-2">
+          <p class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wide">💻 Desktop</p>
+          <div class="rounded-xl overflow-hidden border border-gray-200 shadow-lg bg-white" style="min-height:680px;">
+            <div class="bg-gray-900 text-white px-4 py-2 flex items-center gap-4 text-sm">
+              <span class="font-mono text-green-400">✓</span>
+              <span class="font-medium">Standard 2026</span>
+              <span class="text-gray-400 text-xs">v1 · DRAFT</span>
+              <div class="mr-auto flex gap-2">
+                <button class="text-xs bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded">שכפל</button>
+                <button class="text-xs bg-green-600 hover:bg-green-500 px-3 py-1 rounded font-medium">פרסם</button>
+              </div>
+            </div>
+            <div class="flex" style="height:640px;">
+              <!-- Panel 1: Section tree (narrow) -->
+              <div class="w-40 bg-gray-50 border-l overflow-y-auto">
+                <div class="px-2 py-2 border-b">
+                  <p class="text-xs font-bold text-gray-400 uppercase">סקציות</p>
+                </div>
+                <div>
+                  <div class="px-2 py-2 bg-blue-50 border-r-2 border-blue-700 cursor-pointer">
+                    <div class="flex items-center gap-1">
+                      <span class="w-4 h-4 rounded bg-blue-900 text-white text-xs flex items-center justify-center">א</span>
+                      <span class="text-xs font-medium text-blue-800 truncate">אישור מסמכים</span>
+                    </div>
+                    <span class="text-xs text-gray-400 mr-5">23 פריטים</span>
+                  </div>
+                  <div class="px-2 py-2 hover:bg-gray-100 cursor-pointer">
+                    <div class="flex items-center gap-1">
+                      <span class="w-4 h-4 rounded bg-amber-600 text-white text-xs flex items-center justify-center">ב</span>
+                      <span class="text-xs font-medium text-gray-600 truncate">בעיות אתיות</span>
+                    </div>
+                    <span class="text-xs text-gray-400 mr-5">5 פריטים</span>
+                  </div>
+                  <div class="px-2 py-2 hover:bg-gray-100 cursor-pointer">
+                    <div class="flex items-center gap-1">
+                      <span class="w-4 h-4 rounded bg-purple-700 text-white text-xs flex items-center justify-center">ג</span>
+                      <span class="text-xs font-medium text-gray-600 truncate">סיכום</span>
+                    </div>
+                    <span class="text-xs text-gray-400 mr-5">2 פריטים</span>
+                  </div>
+                  <div class="px-2 py-2 hover:bg-gray-100 cursor-pointer text-xs text-blue-600">+ סקציה</div>
+                </div>
+              </div>
+
+              <!-- Panel 2: Item table -->
+              <div class="flex-1 overflow-y-auto">
+                <div class="sticky top-0 bg-white border-b px-3 py-2 flex items-center gap-3">
+                  <span class="text-sm font-bold text-gray-700">אישור מסמכים והפרטים</span>
+                  <span class="badge-blue text-xs">ADEQUACY</span>
+                  <button class="mr-auto text-xs bg-blue-900 text-white px-3 py-1 rounded">+ פריט</button>
+                </div>
+                <table class="w-full text-xs">
+                  <thead class="bg-gray-50">
+                    <tr>
+                      <th class="text-right px-3 py-2 text-gray-400 font-medium w-6"></th>
+                      <th class="text-right px-3 py-2 text-gray-400 font-medium">#</th>
+                      <th class="text-right px-3 py-2 text-gray-400 font-medium">תווית עברית</th>
+                      <th class="text-right px-3 py-2 text-gray-400 font-medium">חובה</th>
+                      <th class="text-right px-3 py-2 text-gray-400 font-medium">פרטים</th>
+                      <th class="text-right px-3 py-2 text-gray-400 font-medium">פעולות</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y">
+                    <tr class="hover:bg-gray-50">
+                      <td class="px-3 py-2 text-gray-300">⠿</td>
+                      <td class="px-3 py-2 text-gray-400">1</td>
+                      <td class="px-3 py-2 text-gray-700">שם המחקר בעברית ובאנגלית</td>
+                      <td class="px-3 py-2"><span class="badge-green">כן</span></td>
+                      <td class="px-3 py-2"><span class="badge-blue">כן</span></td>
+                      <td class="px-3 py-2"><button class="text-blue-600 hover:underline">✏️</button></td>
+                    </tr>
+                    <tr class="bg-blue-50">
+                      <td class="px-3 py-2 text-gray-300">⠿</td>
+                      <td class="px-3 py-2 text-gray-400">2</td>
+                      <td class="px-3 py-2 text-blue-800 font-medium">שאלון המחקר ← נבחר</td>
+                      <td class="px-3 py-2"><span class="badge-green">כן</span></td>
+                      <td class="px-3 py-2"><span class="badge-blue">כן</span></td>
+                      <td class="px-3 py-2"><button class="text-blue-600 font-bold">✏️</button></td>
+                    </tr>
+                    <tr class="hover:bg-gray-50">
+                      <td class="px-3 py-2 text-gray-300">⠿</td>
+                      <td class="px-3 py-2 text-gray-400">3</td>
+                      <td class="px-3 py-2 text-gray-700">פרוטוקול המחקר</td>
+                      <td class="px-3 py-2"><span class="badge-green">כן</span></td>
+                      <td class="px-3 py-2"><span class="badge-blue">כן</span></td>
+                      <td class="px-3 py-2"><button class="text-blue-600 hover:underline">✏️</button></td>
+                    </tr>
+                    <tr class="hover:bg-gray-50">
+                      <td class="px-3 py-2 text-gray-300">⠿</td>
+                      <td class="px-3 py-2 text-gray-400">4</td>
+                      <td class="px-3 py-2 text-gray-700">נוסח טופס הסכמה מדעת</td>
+                      <td class="px-3 py-2"><span class="badge-green">כן</span></td>
+                      <td class="px-3 py-2"><span class="badge-blue">כן</span></td>
+                      <td class="px-3 py-2"><button class="text-blue-600 hover:underline">✏️</button></td>
+                    </tr>
+                    <tr class="hover:bg-gray-50">
+                      <td class="px-3 py-2 text-gray-300">⠿</td>
+                      <td class="px-3 py-2 text-gray-400">5</td>
+                      <td class="px-3 py-2 text-gray-700">משך השתתפות</td>
+                      <td class="px-3 py-2"><span class="badge-green">כן</span></td>
+                      <td class="px-3 py-2"><span class="badge-gray">לא</span></td>
+                      <td class="px-3 py-2"><button class="text-blue-600 hover:underline">✏️</button></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Panel 3: Inline editor -->
+              <div class="w-64 border-r bg-white p-3 overflow-y-auto">
+                <div class="text-xs font-bold text-gray-500 uppercase mb-3 pb-2 border-b">עורך פריט #2</div>
+                <div class="space-y-2.5">
+                  <div>
+                    <label class="text-xs text-gray-400">עברית</label>
+                    <input class="w-full border border-gray-200 rounded px-2 py-1.5 text-xs mt-0.5" value="שאלון המחקר" />
+                  </div>
+                  <div>
+                    <label class="text-xs text-gray-400">English</label>
+                    <input dir="ltr" class="w-full border border-gray-200 rounded px-2 py-1.5 text-xs mt-0.5" value="Research Questionnaire" />
+                  </div>
+                  <div>
+                    <label class="text-xs text-gray-400">עזרה</label>
+                    <textarea class="w-full border border-gray-200 rounded px-2 py-1.5 text-xs resize-none mt-0.5" rows="2">יש לוודא פתיח, שאלות רגישות, זכויות מרואיין</textarea>
+                  </div>
+                  <div class="flex gap-3 text-xs">
+                    <label class="flex items-center gap-1"><input type="checkbox" checked /> חובה</label>
+                    <label class="flex items-center gap-1"><input type="checkbox" checked /> פרטים</label>
+                  </div>
+                  <div class="flex gap-1 pt-1">
+                    <button class="flex-1 bg-blue-900 text-white text-xs py-1.5 rounded">שמור</button>
+                    <button class="px-2 border border-gray-200 text-gray-400 text-xs py-1.5 rounded hover:text-red-500">🗑</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Mobile C admin -->
+        <div>
+          <p class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wide">📱 Mobile</p>
+          <div class="mobile-frame mx-auto">
+            <div class="bg-gray-900 text-white px-4 py-2.5 flex items-center gap-3">
+              <span class="font-mono text-green-400 text-sm">✓</span>
+              <span class="text-sm font-medium">Standard 2026</span>
+              <span class="badge-amber mr-auto">טיוטה</span>
+            </div>
+            <!-- horizontal section tabs -->
+            <div class="flex overflow-x-auto border-b bg-gray-50 text-xs">
+              <button class="px-3 py-2 whitespace-nowrap text-blue-900 border-b-2 border-blue-900 font-medium">א · מסמכים (23)</button>
+              <button class="px-3 py-2 whitespace-nowrap text-gray-400">ב · אתיקה (5)</button>
+              <button class="px-3 py-2 whitespace-nowrap text-gray-400">ג · סיכום (2)</button>
+            </div>
+            <div class="p-2">
+              <div class="flex justify-between items-center mb-2">
+                <span class="text-xs text-gray-500">סוג: מספק/לא מספק</span>
+                <button class="text-xs text-blue-700 font-medium">+ פריט</button>
+              </div>
+              <div class="space-y-1">
+                <div class="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2 border border-gray-100">
+                  <span class="text-gray-300 text-sm">⠿</span>
+                  <span class="text-xs flex-1 text-gray-700">שם המחקר בעברית ובאנגלית</span>
+                  <button class="text-xs text-blue-600">✏️</button>
+                </div>
+                <div class="flex items-center gap-2 bg-blue-50 rounded-lg px-3 py-2 border border-blue-200">
+                  <span class="text-gray-300 text-sm">⠿</span>
+                  <span class="text-xs flex-1 text-blue-700 font-medium">שאלון המחקר ✏️</span>
+                </div>
+                <div class="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2 border border-gray-100">
+                  <span class="text-gray-300 text-sm">⠿</span>
+                  <span class="text-xs flex-1 text-gray-700">פרוטוקול המחקר</span>
+                  <button class="text-xs text-blue-600">✏️</button>
+                </div>
+              </div>
+            </div>
+            <div class="px-3 pb-3">
+              <button class="w-full bg-green-600 text-white py-2 rounded-lg text-sm font-medium">פרסם תבנית ▶</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /admin-c -->
+
+  </div><!-- /surface-admin -->
+
+
+  <!-- ═══════════════════════════════════════════════════════
+       SURFACE: REVIEWER CHECKLIST RENDERER
+       ═══════════════════════════════════════════════════════ -->
+  <div id="surface-reviewer" class="surface-content p-6">
+
+    <!-- ─── OPTION A: Reviewer — Clean & Minimal ─── -->
+    <div id="reviewer-a" class="option-content active">
+      <div class="mb-4">
+        <h2 class="text-lg font-bold text-gray-800">A — צ'קליסט סוקר: נקי ומינימלי</h2>
+        <p class="text-sm text-gray-500">לבן + רחב. סקציות כ-card נפרד. כפתורי בחירה גדולים. progress bar בראש. מינימום עומס ויזואלי.</p>
+      </div>
+      <div class="grid grid-cols-3 gap-6">
+        <div class="col-span-2">
+          <p class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wide">💻 Desktop</p>
+          <div class="rounded-xl overflow-hidden border border-gray-200 shadow-lg bg-white" style="min-height:720px;">
+            <div class="bg-white border-b px-6 py-3 flex items-center gap-4">
+              <div class="w-8 h-8 rounded-lg bg-blue-900 flex items-center justify-center text-white font-bold text-sm">E</div>
+              <span class="font-bold text-gray-800 text-sm">EthicFlow</span>
+              <span class="text-gray-300">|</span>
+              <span class="text-sm text-gray-500">הבקשות שלי</span>
+            </div>
+            <div class="flex" style="height:680px;">
+              <div class="sidebar">
+                <div class="sidebar-item active">📋 הבקשות שלי</div>
+                <div class="sidebar-item">🔔 התראות</div>
+              </div>
+              <div class="flex-1 overflow-y-auto">
+                <!-- Sticky progress header -->
+                <div class="sticky-progress px-6 py-4">
+                  <div class="flex items-end justify-between mb-2">
+                    <div>
+                      <h1 class="text-lg font-bold text-gray-800">ETH-2026-0042 — מחקר השפעת הוראה היברידית</h1>
+                      <p class="text-sm text-gray-400">פרופ' דניאל לוי · הגישה ב-15.04.2026</p>
+                    </div>
+                    <div class="text-left">
+                      <span class="text-2xl font-bold text-blue-900">18</span><span class="text-sm text-gray-400">/30 נענו</span>
+                    </div>
+                  </div>
+                  <div class="progress-bar">
+                    <div class="progress-fill" style="width:60%"></div>
+                  </div>
+                </div>
+
+                <div class="px-6 py-4 space-y-6">
+                  <!-- Section A card -->
+                  <div class="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-gray-50 border-b px-5 py-3 flex items-center gap-3">
+                      <span class="w-7 h-7 rounded-lg bg-blue-900 text-white text-sm flex items-center justify-center font-bold">א</span>
+                      <span class="font-semibold text-gray-800">אישור המסמכים והפרטים שצורפו</span>
+                      <span class="badge-blue text-xs mr-1">מספק / לא מספק</span>
+                      <span class="mr-auto text-sm text-gray-400">15/23 נענו</span>
+                    </div>
+
+                    <div class="divide-y">
+                      <!-- Row: answered adequate -->
+                      <div class="flex items-center gap-4 px-5 py-3">
+                        <span class="text-sm text-gray-700 flex-1">שם המחקר בעברית ובאנגלית</span>
+                        <div class="flex gap-2">
+                          <button class="adequate-btn selected-adequate text-sm">✓ מספק</button>
+                          <button class="inadequate-btn text-sm">לא מספק</button>
+                        </div>
+                      </div>
+                      <!-- Row: answered inadequate + details -->
+                      <div class="px-5 py-3">
+                        <div class="flex items-center gap-4 mb-2">
+                          <span class="text-sm text-gray-700 flex-1">שאלון המחקר</span>
+                          <div class="flex gap-2">
+                            <button class="adequate-btn text-sm">מספק</button>
+                            <button class="inadequate-btn selected-inadequate text-sm">✗ לא מספק</button>
+                          </div>
+                        </div>
+                        <textarea class="w-full border border-red-200 rounded-lg px-3 py-2 text-sm bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-300 resize-none" rows="2" placeholder="פרט את הבעיה (חובה)...">השאלון חסר פתיח מסודר וזכויות המרואיין אינן מפורטות</textarea>
+                      </div>
+                      <!-- Row: unanswered -->
+                      <div class="flex items-center gap-4 px-5 py-3 bg-yellow-50">
+                        <span class="text-sm text-gray-700 flex-1 flex items-center gap-1">
+                          נוסח טופס הסכמה מדעת
+                          <span class="text-xs text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded">חסר ⚠</span>
+                        </span>
+                        <div class="flex gap-2">
+                          <button class="adequate-btn text-sm">מספק</button>
+                          <button class="inadequate-btn text-sm">לא מספק</button>
+                        </div>
+                      </div>
+                      <!-- Row: unanswered -->
+                      <div class="flex items-center gap-4 px-5 py-3">
+                        <span class="text-sm text-gray-700 flex-1">
+                          משך ההשתתפות
+                          <span class="text-xs text-blue-400 mr-1 cursor-pointer" title="יש לציין את משך ההשתתפות הצפוי">ℹ</span>
+                        </span>
+                        <div class="flex gap-2">
+                          <button class="adequate-btn text-sm">מספק</button>
+                          <button class="inadequate-btn text-sm">לא מספק</button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Section B card -->
+                  <div class="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+                    <div class="bg-amber-50 border-b border-amber-100 px-5 py-3 flex items-center gap-3">
+                      <span class="w-7 h-7 rounded-lg bg-amber-600 text-white text-sm flex items-center justify-center font-bold">ב</span>
+                      <span class="font-semibold text-gray-800">בעיות אתיות פוטנציאליות</span>
+                      <span class="badge-red text-xs mr-1">כן = בעיה אתית</span>
+                      <span class="mr-auto text-sm text-gray-400">3/5 נענו</span>
+                    </div>
+                    <div class="divide-y">
+                      <div class="flex items-center gap-4 px-5 py-3">
+                        <span class="text-sm text-gray-700 flex-1">יחסי מרות או ניגוד אינטרסים</span>
+                        <div class="flex gap-2">
+                          <button class="inadequate-btn selected-inadequate text-sm" style="border-color:#d97706;background:#fef3c7;color:#92400e;">⚠ כן</button>
+                          <button class="adequate-btn selected-adequate text-sm">✓ לא</button>
+                        </div>
+                      </div>
+                      <div class="px-5 py-3">
+                        <div class="flex items-center gap-4 mb-2">
+                          <span class="text-sm text-gray-700 flex-1">מימון המחקר ואינטרסים של גורם ממן</span>
+                          <div class="flex gap-2">
+                            <button class="inadequate-btn text-sm" style="border-color:#d97706;">כן</button>
+                            <button class="adequate-btn text-sm">לא</button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Submit section (locked) -->
+                  <div class="bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl p-5 text-center">
+                    <span class="text-4xl mb-2 block">🔒</span>
+                    <p class="text-sm font-medium text-gray-500">יש לענות על כל הפריטים החובה לפני מילוי הסיכום</p>
+                    <p class="text-xs text-gray-400 mt-1">12 פריטים עדיין חסרים</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right summary panel -->
+              <div class="w-56 border-r bg-gray-50 p-4">
+                <p class="text-xs font-bold text-gray-500 uppercase mb-3">סיכום</p>
+                <div class="space-y-2 text-xs">
+                  <div class="flex justify-between"><span class="text-gray-500">נענו</span><span class="font-bold text-gray-800">18/30</span></div>
+                  <div class="flex justify-between"><span class="text-green-600">מספק</span><span class="font-bold text-green-700">14</span></div>
+                  <div class="flex justify-between"><span class="text-red-600">לא מספק</span><span class="font-bold text-red-700">4</span></div>
+                  <div class="flex justify-between"><span class="text-amber-600">בעיות אתיות</span><span class="font-bold text-amber-700">0</span></div>
+                </div>
+                <div class="mt-4 pt-3 border-t">
+                  <p class="text-xs text-gray-400 mb-2">שמירה אוטומטית</p>
+                  <span class="text-xs text-green-600">✓ נשמר לפני 30 שניות</span>
+                </div>
+                <div class="mt-4">
+                  <button class="w-full bg-gray-200 text-gray-400 py-2 rounded-lg text-sm font-medium cursor-not-allowed">הגש סקירה</button>
+                  <p class="text-xs text-gray-400 text-center mt-1">זמין לאחר השלמה</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Mobile A reviewer -->
+        <div>
+          <p class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wide">📱 Mobile (375px)</p>
+          <div class="mobile-frame mx-auto">
+            <div class="bg-white border-b px-4 py-3">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="text-sm">←</span>
+                <span class="text-sm font-bold text-gray-800 flex-1 truncate">ETH-2026-0042</span>
+                <span class="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">נשמר ✓</span>
+              </div>
+              <div class="progress-bar"><div class="progress-fill" style="width:60%"></div></div>
+              <div class="flex justify-between mt-1">
+                <span class="text-xs text-gray-400">18/30 נענו</span>
+                <span class="text-xs text-blue-600">60%</span>
+              </div>
+            </div>
+            <div class="overflow-y-auto" style="max-height:480px;">
+              <div class="p-3">
+                <div class="bg-gray-50 rounded-lg px-3 py-2 mb-3 flex items-center gap-2">
+                  <span class="w-5 h-5 rounded bg-blue-900 text-white text-xs flex items-center justify-center">א</span>
+                  <span class="text-sm font-semibold text-gray-700">אישור מסמכים</span>
+                </div>
+                <!-- Mobile card: item -->
+                <div class="bg-white border border-gray-200 rounded-xl p-3 mb-2 shadow-sm">
+                  <p class="text-sm font-medium text-gray-700 mb-3">שם המחקר בעברית ובאנגלית</p>
+                  <div class="flex gap-2">
+                    <button class="flex-1 adequate-btn selected-adequate text-sm py-2.5">✓ מספק</button>
+                    <button class="flex-1 inadequate-btn text-sm py-2.5">לא מספק</button>
+                  </div>
+                </div>
+                <div class="bg-white border border-red-200 rounded-xl p-3 mb-2 shadow-sm">
+                  <p class="text-sm font-medium text-gray-700 mb-3">שאלון המחקר</p>
+                  <div class="flex gap-2 mb-2">
+                    <button class="flex-1 adequate-btn text-sm py-2.5">מספק</button>
+                    <button class="flex-1 inadequate-btn selected-inadequate text-sm py-2.5">✗ לא מספק</button>
+                  </div>
+                  <textarea class="w-full border border-red-200 rounded-lg px-3 py-2 text-xs bg-red-50 resize-none" rows="2" placeholder="פרט...">חסר פתיח וזכויות מרואיין</textarea>
+                </div>
+                <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-3 mb-2 shadow-sm">
+                  <p class="text-sm font-medium text-gray-700 mb-1">נוסח טופס הסכמה <span class="text-xs text-amber-600">⚠ חסר</span></p>
+                  <div class="flex gap-2">
+                    <button class="flex-1 adequate-btn text-sm py-2.5">מספק</button>
+                    <button class="flex-1 inadequate-btn text-sm py-2.5">לא מספק</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="border-t p-3">
+              <button class="w-full bg-gray-200 text-gray-400 py-2.5 rounded-xl text-sm font-medium">🔒 הגש סקירה (12 חסרים)</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /reviewer-a -->
+
+    <!-- ─── OPTION B: Reviewer — Bold & Structured ─── -->
+    <div id="reviewer-b" class="option-content">
+      <div class="mb-4">
+        <h2 class="text-lg font-bold text-gray-800">B — צ'קליסט סוקר: מובנה ומודגש</h2>
+        <p class="text-sm text-gray-500">header navy עם metadata הגשה. טבלה ברורה עם עמודות מסודרות. sidebar עם המלצה. כפתורי radio מובנים.</p>
+      </div>
+      <div class="grid grid-cols-3 gap-6">
+        <div class="col-span-2">
+          <p class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wide">💻 Desktop</p>
+          <div class="rounded-xl overflow-hidden border border-gray-200 shadow-lg bg-white" style="min-height:720px;">
+            <!-- Navy header -->
+            <div style="background:linear-gradient(135deg,#1e3a5f,#1e40af);" class="px-6 py-4 text-white">
+              <div class="flex items-start justify-between">
+                <div>
+                  <div class="flex items-center gap-2 mb-1">
+                    <span class="text-xs bg-white/20 px-2 py-0.5 rounded-full">צ'קליסט סוקר</span>
+                    <span class="text-xs bg-amber-400 text-amber-900 px-2 py-0.5 rounded-full font-medium">טיוטה</span>
+                  </div>
+                  <h1 class="text-lg font-bold">ETH-2026-0042</h1>
+                  <p class="text-blue-200 text-sm">השפעת הוראה היברידית על הישגים אקדמיים · פרופ' דניאל לוי</p>
+                </div>
+                <div class="text-left">
+                  <div class="text-3xl font-bold">60%</div>
+                  <div class="text-blue-200 text-xs">18/30 נענו</div>
+                  <div class="progress-bar mt-1" style="width:100px;">
+                    <div class="progress-fill" style="width:60%;background:rgba(255,255,255,0.7)"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex" style="height:590px;">
+              <!-- Main checklist -->
+              <div class="flex-1 overflow-y-auto">
+                <!-- Section A table -->
+                <div class="border-b">
+                  <div class="bg-blue-50 px-5 py-2.5 flex items-center gap-3 sticky top-0 z-10">
+                    <span class="w-6 h-6 rounded bg-blue-900 text-white text-xs flex items-center justify-center font-bold">א</span>
+                    <span class="font-semibold text-gray-800 text-sm">אישור המסמכים והפרטים שצורפו</span>
+                    <span class="badge-blue">ADEQUACY</span>
+                    <span class="mr-auto text-xs text-gray-400">15/23</span>
+                  </div>
+                  <table class="w-full">
+                    <thead>
+                      <tr class="text-xs text-gray-400 bg-gray-50 border-b">
+                        <th class="text-right px-5 py-2 font-medium w-1/2">פריט</th>
+                        <th class="text-center px-3 py-2 font-medium">מספק</th>
+                        <th class="text-center px-3 py-2 font-medium">לא מספק</th>
+                        <th class="text-right px-5 py-2 font-medium">פרטים (אם שלילי)</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y">
+                      <tr class="hover:bg-gray-50">
+                        <td class="px-5 py-3 text-sm text-gray-700">שם המחקר בעברית ובאנגלית</td>
+                        <td class="text-center px-3 py-3"><input type="radio" name="r1" checked class="radio-adequate w-5 h-5" /></td>
+                        <td class="text-center px-3 py-3"><input type="radio" name="r1" class="radio-inadequate w-5 h-5" /></td>
+                        <td class="px-5 py-3"><span class="text-xs text-gray-300">—</span></td>
+                      </tr>
+                      <tr class="bg-red-50 hover:bg-red-50">
+                        <td class="px-5 py-3 text-sm text-gray-700">שאלון המחקר</td>
+                        <td class="text-center px-3 py-3"><input type="radio" name="r2" class="radio-adequate w-5 h-5" /></td>
+                        <td class="text-center px-3 py-3"><input type="radio" name="r2" checked class="radio-inadequate w-5 h-5" /></td>
+                        <td class="px-5 py-3"><input class="w-full border border-red-200 rounded px-2 py-1 text-xs bg-white" value="חסר פתיח וזכויות מרואיין" /></td>
+                      </tr>
+                      <tr class="hover:bg-gray-50">
+                        <td class="px-5 py-3 text-sm text-gray-700 text-amber-700 flex items-center gap-1">
+                          נוסח טופס הסכמה מדעת <span class="text-xs bg-amber-100 text-amber-600 px-1 rounded">⚠</span>
+                        </td>
+                        <td class="text-center px-3 py-3"><input type="radio" name="r3" class="radio-adequate w-5 h-5" /></td>
+                        <td class="text-center px-3 py-3"><input type="radio" name="r3" class="radio-inadequate w-5 h-5" /></td>
+                        <td class="px-5 py-3"><span class="text-xs text-gray-300">—</span></td>
+                      </tr>
+                      <tr class="hover:bg-gray-50">
+                        <td class="px-5 py-3 text-sm text-gray-700">משך ההשתתפות</td>
+                        <td class="text-center px-3 py-3"><input type="radio" name="r4" checked class="radio-adequate w-5 h-5" /></td>
+                        <td class="text-center px-3 py-3"><input type="radio" name="r4" class="radio-inadequate w-5 h-5" /></td>
+                        <td class="px-5 py-3"><span class="text-xs text-gray-300">—</span></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <!-- Section B table -->
+                <div>
+                  <div class="bg-amber-50 px-5 py-2.5 flex items-center gap-3 sticky top-0 z-10 border-b border-amber-100">
+                    <span class="w-6 h-6 rounded bg-amber-600 text-white text-xs flex items-center justify-center font-bold">ב</span>
+                    <span class="font-semibold text-gray-800 text-sm">בעיות אתיות פוטנציאליות</span>
+                    <span class="badge-red">כן = בעיה</span>
+                    <span class="mr-auto text-xs text-gray-400">3/5</span>
+                  </div>
+                  <table class="w-full">
+                    <thead>
+                      <tr class="text-xs text-gray-400 bg-gray-50 border-b">
+                        <th class="text-right px-5 py-2 font-medium w-1/2">בעיה</th>
+                        <th class="text-center px-3 py-2 font-medium text-red-500">כן (בעיה)</th>
+                        <th class="text-center px-3 py-2 font-medium text-green-600">לא</th>
+                        <th class="text-right px-5 py-2 font-medium">פרטים</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y">
+                      <tr class="hover:bg-gray-50">
+                        <td class="px-5 py-3 text-sm text-gray-700">יחסי מרות / ניגוד אינטרסים</td>
+                        <td class="text-center px-3 py-3"><input type="radio" name="e1" class="radio-problem w-5 h-5" /></td>
+                        <td class="text-center px-3 py-3"><input type="radio" name="e1" checked class="radio-yes w-5 h-5" /></td>
+                        <td class="px-5 py-3"><span class="text-xs text-gray-300">—</span></td>
+                      </tr>
+                      <tr class="bg-red-50 hover:bg-red-50">
+                        <td class="px-5 py-3 text-sm text-gray-700">מימון המחקר ואינטרסים</td>
+                        <td class="text-center px-3 py-3"><input type="radio" name="e2" checked class="radio-problem w-5 h-5" /></td>
+                        <td class="text-center px-3 py-3"><input type="radio" name="e2" class="radio-yes w-5 h-5" /></td>
+                        <td class="px-5 py-3"><input class="w-full border border-red-200 rounded px-2 py-1 text-xs bg-white" placeholder="פרט..." /></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Right panel: recommendation -->
+              <div class="w-64 border-r bg-gray-50 p-4 overflow-y-auto">
+                <p class="text-xs font-bold text-gray-500 uppercase mb-3">סיכום סוקר</p>
+                <div class="space-y-1.5 mb-4">
+                  <div class="flex justify-between text-xs"><span class="text-green-600 font-medium">✓ מספק</span><span class="font-bold">14</span></div>
+                  <div class="flex justify-between text-xs"><span class="text-red-600 font-medium">✗ לא מספק</span><span class="font-bold text-red-700">4</span></div>
+                  <div class="flex justify-between text-xs"><span class="text-amber-600 font-medium">⚠ בעיות אתיות</span><span class="font-bold text-amber-700">1</span></div>
+                  <div class="flex justify-between text-xs text-gray-400"><span>חסרים</span><span>12</span></div>
+                </div>
+
+                <div class="border-t pt-3 mb-4">
+                  <p class="text-xs font-bold text-gray-500 mb-2">המלצה (לאחר השלמה)</p>
+                  <select class="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs bg-white text-gray-400 cursor-not-allowed" disabled>
+                    <option>בחר המלצה...</option>
+                  </select>
+                </div>
+
+                <div class="border-t pt-3 mb-4">
+                  <p class="text-xs font-bold text-gray-500 mb-1">הערה כללית</p>
+                  <textarea class="w-full border border-gray-200 rounded-lg px-2 py-1.5 text-xs resize-none" rows="3" placeholder="הערות כלליות לוועדה..."></textarea>
+                </div>
+
+                <div class="text-xs text-green-600 mb-3">✓ נשמר לפני 30 שניות</div>
+                <button class="w-full bg-gray-200 text-gray-400 py-2 rounded-lg text-sm cursor-not-allowed">הגש סקירה</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Mobile B reviewer -->
+        <div>
+          <p class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wide">📱 Mobile</p>
+          <div class="mobile-frame mx-auto">
+            <div style="background:linear-gradient(135deg,#1e3a5f,#1e40af);" class="px-4 py-3 text-white">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-sm">← סקירה</span>
+                <span class="badge-amber text-xs">טיוטה</span>
+              </div>
+              <div class="text-base font-bold truncate">ETH-2026-0042</div>
+              <div class="flex items-center justify-between mt-2">
+                <div class="flex-1 progress-bar ml-3" style="height:4px;"><div style="height:4px;width:60%;background:rgba(255,255,255,0.7);border-radius:2px;"></div></div>
+                <span class="text-white text-xs whitespace-nowrap">18/30 · 60%</span>
+              </div>
+            </div>
+
+            <!-- Section tabs -->
+            <div class="flex border-b bg-gray-50 text-xs overflow-x-auto">
+              <button class="px-3 py-2 whitespace-nowrap text-blue-900 border-b-2 border-blue-900 font-medium">א · מסמכים</button>
+              <button class="px-3 py-2 whitespace-nowrap text-gray-400">ב · אתיקה</button>
+              <button class="px-3 py-2 whitespace-nowrap text-gray-400">ג · סיכום</button>
+            </div>
+            <div class="overflow-y-auto" style="max-height:400px;">
+              <!-- Mobile table rows as cards -->
+              <div class="p-3 space-y-2">
+                <div class="bg-white rounded-xl border border-gray-200 p-3 shadow-sm">
+                  <p class="text-xs font-medium text-gray-700 mb-2">שם המחקר בעברית ובאנגלית</p>
+                  <div class="flex gap-4 justify-center">
+                    <label class="flex items-center gap-1.5 text-sm cursor-pointer">
+                      <input type="radio" name="m1" checked class="radio-adequate w-4 h-4" />
+                      <span class="text-green-700 font-medium">מספק</span>
+                    </label>
+                    <label class="flex items-center gap-1.5 text-sm cursor-pointer">
+                      <input type="radio" name="m1" class="radio-inadequate w-4 h-4" />
+                      <span class="text-red-600">לא מספק</span>
+                    </label>
+                  </div>
+                </div>
+                <div class="bg-red-50 rounded-xl border border-red-200 p-3 shadow-sm">
+                  <p class="text-xs font-medium text-gray-700 mb-2">שאלון המחקר</p>
+                  <div class="flex gap-4 justify-center mb-2">
+                    <label class="flex items-center gap-1.5 text-sm cursor-pointer">
+                      <input type="radio" name="m2" class="radio-adequate w-4 h-4" />
+                      <span class="text-green-700">מספק</span>
+                    </label>
+                    <label class="flex items-center gap-1.5 text-sm cursor-pointer">
+                      <input type="radio" name="m2" checked class="radio-inadequate w-4 h-4" />
+                      <span class="text-red-600 font-medium">לא מספק</span>
+                    </label>
+                  </div>
+                  <textarea class="w-full border border-red-200 rounded-lg px-2 py-1.5 text-xs bg-white resize-none" rows="2">חסר פתיח וזכויות מרואיין</textarea>
+                </div>
+                <div class="bg-yellow-50 rounded-xl border border-yellow-200 p-3 shadow-sm">
+                  <p class="text-xs font-medium text-amber-700 mb-2">נוסח טופס הסכמה ⚠</p>
+                  <div class="flex gap-4 justify-center">
+                    <label class="flex items-center gap-1.5 text-sm cursor-pointer"><input type="radio" name="m3" class="radio-adequate w-4 h-4" /><span>מספק</span></label>
+                    <label class="flex items-center gap-1.5 text-sm cursor-pointer"><input type="radio" name="m3" class="radio-inadequate w-4 h-4" /><span class="text-red-600">לא מספק</span></label>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="border-t p-3">
+              <button class="w-full bg-gray-200 text-gray-400 py-2.5 rounded-xl text-sm">🔒 הגש (12 חסרים)</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /reviewer-b -->
+
+    <!-- ─── OPTION C: Reviewer — Compact & Efficient ─── -->
+    <div id="reviewer-c" class="option-content">
+      <div class="mb-4">
+        <h2 class="text-lg font-bold text-gray-800">C — צ'קליסט סוקר: קומפקטי ויעיל</h2>
+        <p class="text-sm text-gray-500">split-screen: מידע הגשה שמאל + צ'קליסט ימין. שורות דחוסות. Tab לניווט בין פריטים. מתאים לסוקר מנוסה.</p>
+      </div>
+      <div class="grid grid-cols-3 gap-6">
+        <div class="col-span-2">
+          <p class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wide">💻 Desktop</p>
+          <div class="rounded-xl overflow-hidden border border-gray-200 shadow-lg bg-white" style="min-height:720px;">
+            <div class="bg-gray-900 text-white px-4 py-2 flex items-center gap-4 text-sm">
+              <span class="font-mono text-blue-400">ETH-2026-0042</span>
+              <span class="text-gray-400">·</span>
+              <span class="text-gray-300 text-xs">השפעת הוראה היברידית</span>
+              <div class="mr-auto flex items-center gap-3">
+                <div class="flex items-center gap-1.5">
+                  <div class="progress-bar w-24" style="background:rgba(255,255,255,0.2);">
+                    <div class="progress-fill" style="width:60%;"></div>
+                  </div>
+                  <span class="text-xs text-gray-300">18/30</span>
+                </div>
+                <span class="text-xs text-green-400">✓ נשמר</span>
+                <button class="text-xs bg-gray-700 px-3 py-1 rounded hover:bg-gray-600">שמור</button>
+                <button class="text-xs bg-blue-600 px-3 py-1 rounded font-medium hover:bg-blue-500 opacity-50 cursor-not-allowed">הגש</button>
+              </div>
+            </div>
+
+            <div class="flex" style="height:680px;">
+              <!-- Left: submission info panel -->
+              <div class="w-56 bg-gray-50 border-l overflow-y-auto p-3">
+                <p class="text-xs font-bold text-gray-400 uppercase mb-2">מידע הגשה</p>
+                <div class="space-y-2 text-xs">
+                  <div><span class="text-gray-400">חוקר:</span><br/><span class="font-medium text-gray-700">פרופ' דניאל לוי</span></div>
+                  <div><span class="text-gray-400">מחלקה:</span><br/><span class="font-medium text-gray-700">חינוך</span></div>
+                  <div><span class="text-gray-400">הגישה:</span><br/><span class="font-medium text-gray-700">15.04.2026</span></div>
+                  <div><span class="text-gray-400">SLA:</span><br/><span class="font-medium text-green-600">✓ 8 ימים</span></div>
+                  <div><span class="text-gray-400">מסלול:</span><br/><span class="badge-blue">FULL</span></div>
+                </div>
+
+                <div class="border-t mt-3 pt-3">
+                  <p class="text-xs font-bold text-gray-400 uppercase mb-2">סקציות</p>
+                  <div class="space-y-1">
+                    <div class="flex justify-between text-xs cursor-pointer text-blue-700 font-medium bg-blue-50 rounded px-2 py-1">
+                      <span>א · מסמכים</span><span>15/23</span>
+                    </div>
+                    <div class="flex justify-between text-xs cursor-pointer text-gray-500 hover:text-gray-700 px-2 py-1">
+                      <span>ב · אתיקה</span><span>3/5</span>
+                    </div>
+                    <div class="flex justify-between text-xs cursor-pointer text-gray-400 hover:text-gray-700 px-2 py-1">
+                      <span>ג · סיכום</span><span>🔒</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="border-t mt-3 pt-3">
+                  <p class="text-xs font-bold text-gray-400 uppercase mb-2">המלצה</p>
+                  <select class="w-full border border-gray-200 rounded px-2 py-1.5 text-xs bg-white text-gray-400 cursor-not-allowed" disabled>
+                    <option>לאחר השלמה...</option>
+                  </select>
+                </div>
+
+                <div class="border-t mt-3 pt-3">
+                  <p class="text-xs font-bold text-gray-400 mb-1">הערה</p>
+                  <textarea class="w-full border border-gray-200 rounded px-2 py-1 text-xs resize-none" rows="3"></textarea>
+                </div>
+              </div>
+
+              <!-- Right: dense checklist table -->
+              <div class="flex-1 overflow-y-auto">
+                <!-- Section A -->
+                <div class="sticky top-0 bg-blue-900 text-white px-3 py-1.5 flex items-center gap-2 z-10">
+                  <span class="text-xs font-bold">א — אישור מסמכים</span>
+                  <span class="text-blue-300 text-xs">מספק / לא מספק</span>
+                  <span class="mr-auto text-xs text-blue-300">15/23</span>
+                </div>
+                <table class="w-full text-xs">
+                  <tbody class="divide-y divide-gray-100">
+                    <tr class="hover:bg-gray-50">
+                      <td class="px-3 py-2 text-gray-600 w-2/5">שם המחקר בעברית ובאנגלית</td>
+                      <td class="text-center px-2 py-2 w-14">
+                        <label class="flex items-center justify-center gap-1 cursor-pointer">
+                          <input type="radio" name="c1" checked class="radio-adequate" /><span class="text-green-600 font-medium">מספק</span>
+                        </label>
+                      </td>
+                      <td class="text-center px-2 py-2 w-18">
+                        <label class="flex items-center justify-center gap-1 cursor-pointer">
+                          <input type="radio" name="c1" class="radio-inadequate" /><span class="text-red-500">לא מספק</span>
+                        </label>
+                      </td>
+                      <td class="px-2 py-2 text-gray-300">—</td>
+                    </tr>
+                    <tr class="bg-red-50">
+                      <td class="px-3 py-2 text-gray-600">שאלון המחקר</td>
+                      <td class="text-center px-2 py-2"><label class="flex items-center justify-center gap-1 cursor-pointer"><input type="radio" name="c2" class="radio-adequate" /><span class="text-green-600">מספק</span></label></td>
+                      <td class="text-center px-2 py-2"><label class="flex items-center justify-center gap-1 cursor-pointer"><input type="radio" name="c2" checked class="radio-inadequate" /><span class="text-red-500 font-medium">לא מספק</span></label></td>
+                      <td class="px-2 py-2"><input class="w-full border border-red-200 rounded px-1.5 py-1 text-xs bg-white" value="חסר פתיח" /></td>
+                    </tr>
+                    <tr class="hover:bg-amber-50 bg-amber-50/50">
+                      <td class="px-3 py-2 text-amber-700">נוסח טופס הסכמה ⚠</td>
+                      <td class="text-center px-2 py-2"><label class="flex items-center justify-center gap-1 cursor-pointer"><input type="radio" name="c3" class="radio-adequate" /><span class="text-green-600">מספק</span></label></td>
+                      <td class="text-center px-2 py-2"><label class="flex items-center justify-center gap-1 cursor-pointer"><input type="radio" name="c3" class="radio-inadequate" /><span class="text-red-500">לא מספק</span></label></td>
+                      <td class="px-2 py-2 text-gray-300">—</td>
+                    </tr>
+                    <tr class="hover:bg-gray-50">
+                      <td class="px-3 py-2 text-gray-600">משך ההשתתפות</td>
+                      <td class="text-center px-2 py-2"><label class="flex items-center justify-center gap-1 cursor-pointer"><input type="radio" name="c4" checked class="radio-adequate" /><span class="text-green-600">מספק</span></label></td>
+                      <td class="text-center px-2 py-2"><label class="flex items-center justify-center gap-1 cursor-pointer"><input type="radio" name="c4" class="radio-inadequate" /><span class="text-red-500">לא מספק</span></label></td>
+                      <td class="px-2 py-2 text-gray-300">—</td>
+                    </tr>
+                    <tr class="hover:bg-gray-50">
+                      <td class="px-3 py-2 text-gray-600">אופציונליות שאלות רגישות</td>
+                      <td class="text-center px-2 py-2"><label class="flex items-center justify-center gap-1 cursor-pointer"><input type="radio" name="c5" class="radio-adequate" /><span class="text-green-600">מספק</span></label></td>
+                      <td class="text-center px-2 py-2"><label class="flex items-center justify-center gap-1 cursor-pointer"><input type="radio" name="c5" class="radio-inadequate" /><span class="text-red-500">לא מספק</span></label></td>
+                      <td class="px-2 py-2 text-gray-300">—</td>
+                    </tr>
+                    <tr class="hover:bg-gray-50">
+                      <td class="px-3 py-2 text-gray-600">אבטחת נתונים וקידוד מידע</td>
+                      <td class="text-center px-2 py-2"><label class="flex items-center justify-center gap-1 cursor-pointer"><input type="radio" name="c6" checked class="radio-adequate" /><span class="text-green-600">מספק</span></label></td>
+                      <td class="text-center px-2 py-2"><label class="flex items-center justify-center gap-1 cursor-pointer"><input type="radio" name="c6" class="radio-inadequate" /><span class="text-red-500">לא מספק</span></label></td>
+                      <td class="px-2 py-2 text-gray-300">—</td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <!-- Section B -->
+                <div class="sticky top-7 bg-amber-700 text-white px-3 py-1.5 flex items-center gap-2 z-10">
+                  <span class="text-xs font-bold">ב — בעיות אתיות</span>
+                  <span class="text-amber-200 text-xs">כן = בעיה</span>
+                  <span class="mr-auto text-xs text-amber-200">3/5</span>
+                </div>
+                <table class="w-full text-xs">
+                  <tbody class="divide-y divide-gray-100">
+                    <tr class="hover:bg-gray-50">
+                      <td class="px-3 py-2 text-gray-600">יחסי מרות / ניגוד אינטרסים</td>
+                      <td class="text-center px-2 py-2 w-14"><label class="flex items-center justify-center gap-1"><input type="radio" name="e1" class="radio-problem" /><span class="text-red-600">כן</span></label></td>
+                      <td class="text-center px-2 py-2 w-18"><label class="flex items-center justify-center gap-1"><input type="radio" name="e1" checked class="radio-yes" /><span class="text-green-600">לא</span></label></td>
+                      <td class="px-2 py-2 text-gray-300">—</td>
+                    </tr>
+                    <tr class="bg-red-50">
+                      <td class="px-3 py-2 text-gray-600">מימון המחקר</td>
+                      <td class="text-center px-2 py-2"><label class="flex items-center justify-center gap-1"><input type="radio" name="e2" checked class="radio-problem" /><span class="text-red-600 font-medium">כן ⚠</span></label></td>
+                      <td class="text-center px-2 py-2"><label class="flex items-center justify-center gap-1"><input type="radio" name="e2" class="radio-yes" /><span class="text-green-600">לא</span></label></td>
+                      <td class="px-2 py-2"><input class="w-full border border-red-200 rounded px-1.5 py-1 text-xs bg-white" placeholder="פרט..." /></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Mobile C reviewer -->
+        <div>
+          <p class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wide">📱 Mobile</p>
+          <div class="mobile-frame mx-auto">
+            <div class="bg-gray-900 px-4 py-2.5 text-white flex items-center gap-2">
+              <span class="font-mono text-blue-400 text-sm">ETH-2026-0042</span>
+              <div class="mr-auto flex items-center gap-2">
+                <div class="progress-bar w-16" style="background:rgba(255,255,255,0.2);"><div style="width:60%;height:4px;background:#60a5fa;border-radius:2px;"></div></div>
+                <span class="text-xs text-gray-300">60%</span>
+              </div>
+            </div>
+            <div class="flex border-b text-xs overflow-x-auto bg-gray-50">
+              <button class="px-3 py-2 whitespace-nowrap text-blue-900 border-b-2 border-blue-900 font-medium">א (15/23)</button>
+              <button class="px-3 py-2 whitespace-nowrap text-gray-400">ב (3/5)</button>
+              <button class="px-3 py-2 whitespace-nowrap text-gray-300">ג 🔒</button>
+            </div>
+            <div class="overflow-y-auto" style="max-height:410px;">
+              <table class="w-full text-xs">
+                <thead class="bg-blue-900 text-white">
+                  <tr>
+                    <th class="text-right px-3 py-1.5 font-medium">פריט</th>
+                    <th class="text-center px-2 py-1.5 font-medium">מספק</th>
+                    <th class="text-center px-2 py-1.5 font-medium">לא</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y">
+                  <tr class="hover:bg-gray-50">
+                    <td class="px-3 py-2 text-gray-600" style="max-width:130px;word-break:break-word;">שם המחקר</td>
+                    <td class="text-center px-2 py-2"><input type="radio" name="mc1" checked class="radio-adequate w-4 h-4" /></td>
+                    <td class="text-center px-2 py-2"><input type="radio" name="mc1" class="radio-inadequate w-4 h-4" /></td>
+                  </tr>
+                  <tr class="bg-red-50">
+                    <td class="px-3 py-2 text-gray-600">שאלון המחקר</td>
+                    <td class="text-center px-2 py-2"><input type="radio" name="mc2" class="radio-adequate w-4 h-4" /></td>
+                    <td class="text-center px-2 py-2"><input type="radio" name="mc2" checked class="radio-inadequate w-4 h-4" /></td>
+                  </tr>
+                  <tr class="bg-amber-50">
+                    <td class="px-3 py-2 text-amber-700">טופס הסכמה ⚠</td>
+                    <td class="text-center px-2 py-2"><input type="radio" name="mc3" class="radio-adequate w-4 h-4" /></td>
+                    <td class="text-center px-2 py-2"><input type="radio" name="mc3" class="radio-inadequate w-4 h-4" /></td>
+                  </tr>
+                  <tr class="hover:bg-gray-50">
+                    <td class="px-3 py-2 text-gray-600">משך ההשתתפות</td>
+                    <td class="text-center px-2 py-2"><input type="radio" name="mc4" checked class="radio-adequate w-4 h-4" /></td>
+                    <td class="text-center px-2 py-2"><input type="radio" name="mc4" class="radio-inadequate w-4 h-4" /></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="border-t p-2">
+              <button class="w-full bg-gray-700 text-gray-400 py-2 rounded-lg text-xs font-medium cursor-not-allowed">🔒 הגש (12 חסרים)</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /reviewer-c -->
+
+  </div><!-- /surface-reviewer -->
+
+  <script>
+    function showSurface(id, btn) {
+      document.querySelectorAll('.surface-content').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.surface-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('surface-' + id).classList.add('active');
+      btn.classList.add('active');
+    }
+
+    function showOption(id, btn) {
+      const activeSurface = document.querySelector('.surface-content.active').id.replace('surface-', '');
+      document.querySelectorAll('#surface-' + activeSurface + ' .option-content').forEach(o => o.classList.remove('active'));
+      document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(activeSurface + '-' + id).classList.add('active');
+      btn.classList.add('active');
+    }
+  </script>
+</body>
+</html>

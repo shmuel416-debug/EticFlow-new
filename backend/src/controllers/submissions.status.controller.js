@@ -13,6 +13,7 @@ import { setDueDates } from '../services/sla.service.js'
 import { can, getAllowedTransitions } from '../services/status.service.js'
 import { getRequestRole } from '../utils/roles.js'
 import { hasConflict } from '../services/coi.service.js'
+import { getOrCreateReview } from '../services/reviewerChecklist.service.js'
 
 /**
  * Fetches a submission or throws 404.
@@ -99,6 +100,10 @@ export async function assignReviewer(req, res, next) {
         reviewer: { select: { id: true, email: true } },
       },
     })
+
+    // Checklist creation is best-effort: assignment must not be blocked
+    // when no active checklist template exists for the submission track.
+    getOrCreateReview(updated.id, reviewer.id).catch(() => {})
 
     setDueDates(sub.id, 'ASSIGNED').catch(() => {})
     notifyStatusChange(updated, 'ASSIGNED').catch(() => {})

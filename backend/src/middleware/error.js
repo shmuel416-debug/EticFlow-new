@@ -1,4 +1,10 @@
 /**
+ * Backward-compatible AppError export.
+ * Keeps legacy imports working while main source uses utils/errors.js.
+ */
+
+export { AppError } from '../utils/errors.js'
+/**
  * EthicFlow — Global Error Handler Middleware
  * Must be registered LAST in Express (after all routes).
  * Normalizes all errors into { error, code, details? } format.

@@ -58,6 +58,9 @@ export async function getStats(req, res, next) {
       totalApproved,
       totalDecided,
       avgProcessingRaw,
+      checklistByStatus,
+      checklistByRecommendation,
+      checklistTurnaroundRows,
     ] = await Promise.all([
       // Count per status
       prisma.submission.groupBy({
@@ -94,6 +97,26 @@ export async function getStats(req, res, next) {
         select: { createdAt: true, updatedAt: true },
         take:   200,
       }),
+
+      prisma.reviewerChecklistReview.groupBy({
+        by: ['status'],
+        _count: { id: true },
+      }),
+
+      prisma.reviewerChecklistReview.groupBy({
+        by: ['recommendation'],
+        where: { status: 'SUBMITTED' },
+        _count: { id: true },
+      }),
+
+      prisma.reviewerChecklistReview.findMany({
+        where: {
+          status: 'SUBMITTED',
+          submittedAt: { not: null },
+        },
+        select: { createdAt: true, submittedAt: true },
+        take: 300,
+      }),
     ])
 
     // Build monthly trend buckets
@@ -119,6 +142,30 @@ export async function getStats(req, res, next) {
       avgDays = Math.round(total / avgProcessingRaw.length)
     }
 
+    const checklistStatusMap = Object.fromEntries(
+      checklistByStatus.map((row) => [row.status, row._count.id])
+    )
+    const checklistRecommendationMap = Object.fromEntries(
+      checklistByRecommendation
+        .filter((row) => row.recommendation)
+        .map((row) => [row.recommendation, row._count.id])
+    )
+    const checklistSubmittedCount = checklistStatusMap.SUBMITTED ?? 0
+    const checklistDraftCount = checklistStatusMap.DRAFT ?? 0
+    const checklistTotal = checklistSubmittedCount + checklistDraftCount
+    const checklistCompletionRate = checklistTotal > 0
+      ? Math.round((checklistSubmittedCount / checklistTotal) * 100)
+      : 0
+
+    let checklistAvgTurnaroundDays = 0
+    if (checklistTurnaroundRows.length > 0) {
+      const totalChecklistTime = checklistTurnaroundRows.reduce((sum, row) => {
+        const diff = new Date(row.submittedAt) - new Date(row.createdAt)
+        return sum + diff / (1000 * 60 * 60 * 24)
+      }, 0)
+      checklistAvgTurnaroundDays = Math.round((totalChecklistTime / checklistTurnaroundRows.length) * 10) / 10
+    }
+
     res.json({
       data: {
         byStatus:     byStatus.map(r => ({ status: r.status, count: r._count.id })),
@@ -128,6 +175,13 @@ export async function getStats(req, res, next) {
         avgProcessingDays: avgDays,
         totalApproved,
         totalDecided,
+        checklist: {
+          submitted: checklistSubmittedCount,
+          draft: checklistDraftCount,
+          completionRate: checklistCompletionRate,
+          avgTurnaroundDays: checklistAvgTurnaroundDays,
+          byRecommendation: checklistRecommendationMap,
+        },
       },
     })
   } catch (err) {

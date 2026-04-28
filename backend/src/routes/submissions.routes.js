@@ -18,6 +18,7 @@ import * as controller from '../controllers/submissions.controller.js'
 
 import * as statusController from '../controllers/submissions.status.controller.js'
 import { generateApprovalLetter } from '../services/pdf.service.js'
+import * as checklistCtrl from '../controllers/reviewerChecklist.controller.js'
 import { resolvePath } from '../services/storage.service.js'
 import { AppError } from '../utils/errors.js'
 import { getRequestRole } from '../utils/roles.js'
@@ -268,5 +269,10 @@ router.post(
     }
   }
 )
+
+// ─── Reviewer Checklist ───────────────────────────────────────────────────────
+router.get('/:id/checklist', authenticate, authorize('REVIEWER', 'CHAIRMAN'), checklistCtrl.getChecklist)
+router.put('/:id/checklist', authenticate, authorize('REVIEWER', 'CHAIRMAN'), checklistCtrl.saveDraft)
+router.post('/:id/checklist/submit', authenticate, authorize('REVIEWER', 'CHAIRMAN'), checklistCtrl.submitReview)
 
 export default router

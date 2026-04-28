@@ -63,8 +63,19 @@ function SummarySidebar({ fields, values, errors, formConfig }) {
 
   // Load template metadata on mount
   useEffect(() => {
+    let active = true
     if (requiresPreface) {
-      loadTemplateMetadata().catch(console.error)
+      const timerId = window.setTimeout(() => {
+        if (!active) return
+        loadTemplateMetadata().catch(console.error)
+      }, 0)
+      return () => {
+        active = false
+        window.clearTimeout(timerId)
+      }
+    }
+    return () => {
+      active = false
     }
   }, [requiresPreface, loadTemplateMetadata])
 

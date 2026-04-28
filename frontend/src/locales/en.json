@@ -482,6 +482,46 @@
       "noAssignments": "No active assignments",
       "loadError": "Failed to load assignments"
     },
+    "checklist": {
+      "panelTitle": "Reviewer checklist",
+      "loadError": "Failed to load checklist",
+      "saveError": "Failed to save draft",
+      "submitError": "Failed to submit review",
+      "saved": "Draft saved",
+      "submitted": "Review submitted successfully",
+      "alreadySubmitted": "This checklist review is already submitted",
+      "noTemplate": "Note: no active checklist exists for this track, continue the review with comments only",
+      "summaryTitle": "Summary and recommendation",
+      "requiredProgress": "Required answers completed: {{answered}} / {{total}}",
+      "generalNotePlaceholder": "General note (optional)",
+      "selectAnswer": "Select answer",
+      "selectRecommendation": "Select recommendation",
+      "recommendationLabel": "Recommendation",
+      "recommendationRequired": "Please select a recommendation before submitting",
+      "detailsPlaceholder": "Please provide details",
+      "flagged": "Risk flagged",
+      "saveDraft": "Save draft",
+      "submit": "Submit review",
+      "answerType": {
+        "ADEQUACY": "Adequacy",
+        "YES_NO": "Yes / No",
+        "YES_NO_PROBLEM": "Yes / No (risk focus)"
+      },
+      "answer": {
+        "ADEQUATE": "Adequate",
+        "INADEQUATE": "Inadequate",
+        "YES": "Yes",
+        "NO": "No",
+        "NA": "N/A"
+      },
+      "recommendation": {
+        "EXEMPT": "Exempt",
+        "APPROVED": "Approve",
+        "APPROVED_CONDITIONAL": "Approve with conditions",
+        "REVISION_REQUIRED": "Revision required",
+        "REJECTED": "Reject"
+      }
+    },
     "review": {
       "pageTitle": "Submit Review",
       "scoreLabel": "Score (1-5)",
@@ -864,7 +904,19 @@
     "totalDecided": "Decided",
     "noData": "No data available",
     "submissions": "Submissions",
-    "last12Months": "Last 12 months"
+    "last12Months": "Last 12 months",
+    "checklistSubmitted": "Submitted checklists",
+    "checklistDraft": "Checklist drafts",
+    "checklistCompletionRate": "Checklist completion rate",
+    "checklistAvgTurnaroundDays": "Checklist turnaround",
+    "checklistRecommendationBreakdown": "Reviewer recommendation breakdown",
+    "checklistRecommendation": {
+      "EXEMPT": "Exempt",
+      "APPROVED": "Approve",
+      "APPROVED_CONDITIONAL": "Approve with conditions",
+      "REVISION_REQUIRED": "Revision required",
+      "REJECTED": "Reject"
+    }
   },
   "auditLog": {
     "title": "Audit Log",

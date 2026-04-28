@@ -205,6 +205,7 @@ model User {
   meetingCalendarSyncs MeetingCalendarSync[]
   protocolSignatures ProtocolSignature[]
   uploadedDocuments Document[]         @relation("DocumentUploader")
+  uploadedSystemTemplates SystemTemplate[]
   aiAnalyses        AIAnalysis[]
   privacyConsents   PrivacyConsent[]
   dsrRequests       DataSubjectRequest[]
@@ -808,12 +809,10 @@ model SystemTemplate {
 // REVIEWER CHECKLIST
 // ─────────────────────────────────────────────
 
-/**
- * Master checklist template managed by Admin.
- * track: null = applies to all tracks, otherwise "FULL" | "EXPEDITED" | "EXEMPT".
- * Only one active template per track (null counts as its own track).
- * Publishing a template deactivates the previous active one for the same track.
- */
+// Master checklist template managed by Admin.
+// track: null = applies to all tracks, otherwise "FULL" | "EXPEDITED" | "EXEMPT".
+// Only one active template per track (null counts as its own track).
+// Publishing a template deactivates the previous active one for the same track.
 model ReviewerChecklistTemplate {
   id          String    @id @default(uuid())
   name        String
@@ -833,11 +832,9 @@ model ReviewerChecklistTemplate {
   @@map("reviewer_checklist_templates")
 }
 
-/**
- * A section within a template (e.g. "Document Approval", "Ethical Issues").
- * answerType controls what radio options appear for all items in this section.
- * yesIsProblem: when true, a YES answer is highlighted as a problem (amber/red).
- */
+// A section within a template (e.g. "Document Approval", "Ethical Issues").
+// answerType controls what radio options appear for all items in this section.
+// yesIsProblem: when true, a YES answer is highlighted as a problem (amber/red).
 model ReviewerChecklistSection {
   id           String              @id @default(uuid())
   templateId   String              @map("template_id")
@@ -859,12 +856,10 @@ model ReviewerChecklistSection {
   @@map("reviewer_checklist_sections")
 }
 
-/**
- * A single checklist item within a section.
- * requiresDetails: when true, reviewer must fill a text field if answer is negative.
- * conditional: JSON { dependsOn: "<itemCode>", showWhen: "YES" | "NO" | "ADEQUATE" | "INADEQUATE" }
- * isActive: soft-delete only — items with existing responses must never be hard-deleted.
- */
+// A single checklist item within a section.
+// requiresDetails: when true, reviewer must fill a text field if answer is negative.
+// conditional: JSON { dependsOn: "<itemCode>", showWhen: "YES" | "NO" | "ADEQUATE" | "INADEQUATE" }.
+// isActive: soft-delete only; items with existing responses must never be hard-deleted.
 model ReviewerChecklistItem {
   id              String   @id @default(uuid())
   sectionId       String   @map("section_id")
@@ -889,11 +884,9 @@ model ReviewerChecklistItem {
   @@map("reviewer_checklist_items")
 }
 
-/**
- * One review per reviewer per submission.
- * templateId is snapshotted at creation time so future template edits don't alter existing reviews.
- * Summary fields (exemptConsent*, minors*) represent Section C conditional questions.
- */
+// One review per reviewer per submission.
+// templateId is snapshotted at creation time so future template edits don't alter existing reviews.
+// Summary fields (exemptConsent*, minors*) represent Section C conditional questions.
 model ReviewerChecklistReview {
   id                        String                  @id @default(uuid())
   submissionId              String                  @map("submission_id")
@@ -921,11 +914,9 @@ model ReviewerChecklistReview {
   @@map("reviewer_checklist_reviews")
 }
 
-/**
- * One response per item per review.
- * itemCode is snapshotted at save time for audit trail stability.
- * answer values: "ADEQUATE" | "INADEQUATE" | "YES" | "NO" | "NA"
- */
+// One response per item per review.
+// itemCode is snapshotted at save time for audit trail stability.
+// answer values: "ADEQUATE" | "INADEQUATE" | "YES" | "NO" | "NA".
 model ReviewerChecklistResponse {
   id       String   @id @default(uuid())
   reviewId String   @map("review_id")

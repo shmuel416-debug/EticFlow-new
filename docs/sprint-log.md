@@ -6,6 +6,8 @@
 |------|------|--------|-------|
 | 2026-04-28 | UI/UX Design — Admin + Reviewer surfaces | ✅ Done | עיצוב B נבחר לשני המשטחים. docs/designs/reviewer-checklist-design.html |
 | 2026-04-28 | Prisma schema — 5 models + 3 enums | ✅ Done | ReviewerChecklistTemplate/Section/Item/Review/Response + migration SQL + seed |
+| 2026-04-28 | Backend — service + controller + routes | ✅ Done | 17 service functions, 14 controller handlers, admin+reviewer routers, wired to index.js |
+| 2026-04-28 | Reports KPI — checklist analytics | ✅ Done | Added checklist KPIs + recommendation breakdown in `/api/reports/stats` and rendered in `StatsPage` |
 
 ---
 

@@ -1,6 +1,6 @@
 /**
  * EthicFlow — Reviewer Review Detail Page
- * Shows form answers + comments for the reviewer, with ReviewForm to submit evaluation.
+ * Shows form answers + comments for the reviewer, with checklist renderer.
  * Refreshed to Lev design system (PageHeader + Card primitives + Button).
  * IS 5568 / WCAG 2.2 AA.
  */
@@ -13,7 +13,7 @@ import api from '../../services/api'
 import StatusBadge from '../../components/submissions/StatusBadge'
 import FormAnswersViewer from '../../components/submissions/FormAnswersViewer'
 import CommentThread from '../../components/submissions/CommentThread'
-import ReviewForm from '../../components/submissions/ReviewForm'
+import ChecklistRenderer from '../../components/submissions/ChecklistRenderer'
 import AiPanel from '../../components/submissions/AiPanel'
 import {
   PageHeader,
@@ -24,7 +24,7 @@ import {
 } from '../../components/ui'
 
 /**
- * Reviewer's detail page — read-only form answers + ReviewForm.
+ * Reviewer's detail page — read-only form answers + checklist renderer.
  * @returns {JSX.Element}
  */
 export default function ReviewDetailPage() {
@@ -160,7 +160,7 @@ export default function ReviewDetailPage() {
           <AiPanel submissionId={id} canRun={!alreadyReviewed} />
 
           <Card as="section">
-            <CardHeader title={t('reviewer.review.pageTitle')} />
+            <CardHeader title={t('reviewer.checklist.panelTitle')} />
             <CardBody>
               {alreadyReviewed ? (
                 <p
@@ -169,10 +169,10 @@ export default function ReviewDetailPage() {
                   className="text-sm"
                   style={{ color: 'var(--text-muted)' }}
                 >
-                  {t('reviewer.review.submitSuccess')}
+                  {t('reviewer.checklist.alreadySubmitted')}
                 </p>
               ) : (
-                <ReviewForm submissionId={id} onSuccess={handleReviewSuccess} />
+                <ChecklistRenderer submissionId={id} onSuccess={handleReviewSuccess} />
               )}
             </CardBody>
           </Card>

@@ -45,7 +45,7 @@ import AuditLogPage               from './pages/reports/AuditLogPage'
 import SettingsPage               from './pages/admin/SettingsPage'
 import StatusManagementPage       from './pages/admin/StatusManagementPage'
 import SystemTemplatesPage        from './pages/admin/SystemTemplatesPage'
-import ChecklistTemplatesPage     from './pages/admin/ChecklistTemplatesPage'
+import ReviewerChecklistAdminPage from './pages/admin/ReviewerChecklistAdminPage'
 import CoiPage                    from './pages/profile/CoiPage'
 import AccessibilityStatementPage from './pages/AccessibilityStatementPage'
 
@@ -125,7 +125,7 @@ export default function App() {
                 <Route path="/users" element={<UsersPage />} />
                 <Route path="/admin/statuses" element={<StatusManagementPage />} />
                 <Route path="/admin/system-templates" element={<SystemTemplatesPage />} />
-                <Route path="/admin/checklist-templates" element={<ChecklistTemplatesPage />} />
+                <Route path="/admin/checklist-templates" element={<ReviewerChecklistAdminPage />} />
               </Route>
             </Route>
           </Route>

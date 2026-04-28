@@ -146,7 +146,7 @@ export default function FormLibraryPage() {
       const { data } = await api.post(`/forms/${duplicateFormId}/duplicate`, options)
       setForms(prev => [data.form, ...prev])
       setDuplicateFormId(null)
-    } catch (err) {
+    } catch {
       throw new Error(t('errors.SERVER_ERROR'))
     } finally {
       setDuplicateLoading(false)

@@ -88,6 +88,16 @@ export default function ChairmanQueuePage() {
       hideOnMobile: true,
     },
     {
+      key: 'reviewerRecommendation',
+      header: t('chairman.queue.colRecommendation'),
+      render: (row) => (
+        row.reviewerRecommendation
+          ? t(`reviewer.checklist.recommendation.${row.reviewerRecommendation}`)
+          : '—'
+      ),
+      hideOnMobile: true,
+    },
+    {
       key: 'submittedAt',
       header: t('submission.list.colDate'),
       render: (row) => formatDate(row.submittedAt),

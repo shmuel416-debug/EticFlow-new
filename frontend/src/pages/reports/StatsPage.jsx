@@ -39,6 +39,22 @@ const TRACK_LABEL_KEYS = {
   EXEMPT:    'submission.tracks.EXEMPT',
 }
 
+const CHECKLIST_RECOMMENDATIONS = [
+  'EXEMPT',
+  'APPROVED',
+  'APPROVED_CONDITIONAL',
+  'REVISION_REQUIRED',
+  'REJECTED',
+]
+
+const CHECKLIST_RECOMMENDATION_COLORS = {
+  EXEMPT: 'var(--status-info)',
+  APPROVED: 'var(--status-success)',
+  APPROVED_CONDITIONAL: 'var(--lev-gold)',
+  REVISION_REQUIRED: 'var(--status-warning)',
+  REJECTED: 'var(--status-danger)',
+}
+
 /**
  * Bar chart rendered with CSS — proportional to tallest bar.
  * @param {{ byStatus: object }} props
@@ -178,6 +194,53 @@ function MonthlyTrendChart({ monthly }) {
   )
 }
 
+/**
+ * Recommendation breakdown for submitted checklist reviews.
+ * @param {{ byRecommendation: Record<string, number>, total: number }} props
+ */
+function ChecklistRecommendationChart({ byRecommendation, total }) {
+  const { t } = useTranslation()
+
+  return (
+    <div className="space-y-3">
+      {CHECKLIST_RECOMMENDATIONS.map((key) => {
+        const count = byRecommendation[key] ?? 0
+        const pct = total > 0 ? Math.round((count / total) * 100) : 0
+        return (
+          <div key={key}>
+            <div className="flex justify-between text-xs mb-1">
+              <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>
+                {t(`stats.checklistRecommendation.${key}`)}
+              </span>
+              <span className="tabular-nums" style={{ color: 'var(--text-muted)' }}>
+                {count} ({pct}%)
+              </span>
+            </div>
+            <div
+              className="w-full h-2.5"
+              role="progressbar"
+              aria-valuenow={count}
+              aria-valuemin={0}
+              aria-valuemax={total}
+              aria-label={t(`stats.checklistRecommendation.${key}`)}
+              style={{ background: 'var(--surface-sunken)', borderRadius: 'var(--radius-full)' }}
+            >
+              <div
+                className="h-2.5 transition-all duration-500"
+                style={{
+                  width: `${pct}%`,
+                  background: CHECKLIST_RECOMMENDATION_COLORS[key],
+                  borderRadius: 'var(--radius-full)',
+                }}
+              />
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 export default function StatsPage() {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
@@ -232,6 +295,12 @@ export default function StatsPage() {
   )
   const monthly = stats?.monthlyTrend ?? []
   const total   = Object.values(byStatus).reduce((s, v) => s + v, 0)
+  const checklist = stats?.checklist ?? {}
+  const checklistSubmitted = checklist.submitted ?? 0
+  const checklistDraft = checklist.draft ?? 0
+  const checklistCompletionRate = checklist.completionRate ?? 0
+  const checklistAvgTurnaroundDays = checklist.avgTurnaroundDays ?? 0
+  const checklistByRecommendation = checklist.byRecommendation ?? {}
 
   const approvalRate = stats
     ? (stats.approvalRate ?? 0).toFixed(0) + '%'
@@ -284,7 +353,7 @@ export default function StatsPage() {
       />
 
       {/* KPI grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
         <StatCard
           label={t('stats.submissions')}
           value={loading ? '…' : total}
@@ -309,6 +378,33 @@ export default function StatsPage() {
           value={loading ? '…' : totalApproved}
           tone="gold"
           icon={BarChart3}
+        />
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+        <StatCard
+          label={t('stats.checklistSubmitted')}
+          value={loading ? '…' : checklistSubmitted}
+          tone="teal"
+          icon={CheckCircle2}
+        />
+        <StatCard
+          label={t('stats.checklistDraft')}
+          value={loading ? '…' : checklistDraft}
+          tone="navy"
+          icon={FileText}
+        />
+        <StatCard
+          label={t('stats.checklistCompletionRate')}
+          value={loading ? '…' : `${checklistCompletionRate}%`}
+          tone="gold"
+          icon={BarChart3}
+        />
+        <StatCard
+          label={t('stats.checklistAvgTurnaroundDays')}
+          value={loading ? '…' : checklistAvgTurnaroundDays}
+          hint={t('stats.days')}
+          tone="purple"
+          icon={Clock}
         />
       </div>
 
@@ -367,6 +463,22 @@ export default function StatsPage() {
             <CardBody>
               {monthly.length > 0
                 ? <MonthlyTrendChart monthly={monthly} />
+                : <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('stats.noData')}</p>}
+            </CardBody>
+          </Card>
+
+          <Card>
+            <CardHeader
+              title={t('stats.checklistRecommendationBreakdown')}
+              actions={(
+                <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                  {checklistSubmitted} {t('stats.checklistSubmitted')}
+                </span>
+              )}
+            />
+            <CardBody>
+              {checklistSubmitted > 0
+                ? <ChecklistRecommendationChart byRecommendation={checklistByRecommendation} total={checklistSubmitted} />
                 : <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('stats.noData')}</p>}
             </CardBody>
           </Card>

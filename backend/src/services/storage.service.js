@@ -57,6 +57,29 @@ async function saveFileLocal(subId, filename, buffer) {
 }
 
 /**
+ * Saves arbitrary content by relative storage path.
+ * @param {string} storagePath
+ * @param {Buffer} buffer
+ * @returns {Promise<string>}
+ */
+async function saveByPathLocal(storagePath, buffer) {
+  const fullPath = path.join(UPLOAD_DIR, storagePath)
+  await fs.mkdir(path.dirname(fullPath), { recursive: true })
+  await fs.writeFile(fullPath, buffer)
+  return storagePath
+}
+
+/**
+ * Reads arbitrary content by relative storage path.
+ * @param {string} storagePath
+ * @returns {Promise<Buffer>}
+ */
+async function retrieveByPathLocal(storagePath) {
+  const fullPath = path.join(UPLOAD_DIR, storagePath)
+  return fs.readFile(fullPath)
+}
+
+/**
  * Deletes a file by its relative storage path.
  * @param {string} storagePath
  * @returns {Promise<void>}
@@ -103,6 +126,29 @@ export async function saveFile(subId, filename, buffer) {
 }
 
 /**
+ * Saves arbitrary content by relative storage path in active provider.
+ * @param {string} storagePath
+ * @param {Buffer} buffer
+ * @returns {Promise<string>}
+ */
+export async function save(storagePath, buffer) {
+  const provider = getActiveProvider()
+  if (provider === 'local') return saveByPathLocal(storagePath, buffer)
+  throw new Error(`[Storage] Unsupported provider "${provider}"`)
+}
+
+/**
+ * Retrieves arbitrary content by relative storage path in active provider.
+ * @param {string} storagePath
+ * @returns {Promise<Buffer>}
+ */
+export async function retrieve(storagePath) {
+  const provider = getActiveProvider()
+  if (provider === 'local') return retrieveByPathLocal(storagePath)
+  throw new Error(`[Storage] Unsupported provider "${provider}"`)
+}
+
+/**
  * Deletes a file in the active storage provider.
  * @param {string} storagePath
  * @returns {Promise<void>}
@@ -122,4 +168,15 @@ export function resolvePath(storagePath) {
   const provider = getActiveProvider()
   if (provider === 'local') return resolvePathLocal(storagePath)
   throw new Error(`[Storage] Unsupported provider "${provider}"`)
+}
+
+/**
+ * Compatibility object for legacy storage service consumers.
+ */
+export const storage = {
+  save,
+  retrieve,
+  resolvePath,
+  saveFile,
+  deleteFile,
 }

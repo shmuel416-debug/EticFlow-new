@@ -482,6 +482,46 @@
       "noAssignments": "אין הקצאות פעילות",
       "loadError": "שגיאה בטעינת ההקצאות"
     },
+    "checklist": {
+      "panelTitle": "צ׳קליסט סוקר",
+      "loadError": "שגיאה בטעינת הצ׳קליסט",
+      "saveError": "שגיאה בשמירת טיוטה",
+      "submitError": "שגיאה בהגשת הביקורת",
+      "saved": "טיוטה נשמרה",
+      "submitted": "הביקורת הוגשה בהצלחה",
+      "alreadySubmitted": "הביקורת כבר הוגשה",
+      "noTemplate": "שים לב: אין צ׳קליסט פעיל למסלול זה, ניתן להמשיך בבדיקה כהערות בלבד",
+      "summaryTitle": "סיכום והמלצה",
+      "requiredProgress": "שדות חובה שמולאו: {{answered}} מתוך {{total}}",
+      "generalNotePlaceholder": "הערה כללית (אופציונלי)",
+      "selectAnswer": "בחר תשובה",
+      "selectRecommendation": "בחר המלצה",
+      "recommendationLabel": "המלצה ליו\"ר",
+      "recommendationRequired": "יש לבחור המלצה לפני הגשה",
+      "detailsPlaceholder": "נא לפרט",
+      "flagged": "נקודת סיכון",
+      "saveDraft": "שמור טיוטה",
+      "submit": "הגש ביקורת",
+      "answerType": {
+        "ADEQUACY": "מספיק/לא מספיק",
+        "YES_NO": "כן/לא",
+        "YES_NO_PROBLEM": "כן/לא (זיהוי סיכון)"
+      },
+      "answer": {
+        "ADEQUATE": "מספיק",
+        "INADEQUATE": "לא מספיק",
+        "YES": "כן",
+        "NO": "לא",
+        "NA": "לא רלוונטי"
+      },
+      "recommendation": {
+        "EXEMPT": "פטור",
+        "APPROVED": "אישור",
+        "APPROVED_CONDITIONAL": "אישור מותנה",
+        "REVISION_REQUIRED": "נדרש תיקון",
+        "REJECTED": "דחייה"
+      }
+    },
     "review": {
       "pageTitle": "ביצוע ביקורת",
       "scoreLabel": "ציון (1-5)",
@@ -864,7 +904,19 @@
     "totalDecided": "הוחלט",
     "noData": "אין נתונים להצגה",
     "submissions": "הגשות",
-    "last12Months": "12 חודשים אחרונים"
+    "last12Months": "12 חודשים אחרונים",
+    "checklistSubmitted": "צ׳קליסטים שהוגשו",
+    "checklistDraft": "טיוטות צ׳קליסט",
+    "checklistCompletionRate": "שיעור השלמה",
+    "checklistAvgTurnaroundDays": "זמן השלמת צ׳קליסט",
+    "checklistRecommendationBreakdown": "התפלגות המלצות סוקר",
+    "checklistRecommendation": {
+      "EXEMPT": "פטור",
+      "APPROVED": "אישור",
+      "APPROVED_CONDITIONAL": "אישור מותנה",
+      "REVISION_REQUIRED": "נדרש תיקון",
+      "REJECTED": "דחייה"
+    }
   },
   "auditLog": {
     "title": "יומן ביקורת",

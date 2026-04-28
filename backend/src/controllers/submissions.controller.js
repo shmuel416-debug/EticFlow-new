@@ -123,14 +123,26 @@ export async function list(req, res, next) {
         orderBy: { createdAt: 'desc' },
         include: {
           author:      { select: { id: true, fullName: true, email: true } },
+          reviewer:    { select: { id: true, fullName: true, email: true } },
           formConfig:  { select: { id: true, name: true, nameEn: true, version: true } },
           slaTracking: { select: { triageDue: true, reviewDue: true, revisionDue: true, isBreached: true } },
+          checklistReviews: {
+            where: { status: 'SUBMITTED' },
+            orderBy: { submittedAt: 'desc' },
+            take: 1,
+            select: { recommendation: true },
+          },
         },
       }),
       prisma.submission.count({ where }),
     ])
+    const data = submissions.map((row) => {
+      const recommendation = row.checklistReviews?.[0]?.recommendation ?? null
+      const { checklistReviews, ...rest } = row
+      return { ...rest, reviewerRecommendation: recommendation }
+    })
 
-    res.json(paginate(submissions, total, page, limit))
+    res.json(paginate(data, total, page, limit))
   } catch (err) {
     next(err)
   }
