@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import api from '../../services/api'
 import StatusBadge from '../../components/submissions/StatusBadge'
+import TemplateDownloadCard from '../../components/templates/TemplateDownloadCard'
 import {
   Button, Card, CardHeader, PageHeader, StatCard, EmptyState, Spinner,
 } from '../../components/ui'
@@ -398,6 +399,8 @@ export default function ResearcherDashboard() {
           {error}
         </div>
       )}
+
+      <TemplateDownloadCard />
 
       <Card>
         <CardHeader

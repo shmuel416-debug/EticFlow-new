@@ -17,6 +17,7 @@
     "error": "Error",
     "success": "Success",
     "requiredField": "Required field",
+    "required": "Required",
     "actions": "Actions",
     "researcher": "Researcher",
     "status": "Status",
@@ -276,6 +277,24 @@
       "selectFormVersion": "Version {{n}}"
     }
   },
+  "forms": {
+    "instructions": {
+      "title": "ℹ️ Instructions & Required Attachments"
+    },
+    "attachments": {
+      "required": "Required Attachments",
+      "uploadNote": "Files should be uploaded when submitting your request using the 'Documents' button on the submission page."
+    },
+    "duplicate": {
+      "title": "Duplicate Form",
+      "description": "The form will be duplicated as a new draft",
+      "confirmButton": "Duplicate",
+      "cancelButton": "Cancel",
+      "includeInstructions": "Include instructions",
+      "includeAttachments": "Include attachments list",
+      "success": "Form duplicated successfully"
+    }
+  },
   "statusPage": {
     "title": "Submission Status",
     "backToDashboard": "Back to Dashboard",
@@ -406,6 +425,7 @@
       "cardSubmissions": "{{count}} submissions",
       "actionEdit": "Edit",
       "actionPreview": "Preview",
+      "actionDuplicate": "Duplicate",
       "actionArchive": "Archive",
       "actionRestore": "Restore",
       "confirmArchive": "Move this form to archive? This will lock the form.",
@@ -988,6 +1008,31 @@
       "SUBMIT_REVIEW": "Submit review",
       "RECORD_DECISION": "Record decision"
     }
+  },
+  "systemTemplates": {
+    "title": "System Templates",
+    "subtitle": "Upload and manage centralized system templates",
+    "questionnaire_preface": "Questionnaire Preface",
+    "keyLabel": "Key",
+    "noVersion": "No version uploaded",
+    "upload": "Upload",
+    "uploadTitle": "Upload New Version",
+    "uploadSuccess": "File uploaded successfully",
+    "uploadError": "Error uploading file",
+    "validateUpload": "Please select a language and file",
+    "language": "Language",
+    "selectFile": "Select File",
+    "dragDrop": "Drag file here or click to upload",
+    "versionHistory": "Version History",
+    "active": "Active",
+    "restore": "Restore",
+    "confirmRollback": "Are you sure you want to restore this version?",
+    "rollbackSuccess": "Version restored successfully",
+    "rollbackError": "Error restoring version",
+    "loadError": "Error loading templates",
+    "usefulDocuments": "Useful Documents",
+    "downloadError": "Error downloading file",
+    "requiredTemplates": "Required Templates"
   },
   "errors": {
     "VALIDATION_ERROR": "Validation error",

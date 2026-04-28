@@ -17,6 +17,7 @@
     "error": "שגיאה",
     "success": "הצלחה",
     "requiredField": "שדה חובה",
+    "required": "נדרש",
     "actions": "פעולות",
     "researcher": "חוקר",
     "status": "סטטוס",
@@ -276,6 +277,24 @@
       "selectFormVersion": "גרסה {{n}}"
     }
   },
+  "forms": {
+    "instructions": {
+      "title": "ℹ️ הוראות וקבצים מצורפים"
+    },
+    "attachments": {
+      "required": "קבצים נדרשים",
+      "uploadNote": "הקבצים יש להעלות בשלב הגשת הבקשה מלחצן 'מסמכים' בדף ההגשה."
+    },
+    "duplicate": {
+      "title": "שכפול טופס",
+      "description": "הטופס יישכפל כטיוטה חדשה",
+      "confirmButton": "שכפל",
+      "cancelButton": "ביטול",
+      "includeInstructions": "כלול הוראות",
+      "includeAttachments": "כלול רשימת קבצים",
+      "success": "הטופס שוכפל בהצלחה"
+    }
+  },
   "statusPage": {
     "title": "מסלול הגשה",
     "backToDashboard": "חזרה לדשבורד",
@@ -406,6 +425,7 @@
       "cardSubmissions": "{{count}} הגשות",
       "actionEdit": "עריכה",
       "actionPreview": "תצוגה מקדימה",
+      "actionDuplicate": "שכפל",
       "actionArchive": "העבר לארכיון",
       "actionRestore": "שחזור",
       "confirmArchive": "האם להעביר את הטופס לארכיון? פעולה זו תנעל את הטופס.",
@@ -988,6 +1008,31 @@
       "SUBMIT_REVIEW": "הגשת ביקורת",
       "RECORD_DECISION": "רישום החלטה"
     }
+  },
+  "systemTemplates": {
+    "title": "ניהול תבניות מערכת",
+    "subtitle": "העלאה וניהול תבניות מערכת מרכזיות",
+    "questionnaire_preface": "פתיח לשאלון",
+    "keyLabel": "מזהה",
+    "noVersion": "לא הועלתה גרסה",
+    "upload": "העלה",
+    "uploadTitle": "העלאת גרסה חדשה",
+    "uploadSuccess": "הקובץ הועלה בהצלחה",
+    "uploadError": "שגיאה בהעלאת הקובץ",
+    "validateUpload": "בחר שפה וקובץ",
+    "language": "שפה",
+    "selectFile": "בחר קובץ",
+    "dragDrop": "גרור קובץ כאן או לחץ להעלאה",
+    "versionHistory": "היסטוריית גרסאות",
+    "active": "פעיל",
+    "restore": "שחזר",
+    "confirmRollback": "האם תרצה לשחזר לגרסה זו?",
+    "rollbackSuccess": "הגרסה שוחזרה בהצלחה",
+    "rollbackError": "שגיאה בשחזור הגרסה",
+    "loadError": "שגיאה בטעינת התבניות",
+    "usefulDocuments": "מסמכים שימושיים",
+    "downloadError": "שגיאה בהורדת הקובץ",
+    "requiredTemplates": "תבניות נדרשות"
   },
   "errors": {
     "VALIDATION_ERROR": "שגיאת אימות נתונים",

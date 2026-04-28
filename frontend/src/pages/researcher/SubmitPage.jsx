@@ -17,9 +17,11 @@ import {
   X,
   Save,
   Send,
+  Download,
 } from 'lucide-react'
 import api                                           from '../../services/api'
 import FormRenderer                                  from '../../components/formRenderer/FormRenderer'
+import InstructionsAccordion                         from '../../components/InstructionsAccordion'
 import {
   PageHeader,
   Card,
@@ -36,10 +38,54 @@ import {
 /* ── Summary sidebar ─────────────────────── */
 /**
  * Right-panel: shows filled / remaining counts + tip.
- * @param {{ fields: object[], values: object, errors: object }} props
+ * @param {{ fields: object[], values: object, errors: object, formConfig: object }} props
  */
-function SummarySidebar({ fields, values, errors }) {
+function SummarySidebar({ fields, values, errors, formConfig }) {
   const { t } = useTranslation()
+  const [templateData, setTemplateData] = useState(null)
+
+  // Check if form requires templates
+  const requiresPreface = formConfig?.requiresPreface ?? false
+
+  const loadTemplateMetadata = useCallback(async () => {
+    try {
+      const heTemplate = await api.get('/system-templates/questionnaire_preface/active', {
+        params: { lang: 'he' },
+      })
+      const enTemplate = await api.get('/system-templates/questionnaire_preface/active', {
+        params: { lang: 'en' },
+      })
+      setTemplateData({ he: heTemplate.data, en: enTemplate.data })
+    } catch (err) {
+      console.error('Failed to load template metadata:', err)
+    }
+  }, [])
+
+  // Load template metadata on mount
+  useEffect(() => {
+    if (requiresPreface) {
+      loadTemplateMetadata().catch(console.error)
+    }
+  }, [requiresPreface, loadTemplateMetadata])
+
+  const handleDownloadTemplate = async (lang) => {
+    try {
+      const response = await api.get(`/system-templates/questionnaire_preface/download`, {
+        params: { lang },
+        responseType: 'blob',
+      })
+      const url = window.URL.createObjectURL(response.data)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `questionnaire-preface-${lang}.docx`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
+    } catch (err) {
+      console.error('Failed to download template:', err)
+    }
+  }
   const required = fields.filter(f => f.required)
   const filled   = required.filter(f => {
     const v = values[f.id || f.key]
@@ -127,6 +173,46 @@ function SummarySidebar({ fields, values, errors }) {
                   return field ? <li key={k}>{field.labelHe || field.labelEn}</li> : null
                 })}
             </ul>
+          </CardBody>
+        </Card>
+      )}
+
+      {requiresPreface && templateData && (
+        <Card>
+          <CardHeader title={t('systemTemplates.requiredTemplates')} />
+          <CardBody>
+            <div className="space-y-2">
+              {templateData.he && (
+                <button
+                  onClick={() => handleDownloadTemplate('he')}
+                  className="w-full text-right px-3 py-2 flex items-center justify-between gap-2 rounded text-xs transition-colors"
+                  style={{
+                    background: 'var(--lev-navy-50)',
+                    border: '1px solid var(--border-subtle)',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--lev-navy-100)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--lev-navy-50)')}
+                >
+                  <span style={{ color: 'var(--text-primary)' }}>עברית</span>
+                  <Download size={14} strokeWidth={2} aria-hidden="true" />
+                </button>
+              )}
+              {templateData.en && (
+                <button
+                  onClick={() => handleDownloadTemplate('en')}
+                  className="w-full text-right px-3 py-2 flex items-center justify-between gap-2 rounded text-xs transition-colors"
+                  style={{
+                    background: 'var(--lev-navy-50)',
+                    border: '1px solid var(--border-subtle)',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--lev-navy-100)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--lev-navy-50)')}
+                >
+                  <span style={{ color: 'var(--text-primary)' }}>English</span>
+                  <Download size={14} strokeWidth={2} aria-hidden="true" />
+                </button>
+              )}
+            </div>
           </CardBody>
         </Card>
       )}
@@ -778,6 +864,13 @@ export default function SubmitPage() {
             </div>
           )}
 
+          <InstructionsAccordion
+            instructionsHe={formMeta?.instructionsHe}
+            instructionsEn={formMeta?.instructionsEn}
+            attachmentsList={formMeta?.attachmentsList}
+            lang={previewLang}
+          />
+
           {sections.map((sectionFields, idx) => (
             <Section
               key={idx}
@@ -807,7 +900,7 @@ export default function SubmitPage() {
         </main>
 
         {/* Summary sidebar */}
-        <SummarySidebar fields={fields} values={values} errors={errors} />
+        <SummarySidebar fields={fields} values={values} errors={errors} formConfig={formMeta} />
       </div>
 
       <MobileStickyBar>

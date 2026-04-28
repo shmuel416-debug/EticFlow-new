@@ -44,6 +44,7 @@ import StatsPage                  from './pages/reports/StatsPage'
 import AuditLogPage               from './pages/reports/AuditLogPage'
 import SettingsPage               from './pages/admin/SettingsPage'
 import StatusManagementPage       from './pages/admin/StatusManagementPage'
+import SystemTemplatesPage        from './pages/admin/SystemTemplatesPage'
 import CoiPage                    from './pages/profile/CoiPage'
 import AccessibilityStatementPage from './pages/AccessibilityStatementPage'
 
@@ -122,6 +123,7 @@ export default function App() {
               <Route element={<ProtectedRoute roles={['ADMIN']} />}>
                 <Route path="/users" element={<UsersPage />} />
                 <Route path="/admin/statuses" element={<StatusManagementPage />} />
+                <Route path="/admin/system-templates" element={<SystemTemplatesPage />} />
               </Route>
             </Route>
           </Route>

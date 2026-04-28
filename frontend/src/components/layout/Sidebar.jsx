@@ -38,6 +38,7 @@ const NAV_ITEMS = [
   { key: 'reports',              icon: BarChart3,     path: '/reports',                roles: ['SECRETARY','CHAIRMAN','ADMIN'] },
   { key: 'auditLog',             icon: Search,        path: '/reports/audit-log',      roles: ['ADMIN'], indent: true },
   { key: 'statusManagement',     icon: Compass,       path: '/admin/statuses',         roles: ['ADMIN'], indent: true },
+  { key: 'systemTemplates',      icon: FileText,      path: '/admin/system-templates', roles: ['ADMIN'], indent: true },
   { key: 'settings',             icon: Settings,      path: '/settings',               roles: ['SECRETARY','CHAIRMAN','REVIEWER','ADMIN'] },
 ]
 

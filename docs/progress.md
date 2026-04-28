@@ -1,5 +1,38 @@
 # EthicFlow — Progress Tracker
 
+## Latest Update: Sprint 13 — System Templates (Questionnaire Preface)
+**Status:** ✅ Complete | **Date:** 2026-04-28 | **Tag:** v0.13.0 | **Reports:** `docs/qa-report-sprint-13.md`, `docs/accessibility-report-sprint-13.md`, `docs/security-report-sprint-13.md`, `docs/sprint-13-report.md`
+
+### Phase 1 — Backend Infrastructure ✅
+- [x] S13.1.1 Prisma schema: `SystemTemplate` model with versioning + unique key_lang_version constraint
+- [x] S13.1.2 Database migration SQL (manual): creates table with proper FK to users
+- [x] S13.1.3 Backend service: `systemTemplate.service.js` (upload, getActive, listVersions, rollback, archive)
+- [x] S13.1.4 Backend controller: `systemTemplates.controller.js` (6 endpoints)
+- [x] S13.1.5 Backend routes: `systemTemplates.routes.js` (GET active/download + ADMIN POST/upload/rollback/archive)
+- [x] S13.1.6 Backend wiring: register router in `index.js`
+- [x] S13.1.7 Unit tests: `systemTemplate.service.test.js` (version increment, deactivation, validation)
+
+### Phase 2 — Frontend Infrastructure ✅
+- [x] S13.2.1 Frontend API service: `systemTemplates.api.js` (download, upload, rollback, etc.)
+- [x] S13.2.2 Admin page: `SystemTemplatesPage.jsx` (upload modal, version history, rollback)
+- [x] S13.2.3 App routing: add `/admin/system-templates` protected route + import
+- [x] S13.2.4 Sidebar nav: add "תבניות מערכת" link (ADMIN only, indented under statuses)
+- [x] S13.2.5 i18n: add `systemTemplates.*` namespace (he.json + en.json) — 23 keys
+
+### Phase 3 — Download Surfaces ✅
+- [x] S13.3.1 Researcher Dashboard: "מסמכים שימושיים" card with download links (TemplateDownloadCard.jsx)
+- [x] S13.3.2 Submit Page: sidebar "תבניות נדרשות" block (conditional on form requiresPreface flag)
+
+### Phase 4 — Testing + Sprint End ✅
+- [x] S13.4.1 Code Review → 1 critical fixed (null check on uploader), 0 remaining
+- [x] S13.4.2 QA Audit → 0 critical, ready for integration
+- [x] S13.4.3 Accessibility Audit → WCAG 2.2 AA compliant, IS 5568 compliant
+- [x] S13.4.4 Security Audit → OWASP Top 10 compliant, 0 vulnerabilities
+- [x] S13.4.5 Frontend build → ✅ Passes (445.23 kB bundle)
+- [x] S13.4.6 Tag v0.13.0 → ✅ Ready
+
+---
+
 ## Latest Update: Sprint 12 — Dynamic Status Management
 **Status:** ✅ Complete | **Date:** 2026-04-22 | **Report:** `docs/sprint-12-report-hebrew.md`
 
