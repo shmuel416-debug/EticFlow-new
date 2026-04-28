@@ -138,8 +138,8 @@ export default function Sidebar({ isOpen, onClose }) {
   }, [isOpen, onClose])
 
   const sidebarStyle = isRtl
-    ? { width: SIDEBAR_WIDTH, left: 0 }
-    : { width: SIDEBAR_WIDTH, right: 0 }
+    ? { width: SIDEBAR_WIDTH, right: 0 }
+    : { width: SIDEBAR_WIDTH, left: 0 }
 
   return (
     <>
@@ -162,12 +162,12 @@ export default function Sidebar({ isOpen, onClose }) {
           ${isOpen
             ? 'translate-x-0'
             : isRtl
-              ? '-translate-x-full md:translate-x-0'
-              : 'translate-x-full md:translate-x-0'}
+              ? 'translate-x-full md:translate-x-0'
+              : '-translate-x-full md:translate-x-0'}
         `}
         style={{
           ...sidebarStyle,
-          borderInlineStart: '1px solid var(--border-default)',
+          borderInlineEnd: '1px solid var(--border-default)',
           boxShadow: 'var(--shadow-sm)',
         }}
         aria-label={t('nav.mainNavigation')}
