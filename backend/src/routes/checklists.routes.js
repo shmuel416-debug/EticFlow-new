@@ -6,7 +6,8 @@
 
 import { Router } from 'express';
 import { z } from 'zod';
-import { authenticate, authorize } from '../middleware/auth.js';
+import { authenticate } from '../middleware/auth.js';
+import { authorize } from '../middleware/role.js';
 import { validate } from '../middleware/validate.js';
 import * as checklistsController from '../controllers/checklists.controller.js';
 
@@ -101,7 +102,7 @@ const submitReviewSchema = z.object({
 router.get(
   '/templates',
   authenticate,
-  authorize(['ADMIN']),
+  authorize('ADMIN'),
   checklistsController.listTemplates
 );
 
@@ -113,7 +114,7 @@ router.get(
 router.get(
   '/templates/:id',
   authenticate,
-  authorize(['ADMIN']),
+  authorize('ADMIN'),
   checklistsController.getTemplate
 );
 
@@ -125,7 +126,7 @@ router.get(
 router.post(
   '/templates',
   authenticate,
-  authorize(['ADMIN']),
+  authorize('ADMIN'),
   validate(createTemplateSchema),
   checklistsController.createTemplate
 );
@@ -138,7 +139,7 @@ router.post(
 router.put(
   '/templates/:id',
   authenticate,
-  authorize(['ADMIN']),
+  authorize('ADMIN'),
   validate(updateTemplateSchema),
   checklistsController.updateTemplate
 );
@@ -151,7 +152,7 @@ router.put(
 router.post(
   '/templates/:id/publish',
   authenticate,
-  authorize(['ADMIN']),
+  authorize('ADMIN'),
   checklistsController.publishTemplate
 );
 
@@ -168,7 +169,7 @@ router.post(
 router.post(
   '/reviews',
   authenticate,
-  authorize(['SECRETARY', 'ADMIN']),
+  authorize('SECRETARY', 'ADMIN'),
   validate(createReviewSchema),
   checklistsController.createChecklistReview
 );
@@ -181,7 +182,7 @@ router.post(
 router.get(
   '/reviews/:id',
   authenticate,
-  authorize(['REVIEWER', 'SECRETARY', 'ADMIN']),
+  authorize('REVIEWER', 'SECRETARY', 'ADMIN'),
   checklistsController.getChecklistReview
 );
 
@@ -193,7 +194,7 @@ router.get(
 router.put(
   '/reviews/:id',
   authenticate,
-  authorize(['REVIEWER', 'ADMIN']),
+  authorize('REVIEWER', 'ADMIN'),
   validate(updateResponsesSchema),
   checklistsController.updateChecklistResponses
 );
@@ -206,7 +207,7 @@ router.put(
 router.post(
   '/reviews/:id/submit',
   authenticate,
-  authorize(['REVIEWER', 'ADMIN']),
+  authorize('REVIEWER', 'ADMIN'),
   validate(submitReviewSchema),
   checklistsController.submitChecklistReview
 );
@@ -219,7 +220,7 @@ router.post(
 router.get(
   '/submission/:submissionId',
   authenticate,
-  authorize(['SECRETARY', 'ADMIN']),
+  authorize('SECRETARY', 'ADMIN'),
   checklistsController.getSubmissionReviews
 );
 
@@ -231,7 +232,7 @@ router.get(
 router.get(
   '/my-assignments',
   authenticate,
-  authorize(['REVIEWER']),
+  authorize('REVIEWER'),
   checklistsController.getMyChecklistAssignments
 );
 
