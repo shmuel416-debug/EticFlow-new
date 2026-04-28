@@ -27,6 +27,8 @@ import usersRouter         from './routes/users.routes.js'
 import documentsRouter     from './routes/documents.routes.js'
 import aiRouter            from './routes/ai.routes.js'
 import systemTemplatesRouter from './routes/systemTemplates.routes.js'
+import reviewerChecklistRouter from './routes/reviewerChecklist.routes.js'
+import checklistsRouter    from './routes/checklists.routes.js'
 import meetingsRouter      from './routes/meetings.routes.js'
 import protocolsRouter, { publicSignRouter } from './routes/protocols.routes.js'
 import reportsRouter, { auditLogsRouter } from './routes/reports.routes.js'
@@ -78,7 +80,9 @@ app.use('/api/submissions',   submissionsRouter)
 app.use('/api/notifications', notificationsRouter)
 app.use('/api/users',         usersRouter)
 app.use('/api/documents',         documentsRouter)
-app.use('/api/system-templates',  systemTemplatesRouter)
+app.use('/api/system-templates',    systemTemplatesRouter)
+app.use('/api/reviewer-checklist',  reviewerChecklistRouter)
+app.use('/api/checklists',         checklistsRouter)
 app.use('/api/ai',                aiRouter)
 app.use('/api/meetings',    meetingsRouter)
 app.use('/api/protocols',  protocolsRouter)
