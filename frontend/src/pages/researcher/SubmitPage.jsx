@@ -423,7 +423,22 @@ export default function SubmitPage() {
   const [successId,    setSuccessId]    = useState('')
   const [previewLang,  setPreviewLang]  = useState(lang)
 
-  const fields = useMemo(() => formMeta?.schemaJson?.fields ?? [], [formMeta])
+  const fields = useMemo(() => {
+    const schema = formMeta?.schemaJson
+    if (!schema || typeof schema !== 'object') return []
+
+    if (Array.isArray(schema.fields)) {
+      return schema.fields.filter(Boolean)
+    }
+
+    if (Array.isArray(schema.sections)) {
+      return schema.sections.flatMap((section) =>
+        Array.isArray(section?.fields) ? section.fields.filter(Boolean) : []
+      )
+    }
+
+    return []
+  }, [formMeta])
 
   const lastEditIdRef = useRef(editId)
 
