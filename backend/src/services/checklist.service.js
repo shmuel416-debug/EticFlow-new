@@ -6,8 +6,8 @@
  * DRAFT/SUBMITTED states separate from old submission status enum.
  */
 
-import { prisma } from '../db.js';
-import { AppError } from '../errors/AppError.js';
+import prisma from '../config/database.js';
+import { AppError } from '../utils/errors.js';
 
 /**
  * List all reviewer checklist templates with pagination
