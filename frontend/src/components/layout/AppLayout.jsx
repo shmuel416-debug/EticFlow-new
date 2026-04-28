@@ -25,8 +25,19 @@ export default function AppLayout() {
   const [unreadCount, setUnreadCount] = useState(0)
 
   function handleToggleSidebar() {
+    if (window.innerWidth >= 1024) return
     setSidebarOpen((prev) => !prev)
   }
+
+  useEffect(() => {
+    function closeDrawerOnDesktop() {
+      if (window.innerWidth >= 1024) {
+        setSidebarOpen(false)
+      }
+    }
+    window.addEventListener('resize', closeDrawerOnDesktop)
+    return () => window.removeEventListener('resize', closeDrawerOnDesktop)
+  }, [])
 
   useEffect(() => {
     let active = true
@@ -70,7 +81,7 @@ export default function AppLayout() {
               aria-label={t('pages.openMenu')}
               aria-expanded={sidebarOpen}
               aria-controls="app-sidebar"
-              className="md:hidden inline-flex items-center justify-center rounded-lg transition hover:bg-gray-100"
+              className="lg:hidden inline-flex items-center justify-center rounded-lg transition hover:bg-gray-100"
               style={{
                 minWidth: 44,
                 minHeight: 44,

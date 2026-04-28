@@ -145,7 +145,7 @@ export default function Sidebar({ isOpen, onClose }) {
     <>
       {isOpen && (
         <div
-          className="fixed inset-0 z-30 md:hidden"
+          className="fixed inset-0 z-30 lg:hidden"
           style={{ background: 'var(--surface-overlay)' }}
           onPointerDown={handleCloseDrawer}
           onClick={handleCloseDrawer}
@@ -156,14 +156,14 @@ export default function Sidebar({ isOpen, onClose }) {
       <aside
         id="app-sidebar"
         className={`
-          fixed top-0 bottom-0 z-40 flex flex-col bg-white
+          fixed top-0 bottom-0 z-40 flex flex-col bg-white shrink-0
           transition-transform duration-200 ease-out
-          md:static md:translate-x-0
+          lg:static lg:translate-x-0
           ${isOpen
             ? 'translate-x-0'
             : isRtl
-              ? 'translate-x-full md:translate-x-0'
-              : '-translate-x-full md:translate-x-0'}
+              ? 'translate-x-full lg:translate-x-0'
+              : '-translate-x-full lg:translate-x-0'}
         `}
         style={{
           ...sidebarStyle,
@@ -191,7 +191,7 @@ export default function Sidebar({ isOpen, onClose }) {
               type="button"
               onPointerDown={handleCloseDrawer}
               onClick={handleCloseDrawer}
-              className="md:hidden ms-auto text-white/90 hover:text-white inline-flex items-center justify-center rounded-lg"
+              className="lg:hidden ms-auto text-white/90 hover:text-white inline-flex items-center justify-center rounded-lg"
               aria-label={t('pages.closeMenu')}
               style={{ minWidth: 40, minHeight: 40 }}
             >
