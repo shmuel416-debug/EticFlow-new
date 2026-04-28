@@ -21,7 +21,7 @@ CREATE TYPE "ChecklistRecommendation" AS ENUM (
 -- ─────────────────────────────────────────────
 
 CREATE TABLE "reviewer_checklist_templates" (
-  "id"           UUID         NOT NULL DEFAULT gen_random_uuid(),
+  "id"           TEXT         NOT NULL,
   "name"         TEXT         NOT NULL,
   "name_en"      TEXT         NOT NULL,
   "version"      INTEGER      NOT NULL DEFAULT 1,
@@ -43,8 +43,8 @@ CREATE INDEX "reviewer_checklist_templates_is_active_track_idx"
 -- ─────────────────────────────────────────────
 
 CREATE TABLE "reviewer_checklist_sections" (
-  "id"            UUID                  NOT NULL DEFAULT gen_random_uuid(),
-  "template_id"   UUID                  NOT NULL,
+  "id"            TEXT                  NOT NULL,
+  "template_id"   TEXT                  NOT NULL,
   "code"          TEXT                  NOT NULL,
   "title"         TEXT                  NOT NULL,
   "title_en"      TEXT                  NOT NULL,
@@ -72,8 +72,8 @@ CREATE INDEX "reviewer_checklist_sections_template_order_idx"
 -- ─────────────────────────────────────────────
 
 CREATE TABLE "reviewer_checklist_items" (
-  "id"               UUID        NOT NULL DEFAULT gen_random_uuid(),
-  "section_id"       UUID        NOT NULL,
+  "id"               TEXT        NOT NULL,
+  "section_id"       TEXT        NOT NULL,
   "code"             TEXT        NOT NULL,
   "label"            TEXT        NOT NULL,
   "label_en"         TEXT        NOT NULL,
@@ -104,10 +104,10 @@ CREATE INDEX "reviewer_checklist_items_section_order_active_idx"
 -- ─────────────────────────────────────────────
 
 CREATE TABLE "reviewer_checklist_reviews" (
-  "id"                           UUID                     NOT NULL DEFAULT gen_random_uuid(),
-  "submission_id"                UUID                     NOT NULL,
-  "reviewer_id"                  UUID                     NOT NULL,
-  "template_id"                  UUID                     NOT NULL,
+  "id"                           TEXT                     NOT NULL,
+  "submission_id"                TEXT                     NOT NULL,
+  "reviewer_id"                  TEXT                     NOT NULL,
+  "template_id"                  TEXT                     NOT NULL,
   "status"                       "ChecklistReviewStatus"  NOT NULL DEFAULT 'DRAFT',
   "recommendation"               "ChecklistRecommendation",
   "general_note"                 TEXT,
@@ -143,9 +143,9 @@ CREATE INDEX "reviewer_checklist_reviews_reviewer_status_idx"
 -- ─────────────────────────────────────────────
 
 CREATE TABLE "reviewer_checklist_responses" (
-  "id"         UUID        NOT NULL DEFAULT gen_random_uuid(),
-  "review_id"  UUID        NOT NULL,
-  "item_id"    UUID        NOT NULL,
+  "id"         TEXT        NOT NULL,
+  "review_id"  TEXT        NOT NULL,
+  "item_id"    TEXT        NOT NULL,
   "item_code"  TEXT        NOT NULL,   -- snapshot for audit stability
   "answer"     TEXT        NOT NULL,   -- ADEQUATE | INADEQUATE | YES | NO | NA
   "details"    TEXT,
