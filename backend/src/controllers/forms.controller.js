@@ -275,3 +275,71 @@ export async function archive(req, res, next) {
     next(err)
   }
 }
+
+/**
+ * POST /api/forms/:id/duplicate
+ * Duplicates a form (creates new FormConfig from existing).
+ * Copies schema, instructions, attachments. SECRETARY and ADMIN only.
+ * @param {import('express').Request} req - params: { id }, body: { includeInstructions?, includeAttachments? }
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
+export async function duplicate(req, res, next) {
+  try {
+    const existing = await prisma.formConfig.findUnique({ where: { id: req.params.id } })
+    if (!existing) return next(AppError.notFound('Form'))
+
+    const { includeInstructions = true, includeAttachments = true } = req.body
+
+    const newName = `${existing.name} - העתק`
+    const newNameEn = `${existing.nameEn} - Copy`
+
+    const form = await prisma.formConfig.create({
+      data: {
+        name: newName,
+        nameEn: newNameEn,
+        schemaJson: existing.schemaJson,
+        instructionsHe: includeInstructions ? existing.instructionsHe : null,
+        instructionsEn: includeInstructions ? existing.instructionsEn : null,
+        attachmentsList: includeAttachments ? existing.attachmentsList : null,
+        isActive: true,
+        isPublished: false,
+        version: 1,
+        duplicatedFromId: existing.id,
+      },
+    })
+    res.locals.entityId = form.id
+    res.json({ form: withStatus(form) })
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
+ * PUT /api/forms/:id/instructions
+ * Updates form instructions and attachments list. SECRETARY and ADMIN only.
+ * @param {import('express').Request} req - params: { id }, body: { instructionsHe?, instructionsEn?, attachmentsList? }
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
+export async function updateInstructions(req, res, next) {
+  try {
+    const existing = await prisma.formConfig.findUnique({ where: { id: req.params.id } })
+    if (!existing) return next(AppError.notFound('Form'))
+
+    const { instructionsHe, instructionsEn, attachmentsList } = req.body
+
+    const form = await prisma.formConfig.update({
+      where: { id: req.params.id },
+      data: {
+        ...(instructionsHe !== undefined && { instructionsHe }),
+        ...(instructionsEn !== undefined && { instructionsEn }),
+        ...(attachmentsList !== undefined && { attachmentsList }),
+      },
+    })
+    res.locals.entityId = form.id
+    res.json({ form: withStatus(form) })
+  } catch (err) {
+    next(err)
+  }
+}

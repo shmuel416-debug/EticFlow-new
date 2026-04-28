@@ -146,6 +146,25 @@ enum CommitteeVoteDecision {
   ABSTAIN
 }
 
+enum ChecklistAnswerType {
+  ADEQUACY        // מספק / לא מספק
+  YES_NO          // כן / לא (informational)
+  YES_NO_PROBLEM  // כן / לא (yes = ethical problem)
+}
+
+enum ChecklistReviewStatus {
+  DRAFT
+  SUBMITTED
+}
+
+enum ChecklistRecommendation {
+  EXEMPT
+  APPROVED
+  APPROVED_CONDITIONAL
+  REVISION_REQUIRED
+  REJECTED
+}
+
 // ─────────────────────────────────────────────
 // 1. USER
 // ─────────────────────────────────────────────
@@ -190,8 +209,9 @@ model User {
   privacyConsents   PrivacyConsent[]
   dsrRequests       DataSubjectRequest[]
   submissionVotes   SubmissionVote[]
-  declaredConflicts ConflictDeclaration[] @relation("ConflictDeclarer")
-  targetConflicts   ConflictDeclaration[] @relation("ConflictTargetUser")
+  declaredConflicts    ConflictDeclaration[]        @relation("ConflictDeclarer")
+  targetConflicts      ConflictDeclaration[]        @relation("ConflictTargetUser")
+  checklistReviews     ReviewerChecklistReview[]    @relation("ReviewerChecklistReviews")
 
   @@map("users")
 }
@@ -238,19 +258,25 @@ model RefreshToken {
 // ─────────────────────────────────────────────
 
 model FormConfig {
-  id          String   @id @default(uuid())
-  name        String
-  nameEn      String   @map("name_en")
-  version     Int      @default(1)
-  schemaJson  Json     @map("schema_json")   // JSON Schema for dynamic rendering
-  isActive    Boolean  @default(true) @map("is_active")
-  isPublished Boolean  @default(false) @map("is_published")
-  publishedAt DateTime? @map("published_at")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id               String   @id @default(uuid())
+  name             String
+  nameEn           String   @map("name_en")
+  version          Int      @default(1)
+  schemaJson       Json     @map("schema_json")   // JSON Schema for dynamic rendering
+  instructionsHe   String?  @map("instructions_he") @db.Text
+  instructionsEn   String?  @map("instructions_en") @db.Text
+  attachmentsList  Json?    @map("attachments_list")  // [{id, name, nameEn, required, acceptedTypes[], note}]
+  isActive         Boolean  @default(true) @map("is_active")
+  isPublished      Boolean  @default(false) @map("is_published")
+  publishedAt      DateTime? @map("published_at")
+  duplicatedFromId String?  @map("duplicated_from_id")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
 
   // Relations
-  submissions Submission[]
+  submissions      Submission[]
+  duplicatedFrom   FormConfig?  @relation("FormDuplication", fields: [duplicatedFromId], references: [id], onDelete: SetNull)
+  duplicates       FormConfig[] @relation("FormDuplication")
 
   @@map("form_configs")
 }
@@ -287,8 +313,9 @@ model Submission {
   agendaItems  MeetingAgendaItem[]
   documents    Document[]
   statusConfig SubmissionStatus @relation("SubmissionStatusRelation", fields: [status], references: [code])
-  committeeVotes SubmissionVote[]
-  conflictDeclarations ConflictDeclaration[] @relation("ConflictTargetSubmission")
+  committeeVotes       SubmissionVote[]
+  conflictDeclarations ConflictDeclaration[]     @relation("ConflictTargetSubmission")
+  checklistReviews     ReviewerChecklistReview[]
 
   @@map("submissions")
 }
@@ -749,4 +776,170 @@ model ConflictDeclaration {
   @@index([targetUserId, isActive])
   @@index([scope, isActive])
   @@map("conflict_declarations")
+}
+
+// ─────────────────────────────────────────────
+// SYSTEM TEMPLATES
+// ─────────────────────────────────────────────
+
+model SystemTemplate {
+  id          String   @id @default(uuid())
+  key         String                         // "questionnaire_preface", extensible for future templates
+  lang        String                         // "he" or "en"
+  version     Int                            // 1, 2, 3... incrementing per key+lang combination
+  filename    String                         // original upload filename for display
+  storagePath String                         // STORAGE_PROVIDER path: templates/{key}/v{version}/{lang}.{ext}
+  mimeType    String                         // application/pdf or application/vnd.openxmlformats-officedocument.wordprocessingml.document
+  size        Int                            // bytes
+  isActive    Boolean  @default(true)        // false = archived version, true = current version per key+lang
+  uploadedBy  String                         @map("uploaded_by")
+  createdAt   DateTime @default(now())       @map("created_at")
+  updatedAt   DateTime @updatedAt            @map("updated_at")
+
+  uploader    User     @relation(fields: [uploadedBy], references: [id])
+
+  @@unique([key, lang, version])
+  @@index([key, lang, isActive])
+  @@index([key, isActive])
+  @@map("system_templates")
+}
+
+// ─────────────────────────────────────────────
+// REVIEWER CHECKLIST
+// ─────────────────────────────────────────────
+
+/**
+ * Master checklist template managed by Admin.
+ * track: null = applies to all tracks, otherwise "FULL" | "EXPEDITED" | "EXEMPT".
+ * Only one active template per track (null counts as its own track).
+ * Publishing a template deactivates the previous active one for the same track.
+ */
+model ReviewerChecklistTemplate {
+  id          String    @id @default(uuid())
+  name        String
+  nameEn      String    @map("name_en")
+  version     Int       @default(1)
+  track       String?                          // null = all tracks
+  isActive    Boolean   @default(false) @map("is_active")
+  isPublished Boolean   @default(false) @map("is_published")
+  publishedAt DateTime? @map("published_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  sections ReviewerChecklistSection[]
+  reviews  ReviewerChecklistReview[]
+
+  @@index([isActive, track])
+  @@map("reviewer_checklist_templates")
+}
+
+/**
+ * A section within a template (e.g. "Document Approval", "Ethical Issues").
+ * answerType controls what radio options appear for all items in this section.
+ * yesIsProblem: when true, a YES answer is highlighted as a problem (amber/red).
+ */
+model ReviewerChecklistSection {
+  id           String              @id @default(uuid())
+  templateId   String              @map("template_id")
+  code         String                               // "DOCS" | "ETHICS" | "SUMMARY"
+  title        String
+  titleEn      String              @map("title_en")
+  description  String?
+  answerType   ChecklistAnswerType @map("answer_type")
+  yesIsProblem Boolean             @default(false) @map("yes_is_problem")
+  orderIndex   Int                 @map("order_index")
+  createdAt    DateTime            @default(now()) @map("created_at")
+  updatedAt    DateTime            @updatedAt @map("updated_at")
+
+  template ReviewerChecklistTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  items    ReviewerChecklistItem[]
+
+  @@unique([templateId, code])
+  @@index([templateId, orderIndex])
+  @@map("reviewer_checklist_sections")
+}
+
+/**
+ * A single checklist item within a section.
+ * requiresDetails: when true, reviewer must fill a text field if answer is negative.
+ * conditional: JSON { dependsOn: "<itemCode>", showWhen: "YES" | "NO" | "ADEQUATE" | "INADEQUATE" }
+ * isActive: soft-delete only — items with existing responses must never be hard-deleted.
+ */
+model ReviewerChecklistItem {
+  id              String   @id @default(uuid())
+  sectionId       String   @map("section_id")
+  code            String
+  label           String
+  labelEn         String   @map("label_en")
+  helpText        String?  @map("help_text")
+  helpTextEn      String?  @map("help_text_en")
+  orderIndex      Int      @map("order_index")
+  isRequired      Boolean  @default(true) @map("is_required")
+  requiresDetails Boolean  @default(false) @map("requires_details")
+  conditional     Json?                             // { dependsOn, showWhen }
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  section   ReviewerChecklistSection      @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  responses ReviewerChecklistResponse[]
+
+  @@unique([sectionId, code])
+  @@index([sectionId, orderIndex, isActive])
+  @@map("reviewer_checklist_items")
+}
+
+/**
+ * One review per reviewer per submission.
+ * templateId is snapshotted at creation time so future template edits don't alter existing reviews.
+ * Summary fields (exemptConsent*, minors*) represent Section C conditional questions.
+ */
+model ReviewerChecklistReview {
+  id                        String                  @id @default(uuid())
+  submissionId              String                  @map("submission_id")
+  reviewerId                String                  @map("reviewer_id")
+  templateId                String                  @map("template_id")
+  status                    ChecklistReviewStatus   @default(DRAFT)
+  recommendation            ChecklistRecommendation?
+  generalNote               String?                 @map("general_note") @db.Text
+  exemptConsentRequested    Boolean?                @map("exempt_consent_requested")
+  exemptConsentReviewerView String?                 @map("exempt_consent_reviewer_view")  // "APPROVE" | "REJECT"
+  minorsBothParentsExempt   Boolean?                @map("minors_both_parents_exempt")
+  minorsExemptReviewerView  String?                 @map("minors_exempt_reviewer_view")   // "APPROVE" | "REJECT"
+  submittedAt               DateTime?               @map("submitted_at")
+  createdAt                 DateTime                @default(now()) @map("created_at")
+  updatedAt                 DateTime                @updatedAt @map("updated_at")
+
+  submission Submission                  @relation(fields: [submissionId], references: [id])
+  reviewer   User                        @relation("ReviewerChecklistReviews", fields: [reviewerId], references: [id])
+  template   ReviewerChecklistTemplate   @relation(fields: [templateId], references: [id])
+  responses  ReviewerChecklistResponse[]
+
+  @@unique([submissionId, reviewerId])
+  @@index([submissionId, status])
+  @@index([reviewerId, status])
+  @@map("reviewer_checklist_reviews")
+}
+
+/**
+ * One response per item per review.
+ * itemCode is snapshotted at save time for audit trail stability.
+ * answer values: "ADEQUATE" | "INADEQUATE" | "YES" | "NO" | "NA"
+ */
+model ReviewerChecklistResponse {
+  id       String   @id @default(uuid())
+  reviewId String   @map("review_id")
+  itemId   String   @map("item_id")
+  itemCode String   @map("item_code")              // snapshot of item.code
+  answer   String                                  // ADEQUATE | INADEQUATE | YES | NO | NA
+  details  String?  @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  review ReviewerChecklistReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  item   ReviewerChecklistItem   @relation(fields: [itemId], references: [id])
+
+  @@unique([reviewId, itemId])
+  @@index([reviewId])
+  @@map("reviewer_checklist_responses")
 }

@@ -14,6 +14,8 @@
 import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcryptjs'
 import { getDefaultApprovalTemplate } from '../src/constants/approvalTemplate.js'
+import { seedResearcherQuestionnaire } from './seeds/researcher-questionnaire.seed.js'
+import seedReviewerChecklist from './seeds/reviewer-checklist.seed.js'
 
 const prisma = new PrismaClient()
 
@@ -468,6 +470,8 @@ async function main() {
   await seedInstitutionSettings()
   const form  = await seedFormConfig()
   await seedSubmissions(users, form)
+  await seedResearcherQuestionnaire()
+  await seedReviewerChecklist()
 
   console.log('✅ Seed complete!')
 }

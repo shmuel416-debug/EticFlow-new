@@ -10,6 +10,8 @@
  * POST   /api/forms/:id/publish — publish form           (SECRETARY, ADMIN)
  * POST   /api/forms/:id/archive  — archive form           (SECRETARY, ADMIN)
  * POST   /api/forms/:id/restore  — restore archived form  (SECRETARY, ADMIN)
+ * POST   /api/forms/:id/duplicate — duplicate form         (SECRETARY, ADMIN)
+ * PUT    /api/forms/:id/instructions — update instructions (SECRETARY, ADMIN)
  */
 
 import { Router } from 'express'
@@ -39,6 +41,24 @@ const updateSchema = z.object({
   name:       z.string().min(2).transform(stripHtml).optional(),
   nameEn:     z.string().min(2).transform(stripHtml).optional(),
   schemaJson: z.record(z.unknown()).optional(),
+})
+
+const duplicateSchema = z.object({
+  includeInstructions: z.boolean().default(true),
+  includeAttachments: z.boolean().default(true),
+})
+
+const instructionsSchema = z.object({
+  instructionsHe: z.string().max(20000).optional(),
+  instructionsEn: z.string().max(20000).optional(),
+  attachmentsList: z.array(z.object({
+    id: z.string(),
+    name: z.string().min(1),
+    nameEn: z.string().min(1),
+    required: z.boolean(),
+    acceptedTypes: z.array(z.string()),
+    note: z.string().optional(),
+  })).optional(),
 })
 
 // ─────────────────────────────────────────────
@@ -119,6 +139,24 @@ router.post(
   authorize('SECRETARY', 'ADMIN'),
   auditLog('form.restore', 'FormConfig'),
   controller.restore
+)
+
+router.post(
+  '/:id/duplicate',
+  authenticate,
+  authorize('SECRETARY', 'ADMIN'),
+  validate(duplicateSchema),
+  auditLog('form.duplicate', 'FormConfig'),
+  controller.duplicate
+)
+
+router.put(
+  '/:id/instructions',
+  authenticate,
+  authorize('SECRETARY', 'ADMIN'),
+  validate(instructionsSchema),
+  auditLog('form.updateInstructions', 'FormConfig'),
+  controller.updateInstructions
 )
 
 export default router

@@ -1,5 +1,14 @@
 # EthicFlow — Sprint Log
 
+## Sprint 14 — Reviewer Checklist (Dynamic)
+
+| Date | Task | Status | Notes |
+|------|------|--------|-------|
+| 2026-04-28 | UI/UX Design — Admin + Reviewer surfaces | ✅ Done | עיצוב B נבחר לשני המשטחים. docs/designs/reviewer-checklist-design.html |
+| 2026-04-28 | Prisma schema — 5 models + 3 enums | ✅ Done | ReviewerChecklistTemplate/Section/Item/Review/Response + migration SQL + seed |
+
+---
+
 ## Sprint 12 — Dynamic Status Management
 
 | Date | Task | Status | Notes |

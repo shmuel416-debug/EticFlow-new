@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import api                from '../../services/api'
 import FormCard           from '../../components/formLibrary/FormCard'
+import DuplicateFormDialog from '../../components/formLibrary/DuplicateFormDialog'
 import {
   Button, StatCard, Tabs, Input, EmptyState, Skeleton, IconButton,
   PageHeader,
@@ -70,11 +71,13 @@ export default function FormLibraryPage() {
   const { t }    = useTranslation()
   const navigate = useNavigate()
 
-  const [forms,    setForms]    = useState([])
-  const [loading,  setLoading]  = useState(true)
-  const [error,    setError]    = useState('')
-  const [filter,   setFilter]   = useState('all')
-  const [search,   setSearch]   = useState('')
+  const [forms,              setForms]              = useState([])
+  const [loading,            setLoading]            = useState(true)
+  const [error,              setError]              = useState('')
+  const [filter,             setFilter]             = useState('all')
+  const [search,             setSearch]             = useState('')
+  const [duplicateFormId,    setDuplicateFormId]    = useState(null)
+  const [duplicateLoading,   setDuplicateLoading]   = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -132,6 +135,23 @@ export default function FormLibraryPage() {
       setError(t('errors.SERVER_ERROR'))
     }
   }, [t])
+
+  const handleDuplicate = useCallback((id) => {
+    setDuplicateFormId(id)
+  }, [])
+
+  const handleDuplicateConfirm = useCallback(async (options) => {
+    try {
+      setDuplicateLoading(true)
+      const { data } = await api.post(`/forms/${duplicateFormId}/duplicate`, options)
+      setForms(prev => [data.form, ...prev])
+      setDuplicateFormId(null)
+    } catch (err) {
+      throw new Error(t('errors.SERVER_ERROR'))
+    } finally {
+      setDuplicateLoading(false)
+    }
+  }, [duplicateFormId, t])
 
   const tabItems = FILTERS.map((f) => ({
     key: f,
@@ -281,12 +301,23 @@ export default function FormLibraryPage() {
                     onPreview={handlePreview}
                     onArchive={handleArchive}
                     onRestore={handleRestore}
+                    onDuplicate={handleDuplicate}
                   />
                 </div>
               ))}
             </div>
           )}
         </section>
+
+        {duplicateFormId && (
+          <DuplicateFormDialog
+            isOpen={!!duplicateFormId}
+            form={forms.find(f => f.id === duplicateFormId)}
+            onConfirm={handleDuplicateConfirm}
+            onCancel={() => setDuplicateFormId(null)}
+            loading={duplicateLoading}
+          />
+        )}
       </div>
     </>
   )

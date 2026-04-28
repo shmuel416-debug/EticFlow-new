@@ -6,7 +6,7 @@
  */
 
 import { useTranslation } from 'react-i18next'
-import { Pencil, Eye, Archive, RotateCcw } from 'lucide-react'
+import { Pencil, Eye, Archive, RotateCcw, Copy } from 'lucide-react'
 
 /** Top border color per status */
 const STATUS_BORDER = {
@@ -43,9 +43,10 @@ function StatusBadge({ status }) {
  *   onPreview:   (id: string) => void,
  *   onArchive:   (id: string) => void,
  *   onRestore:   (id: string) => void,
+ *   onDuplicate: (id: string) => void,
  * }} props
  */
-export default function FormCard({ form, onEdit, onPreview, onArchive, onRestore }) {
+export default function FormCard({ form, onEdit, onPreview, onArchive, onRestore, onDuplicate }) {
   const { t, i18n } = useTranslation()
   const isRtl      = i18n.language === 'he'
   const isArchived = form.status === 'archived'
@@ -109,6 +110,17 @@ export default function FormCard({ form, onEdit, onPreview, onArchive, onRestore
               aria-label={`${t('secretary.formLibrary.actionPreview')} — ${displayName}`}>
               <Eye size={14} strokeWidth={2} aria-hidden="true" focusable="false" />
               {t('secretary.formLibrary.actionPreview')}
+            </button>
+          )}
+
+          {!isArchived && (
+            <button type="button" onClick={() => onDuplicate(form.id)}
+              className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 text-xs font-semibold border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+              style={{ color: 'var(--lev-teal-text)', minHeight: '44px' }}
+              aria-label={`${t('secretary.formLibrary.actionDuplicate')} — ${displayName}`}
+              data-testid={`duplicate-form-${form.id}`}>
+              <Copy size={14} strokeWidth={2} aria-hidden="true" focusable="false" />
+              {t('secretary.formLibrary.actionDuplicate')}
             </button>
           )}
 

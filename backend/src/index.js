@@ -26,6 +26,7 @@ import notificationsRouter from './routes/notifications.routes.js'
 import usersRouter         from './routes/users.routes.js'
 import documentsRouter     from './routes/documents.routes.js'
 import aiRouter            from './routes/ai.routes.js'
+import systemTemplatesRouter from './routes/systemTemplates.routes.js'
 import meetingsRouter      from './routes/meetings.routes.js'
 import protocolsRouter, { publicSignRouter } from './routes/protocols.routes.js'
 import reportsRouter, { auditLogsRouter } from './routes/reports.routes.js'
@@ -76,8 +77,9 @@ app.use('/api/forms', formsRouter)
 app.use('/api/submissions',   submissionsRouter)
 app.use('/api/notifications', notificationsRouter)
 app.use('/api/users',         usersRouter)
-app.use('/api/documents',    documentsRouter)
-app.use('/api/ai',           aiRouter)
+app.use('/api/documents',         documentsRouter)
+app.use('/api/system-templates',  systemTemplatesRouter)
+app.use('/api/ai',                aiRouter)
 app.use('/api/meetings',    meetingsRouter)
 app.use('/api/protocols',  protocolsRouter)
 app.use('/api/protocol',   publicSignRouter)  // Public sign endpoint (no auth)
