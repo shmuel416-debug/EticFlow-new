@@ -74,7 +74,9 @@ export default function App() {
                 <Route path="/settings"      element={<SettingsPage />} />
               </Route>
               <Route path="/notifications"   element={<NotificationsPage />} />
-              <Route path="/profile/coi"     element={<CoiPage />} />
+              <Route element={<ProtectedRoute roles={['SECRETARY', 'REVIEWER', 'CHAIRMAN', 'ADMIN']} />}>
+                <Route path="/profile/coi"   element={<CoiPage />} />
+              </Route>
               <Route path="/privacy"         element={<PrivacyCenterPage />} />
 
               {/* Meetings — SECRETARY, CHAIRMAN, ADMIN */}

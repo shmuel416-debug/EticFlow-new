@@ -654,12 +654,14 @@
     },
     "fields": {
       "submissionId": "Submission ID",
-      "userId": "User ID",
+      "userId": "Researcher ID",
+      "userIdPlaceholder": "e.g. 550e8400-e29b-41d4-a716-446655440000",
+      "userIdHint": "Enter the researcher's internal User ID from the Users management screen. This is the user you have a conflict with.",
       "department": "Department"
     },
     "page": {
       "title": "Conflict management",
-      "subtitle": "Declare and prevent assignments when you have a conflict",
+      "subtitle": "Committee members only: declare conflicts and prevent conflicting assignments",
       "list": "Active declarations",
       "empty": "No active declarations"
     }

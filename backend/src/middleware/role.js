@@ -21,7 +21,13 @@ import { AppError } from '../utils/errors.js'
 export function authorize(...roles) {
   return (req, res, next) => {
     if (!req.user) return next(AppError.unauthorized())
-    if (!roles.some((role) => req.user.roles?.includes(role))) return next(AppError.forbidden())
+    const activeRole = req.user.activeRole || req.user.role
+    if (typeof activeRole === 'string') {
+      if (!roles.includes(activeRole)) return next(AppError.forbidden())
+      return next()
+    }
+    const hasAllowedLegacyRole = roles.some((role) => req.user.roles?.includes(role))
+    if (!hasAllowedLegacyRole) return next(AppError.forbidden())
     next()
   }
 }

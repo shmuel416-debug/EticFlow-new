@@ -33,7 +33,7 @@ const NAV_ITEMS = [
   { key: 'notifications',        icon: Bell,          path: '/notifications',          roles: ['RESEARCHER','SECRETARY','REVIEWER','CHAIRMAN','ADMIN'] },
   { key: 'privacy',              icon: Shield,        path: '/privacy',                roles: ['RESEARCHER','SECRETARY','REVIEWER','CHAIRMAN','ADMIN'] },
   { key: 'accessibilityStatement', icon: Accessibility, path: '/accessibility-statement', roles: ['RESEARCHER','SECRETARY','REVIEWER','CHAIRMAN','ADMIN'] },
-  { key: 'coi',                  labelKey: 'coi.page.title', icon: AlertTriangle, path: '/profile/coi',            roles: ['RESEARCHER','SECRETARY','REVIEWER','CHAIRMAN','ADMIN'] },
+  { key: 'coi',                  labelKey: 'coi.page.title', icon: AlertTriangle, path: '/profile/coi',            roles: ['SECRETARY','REVIEWER','CHAIRMAN','ADMIN'] },
   { key: 'users',                icon: Users,         path: '/users',                  roles: ['ADMIN'] },
   { key: 'reports',              icon: BarChart3,     path: '/reports',                roles: ['SECRETARY','CHAIRMAN','ADMIN'] },
   { key: 'auditLog',             icon: Search,        path: '/reports/audit-log',      roles: ['ADMIN'], indent: true },

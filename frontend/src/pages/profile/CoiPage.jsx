@@ -180,13 +180,15 @@ export default function CoiPage() {
             {showUser && (
               <FormField
                 label={t('coi.fields.userId')}
+                hint={t('coi.fields.userIdHint')}
                 render={({ inputId, describedBy }) => (
                   <Input
                     id={inputId}
                     aria-describedby={describedBy}
                     value={form.targetUserId}
                     onChange={(event) => setForm((prev) => ({ ...prev, targetUserId: event.target.value }))}
-                    placeholder={t('coi.fields.userId')}
+                    placeholder={t('coi.fields.userIdPlaceholder')}
+                    dir="ltr"
                   />
                 )}
               />

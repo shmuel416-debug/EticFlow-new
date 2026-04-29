@@ -5,6 +5,7 @@
 import { Router } from 'express'
 import { z } from 'zod'
 import { authenticate } from '../middleware/auth.js'
+import { authorize } from '../middleware/role.js'
 import { validate, validateQuery } from '../middleware/validate.js'
 import { auditLog } from '../middleware/audit.js'
 import * as controller from '../controllers/coi.controller.js'
@@ -24,9 +25,9 @@ const checkQuerySchema = z.object({
   submissionId: z.string().uuid(),
 })
 
-router.get('/', authenticate, controller.listMine)
-router.post('/', authenticate, validate(createSchema), auditLog('coi.declared', 'ConflictDeclaration'), controller.create)
-router.delete('/:id', authenticate, auditLog('coi.revoked', 'ConflictDeclaration'), controller.remove)
-router.get('/check', authenticate, validateQuery(checkQuerySchema), controller.check)
+router.get('/', authenticate, authorize('SECRETARY', 'REVIEWER', 'CHAIRMAN', 'ADMIN'), controller.listMine)
+router.post('/', authenticate, authorize('SECRETARY', 'REVIEWER', 'CHAIRMAN', 'ADMIN'), validate(createSchema), auditLog('coi.declared', 'ConflictDeclaration'), controller.create)
+router.delete('/:id', authenticate, authorize('SECRETARY', 'REVIEWER', 'CHAIRMAN', 'ADMIN'), auditLog('coi.revoked', 'ConflictDeclaration'), controller.remove)
+router.get('/check', authenticate, authorize('SECRETARY', 'REVIEWER', 'CHAIRMAN', 'ADMIN'), validateQuery(checkQuerySchema), controller.check)
 
 export default router
