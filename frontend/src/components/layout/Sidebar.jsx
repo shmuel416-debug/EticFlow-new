@@ -7,7 +7,7 @@
  */
 
 import { useEffect } from 'react'
-import { NavLink, useNavigate } from 'react-router-dom'
+import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import levLogo from '../../assets/LOGO.jpg'
@@ -49,12 +49,15 @@ const SIDEBAR_WIDTH = 240
  * Nav item renderer — consistent styling, gold accent when active.
  * @param {{ item: typeof NAV_ITEMS[number], onNavigate: () => void }} props
  */
-function NavItem({ item, onNavigate }) {
+function NavItem({ item, onNavigate, fromPath }) {
   const { t } = useTranslation()
   const Icon = item.icon
+  const target = item.key === 'accessibilityStatement'
+    ? { pathname: item.path, state: { from: fromPath } }
+    : item.path
   return (
     <NavLink
-      to={item.path}
+      to={target}
       end={item.path === '/dashboard'}
       onClick={onNavigate}
       className={({ isActive }) => [
@@ -111,6 +114,7 @@ function NavItem({ item, onNavigate }) {
 export default function Sidebar({ isOpen, onClose }) {
   const { t, i18n } = useTranslation()
   const { user, logout, isImpersonating, impersonation } = useAuth()
+  const location = useLocation()
   const navigate = useNavigate()
   const isRtl = i18n.dir() === 'rtl'
   const activeRole = user?.activeRole || user?.role
@@ -214,7 +218,7 @@ export default function Sidebar({ isOpen, onClose }) {
           aria-label={t('nav.mainNavigation')}
         >
           {mainItems.map((item) => (
-            <NavItem key={item.key} item={item} onNavigate={onClose} />
+            <NavItem key={item.key} item={item} onNavigate={onClose} fromPath={`${location.pathname}${location.search}`} />
           ))}
 
           {settingsItem && (
@@ -225,7 +229,7 @@ export default function Sidebar({ isOpen, onClose }) {
               >
                 {t('nav.system')}
               </p>
-              <NavItem item={settingsItem} onNavigate={onClose} />
+              <NavItem item={settingsItem} onNavigate={onClose} fromPath={`${location.pathname}${location.search}`} />
             </div>
           )}
         </nav>

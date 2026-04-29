@@ -9,10 +9,11 @@
  *   - תקנות שוויון זכויות לאנשים עם מוגבלות (התאמות נגישות לשירות), תשע"ג-2013
  */
 
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ArrowRight, ArrowLeft, Mail, Shield, CheckCircle2, AlertTriangle } from 'lucide-react'
 import { Button, LanguageSwitcher } from '../components/ui'
+import { useAuth } from '../context/AuthContext'
 import levLogo from '../assets/LOGO.jpg'
 
 const LAST_UPDATED = '2026-04-23'
@@ -25,6 +26,12 @@ const COMMITTEE_EMAIL = 'ethics@jct.ac.il'
  */
 export default function AccessibilityStatementPage() {
   const { t, i18n } = useTranslation()
+  const { user } = useAuth()
+  const location = useLocation()
+  const backTo = typeof location.state?.from === 'string'
+    ? location.state.from
+    : (user ? '/dashboard' : '/login')
+  const backLabel = user ? t('common.back') : 'חזרה לדף הכניסה'
   const isRtl = i18n.dir() === 'rtl'
   const BackIcon = isRtl ? ArrowLeft : ArrowRight
 
@@ -199,12 +206,12 @@ export default function AccessibilityStatementPage() {
 
               <div className="pt-6 flex flex-wrap items-center gap-3" style={{ borderTop: '1px solid var(--border-subtle)' }}>
                 <Link
-                  to="/login"
+                  to={backTo}
                   className="text-sm font-semibold hover:underline inline-flex items-center gap-1.5"
                   style={{ color: 'var(--lev-teal-text)' }}
                 >
                   <BackIcon size={16} strokeWidth={2} aria-hidden="true" focusable="false" />
-                  חזרה לדף הכניסה
+                  {backLabel}
                 </Link>
                 <a
                   href={`mailto:${CONTACT_EMAIL}`}
