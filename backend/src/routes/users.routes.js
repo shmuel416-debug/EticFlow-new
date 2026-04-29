@@ -4,6 +4,7 @@
  * Public to staff:
  *   GET  /api/users/reviewers          — reviewer list (SECRETARY, CHAIRMAN, ADMIN)
  *   GET  /api/users/researchers        — COI researcher selector (committee)
+ *   GET  /api/users/departments        — COI department selector (committee)
  *
  * Admin management:
  *   GET    /api/admin/users                      — list all users
@@ -66,6 +67,11 @@ const researchersQuerySchema = z.object({
   limit: z.string().regex(/^\d+$/).optional(),
 })
 
+const departmentsQuerySchema = z.object({
+  search: z.string().max(200).optional(),
+  limit: z.string().regex(/^\d+$/).optional(),
+})
+
 // ─────────────────────────────────────────────
 // ROUTES — STAFF (reviewer dropdown)
 // ─────────────────────────────────────────────
@@ -91,6 +97,14 @@ router.get(
   authorize('SECRETARY', 'REVIEWER', 'CHAIRMAN', 'ADMIN'),
   validateQuery(researchersQuerySchema),
   controller.listResearchers
+)
+
+router.get(
+  '/departments',
+  authenticate,
+  authorize('SECRETARY', 'REVIEWER', 'CHAIRMAN', 'ADMIN'),
+  validateQuery(departmentsQuerySchema),
+  controller.listDepartments
 )
 
 // ─────────────────────────────────────────────

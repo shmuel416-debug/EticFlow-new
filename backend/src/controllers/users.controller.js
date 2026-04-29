@@ -5,6 +5,7 @@
  * Endpoints:
  *   GET  /api/users/reviewers          — list reviewers (SECRETARY, CHAIRMAN, ADMIN)
  *   GET  /api/users/researchers        — list researcher candidates for COI (committee)
+ *   GET  /api/users/departments        — list departments for COI (committee)
  *   GET  /api/admin/users              — list all users (ADMIN)
  *   POST /api/admin/users              — create user (ADMIN)
  *   PUT  /api/admin/users/:id          — update user (ADMIN)
@@ -126,6 +127,42 @@ export async function listResearchers(req, res, next) {
       orderBy: { fullName: 'asc' },
       take: limit,
     })
+    res.json({ data })
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
+ * GET /api/users/departments
+ * Returns distinct active researcher departments for COI DEPARTMENT-scope selection.
+ * @param {import('express').Request} req - query: { search?, limit? }
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
+export async function listDepartments(req, res, next) {
+  try {
+    const search = typeof req.query.search === 'string' ? req.query.search.trim() : ''
+    const limitRaw = Number.parseInt(String(req.query.limit ?? '30'), 10)
+    const limit = Number.isFinite(limitRaw) ? Math.min(Math.max(limitRaw, 1), 100) : 30
+    const where = {
+      isActive: true,
+      NOT: { roles: { hasSome: COMMITTEE_ROLES } },
+      department: { not: null },
+    }
+    if (search) {
+      where.department = { contains: search, mode: 'insensitive', not: null }
+    }
+    const rows = await prisma.user.findMany({
+      where,
+      select: { department: true },
+      distinct: ['department'],
+      orderBy: { department: 'asc' },
+      take: limit,
+    })
+    const data = rows
+      .map((row) => String(row.department || '').trim())
+      .filter(Boolean)
     res.json({ data })
   } catch (err) {
     next(err)

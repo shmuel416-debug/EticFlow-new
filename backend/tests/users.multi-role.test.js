@@ -19,7 +19,7 @@ jest.unstable_mockModule('../src/config/database.js', () => ({
 }))
 jest.unstable_mockModule('../src/services/coi.service.js', () => coiServiceMock)
 
-const { listReviewers, listResearchers } = await import('../src/controllers/users.controller.js')
+const { listReviewers, listResearchers, listDepartments } = await import('../src/controllers/users.controller.js')
 
 function makeContext(query = {}) {
   const req = { query, user: { id: 'sec-1' } }
@@ -116,6 +116,32 @@ describe('users.controller listResearchers', () => {
         }),
       ]),
     })
+    expect(next).not.toHaveBeenCalled()
+  })
+})
+
+describe('users.controller listDepartments', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+    prismaMock.user.findMany.mockResolvedValue([
+      { department: 'Computer Science' },
+      { department: 'Psychology' },
+    ])
+  })
+
+  test('returns filtered distinct departments with bounded limit', async () => {
+    const { req, res, next } = makeContext({ search: 'comp', limit: '999' })
+    await listDepartments(req, res, next)
+    expect(prismaMock.user.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({
+        isActive: true,
+        NOT: { roles: { hasSome: ['SECRETARY', 'REVIEWER', 'CHAIRMAN', 'ADMIN'] } },
+        department: expect.objectContaining({ contains: 'comp', mode: 'insensitive' }),
+      }),
+      distinct: ['department'],
+      take: 100,
+    }))
+    expect(res.json).toHaveBeenCalledWith({ data: ['Computer Science', 'Psychology'] })
     expect(next).not.toHaveBeenCalled()
   })
 })

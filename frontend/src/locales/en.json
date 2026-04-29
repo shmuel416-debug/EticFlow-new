@@ -661,7 +661,13 @@
       "userSelectPlaceholder": "Select a researcher",
       "userOptionsLoading": "Loading researchers...",
       "userNoResults": "No matching researchers found",
-      "department": "Department"
+      "department": "Department",
+      "departmentHint": "The researcher's academic department (e.g. Computer Science, Psychology, Electrical Engineering).",
+      "departmentSearchLabel": "Search department",
+      "departmentSearchPlaceholder": "Search department...",
+      "departmentSelectPlaceholder": "Select a department",
+      "departmentOptionsLoading": "Loading departments...",
+      "departmentNoResults": "No matching departments found"
     },
     "page": {
       "title": "Conflict management",

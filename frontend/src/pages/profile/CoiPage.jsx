@@ -61,6 +61,9 @@ export default function CoiPage() {
   const [researcherQuery, setResearcherQuery] = useState('')
   const [researcherOptions, setResearcherOptions] = useState([])
   const [researchersLoading, setResearchersLoading] = useState(false)
+  const [departmentQuery, setDepartmentQuery] = useState('')
+  const [departmentOptions, setDepartmentOptions] = useState([])
+  const [departmentsLoading, setDepartmentsLoading] = useState(false)
   const [form, setForm] = useState({
     scope: 'SUBMISSION',
     targetSubmissionId: '',
@@ -142,6 +145,30 @@ export default function CoiPage() {
       clearTimeout(timeoutId)
     }
   }, [researcherQuery, showUser])
+
+  useEffect(() => {
+    if (!showDepartment) return
+    let cancelled = false
+    const timeoutId = setTimeout(async () => {
+      setDepartmentsLoading(true)
+      try {
+        const query = new URLSearchParams({
+          limit: '30',
+          ...(departmentQuery.trim() ? { search: departmentQuery.trim() } : {}),
+        })
+        const { data } = await api.get(`/users/departments?${query.toString()}`)
+        if (!cancelled) setDepartmentOptions(data.data ?? [])
+      } catch {
+        if (!cancelled) setDepartmentOptions([])
+      } finally {
+        if (!cancelled) setDepartmentsLoading(false)
+      }
+    }, 250)
+    return () => {
+      cancelled = true
+      clearTimeout(timeoutId)
+    }
+  }, [departmentQuery, showDepartment])
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -249,14 +276,41 @@ export default function CoiPage() {
             {showDepartment && (
               <FormField
                 label={t('coi.fields.department')}
+                hint={t('coi.fields.departmentHint')}
                 render={({ inputId, describedBy }) => (
-                  <Input
-                    id={inputId}
-                    aria-describedby={describedBy}
-                    value={form.targetDepartment}
-                    onChange={(event) => setForm((prev) => ({ ...prev, targetDepartment: event.target.value }))}
-                    placeholder={t('coi.fields.department')}
-                  />
+                  <div className="space-y-2">
+                    <Input
+                      icon={Search}
+                      type="search"
+                      value={departmentQuery}
+                      onChange={(event) => setDepartmentQuery(event.target.value)}
+                      placeholder={t('coi.fields.departmentSearchPlaceholder')}
+                      aria-label={t('coi.fields.departmentSearchLabel')}
+                    />
+                    <Select
+                      id={inputId}
+                      aria-describedby={describedBy}
+                      value={form.targetDepartment}
+                      onChange={(event) => setForm((prev) => ({ ...prev, targetDepartment: event.target.value }))}
+                      disabled={departmentsLoading}
+                    >
+                      <option value="">
+                        {departmentsLoading
+                          ? t('coi.fields.departmentOptionsLoading')
+                          : t('coi.fields.departmentSelectPlaceholder')}
+                      </option>
+                      {departmentOptions.map((department) => (
+                        <option key={department} value={department}>
+                          {department}
+                        </option>
+                      ))}
+                    </Select>
+                    {!departmentsLoading && departmentOptions.length === 0 && (
+                      <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                        {t('coi.fields.departmentNoResults')}
+                      </p>
+                    )}
+                  </div>
                 )}
               />
             )}

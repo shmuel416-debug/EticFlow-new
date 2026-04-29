@@ -661,7 +661,13 @@
       "userSelectPlaceholder": "בחר חוקר מהרשימה",
       "userOptionsLoading": "טוען חוקרים...",
       "userNoResults": "לא נמצאו חוקרים מתאימים",
-      "department": "מחלקה"
+      "department": "מחלקה",
+      "departmentHint": "מחלקה אקדמית של החוקר/ת (למשל: מדעי המחשב, פסיכולוגיה, הנדסת חשמל).",
+      "departmentSearchLabel": "חיפוש מחלקה",
+      "departmentSearchPlaceholder": "חיפוש מחלקה...",
+      "departmentSelectPlaceholder": "בחר מחלקה מהרשימה",
+      "departmentOptionsLoading": "טוען מחלקות...",
+      "departmentNoResults": "לא נמצאו מחלקות מתאימות"
     },
     "page": {
       "title": "ניהול ניגוד עניינים",
