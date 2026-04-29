@@ -655,8 +655,12 @@
     "fields": {
       "submissionId": "Submission ID",
       "userId": "Researcher ID",
-      "userIdPlaceholder": "e.g. 550e8400-e29b-41d4-a716-446655440000",
       "userIdHint": "Enter the researcher's internal User ID from the Users management screen. This is the user you have a conflict with.",
+      "userSearchLabel": "Search researcher by name or email",
+      "userSearchPlaceholder": "Search researcher...",
+      "userSelectPlaceholder": "Select a researcher",
+      "userOptionsLoading": "Loading researchers...",
+      "userNoResults": "No matching researchers found",
       "department": "Department"
     },
     "page": {

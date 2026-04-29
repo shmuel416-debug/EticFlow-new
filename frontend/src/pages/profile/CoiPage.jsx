@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next'
 import {
   AlertTriangle,
   Plus,
+  Search,
   Trash2,
   ShieldAlert,
 } from 'lucide-react'
@@ -57,6 +58,9 @@ export default function CoiPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
+  const [researcherQuery, setResearcherQuery] = useState('')
+  const [researcherOptions, setResearcherOptions] = useState([])
+  const [researchersLoading, setResearchersLoading] = useState(false)
   const [form, setForm] = useState({
     scope: 'SUBMISSION',
     targetSubmissionId: '',
@@ -114,6 +118,30 @@ export default function CoiPage() {
   const showSubmission = form.scope === 'SUBMISSION'
   const showUser       = form.scope === 'USER'
   const showDepartment = form.scope === 'DEPARTMENT'
+
+  useEffect(() => {
+    if (!showUser) return
+    let cancelled = false
+    const timeoutId = setTimeout(async () => {
+      setResearchersLoading(true)
+      try {
+        const query = new URLSearchParams({
+          limit: '20',
+          ...(researcherQuery.trim() ? { search: researcherQuery.trim() } : {}),
+        })
+        const { data } = await api.get(`/users/researchers?${query.toString()}`)
+        if (!cancelled) setResearcherOptions(data.data ?? [])
+      } catch {
+        if (!cancelled) setResearcherOptions([])
+      } finally {
+        if (!cancelled) setResearchersLoading(false)
+      }
+    }, 250)
+    return () => {
+      cancelled = true
+      clearTimeout(timeoutId)
+    }
+  }, [researcherQuery, showUser])
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -182,14 +210,39 @@ export default function CoiPage() {
                 label={t('coi.fields.userId')}
                 hint={t('coi.fields.userIdHint')}
                 render={({ inputId, describedBy }) => (
-                  <Input
-                    id={inputId}
-                    aria-describedby={describedBy}
-                    value={form.targetUserId}
-                    onChange={(event) => setForm((prev) => ({ ...prev, targetUserId: event.target.value }))}
-                    placeholder={t('coi.fields.userIdPlaceholder')}
-                    dir="ltr"
-                  />
+                  <div className="space-y-2">
+                    <Input
+                      icon={Search}
+                      type="search"
+                      value={researcherQuery}
+                      onChange={(event) => setResearcherQuery(event.target.value)}
+                      placeholder={t('coi.fields.userSearchPlaceholder')}
+                      aria-label={t('coi.fields.userSearchLabel')}
+                    />
+                    <Select
+                      id={inputId}
+                      aria-describedby={describedBy}
+                      value={form.targetUserId}
+                      onChange={(event) => setForm((prev) => ({ ...prev, targetUserId: event.target.value }))}
+                      disabled={researchersLoading}
+                    >
+                      <option value="">
+                        {researchersLoading
+                          ? t('coi.fields.userOptionsLoading')
+                          : t('coi.fields.userSelectPlaceholder')}
+                      </option>
+                      {researcherOptions.map((user) => (
+                        <option key={user.id} value={user.id}>
+                          {`${user.fullName} (${user.email})`}
+                        </option>
+                      ))}
+                    </Select>
+                    {!researchersLoading && researcherOptions.length === 0 && (
+                      <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                        {t('coi.fields.userNoResults')}
+                      </p>
+                    )}
+                  </div>
                 )}
               />
             )}

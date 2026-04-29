@@ -19,7 +19,7 @@ jest.unstable_mockModule('../src/config/database.js', () => ({
 }))
 jest.unstable_mockModule('../src/services/coi.service.js', () => coiServiceMock)
 
-const { listReviewers } = await import('../src/controllers/users.controller.js')
+const { listReviewers, listResearchers } = await import('../src/controllers/users.controller.js')
 
 function makeContext(query = {}) {
   const req = { query, user: { id: 'sec-1' } }
@@ -80,6 +80,42 @@ describe('users.controller listReviewers multi-role', () => {
     const { req, res, next } = makeContext({ submissionId: 'sub-1' })
     await listReviewers(req, res, next)
     expect(coiServiceMock.mapReviewerConflicts).toHaveBeenCalledWith(expect.any(Array), 'sub-1')
+    expect(next).not.toHaveBeenCalled()
+  })
+})
+
+describe('users.controller listResearchers', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+    prismaMock.user.findMany.mockResolvedValue([
+      {
+        id: 'u-r1',
+        fullName: 'Researcher One',
+        email: 'r1@test.com',
+        department: 'Biology',
+      },
+    ])
+  })
+
+  test('returns non-committee active researchers with bounded limit', async () => {
+    const { req, res, next } = makeContext({ search: 'research', limit: '200' })
+    await listResearchers(req, res, next)
+    expect(prismaMock.user.findMany).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({
+        isActive: true,
+        NOT: { roles: { hasSome: ['SECRETARY', 'REVIEWER', 'CHAIRMAN', 'ADMIN'] } },
+        OR: expect.any(Array),
+      }),
+      take: 100,
+    }))
+    expect(res.json).toHaveBeenCalledWith({
+      data: expect.arrayContaining([
+        expect.objectContaining({
+          id: 'u-r1',
+          fullName: 'Researcher One',
+        }),
+      ]),
+    })
     expect(next).not.toHaveBeenCalled()
   })
 })

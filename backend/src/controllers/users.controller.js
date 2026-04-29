@@ -4,6 +4,7 @@
  *
  * Endpoints:
  *   GET  /api/users/reviewers          — list reviewers (SECRETARY, CHAIRMAN, ADMIN)
+ *   GET  /api/users/researchers        — list researcher candidates for COI (committee)
  *   GET  /api/admin/users              — list all users (ADMIN)
  *   POST /api/admin/users              — create user (ADMIN)
  *   PUT  /api/admin/users/:id          — update user (ADMIN)
@@ -92,6 +93,40 @@ export async function listSigners(req, res, next) {
     })
 
     res.json({ data: signers })
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
+ * GET /api/users/researchers
+ * Returns active non-committee researchers for COI USER-scope selection.
+ * @param {import('express').Request} req - query: { search?, limit? }
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
+export async function listResearchers(req, res, next) {
+  try {
+    const search = typeof req.query.search === 'string' ? req.query.search.trim() : ''
+    const limitRaw = Number.parseInt(String(req.query.limit ?? '20'), 10)
+    const limit = Number.isFinite(limitRaw) ? Math.min(Math.max(limitRaw, 1), 100) : 20
+    const where = {
+      isActive: true,
+      NOT: { roles: { hasSome: COMMITTEE_ROLES } },
+    }
+    if (search) {
+      where.OR = [
+        { fullName: { contains: search, mode: 'insensitive' } },
+        { email: { contains: search, mode: 'insensitive' } },
+      ]
+    }
+    const data = await prisma.user.findMany({
+      where,
+      select: { id: true, fullName: true, email: true, department: true },
+      orderBy: { fullName: 'asc' },
+      take: limit,
+    })
+    res.json({ data })
   } catch (err) {
     next(err)
   }
