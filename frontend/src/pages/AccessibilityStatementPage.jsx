@@ -1,46 +1,72 @@
 /**
  * EthicFlow — Accessibility Statement (הצהרת נגישות)
- * Mandatory under Israeli IS 5568 / Equal Rights for Persons with Disabilities Act.
- * Public page accessible without authentication; linked from footer/sidebar.
- *
- * References:
- *   - IS 5568 standard
- *   - WCAG 2.2 Level AA
- *   - תקנות שוויון זכויות לאנשים עם מוגבלות (התאמות נגישות לשירות), תשע"ג-2013
+ * Public page with DB-backed bilingual markdown content and safe fallback.
  */
 
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { ArrowRight, ArrowLeft, Mail, Shield, CheckCircle2, AlertTriangle } from 'lucide-react'
-import { Button, LanguageSwitcher } from '../components/ui'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import { ArrowRight, ArrowLeft, Mail, Shield, AlertTriangle } from 'lucide-react'
+import { Button, LanguageSwitcher, Skeleton } from '../components/ui'
 import { useAuth } from '../context/AuthContext'
 import levLogo from '../assets/LOGO.jpg'
-
-const LAST_UPDATED = '2026-04-23'
-const CONTACT_EMAIL = 'accessibility@jct.ac.il'
-const COMMITTEE_EMAIL = 'ethics@jct.ac.il'
+import {
+  getDefaultAccessibilityStatement,
+  getPublicStatement,
+} from '../services/accessibilityStatement.api'
 
 /**
- * Mandatory accessibility statement page.
+ * Accessibility statement public page.
  * @returns {JSX.Element}
  */
 export default function AccessibilityStatementPage() {
   const { t, i18n } = useTranslation()
   const { user } = useAuth()
   const location = useLocation()
+  const [statement, setStatement] = useState(getDefaultAccessibilityStatement())
+  const [loading, setLoading] = useState(true)
+
   const backTo = typeof location.state?.from === 'string'
     ? location.state.from
     : (user ? '/dashboard' : '/login')
-  const backLabel = user ? t('common.back') : 'חזרה לדף הכניסה'
+  const backLabel = user ? t('common.back') : t('accessibilityStatementPage.backToLogin')
   const isRtl = i18n.dir() === 'rtl'
   const BackIcon = isRtl ? ArrowLeft : ArrowRight
+  const lang = i18n.language === 'en' ? 'en' : 'he'
+  const localized = useMemo(() => statement[lang], [lang, statement])
+
+  useEffect(() => {
+    let cancelled = false
+
+    /**
+     * Loads the statement and falls back to defaults on failure.
+     * @returns {Promise<void>}
+     */
+    async function loadStatement() {
+      setLoading(true)
+      try {
+        const data = await getPublicStatement()
+        if (!cancelled) setStatement(data)
+      } catch {
+        if (!cancelled) setStatement(getDefaultAccessibilityStatement())
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+
+    loadStatement()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   return (
     <>
       <a href="#main-content" className="skip-link">{t('common.skipToMain')}</a>
 
       <div className="min-h-screen flex flex-col" style={{ background: 'var(--surface-base)' }}>
-        {/* Top band */}
         <header
           className="px-6 py-4 text-white"
           style={{ background: 'var(--gradient-brand)' }}
@@ -67,7 +93,8 @@ export default function AccessibilityStatementPage() {
               <span
                 className="inline-flex items-center justify-center flex-shrink-0"
                 style={{
-                  width: 44, height: 44,
+                  width: 44,
+                  height: 44,
                   borderRadius: 'var(--radius-lg)',
                   background: 'var(--lev-gold-50)',
                   color: 'var(--lev-gold-600)',
@@ -76,11 +103,15 @@ export default function AccessibilityStatementPage() {
                 <Shield size={22} strokeWidth={2} aria-hidden="true" focusable="false" />
               </span>
               <div>
-                <h1 className="text-2xl md:text-3xl font-bold" style={{ color: 'var(--lev-navy)' }}>
-                  הצהרת נגישות
-                </h1>
+                {loading ? (
+                  <Skeleton className="h-8 w-48" />
+                ) : (
+                  <h1 className="text-2xl md:text-3xl font-bold" style={{ color: 'var(--lev-navy)' }}>
+                    {localized.title}
+                  </h1>
+                )}
                 <p className="text-sm mt-0.5" style={{ color: 'var(--text-muted)' }}>
-                  עודכנה לאחרונה: {LAST_UPDATED}
+                  {t('accessibilityStatementPage.lastUpdated', { date: statement.lastUpdated })}
                 </p>
               </div>
             </div>
@@ -94,135 +125,39 @@ export default function AccessibilityStatementPage() {
                 boxShadow: 'var(--shadow-sm)',
               }}
             >
-              <Section title="מחויבות לנגישות">
-                <p>
-                  מערכת <strong>EthicFlow</strong> של ועדת האתיקה למחקר במרכז האקדמי לב
-                  מחויבת לספק שירות נגיש לכל המשתמשים, לרבות אנשים עם מוגבלות,
-                  בהתאם לחוק שוויון זכויות לאנשים עם מוגבלות, תשנ"ח-1998,
-                  ולתקנות שוויון זכויות לאנשים עם מוגבלות (התאמות נגישות לשירות), תשע"ג-2013.
-                </p>
-              </Section>
+              {loading && <StatementSkeleton />}
 
-              <Section title="תקנים בהם עומדת המערכת">
-                <ul className="space-y-2">
-                  {[
-                    'תקן ישראלי IS 5568 — קווים מנחים לנגישות תוכן באינטרנט',
-                    'WCAG 2.2 ברמה AA (Web Content Accessibility Guidelines)',
-                    'תמיכה מלאה בקוראי מסך עבריים (NVDA, JAWS, VoiceOver)',
-                    'ניווט מלא באמצעות מקלדת בלבד',
-                    'תמיכה בהגדלת טקסט עד 200% ללא אובדן תפקודיות',
-                    'יחסי ניגודיות צבעים של לפחות 4.5:1 לטקסט רגיל ו-3:1 לטקסט גדול',
-                    'תמיכה במצב קריאה מוגברת (prefers-reduced-motion)',
-                  ].map((item) => (
-                    <li key={item} className="flex items-start gap-2.5">
-                      <CheckCircle2
-                        size={18}
-                        strokeWidth={2}
-                        aria-hidden="true"
-                        focusable="false"
-                        style={{ color: 'var(--status-success)', flexShrink: 0, marginTop: 2 }}
-                      />
-                      <span style={{ color: 'var(--text-primary)' }}>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </Section>
+              {!loading && localized.sections.map((section) => (
+                <Section key={section.id} title={section.title}>
+                  {section.variant === 'warning' ? (
+                    <WarningBox body={section.body} dir={i18n.dir()} />
+                  ) : (
+                    <MarkdownBlock body={section.body} dir={i18n.dir()} />
+                  )}
+                </Section>
+              ))}
 
-              <Section title="התאמות נגישות במערכת">
-                <ul className="list-disc ps-5 space-y-1.5" style={{ color: 'var(--text-primary)' }}>
-                  <li>ניווט מלא באמצעות מקלדת (Tab, Shift+Tab, Enter, חצים).</li>
-                  <li>אינדיקציית מיקוד ברורה (outline) על כל רכיב הניתן להפעלה.</li>
-                  <li>תיוגי ARIA מלאים על טפסים, טבלאות, ותפריטים.</li>
-                  <li>אזורי landmark סמנטיים (header, nav, main, aside, footer).</li>
-                  <li>קישור "דלג לתוכן הראשי" בראש כל עמוד.</li>
-                  <li>הודעות שגיאה והצלחה מוכרזות לקוראי מסך (aria-live).</li>
-                  <li>מטרות מגע של לפחות 44×44 פיקסלים בכל הכפתורים.</li>
-                  <li>תמיכה מלאה בכיוונים עברי (RTL) ואנגלי (LTR).</li>
-                </ul>
-              </Section>
-
-              <Section title="מגבלות נגישות ידועות">
-                <div
-                  className="flex items-start gap-3 p-4"
-                  style={{
-                    background: 'var(--status-warning-50)',
-                    border: '1px solid var(--status-warning)',
-                    borderRadius: 'var(--radius-lg)',
-                  }}
-                >
-                  <AlertTriangle
-                    size={20}
-                    strokeWidth={2}
-                    aria-hidden="true"
-                    focusable="false"
-                    style={{ color: 'var(--status-warning)', flexShrink: 0, marginTop: 2 }}
-                  />
-                  <div className="text-sm" style={{ color: 'var(--text-primary)' }}>
-                    <p className="font-semibold mb-1" style={{ color: 'var(--status-warning)' }}>
-                      תחומים בטיפול
-                    </p>
-                    <ul className="list-disc ps-5 space-y-1">
-                      <li>
-                        קבצים מצורפים בפורמט PDF שהועלו על ידי משתמשים עשויים להיות
-                        לא-נגישים; אנו ממליצים להעלות מסמכים נגישים (PDF Tagged).
-                      </li>
-                      <li>
-                        מסכי Builder לבניית טפסים מיועדים להפעלה על ידי צוות מזכירות
-                        באמצעות עכבר; קיימות חלופות זמינות עבור משתמשים עם מוגבלות.
-                      </li>
-                    </ul>
-                  </div>
+              {!loading && (
+                <div className="pt-6 flex flex-wrap items-center gap-3" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+                  <Link
+                    to={backTo}
+                    className="text-sm font-semibold hover:underline inline-flex items-center gap-1.5"
+                    style={{ color: 'var(--lev-teal-text)' }}
+                  >
+                    <BackIcon size={16} strokeWidth={2} aria-hidden="true" focusable="false" />
+                    {backLabel}
+                  </Link>
+                  <a
+                    href={`mailto:${statement.contactEmail}`}
+                    className="ms-auto"
+                    aria-label={t('accessibilityStatementPage.contactAriaLabel', { email: statement.contactEmail })}
+                  >
+                    <Button variant="gold" size="md" leftIcon={<Mail size={16} strokeWidth={2} aria-hidden="true" focusable="false" />}>
+                      {t('accessibilityStatementPage.contactButton')}
+                    </Button>
+                  </a>
                 </div>
-              </Section>
-
-              <Section title="פנייה לרכז הנגישות">
-                <p>
-                  נתקלתם בבעיית נגישות? אנא פנו אלינו ואנו נטפל בפנייתכם במהירות:
-                </p>
-                <div className="mt-3 space-y-2 text-sm">
-                  <ContactRow
-                    label="רכז נגישות"
-                    value={CONTACT_EMAIL}
-                    href={`mailto:${CONTACT_EMAIL}`}
-                  />
-                  <ContactRow
-                    label="ועדת האתיקה למחקר"
-                    value={COMMITTEE_EMAIL}
-                    href={`mailto:${COMMITTEE_EMAIL}`}
-                  />
-                </div>
-                <p className="mt-3 text-sm" style={{ color: 'var(--text-muted)' }}>
-                  זמן מענה ממוצע: 5 ימי עסקים.
-                </p>
-              </Section>
-
-              <Section title="הערכת נגישות">
-                <p>
-                  הצהרה זו נבדקה באמצעות כלי הבדיקה האוטומטיים <strong>axe-core</strong>{' '}
-                  ו-<strong>Lighthouse</strong>, ובדיקה ידנית עם קוראי מסך NVDA ו-VoiceOver.
-                  המערכת נתמכת בדפדפנים: Chrome, Edge, Firefox, Safari (גרסאות 2023 ומעלה).
-                </p>
-              </Section>
-
-              <div className="pt-6 flex flex-wrap items-center gap-3" style={{ borderTop: '1px solid var(--border-subtle)' }}>
-                <Link
-                  to={backTo}
-                  className="text-sm font-semibold hover:underline inline-flex items-center gap-1.5"
-                  style={{ color: 'var(--lev-teal-text)' }}
-                >
-                  <BackIcon size={16} strokeWidth={2} aria-hidden="true" focusable="false" />
-                  {backLabel}
-                </Link>
-                <a
-                  href={`mailto:${CONTACT_EMAIL}`}
-                  className="ms-auto"
-                  aria-label={`שלח אימייל לרכז הנגישות בכתובת ${CONTACT_EMAIL}`}
-                >
-                  <Button variant="gold" size="md" leftIcon={<Mail size={16} strokeWidth={2} aria-hidden="true" focusable="false" />}>
-                    פנייה לרכז נגישות
-                  </Button>
-                </a>
-              </div>
+              )}
             </div>
 
             <p className="text-xs text-center mt-6" style={{ color: 'var(--text-muted)' }}>
@@ -236,7 +171,27 @@ export default function AccessibilityStatementPage() {
 }
 
 /**
+ * Loading skeleton for statement sections.
+ * @returns {JSX.Element}
+ */
+function StatementSkeleton() {
+  return (
+    <div className="space-y-5" aria-hidden="true">
+      <Skeleton className="h-6 w-52" />
+      <Skeleton className="h-4 w-full" />
+      <Skeleton className="h-4 w-11/12" />
+      <Skeleton className="h-4 w-4/5" />
+      <Skeleton className="h-6 w-44 mt-2" />
+      <Skeleton className="h-24 w-full" />
+      <Skeleton className="h-4 w-2/3" />
+    </div>
+  )
+}
+
+/**
  * Section heading + body wrapper.
+ * @param {{ title: string, children: import('react').ReactNode }} props
+ * @returns {JSX.Element}
  */
 function Section({ title, children }) {
   return (
@@ -244,10 +199,7 @@ function Section({ title, children }) {
       <h2 className="text-lg font-bold mb-3" style={{ color: 'var(--lev-navy)' }}>
         {title}
       </h2>
-      <div
-        className="text-sm leading-relaxed"
-        style={{ color: 'var(--text-primary)' }}
-      >
+      <div className="text-sm leading-relaxed" style={{ color: 'var(--text-primary)' }}>
         {children}
       </div>
     </section>
@@ -255,20 +207,45 @@ function Section({ title, children }) {
 }
 
 /**
- * Contact-row helper.
+ * Renders markdown body with RTL/LTR direction.
+ * @param {{ body: string, dir: string }} props
+ * @returns {JSX.Element}
  */
-function ContactRow({ label, value, href }) {
+function MarkdownBlock({ body, dir }) {
   return (
-    <div className="flex items-center gap-2">
-      <Mail size={14} strokeWidth={1.75} aria-hidden="true" focusable="false" style={{ color: 'var(--text-muted)' }} />
-      <span style={{ color: 'var(--text-muted)' }}>{label}:</span>
-      <a
-        href={href}
-        className="font-semibold hover:underline"
-        style={{ color: 'var(--lev-teal-text)' }}
-      >
-        {value}
-      </a>
+    <div className="prose prose-sm max-w-none" dir={dir}>
+      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+        {body}
+      </ReactMarkdown>
+    </div>
+  )
+}
+
+/**
+ * Warning section renderer for known limitations.
+ * @param {{ body: string, dir: string }} props
+ * @returns {JSX.Element}
+ */
+function WarningBox({ body, dir }) {
+  return (
+    <div
+      className="flex items-start gap-3 p-4"
+      style={{
+        background: 'var(--status-warning-50)',
+        border: '1px solid var(--status-warning)',
+        borderRadius: 'var(--radius-lg)',
+      }}
+    >
+      <AlertTriangle
+        size={20}
+        strokeWidth={2}
+        aria-hidden="true"
+        focusable="false"
+        style={{ color: 'var(--status-warning)', flexShrink: 0, marginTop: 2 }}
+      />
+      <div className="text-sm flex-1" style={{ color: 'var(--text-primary)' }}>
+        <MarkdownBlock body={body} dir={dir} />
+      </div>
     </div>
   )
 }

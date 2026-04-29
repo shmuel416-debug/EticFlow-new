@@ -46,6 +46,7 @@ import SettingsPage               from './pages/admin/SettingsPage'
 import StatusManagementPage       from './pages/admin/StatusManagementPage'
 import SystemTemplatesPage        from './pages/admin/SystemTemplatesPage'
 import ReviewerChecklistAdminPage from './pages/admin/ReviewerChecklistAdminPage'
+import AccessibilityStatementAdminPage from './pages/admin/AccessibilityStatementAdminPage'
 import CoiPage                    from './pages/profile/CoiPage'
 import AccessibilityStatementPage from './pages/AccessibilityStatementPage'
 
@@ -128,6 +129,7 @@ export default function App() {
                 <Route path="/admin/statuses" element={<StatusManagementPage />} />
                 <Route path="/admin/system-templates" element={<SystemTemplatesPage />} />
                 <Route path="/admin/checklist-templates" element={<ReviewerChecklistAdminPage />} />
+                <Route path="/admin/accessibility-statement" element={<AccessibilityStatementAdminPage />} />
               </Route>
             </Route>
           </Route>

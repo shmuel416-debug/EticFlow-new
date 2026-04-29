@@ -120,6 +120,7 @@
     "meetingsCalendar": "לוח פגישות",
     "privacy": "מרכז פרטיות",
     "accessibilityStatement": "הצהרת נגישות",
+    "accessibilityStatementAdmin": "עריכת הצהרת נגישות",
     "coi": "ניגוד עניינים",
     "systemTemplates": "תבניות מערכת"
   },
@@ -765,7 +766,64 @@
     "updateSuccess": "פרטי המשתמש עודכנו",
     "deactivateSuccess": "המשתמש הושבת",
     "noUsers": "לא נמצאו משתמשים",
-    "lastLogin": "כניסה אחרונה"
+    "lastLogin": "כניסה אחרונה",
+    "accessibilityStatement": {
+      "title": "עריכת הצהרת נגישות",
+      "subtitle": "ניהול תוכן דו-לשוני ומטה-דאטה לעמוד ההצהרה הציבורי",
+      "lastSavedAt": "נשמר לאחרונה: {{date}}",
+      "tabs": {
+        "label": "שפות לעריכת הצהרת נגישות",
+        "he": "עברית",
+        "en": "English"
+      },
+      "metadata": {
+        "title": "פרטי קשר ומועד עדכון",
+        "lastUpdated": "עודכן לאחרונה",
+        "responseDays": "זמן מענה (ימי עסקים)",
+        "contactEmail": "אימייל רכז נגישות",
+        "committeeEmail": "אימייל ועדת האתיקה"
+      },
+      "sections": {
+        "title": "ניהול סעיפים",
+        "subtitle": "עריכה, סידור והוספת סעיפים בשפה הנוכחית",
+        "pageTitle": "כותרת העמוד",
+        "sectionHeading": "סעיף {{index}}",
+        "sectionTitle": "כותרת סעיף",
+        "variant": "סוג תצוגה",
+        "variantDefault": "רגיל",
+        "variantWarning": "אזהרה",
+        "body": "תוכן (Markdown)",
+        "bodyHint": "ניתן להשתמש ב־Markdown בסיסי: כותרות, רשימות, הדגשות וקישורים.",
+        "charCount": "{{count}} תווים"
+      },
+      "preview": {
+        "title": "תצוגה מקדימה",
+        "subtitle": "כך ההצהרה תוצג למשתמשים בעמוד הציבורי"
+      },
+      "actions": {
+        "save": "שמור שינויים",
+        "addSection": "הוסף סעיף",
+        "removeSection": "מחק סעיף",
+        "moveUp": "הזז סעיף למעלה",
+        "moveDown": "הזז סעיף למטה",
+        "restoreDefault": "שחזר ברירת מחדל"
+      },
+      "confirm": {
+        "restoreDefault": "לשחזר לברירת המחדל? פעולה זו תחליף את הטיוטה הנוכחית שלא נשמרה."
+      },
+      "errors": {
+        "invalidDate": "יש להזין תאריך בפורמט תקין (YYYY-MM-DD).",
+        "invalidEmail": "יש להזין כתובת אימייל תקינה.",
+        "invalidDays": "יש להזין מספר ימים חוקי (1 ומעלה)."
+      },
+      "messages": {
+        "saved": "הצהרת הנגישות נשמרה בהצלחה",
+        "saveFailed": "שמירת הצהרת הנגישות נכשלה",
+        "loadFailed": "לא ניתן היה לטעון את ההצהרה. נטענה ברירת מחדל.",
+        "restored": "ברירת המחדל נטענה לטיוטה",
+        "validationFailed": "יש להשלים שדות חובה ולתקן שגיאות לפני שמירה"
+      }
+    }
   },
   "meetings": {
     "title": "פגישות ועדה",
@@ -955,6 +1013,12 @@
     "noLogs": "לא נמצאו רשומות",
     "loading": "טוען יומן...",
     "system": "מערכת"
+  },
+  "accessibilityStatementPage": {
+    "backToLogin": "חזרה לדף הכניסה",
+    "lastUpdated": "עודכנה לאחרונה: {{date}}",
+    "contactButton": "פנייה לרכז נגישות",
+    "contactAriaLabel": "שלח אימייל לרכז הנגישות בכתובת {{email}}"
   },
   "settings": {
     "title": "הגדרות מוסד",

@@ -19,6 +19,11 @@ import {
   normalizeApprovalTemplate,
   validateApprovalTemplatePayload,
 } from '../constants/approvalTemplate.js'
+import {
+  ACCESSIBILITY_STATEMENT_KEY,
+  accessibilityStatementSchema,
+  getDefaultAccessibilityStatement,
+} from '../constants/accessibilityStatement.js'
 import { getRequestRole } from '../utils/roles.js'
 
 /** Allowed setting keys to prevent arbitrary key creation via the API. */
@@ -34,6 +39,7 @@ const ADMIN_ONLY_KEYS = new Set([
   'allowed_file_types',
   'email_sender_name',
   'email_sender_address',
+  ACCESSIBILITY_STATEMENT_KEY,
 ])
 const TEMPLATE_MANAGED_KEYS = new Set([...APPROVAL_TEMPLATE_KEYS, APPROVAL_SIGNATURE_KEY])
 const ALLOWED_UPDATE_KEYS = new Set([...ADMIN_ONLY_KEYS, ...TEMPLATE_MANAGED_KEYS])
@@ -61,6 +67,26 @@ function allowedKeysForRole(role) {
     readKeys: new Set(),
     updateKeys: new Set(),
   }
+}
+
+/**
+ * Ensures the accessibility statement setting exists when requested by role.
+ * @param {Map<string, any>} settingsMap
+ * @param {Set<string>} readKeys
+ * @returns {Promise<void>}
+ */
+async function ensureAccessibilitySetting(settingsMap, readKeys) {
+  if (!readKeys.has(ACCESSIBILITY_STATEMENT_KEY) || settingsMap.has(ACCESSIBILITY_STATEMENT_KEY)) return
+  const created = await prisma.institutionSetting.upsert({
+    where: { key: ACCESSIBILITY_STATEMENT_KEY },
+    update: {},
+    create: {
+      key: ACCESSIBILITY_STATEMENT_KEY,
+      value: JSON.stringify(getDefaultAccessibilityStatement()),
+      valueType: 'json',
+    },
+  })
+  settingsMap.set(ACCESSIBILITY_STATEMENT_KEY, created)
 }
 
 // ─────────────────────────────────────────────
@@ -127,6 +153,7 @@ export async function list(req, res, next) {
       })
       map.set(APPROVAL_SIGNATURE_KEY, created)
     }
+    await ensureAccessibilitySetting(map, permissions.readKeys)
 
     res.json({ data: [...map.values()] })
   } catch (err) {
@@ -160,7 +187,16 @@ export async function update(req, res, next) {
       throw new AppError('Forbidden', 'FORBIDDEN', 403)
     }
 
-    const setting = await prisma.institutionSetting.findUnique({ where: { key } })
+    let setting = await prisma.institutionSetting.findUnique({ where: { key } })
+    if (!setting && key === ACCESSIBILITY_STATEMENT_KEY) {
+      setting = await prisma.institutionSetting.create({
+        data: {
+          key: ACCESSIBILITY_STATEMENT_KEY,
+          value: JSON.stringify(getDefaultAccessibilityStatement()),
+          valueType: 'json',
+        },
+      })
+    }
     if (!setting || !setting.isActive) {
       throw new AppError(`Setting "${key}" not found`, 'NOT_FOUND', 404)
     }
@@ -184,6 +220,14 @@ export async function update(req, res, next) {
       } catch (e) {
         throw new AppError(e?.message || 'Invalid template payload', 'VALIDATION_ERROR', 400)
       }
+    }
+    if (key === ACCESSIBILITY_STATEMENT_KEY) {
+      const parsed = accessibilityStatementSchema.safeParse(value)
+      if (!parsed.success) {
+        throw AppError.validation(parsed.error.flatten())
+      }
+      nextValue = JSON.stringify(parsed.data)
+      nextType = 'json'
     }
 
     const updated = await prisma.institutionSetting.update({
@@ -260,6 +304,39 @@ export async function previewApprovalTemplate(req, res, next) {
     res.setHeader('Content-Disposition', `inline; filename="${filename}"`)
     res.setHeader('Content-Length', buffer.length)
     res.send(buffer)
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
+ * GET /api/settings/public/accessibility-statement
+ * Returns the public accessibility statement without authentication.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
+export async function getPublicAccessibilityStatement(req, res, next) {
+  try {
+    const setting = await prisma.institutionSetting.findUnique({
+      where: { key: ACCESSIBILITY_STATEMENT_KEY },
+    })
+    const fallback = getDefaultAccessibilityStatement()
+
+    let value = fallback
+    if (setting?.value) {
+      try {
+        const parsed = accessibilityStatementSchema.safeParse(JSON.parse(setting.value))
+        if (parsed.success) {
+          value = parsed.data
+        }
+      } catch {
+        value = fallback
+      }
+    }
+
+    res.setHeader('Cache-Control', 'public, max-age=60')
+    res.json({ data: value })
   } catch (err) {
     next(err)
   }

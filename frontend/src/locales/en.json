@@ -120,6 +120,7 @@
     "meetingsCalendar": "Meetings Calendar",
     "privacy": "Privacy Center",
     "accessibilityStatement": "Accessibility Statement",
+    "accessibilityStatementAdmin": "Accessibility Statement Editor",
     "coi": "Conflict of Interest",
     "systemTemplates": "System Templates"
   },
@@ -765,7 +766,64 @@
     "updateSuccess": "User details updated",
     "deactivateSuccess": "User deactivated",
     "noUsers": "No users found",
-    "lastLogin": "Last login"
+    "lastLogin": "Last login",
+    "accessibilityStatement": {
+      "title": "Accessibility Statement Editor",
+      "subtitle": "Manage bilingual content and metadata for the public accessibility page",
+      "lastSavedAt": "Last saved: {{date}}",
+      "tabs": {
+        "label": "Accessibility statement editing languages",
+        "he": "Hebrew",
+        "en": "English"
+      },
+      "metadata": {
+        "title": "Contact and update metadata",
+        "lastUpdated": "Last updated",
+        "responseDays": "Response time (business days)",
+        "contactEmail": "Accessibility coordinator email",
+        "committeeEmail": "Ethics committee email"
+      },
+      "sections": {
+        "title": "Sections editor",
+        "subtitle": "Edit, reorder, and add sections in the active language",
+        "pageTitle": "Page title",
+        "sectionHeading": "Section {{index}}",
+        "sectionTitle": "Section title",
+        "variant": "Display type",
+        "variantDefault": "Default",
+        "variantWarning": "Warning",
+        "body": "Content (Markdown)",
+        "bodyHint": "Basic Markdown is supported: headings, lists, emphasis, and links.",
+        "charCount": "{{count}} characters"
+      },
+      "preview": {
+        "title": "Live preview",
+        "subtitle": "This is how the statement appears on the public page"
+      },
+      "actions": {
+        "save": "Save changes",
+        "addSection": "Add section",
+        "removeSection": "Remove section",
+        "moveUp": "Move section up",
+        "moveDown": "Move section down",
+        "restoreDefault": "Restore defaults"
+      },
+      "confirm": {
+        "restoreDefault": "Restore default content? This replaces your unsaved draft."
+      },
+      "errors": {
+        "invalidDate": "Enter a valid date in YYYY-MM-DD format.",
+        "invalidEmail": "Enter a valid email address.",
+        "invalidDays": "Enter a valid number of days (1 or higher)."
+      },
+      "messages": {
+        "saved": "Accessibility statement saved successfully",
+        "saveFailed": "Failed to save accessibility statement",
+        "loadFailed": "Could not load statement. Defaults were loaded.",
+        "restored": "Default content loaded into the draft",
+        "validationFailed": "Please fix required fields and validation errors before saving"
+      }
+    }
   },
   "meetings": {
     "title": "Committee Meetings",
@@ -955,6 +1013,12 @@
     "noLogs": "No log entries found",
     "loading": "Loading audit log...",
     "system": "System"
+  },
+  "accessibilityStatementPage": {
+    "backToLogin": "Back to login",
+    "lastUpdated": "Last updated: {{date}}",
+    "contactButton": "Contact accessibility coordinator",
+    "contactAriaLabel": "Send email to the accessibility coordinator at {{email}}"
   },
   "settings": {
     "title": "Institution Settings",

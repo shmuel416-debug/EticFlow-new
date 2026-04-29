@@ -1,6 +1,7 @@
 /**
  * EthicFlow — Settings Routes
  *
+ * GET /api/settings/public/accessibility-statement — public accessibility statement
  * GET /api/settings       — list institution settings (ADMIN + SECRETARY [template keys only])
  * PUT /api/settings/:key  — update a setting value (ADMIN + SECRETARY [template keys only])
  */
@@ -31,6 +32,11 @@ const previewSchema = z.object({
 // ─────────────────────────────────────────────
 // ROUTES
 // ─────────────────────────────────────────────
+
+router.get(
+  '/public/accessibility-statement',
+  controller.getPublicAccessibilityStatement
+)
 
 router.get(
   '/',

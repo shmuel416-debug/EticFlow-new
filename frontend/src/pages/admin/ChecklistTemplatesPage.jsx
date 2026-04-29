@@ -401,7 +401,12 @@ export default function ChecklistTemplatesPage() {
           <CardHeader
             title={t('checklistTemplates.listTitle')}
             actions={(
-              <Button type="button" size="sm" onClick={() => setCreateOpen(true)}>
+              <Button
+                type="button"
+                size="sm"
+                className="w-full min-[500px]:w-auto min-h-[44px]"
+                onClick={() => setCreateOpen(true)}
+              >
                 <Plus className="w-4 h-4" aria-hidden />
                 {t('checklistTemplates.create')}
               </Button>
@@ -471,15 +476,18 @@ export default function ChecklistTemplatesPage() {
                 <CardHeader
                   title={isHeUi ? editor.name : editor.nameEn}
                   actions={(
-                    <div className="flex flex-wrap gap-2 justify-end">
-                      <Badge tone="navy" size="sm">v{editor.version}</Badge>
+                    <div className="flex w-full flex-col items-stretch gap-2 min-[500px]:w-auto min-[500px]:flex-row min-[500px]:items-center min-[500px]:justify-end">
+                      <div className="flex justify-end">
+                        <Badge tone="navy" size="sm">v{editor.version}</Badge>
+                      </div>
                       {!editor.isPublished && (
-                        <>
+                        <div className="flex w-full flex-col gap-2 min-[500px]:w-auto min-[500px]:flex-row">
                           <Button
                             type="button"
                             variant="secondary"
                             onClick={handleSave}
                             disabled={saving}
+                            className="w-full min-[500px]:w-auto"
                           >
                             <Save className="w-4 h-4" aria-hidden />
                             {t('checklistTemplates.save')}
@@ -488,11 +496,12 @@ export default function ChecklistTemplatesPage() {
                             type="button"
                             onClick={handlePublishClick}
                             disabled={saving}
+                            className="w-full min-[500px]:w-auto"
                           >
                             <Send className="w-4 h-4" aria-hidden />
                             {t('checklistTemplates.publish')}
                           </Button>
-                        </>
+                        </div>
                       )}
                     </div>
                   )}
@@ -620,20 +629,6 @@ export default function ChecklistTemplatesPage() {
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                        <FormField label={t('checklistTemplates.sectionCode')}>
-                          <Input
-                            value={section.code}
-                            onChange={(e) => {
-                              const v = e.target.value
-                              setEditor((p) => {
-                                if (!p) return p
-                                const sections = p.sections.map((s, idx) => (idx === si ? { ...s, code: v } : s))
-                                return { ...p, sections }
-                              })
-                            }}
-                            disabled={editor.isPublished}
-                          />
-                        </FormField>
                         <FormField label={t('checklistTemplates.answerType')}>
                           <Select
                             value={section.answerType}
@@ -796,24 +791,6 @@ export default function ChecklistTemplatesPage() {
                               )}
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                              <FormField label={t('checklistTemplates.itemCode')}>
-                                <Input
-                                  value={item.code}
-                                  onChange={(e) => {
-                                    const v = e.target.value
-                                    setEditor((p) => {
-                                      if (!p) return p
-                                      const sections = p.sections.map((s, sidx) => {
-                                        if (sidx !== si) return s
-                                        const items = (s.items || []).map((it, j) => (j === ii ? { ...it, code: v } : it))
-                                        return { ...s, items }
-                                      })
-                                      return { ...p, sections }
-                                    })
-                                  }}
-                                  disabled={editor.isPublished}
-                                />
-                              </FormField>
                               <div className="flex flex-col gap-2 md:flex-row md:items-end">
                                 <div className="flex-1 flex items-center gap-2 pb-1">
                                   <Checkbox

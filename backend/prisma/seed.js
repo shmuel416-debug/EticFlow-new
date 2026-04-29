@@ -14,6 +14,7 @@
 import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcryptjs'
 import { getDefaultApprovalTemplate } from '../src/constants/approvalTemplate.js'
+import { ACCESSIBILITY_STATEMENT_KEY, getDefaultAccessibilityStatement } from '../src/constants/accessibilityStatement.js'
 import { seedResearcherQuestionnaire } from './seeds/researcher-questionnaire.seed.js'
 import seedReviewerChecklist from './seeds/reviewer-checklist.seed.js'
 
@@ -271,6 +272,11 @@ async function seedInstitutionSettings() {
       key: 'approval_chairman_signature',
       value: '',
       valueType: 'string',
+    },
+    {
+      key: ACCESSIBILITY_STATEMENT_KEY,
+      value: JSON.stringify(getDefaultAccessibilityStatement()),
+      valueType: 'json',
     },
   ]
 

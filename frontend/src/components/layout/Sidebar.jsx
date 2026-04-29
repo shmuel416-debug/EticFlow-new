@@ -40,6 +40,7 @@ const NAV_ITEMS = [
   { key: 'statusManagement',     icon: Compass,       path: '/admin/statuses',         roles: ['ADMIN'], indent: true },
   { key: 'systemTemplates',      labelKey: 'systemTemplates.title', icon: FileText,      path: '/admin/system-templates', roles: ['ADMIN'], indent: true },
   { key: 'checklistTemplates',   icon: ListChecks,    path: '/admin/checklist-templates', roles: ['ADMIN'], indent: true },
+  { key: 'accessibilityStatementAdmin', icon: Accessibility, path: '/admin/accessibility-statement', roles: ['ADMIN'], indent: true },
   { key: 'settings',             icon: Settings,      path: '/settings',               roles: ['SECRETARY','CHAIRMAN','REVIEWER','ADMIN'] },
 ]
 
