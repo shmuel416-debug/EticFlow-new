@@ -32,13 +32,18 @@ export default function Modal({
   closeLabel = 'סגור חלון',
 }) {
   const dialogRef = useRef(null)
+  const onCloseRef = useRef(onClose)
+
+  useEffect(() => {
+    onCloseRef.current = onClose
+  }, [onClose])
 
   const handleKey = useCallback((e) => {
     if (e.key === 'Escape') {
       e.stopPropagation()
-      onClose?.()
+      onCloseRef.current?.()
     }
-  }, [onClose])
+  }, [])
 
   useEffect(() => {
     if (!open) return undefined

@@ -789,10 +789,10 @@ model SystemTemplate {
   lang        String                         // "he" or "en"
   version     Int                            // 1, 2, 3... incrementing per key+lang combination
   filename    String                         // original upload filename for display
-  storagePath String                         // STORAGE_PROVIDER path: templates/{key}/v{version}/{lang}.{ext}
-  mimeType    String                         // application/pdf or application/vnd.openxmlformats-officedocument.wordprocessingml.document
+  storagePath String   @map("storage_path")  // STORAGE_PROVIDER path: templates/{key}/v{version}/{lang}.{ext}
+  mimeType    String   @map("mime_type")     // application/pdf or application/vnd.openxmlformats-officedocument.wordprocessingml.document
   size        Int                            // bytes
-  isActive    Boolean  @default(true)        // false = archived version, true = current version per key+lang
+  isActive    Boolean  @default(true) @map("is_active") // false = archived version, true = current version per key+lang
   uploadedBy  String                         @map("uploaded_by")
   createdAt   DateTime @default(now())       @map("created_at")
   updatedAt   DateTime @updatedAt            @map("updated_at")

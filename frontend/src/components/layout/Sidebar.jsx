@@ -33,12 +33,12 @@ const NAV_ITEMS = [
   { key: 'notifications',        icon: Bell,          path: '/notifications',          roles: ['RESEARCHER','SECRETARY','REVIEWER','CHAIRMAN','ADMIN'] },
   { key: 'privacy',              icon: Shield,        path: '/privacy',                roles: ['RESEARCHER','SECRETARY','REVIEWER','CHAIRMAN','ADMIN'] },
   { key: 'accessibilityStatement', icon: Accessibility, path: '/accessibility-statement', roles: ['RESEARCHER','SECRETARY','REVIEWER','CHAIRMAN','ADMIN'] },
-  { key: 'coi',                  icon: AlertTriangle, path: '/profile/coi',            roles: ['RESEARCHER','SECRETARY','REVIEWER','CHAIRMAN','ADMIN'] },
+  { key: 'coi',                  labelKey: 'coi.page.title', icon: AlertTriangle, path: '/profile/coi',            roles: ['RESEARCHER','SECRETARY','REVIEWER','CHAIRMAN','ADMIN'] },
   { key: 'users',                icon: Users,         path: '/users',                  roles: ['ADMIN'] },
   { key: 'reports',              icon: BarChart3,     path: '/reports',                roles: ['SECRETARY','CHAIRMAN','ADMIN'] },
   { key: 'auditLog',             icon: Search,        path: '/reports/audit-log',      roles: ['ADMIN'], indent: true },
   { key: 'statusManagement',     icon: Compass,       path: '/admin/statuses',         roles: ['ADMIN'], indent: true },
-  { key: 'systemTemplates',      icon: FileText,      path: '/admin/system-templates', roles: ['ADMIN'], indent: true },
+  { key: 'systemTemplates',      labelKey: 'systemTemplates.title', icon: FileText,      path: '/admin/system-templates', roles: ['ADMIN'], indent: true },
   { key: 'checklistTemplates',   icon: ListChecks,    path: '/admin/checklist-templates', roles: ['ADMIN'], indent: true },
   { key: 'settings',             icon: Settings,      path: '/settings',               roles: ['SECRETARY','CHAIRMAN','REVIEWER','ADMIN'] },
 ]
@@ -63,7 +63,10 @@ function NavItem({ item, onNavigate }) {
         isActive ? 'nav-item-active' : 'hover:bg-gray-50',
       ].join(' ')}
       style={({ isActive }) => ({
-        padding: item.indent ? '8px 14px 8px 32px' : '10px 14px',
+        paddingTop: item.indent ? 8 : 10,
+        paddingBottom: item.indent ? 8 : 10,
+        paddingInlineEnd: 14,
+        paddingInlineStart: item.indent ? 32 : 14,
         fontSize: item.indent ? '13px' : '14px',
         minHeight: 44,
         color: isActive ? 'var(--lev-navy)' : 'var(--text-secondary)',
@@ -95,7 +98,7 @@ function NavItem({ item, onNavigate }) {
             focusable="false"
             style={{ flexShrink: 0, color: 'inherit' }}
           />
-          <span className="truncate">{t(`nav.${item.key}`)}</span>
+          <span className="truncate">{t(item.labelKey || `nav.${item.key}`)}</span>
         </>
       )}
     </NavLink>

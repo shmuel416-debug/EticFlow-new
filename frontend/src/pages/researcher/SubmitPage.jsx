@@ -395,6 +395,22 @@ function FormChooser({ options, value, onChange, onConfirm, loading }) {
 }
 
 /**
+ * Converts API load errors to user-facing translated messages.
+ * @param {{ code?: string }|undefined} err
+ * @param {(key: string, opts?: object) => string} t
+ * @returns {string}
+ */
+function getLoadErrorMessage(err, t) {
+  if (err?.code === 'FORM_SCHEMA_EMPTY') return t('submission.submit.formInvalid')
+  const codeKey = err?.code ? `errors.${err.code}` : ''
+  if (codeKey) {
+    const translated = t(codeKey)
+    if (translated !== codeKey) return translated
+  }
+  return t('submission.submit.formLoadError')
+}
+
+/**
  * SubmitPage — loads published form(s), renders fields, posts submission.
  * @returns {JSX.Element}
  */
@@ -479,8 +495,8 @@ export default function SubmitPage() {
           const latest = (vers[vers.length - 1] ?? vers[0])?.dataJson ?? {}
           setValues(latest)
           setSubmissionId(editId)
-        } catch {
-          if (!cancelled) setLoadError(t('submission.submit.formLoadError'))
+        } catch (err) {
+          if (!cancelled) setLoadError(getLoadErrorMessage(err, t))
         } finally {
           if (!cancelled) setLoading(false)
         }
@@ -539,8 +555,8 @@ export default function SubmitPage() {
         } else {
           setLoadError(t('submission.submit.formLoadError'))
         }
-      } catch {
-        if (!cancelled) setLoadError(t('submission.submit.formLoadError'))
+      } catch (err) {
+        if (!cancelled) setLoadError(getLoadErrorMessage(err, t))
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -583,6 +599,7 @@ export default function SubmitPage() {
       fields.slice(third * 2),
     ].filter(s => s.length > 0)
   }, [fields])
+  const hasRenderableFields = fields.length > 0
 
   const sectionTitles = [
     t('submission.submit.section1Title'),
@@ -701,7 +718,7 @@ export default function SubmitPage() {
     )
   }
 
-  if (loadError || !formMeta) {
+  if (loadError || !formMeta || !hasRenderableFields) {
     return (
       <div className="p-4 md:p-6">
         <PageHeader
@@ -713,7 +730,9 @@ export default function SubmitPage() {
           <CardBody>
             <EmptyState
               icon={AlertTriangle}
-              title={loadError || t('submission.submit.noActiveForm')}
+              title={loadError || (!hasRenderableFields
+                ? t('submission.submit.formInvalid')
+                : t('submission.submit.noActiveForm'))}
               action={
                 <Button
                   variant="primary"

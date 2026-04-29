@@ -34,6 +34,22 @@ function withStatus(form) {
   return { ...form, status: formStatus(form) }
 }
 
+/**
+ * Returns normalized field list from supported schema shapes.
+ * @param {unknown} schemaJson
+ * @returns {Array<Record<string, unknown>>}
+ */
+function getSchemaFields(schemaJson) {
+  if (!schemaJson || typeof schemaJson !== 'object') return []
+  if (Array.isArray(schemaJson.fields)) return schemaJson.fields.filter(Boolean)
+  if (Array.isArray(schemaJson.sections)) {
+    return schemaJson.sections.flatMap((section) =>
+      Array.isArray(section?.fields) ? section.fields.filter(Boolean) : []
+    )
+  }
+  return []
+}
+
 // ─────────────────────────────────────────────
 // CONTROLLERS
 // ─────────────────────────────────────────────
@@ -89,10 +105,23 @@ export async function listAvailable(req, res, next) {
       where:   { isPublished: true, isActive: true },
       orderBy: { publishedAt: 'desc' },
       select:  {
-        id: true, name: true, nameEn: true, version: true, publishedAt: true, isActive: true, isPublished: true,
+        id: true,
+        name: true,
+        nameEn: true,
+        version: true,
+        publishedAt: true,
+        isActive: true,
+        isPublished: true,
+        schemaJson: true,
       },
     })
-    res.json({ forms: forms.map(withStatus) })
+    const usableForms = forms
+      .filter((form) => getSchemaFields(form.schemaJson).length > 0)
+      .map((form) => {
+        const { schemaJson: _schemaJson, ...meta } = form
+        return withStatus(meta)
+      })
+    res.json({ forms: usableForms })
   } catch (err) {
     next(err)
   }
@@ -115,6 +144,9 @@ export async function getAvailableById(req, res, next) {
       },
     })
     if (!form) return next(AppError.notFound('Form'))
+    if (getSchemaFields(form.schemaJson).length === 0) {
+      return next(AppError.notFound('Form'))
+    }
     res.json({ form: withStatus(form) })
   } catch (err) {
     next(err)
@@ -207,6 +239,9 @@ export async function publish(req, res, next) {
     }
     if (existing.isPublished) {
       return next(new AppError('Form is already published', 'FORM_ALREADY_PUBLISHED', 400))
+    }
+    if (getSchemaFields(existing.schemaJson).length === 0) {
+      return next(new AppError('Cannot publish a form without fields', 'FORM_SCHEMA_EMPTY', 400))
     }
 
     const form = await prisma.formConfig.update({

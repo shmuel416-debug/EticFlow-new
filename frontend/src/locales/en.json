@@ -119,7 +119,9 @@
     "mainNavigation": "Main Navigation",
     "meetingsCalendar": "Meetings Calendar",
     "privacy": "Privacy Center",
-    "accessibilityStatement": "Accessibility Statement"
+    "accessibilityStatement": "Accessibility Statement",
+    "coi": "Conflict of Interest",
+    "systemTemplates": "System Templates"
   },
   "dashboard": {
     "researcher": {
@@ -243,6 +245,7 @@
       "pageSubtitle": "Fill in all fields marked with *",
       "formLoadError": "Failed to load the form",
       "noActiveForm": "No active submission form at the moment. Please contact the secretary.",
+      "formInvalid": "The available submission form is not configured correctly. Please contact the secretary.",
       "section1Title": "Research Details",
       "section2Title": "Research Type & Participants",
       "section3Title": "Documents & Declaration",
@@ -1173,6 +1176,7 @@
     "CANNOT_IMPERSONATE_ADMIN": "Cannot impersonate an Admin",
     "ROLE_NOT_ALLOWED": "Only committee members are allowed to perform this action",
     "USER_INACTIVE": "The selected user is inactive",
-    "COI_BLOCKED": "A conflict of interest blocks this action"
+    "COI_BLOCKED": "A conflict of interest blocks this action",
+    "FORM_SCHEMA_EMPTY": "Cannot publish a form without at least one field"
   }
 }

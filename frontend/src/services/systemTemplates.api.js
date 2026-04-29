@@ -38,7 +38,7 @@ export async function downloadTemplate(key, lang = 'he') {
  * @returns {array} Versions
  */
 export async function listVersions(key) {
-  const { data } = await api.get(`/admin/system-templates/${key}/versions`);
+  const { data } = await api.get(`/system-templates/admin/${key}/versions`);
   return data;
 }
 
@@ -47,7 +47,7 @@ export async function listVersions(key) {
  * @returns {object} Templates grouped by key
  */
 export async function listAllTemplates() {
-  const { data } = await api.get('/admin/system-templates');
+  const { data } = await api.get('/system-templates/admin/all');
   return data;
 }
 
@@ -63,7 +63,7 @@ export async function uploadTemplate(key, lang, file) {
   formData.append('lang', lang);
   formData.append('file', file);
 
-  const { data } = await api.post(`/admin/system-templates/${key}/upload`, formData, {
+  const { data } = await api.post(`/system-templates/admin/${key}/upload`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
   return data;
@@ -77,7 +77,7 @@ export async function uploadTemplate(key, lang, file) {
  * @returns {object} Restored template metadata
  */
 export async function rollbackTemplate(key, lang, version) {
-  const { data } = await api.post(`/admin/system-templates/${key}/rollback`, {
+  const { data } = await api.post(`/system-templates/admin/${key}/rollback`, {
     lang,
     version,
   });
@@ -90,7 +90,7 @@ export async function rollbackTemplate(key, lang, version) {
  * @param {string} lang
  */
 export async function archiveTemplate(key, lang) {
-  const { data } = await api.post(`/admin/system-templates/${key}/archive`, {
+  const { data } = await api.post(`/system-templates/admin/${key}/archive`, {
     lang,
   });
   return data;

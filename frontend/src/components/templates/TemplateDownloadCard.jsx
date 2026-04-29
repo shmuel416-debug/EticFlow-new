@@ -15,12 +15,43 @@ export default function TemplateDownloadCard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
+  /**
+   * Returns true when an API error indicates "no active template".
+   * @param {unknown} err
+   * @returns {boolean}
+   */
+  function isTemplateMissingError(err) {
+    return Boolean(err && typeof err === 'object' && err.code === 'TEMPLATE_NOT_FOUND')
+  }
+
   const loadTemplates = useCallback(async () => {
     try {
       setLoading(true)
-      const heTemplate = await systemTemplatesApi.getActiveTemplate('questionnaire_preface', 'he')
-      const enTemplate = await systemTemplatesApi.getActiveTemplate('questionnaire_preface', 'en')
-      setTemplates({ he: heTemplate, en: enTemplate })
+      setError(null)
+      const [heRes, enRes] = await Promise.allSettled([
+        systemTemplatesApi.getActiveTemplate('questionnaire_preface', 'he'),
+        systemTemplatesApi.getActiveTemplate('questionnaire_preface', 'en'),
+      ])
+
+      const nextTemplates = { he: null, en: null }
+      let hasUnexpectedFailure = false
+
+      if (heRes.status === 'fulfilled') {
+        nextTemplates.he = heRes.value
+      } else if (!isTemplateMissingError(heRes.reason)) {
+        hasUnexpectedFailure = true
+      }
+
+      if (enRes.status === 'fulfilled') {
+        nextTemplates.en = enRes.value
+      } else if (!isTemplateMissingError(enRes.reason)) {
+        hasUnexpectedFailure = true
+      }
+
+      setTemplates(nextTemplates)
+      if (hasUnexpectedFailure) {
+        setError(t('systemTemplates.loadError'))
+      }
     } catch {
       setError(t('systemTemplates.loadError'))
     } finally {
