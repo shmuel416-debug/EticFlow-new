@@ -1,6 +1,7 @@
 /**
  * EthicFlow — Submissions Routes
  * GET    /api/submissions           — list (role-filtered)       (all authenticated)
+ * GET    /api/submissions/coi-candidates — COI selector options  (committee)
  * GET    /api/submissions/:id       — single + versions + comments (all authenticated)
  * POST   /api/submissions           — create new submission       (RESEARCHER)
  * PUT    /api/submissions/:id       — update draft                (RESEARCHER, SECRETARY, ADMIN)
@@ -57,6 +58,11 @@ const listQuerySchema = z.object({
   limit:    z.string().regex(/^\d+$/).optional(),
 })
 
+const coiCandidatesQuerySchema = z.object({
+  search: z.string().max(200).optional(),
+  limit: z.string().regex(/^\d+$/).optional(),
+})
+
 const transitionSchema = z.object({
   status: statusCodeSchema,
   note:   z.string().max(2000).optional(),
@@ -108,6 +114,14 @@ router.get(
   authenticate,
   validateQuery(listQuerySchema),
   controller.list
+)
+
+router.get(
+  '/coi-candidates',
+  authenticate,
+  authorize('SECRETARY', 'REVIEWER', 'CHAIRMAN', 'ADMIN'),
+  validateQuery(coiCandidatesQuerySchema),
+  controller.listCoiCandidates
 )
 
 router.get(

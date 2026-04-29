@@ -654,6 +654,12 @@
     },
     "fields": {
       "submissionId": "מזהה בקשה",
+      "submissionHint": "בחר בקשה מתוך הרשימה לפי מספר בקשה או כותרת המחקר.",
+      "submissionSearchLabel": "חיפוש בקשה לפי מספר או כותרת",
+      "submissionSearchPlaceholder": "חיפוש בקשה...",
+      "submissionSelectPlaceholder": "בחר בקשה מהרשימה",
+      "submissionOptionsLoading": "טוען בקשות...",
+      "submissionNoResults": "לא נמצאו בקשות מתאימות",
       "userId": "מזהה חוקר",
       "userIdHint": "יש להזין את מזהה החוקר (User ID) מתוך מסך ניהול משתמשים. זה המשתמש שמולו קיים ניגוד העניינים שלך.",
       "userSearchLabel": "חיפוש חוקר לפי שם או אימייל",

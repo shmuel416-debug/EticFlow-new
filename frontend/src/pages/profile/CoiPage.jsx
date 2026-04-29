@@ -61,6 +61,9 @@ export default function CoiPage() {
   const [researcherQuery, setResearcherQuery] = useState('')
   const [researcherOptions, setResearcherOptions] = useState([])
   const [researchersLoading, setResearchersLoading] = useState(false)
+  const [submissionQuery, setSubmissionQuery] = useState('')
+  const [submissionOptions, setSubmissionOptions] = useState([])
+  const [submissionsLoading, setSubmissionsLoading] = useState(false)
   const [departmentQuery, setDepartmentQuery] = useState('')
   const [departmentOptions, setDepartmentOptions] = useState([])
   const [departmentsLoading, setDepartmentsLoading] = useState(false)
@@ -121,6 +124,30 @@ export default function CoiPage() {
   const showSubmission = form.scope === 'SUBMISSION'
   const showUser       = form.scope === 'USER'
   const showDepartment = form.scope === 'DEPARTMENT'
+
+  useEffect(() => {
+    if (!showSubmission) return
+    let cancelled = false
+    const timeoutId = setTimeout(async () => {
+      setSubmissionsLoading(true)
+      try {
+        const query = new URLSearchParams({
+          limit: '20',
+          ...(submissionQuery.trim() ? { search: submissionQuery.trim() } : {}),
+        })
+        const { data } = await api.get(`/submissions/coi-candidates?${query.toString()}`)
+        if (!cancelled) setSubmissionOptions(data.data ?? [])
+      } catch {
+        if (!cancelled) setSubmissionOptions([])
+      } finally {
+        if (!cancelled) setSubmissionsLoading(false)
+      }
+    }, 250)
+    return () => {
+      cancelled = true
+      clearTimeout(timeoutId)
+    }
+  }, [submissionQuery, showSubmission])
 
   useEffect(() => {
     if (!showUser) return
@@ -221,14 +248,41 @@ export default function CoiPage() {
             {showSubmission && (
               <FormField
                 label={t('coi.fields.submissionId')}
+                hint={t('coi.fields.submissionHint')}
                 render={({ inputId, describedBy }) => (
-                  <Input
-                    id={inputId}
-                    aria-describedby={describedBy}
-                    value={form.targetSubmissionId}
-                    onChange={(event) => setForm((prev) => ({ ...prev, targetSubmissionId: event.target.value }))}
-                    placeholder={t('coi.fields.submissionId')}
-                  />
+                  <div className="space-y-2">
+                    <Input
+                      icon={Search}
+                      type="search"
+                      value={submissionQuery}
+                      onChange={(event) => setSubmissionQuery(event.target.value)}
+                      placeholder={t('coi.fields.submissionSearchPlaceholder')}
+                      aria-label={t('coi.fields.submissionSearchLabel')}
+                    />
+                    <Select
+                      id={inputId}
+                      aria-describedby={describedBy}
+                      value={form.targetSubmissionId}
+                      onChange={(event) => setForm((prev) => ({ ...prev, targetSubmissionId: event.target.value }))}
+                      disabled={submissionsLoading}
+                    >
+                      <option value="">
+                        {submissionsLoading
+                          ? t('coi.fields.submissionOptionsLoading')
+                          : t('coi.fields.submissionSelectPlaceholder')}
+                      </option>
+                      {submissionOptions.map((submission) => (
+                        <option key={submission.id} value={submission.id}>
+                          {`${submission.applicationId} - ${submission.title}`}
+                        </option>
+                      ))}
+                    </Select>
+                    {!submissionsLoading && submissionOptions.length === 0 && (
+                      <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                        {t('coi.fields.submissionNoResults')}
+                      </p>
+                    )}
+                  </div>
                 )}
               />
             )}

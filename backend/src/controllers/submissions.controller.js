@@ -149,6 +149,41 @@ export async function list(req, res, next) {
 }
 
 /**
+ * GET /api/submissions/coi-candidates
+ * Returns lightweight submission options for COI SUBMISSION-scope selection.
+ * @param {import('express').Request} req - query: { search?, limit? }
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
+export async function listCoiCandidates(req, res, next) {
+  try {
+    const activeRole = getRequestRole(req)
+    const search = typeof req.query.search === 'string' ? req.query.search.trim() : ''
+    const limitRaw = Number.parseInt(String(req.query.limit ?? '20'), 10)
+    const limit = Number.isFinite(limitRaw) ? Math.min(Math.max(limitRaw, 1), 100) : 20
+    const extra = {
+      status: { not: 'WITHDRAWN' },
+    }
+    if (search) {
+      extra.OR = [
+        { title: { contains: search, mode: 'insensitive' } },
+        { applicationId: { contains: search, mode: 'insensitive' } },
+      ]
+    }
+    const where = roleFilter(req.user, activeRole, extra)
+    const data = await prisma.submission.findMany({
+      where,
+      select: { id: true, applicationId: true, title: true },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+    })
+    res.json({ data })
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
  * GET /api/submissions/:id
  * Returns a single submission with its version history and active comments.
  * Internal comments are hidden from RESEARCHER role.
