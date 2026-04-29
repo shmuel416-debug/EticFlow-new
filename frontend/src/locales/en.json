@@ -1076,6 +1076,8 @@
     "uploadTitle": "Upload New Version",
     "uploadSuccess": "File uploaded successfully",
     "uploadError": "Error uploading file",
+    "invalidFileType": "Unsupported file type. Please upload PDF or DOCX only",
+    "fileTooLarge": "File is too large (maximum {{maxSize}}MB)",
     "validateUpload": "Please select a language and file",
     "language": "Language",
     "selectFile": "Select File",

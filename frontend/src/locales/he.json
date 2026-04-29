@@ -1076,6 +1076,8 @@
     "uploadTitle": "העלאת גרסה חדשה",
     "uploadSuccess": "הקובץ הועלה בהצלחה",
     "uploadError": "שגיאה בהעלאת הקובץ",
+    "invalidFileType": "סוג קובץ לא נתמך. ניתן להעלות רק PDF או DOCX",
+    "fileTooLarge": "הקובץ גדול מדי (מקסימום {{maxSize}}MB)",
     "validateUpload": "בחר שפה וקובץ",
     "language": "שפה",
     "selectFile": "בחר קובץ",

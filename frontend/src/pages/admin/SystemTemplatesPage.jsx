@@ -9,6 +9,8 @@ import * as systemTemplatesApi from '../../services/systemTemplates.api.js';
 import { formatBytes, formatDatetime } from '../../utils/format.js';
 
 const TEMPLATE_KEYS = ['questionnaire_preface'];
+const MAX_TEMPLATE_SIZE_BYTES = 5 * 1024 * 1024;
+const ALLOWED_TEMPLATE_EXTENSIONS = ['.pdf', '.docx'];
 
 export default function SystemTemplatesPage() {
   const { t } = useTranslation();
@@ -50,6 +52,24 @@ export default function SystemTemplatesPage() {
       return;
     }
 
+    const lowerName = selectedFile.name.toLowerCase();
+    const isAllowedExtension = ALLOWED_TEMPLATE_EXTENSIONS.some((ext) => lowerName.endsWith(ext));
+    if (!isAllowedExtension) {
+      setToast({
+        type: 'error',
+        message: t('systemTemplates.invalidFileType'),
+      });
+      return;
+    }
+
+    if (selectedFile.size > MAX_TEMPLATE_SIZE_BYTES) {
+      setToast({
+        type: 'error',
+        message: t('systemTemplates.fileTooLarge', { maxSize: 5 }),
+      });
+      return;
+    }
+
     try {
       await systemTemplatesApi.uploadTemplate(uploadingKey, uploadingLang, selectedFile);
       setToast({
@@ -60,9 +80,19 @@ export default function SystemTemplatesPage() {
       setSelectedFile(null);
       await loadTemplates();
     } catch (error) {
+      const code = error.response?.data?.code;
+      const mappedErrorKey = {
+        INVALID_MIME: 'systemTemplates.invalidFileType',
+        FILE_TOO_LARGE: 'systemTemplates.fileTooLarge',
+        LIMIT_FILE_SIZE: 'systemTemplates.fileTooLarge',
+        MISSING_FILE: 'systemTemplates.validateUpload',
+      }[code];
+
       setToast({
         type: 'error',
-        message: error.response?.data?.error || t('systemTemplates.uploadError'),
+        message: mappedErrorKey
+          ? t(mappedErrorKey, { maxSize: 5 })
+          : error.response?.data?.error || t('systemTemplates.uploadError'),
       });
     }
   }
