@@ -115,6 +115,24 @@ export default function SystemTemplatesPage() {
     }
   }
 
+  async function handleArchive(key, lang) {
+    if (!confirm(t('systemTemplates.confirmArchive'))) return;
+
+    try {
+      await systemTemplatesApi.archiveTemplate(key, lang);
+      setToast({
+        type: 'success',
+        message: t('systemTemplates.archiveSuccess'),
+      });
+      await loadTemplates();
+    } catch (error) {
+      setToast({
+        type: 'error',
+        message: error.response?.data?.error || t('systemTemplates.archiveError'),
+      });
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -179,6 +197,16 @@ export default function SystemTemplatesPage() {
                             {t('systemTemplates.upload')}
                           </button>
                         </div>
+                        {activeVersion && (
+                          <div className="mb-4">
+                            <button
+                              onClick={() => handleArchive(key, lang)}
+                              className="px-3 py-2 bg-red-50 text-red-600 rounded hover:bg-red-100 text-sm font-medium"
+                            >
+                              {t('systemTemplates.archive')}
+                            </button>
+                          </div>
+                        )}
 
                         {/* Version Accordion */}
                         {langVersions.length > 0 && (
@@ -258,6 +286,9 @@ export default function SystemTemplatesPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   {t('systemTemplates.selectFile')}
                 </label>
+                <p className="text-xs text-gray-500 mb-2">
+                  {t('systemTemplates.uploadLimits', { maxSize: 5 })}
+                </p>
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
                   <input
                     type="file"

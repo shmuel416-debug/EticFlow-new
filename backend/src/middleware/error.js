@@ -48,6 +48,29 @@ export function errorHandler(err, req, res, _next) {
     method: req.method,
   }
 
+  // Multer upload errors (e.g. size limits)
+  if (err?.name === 'MulterError') {
+    const codeMap = {
+      LIMIT_FILE_SIZE: 'FILE_TOO_LARGE',
+      LIMIT_UNEXPECTED_FILE: 'INVALID_FILE_FIELD',
+    }
+    const mappedCode = codeMap[err.code] || err.code || 'UPLOAD_ERROR'
+    const messageMap = {
+      FILE_TOO_LARGE: 'File size exceeds upload limit',
+      INVALID_FILE_FIELD: 'Invalid upload field',
+      LIMIT_PART_COUNT: 'Too many form parts in request',
+      LIMIT_FILE_COUNT: 'Too many files in request',
+      LIMIT_FIELD_KEY: 'Field name is too long',
+      LIMIT_FIELD_VALUE: 'Field value is too long',
+      LIMIT_FIELD_COUNT: 'Too many fields in request',
+      LIMIT_UNEXPECTED_FILE: 'Unexpected file field in request',
+    }
+    return res.status(400).json({
+      error: messageMap[mappedCode] || err.message || 'Upload failed',
+      code: mappedCode,
+    })
+  }
+
   // JSON parse error from Express body-parser
   if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
     return res.status(400).json({ error: 'Invalid JSON body', code: 'INVALID_JSON' })
