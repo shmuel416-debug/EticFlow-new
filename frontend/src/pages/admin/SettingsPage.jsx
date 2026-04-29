@@ -222,11 +222,11 @@ function renderTemplatePreviewText(text, context) {
 
 /**
  * Inline status toast inside a card footer.
- * @param {{ toast: {type: 'ok'|'err', msg: string} | null }} props
+ * @param {{ toast: {type: 'success'|'error', msg: string} | null }} props
  */
 function InlineToast({ toast }) {
   if (!toast) return <div aria-live="polite" aria-atomic="true" />
-  const ok = toast.type === 'ok'
+  const ok = toast.type === 'success'
   const Icon = ok ? Check : XIcon
   return (
     <p
@@ -270,9 +270,9 @@ function SettingsGroup({ group, values, onSave }) {
     setToast(null)
     try {
       await onSave(group.groupKey, draft)
-      setToast({ type: 'ok', msg: t('settings.saveSuccess') })
+      setToast({ type: 'success', msg: t('settings.saveSuccess') })
     } catch {
-      setToast({ type: 'err', msg: t('settings.saveError') })
+      setToast({ type: 'error', msg: t('settings.saveError') })
     } finally {
       setSaving(false)
       setTimeout(() => setToast(null), 3000)
@@ -432,9 +432,9 @@ function ApprovalTemplateEditor({
     setToast(null)
     try {
       await onSave(lang, draft, signatureDataUrl)
-      setToast({ type: 'ok', msg: t('settings.saveSuccess') })
+      setToast({ type: 'success', msg: t('settings.saveSuccess') })
     } catch {
-      setToast({ type: 'err', msg: t('settings.saveError') })
+      setToast({ type: 'error', msg: t('settings.saveError') })
     } finally {
       setSaving(false)
       setTimeout(() => setToast(null), 3000)
@@ -444,7 +444,7 @@ function ApprovalTemplateEditor({
   async function handlePreviewPdf() {
     const selectedSubmissionId = previewSubmissionId || previewSubmissions[0]?.id || ''
     if (!selectedSubmissionId) {
-      setToast({ type: 'err', msg: t('settings.template.noApprovedSubmissions') })
+      setToast({ type: 'error', msg: t('settings.template.noApprovedSubmissions') })
       setTimeout(() => setToast(null), 3000)
       return
     }
@@ -469,7 +469,7 @@ function ApprovalTemplateEditor({
       }
       setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000)
     } catch {
-      setToast({ type: 'err', msg: t('settings.template.previewPdfError') })
+      setToast({ type: 'error', msg: t('settings.template.previewPdfError') })
       setTimeout(() => setToast(null), 3000)
     } finally {
       setPreviewingPdf(false)
@@ -488,12 +488,12 @@ function ApprovalTemplateEditor({
     const file = event.target.files?.[0]
     if (!file) return
     if (!/^image\/(png|jpeg|jpg)$/i.test(file.type)) {
-      setToast({ type: 'err', msg: t('settings.template.signatureTypeError') })
+      setToast({ type: 'error', msg: t('settings.template.signatureTypeError') })
       setTimeout(() => setToast(null), 3000)
       return
     }
     if (file.size > 1_500_000) {
-      setToast({ type: 'err', msg: t('settings.template.signatureSizeError') })
+      setToast({ type: 'error', msg: t('settings.template.signatureSizeError') })
       setTimeout(() => setToast(null), 3000)
       return
     }

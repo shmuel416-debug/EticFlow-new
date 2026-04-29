@@ -270,7 +270,7 @@ export default function SystemTemplatesPage() {
       {/* Toast */}
       {toast && (
         <div className={`fixed bottom-4 right-4 px-4 py-3 rounded-lg text-white text-sm ${
-          toast.type === 'ok' ? 'bg-green-600' : 'bg-red-600'
+          toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'
         } flex items-center gap-2 shadow-lg animate-fade-in z-50`}>
           <span>{toast.message}</span>
           <button onClick={() => setToast(null)} className="ml-2 font-bold hover:opacity-80">×</button>
