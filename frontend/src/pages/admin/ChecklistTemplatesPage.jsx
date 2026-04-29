@@ -152,6 +152,7 @@ export default function ChecklistTemplatesPage() {
   const [editor, setEditor] = useState(null)
   const [saving, setSaving] = useState(false)
   const [createOpen, setCreateOpen] = useState(false)
+  const [createError, setCreateError] = useState('')
   const [publishOpen, setPublishOpen] = useState(false)
   const [newName, setNewName] = useState('')
   const [newNameEn, setNewNameEn] = useState('')
@@ -291,11 +292,11 @@ export default function ChecklistTemplatesPage() {
     const name = newName.trim()
     const nameEn = newNameEn.trim()
     if (!name || !nameEn) {
-      setError(t('checklistTemplates.validationNames'))
+      setCreateError(t('checklistTemplates.validationNames'))
       return
     }
     setSaving(true)
-    setError('')
+    setCreateError('')
     try {
       const track = newTrack === '' ? null : newTrack
       const created = await createTemplate({ name, nameEn, track })
@@ -303,12 +304,13 @@ export default function ChecklistTemplatesPage() {
       setNewName('')
       setNewNameEn('')
       setNewTrack('')
+      setCreateError('')
       setToast(t('checklistTemplates.created'))
       await loadList()
       await selectTemplate(created.id)
     } catch (e) {
       const msg = e?.response?.data?.message || e?.message
-      setError(msg || t('checklistTemplates.createError'))
+      setCreateError(msg || t('checklistTemplates.createError'))
     } finally {
       setSaving(false)
     }
@@ -405,7 +407,10 @@ export default function ChecklistTemplatesPage() {
                 type="button"
                 size="sm"
                 className="w-full min-[500px]:w-auto min-h-[44px]"
-                onClick={() => setCreateOpen(true)}
+                onClick={() => {
+                  setCreateError('')
+                  setCreateOpen(true)
+                }}
               >
                 <Plus className="w-4 h-4" aria-hidden />
                 {t('checklistTemplates.create')}
@@ -888,13 +893,24 @@ export default function ChecklistTemplatesPage() {
 
       <Modal
         open={createOpen}
-        onClose={() => setCreateOpen(false)}
+        onClose={() => {
+          setCreateOpen(false)
+          setCreateError('')
+        }}
         title={t('checklistTemplates.createModalTitle')}
         description={t('checklistTemplates.createModalDescription')}
         closeLabel={t('common.cancel')}
         footer={(
           <div className="flex flex-wrap gap-2 justify-end">
-            <Button type="button" variant="secondary" onClick={() => setCreateOpen(false)} disabled={saving}>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => {
+                setCreateOpen(false)
+                setCreateError('')
+              }}
+              disabled={saving}
+            >
               {t('common.cancel')}
             </Button>
             <Button type="button" onClick={handleCreate} disabled={saving}>
@@ -904,6 +920,19 @@ export default function ChecklistTemplatesPage() {
         )}
       >
         <div className="space-y-3">
+          {createError && (
+            <div
+              role="alert"
+              className="text-sm font-medium rounded-xl px-3 py-2 border"
+              style={{
+                background: 'var(--status-danger-50)',
+                color: 'var(--status-danger)',
+                borderColor: 'var(--status-danger)',
+              }}
+            >
+              {createError}
+            </div>
+          )}
           <FormField label={t('checklistTemplates.fieldNameHe')}>
             <Input value={newName} onChange={(e) => setNewName(e.target.value)} autoComplete="off" />
           </FormField>
