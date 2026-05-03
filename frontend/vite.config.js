@@ -2,6 +2,22 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
+/**
+ * Normalizes API target URL for Vite proxy.
+ * Accepts values with or without trailing /api segment.
+ * @param {string | undefined} rawUrl
+ * @returns {string}
+ */
+function resolveApiProxyTarget(rawUrl) {
+  const fallback = 'http://localhost:5000'
+  if (!rawUrl) return fallback
+  return rawUrl.replace(/\/api\/?$/i, '')
+}
+
+const apiProxyTarget = resolveApiProxyTarget(
+  process.env.VITE_API_URL || process.env.E2E_API_URL
+)
+
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   build: {
@@ -21,7 +37,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:5000',
+        target: apiProxyTarget,
         changeOrigin: true,
       },
     },

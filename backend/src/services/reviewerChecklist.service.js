@@ -6,6 +6,8 @@
 
 import prisma from '../config/database.js';
 import { AppError } from '../utils/errors.js';
+import { notifyStatusChange } from './notification.service.js';
+import { setDueDates } from './sla.service.js';
 
 // ─── Template queries ────────────────────────────────────────────────────────
 
@@ -423,7 +425,7 @@ export async function submitReview(reviewId, reviewerId, payload) {
 
   await validateSubmitCompleteness(reviewId, review.templateId);
 
-  return prisma.$transaction(async (tx) => {
+  const submitted = await prisma.$transaction(async (tx) => {
     const submitted = await tx.reviewerChecklistReview.update({
       where: { id: reviewId },
       data: {
@@ -455,6 +457,20 @@ export async function submitReview(reviewId, reviewerId, payload) {
 
     return submitted;
   });
+
+  const updatedSubmission = await prisma.submission.findFirst({
+    where: { id: review.submissionId, isActive: true },
+    include: {
+      author: { select: { id: true, email: true } },
+      reviewer: { select: { id: true, email: true } },
+    },
+  });
+  if (updatedSubmission) {
+    setDueDates(review.submissionId, 'IN_REVIEW').catch(() => {});
+    notifyStatusChange(updatedSubmission, 'IN_REVIEW').catch(() => {});
+  }
+
+  return submitted;
 }
 
 // ─── Internal validation helpers ─────────────────────────────────────────────

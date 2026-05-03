@@ -21,6 +21,7 @@ import {
 } from 'lucide-react'
 import api from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
+import useStatusConfig from '../../hooks/useStatusConfig'
 import StatusBadge from '../../components/submissions/StatusBadge'
 import CommentThread from '../../components/submissions/CommentThread'
 import FormAnswersViewer from '../../components/submissions/FormAnswersViewer'
@@ -38,8 +39,13 @@ import {
   FormField,
 } from '../../components/ui'
 
-const STATUS_ORDER = ['SUBMITTED','IN_TRIAGE','ASSIGNED','IN_REVIEW','PENDING_REVISION','APPROVED']
-const STATUS_STEP  = { DRAFT:0,SUBMITTED:1,IN_TRIAGE:2,ASSIGNED:3,IN_REVIEW:4,PENDING_REVISION:4,APPROVED:5,REJECTED:5,WITHDRAWN:5 }
+const NEXT_OWNER_ROLE_BY_STATUS = {
+  SUBMITTED: 'SECRETARY',
+  IN_TRIAGE: 'SECRETARY',
+  ASSIGNED: 'REVIEWER',
+  IN_REVIEW: 'CHAIRMAN',
+  PENDING_REVISION: 'RESEARCHER',
+}
 
 /**
  * Renders SLA indicator for a submission.
@@ -95,7 +101,19 @@ export default function SubmissionStatusPage() {
   const [nowMs]      = useState(() => Date.now())
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [withdrawNote, setWithdrawNote] = useState('')
+  const { statuses, statusMap, transitionsByFromCode } = useStatusConfig({ submissionId: id })
   const backTo = typeof location.state?.from === 'string' ? location.state.from : '/dashboard'
+
+  /**
+   * Resolves localized status label from config with translation fallback.
+   * @param {string} statusCode
+   * @returns {string}
+   */
+  function getStatusLabel(statusCode) {
+    const statusMeta = statusMap[statusCode]
+    const fromDb = i18n.language === 'he' ? statusMeta?.labelHe : statusMeta?.labelEn
+    return t(`submission.status.${statusCode}`, fromDb || statusCode)
+  }
 
   /** Loads submission from API. */
   const load = useCallback(async () => {
@@ -191,9 +209,19 @@ export default function SubmissionStatusPage() {
     )
   }
 
-  const step     = STATUS_STEP[submission.status] ?? 1
-  const latest   = submission.versions?.slice(-1)[0]
-  const progress = Math.round((step / 5) * 100)
+  const latest = submission.versions?.slice(-1)[0]
+  const baseTimeline = (statuses || [])
+    .filter((status) => status.code !== 'DRAFT')
+    .sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0))
+    .map((status) => status.code)
+  const timelineStatuses = submission?.status && !baseTimeline.includes(submission.status)
+    ? [...baseTimeline, submission.status]
+    : baseTimeline
+  const currentStep = Math.max(1, timelineStatuses.indexOf(submission.status) + 1)
+  const totalSteps = Math.max(1, timelineStatuses.length)
+  const progress = Math.round((currentStep / totalSteps) * 100)
+  const nextTransitions = transitionsByFromCode[submission.status] || []
+  const nextOwnerRole = NEXT_OWNER_ROLE_BY_STATUS[submission.status]
 
   return (
     <main id="main-content" className="max-w-3xl mx-auto p-4 md:p-6 space-y-5">
@@ -211,12 +239,36 @@ export default function SubmissionStatusPage() {
 
           <div className="mt-4">
             <div
+              className="mb-3 rounded-lg p-3"
+              style={{ background: 'var(--surface-sunken)' }}
+            >
+              <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                {t('statusPage.currentStatusLabel')} {getStatusLabel(submission.status)}
+              </p>
+              {nextTransitions.length > 0 ? (
+                <p className="mt-1 text-xs" style={{ color: 'var(--text-secondary)' }}>
+                  {t('statusPage.nextPossibleStatuses', {
+                    statuses: nextTransitions.map((transition) => getStatusLabel(transition.toCode)).join(', '),
+                  })}
+                </p>
+              ) : (
+                <p className="mt-1 text-xs" style={{ color: 'var(--text-secondary)' }}>
+                  {t('statusPage.noFurtherTransition')}
+                </p>
+              )}
+              {nextOwnerRole && (
+                <p className="mt-1 text-xs font-medium" style={{ color: 'var(--lev-teal-text)' }}>
+                  {t('statusPage.nextOwner', { role: t(`roles.${nextOwnerRole}`) })}
+                </p>
+              )}
+            </div>
+            <div
               className="h-2 overflow-hidden"
               role="progressbar"
-              aria-valuenow={step}
+              aria-valuenow={currentStep}
               aria-valuemin={0}
-              aria-valuemax={5}
-              aria-label={t('statusPage.progressLabel', { current: step, total: 5 })}
+              aria-valuemax={totalSteps}
+              aria-label={t('statusPage.progressLabel', { current: currentStep, total: totalSteps })}
               style={{
                 background: 'var(--border-subtle)',
                 borderRadius: 'var(--radius-full)',
@@ -238,7 +290,7 @@ export default function SubmissionStatusPage() {
               className="text-xs text-center mt-1"
               style={{ color: 'var(--text-muted)' }}
             >
-              {t('statusPage.progressLabel', { current: step, total: 5 })}
+              {t('statusPage.progressLabel', { current: currentStep, total: totalSteps })}
             </p>
           </div>
 
@@ -354,8 +406,8 @@ export default function SubmissionStatusPage() {
                 role="list"
                 aria-label={t('statusPage.timeline')}
               >
-                {STATUS_ORDER.map((s, i) => {
-                  const done = STATUS_STEP[submission.status] > i
+                {timelineStatuses.map((s, i) => {
+                  const done = currentStep > i + 1
                   const cur  = submission.status === s
                   const isRejected = submission.status === 'REJECTED' && cur
                   const activeBg = isRejected
@@ -363,7 +415,12 @@ export default function SubmissionStatusPage() {
                     : 'var(--lev-teal-text)'
 
                   return (
-                    <div key={s} role="listitem" className="flex gap-4">
+                    <div
+                      key={s}
+                      role="listitem"
+                      className="flex gap-4"
+                      aria-current={cur ? 'step' : undefined}
+                    >
                       <div className="flex flex-col items-center">
                         <div
                           className="flex items-center justify-center font-bold text-sm flex-shrink-0"
@@ -390,7 +447,7 @@ export default function SubmissionStatusPage() {
                             <span aria-hidden="true">{i + 1}</span>
                           )}
                         </div>
-                        {i < STATUS_ORDER.length - 1 && (
+                        {i < timelineStatuses.length - 1 && (
                           <div
                             className="my-1"
                             style={{
@@ -412,7 +469,7 @@ export default function SubmissionStatusPage() {
                               : 'var(--text-secondary)',
                           }}
                         >
-                          {t(`statusPage.steps.${s}`)}
+                          {t(`statusPage.steps.${s}`, getStatusLabel(s))}
                           {cur && (
                             <span
                               className="text-xs font-normal ms-2"

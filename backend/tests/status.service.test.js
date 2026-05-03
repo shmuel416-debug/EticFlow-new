@@ -101,4 +101,15 @@ describe('status.service', () => {
     expect(await statusService.can('SUBMIT_REVIEW', 'ASSIGNED', 'REVIEWER')).toBe(true)
     expect(await statusService.can('EDIT', 'ASSIGNED', 'REVIEWER')).toBe(false)
   })
+
+  test('isTransitionAllowed blocks when reviewer is required but missing', () => {
+    const transition = {
+      fromCode: 'IN_TRIAGE',
+      toCode: 'ASSIGNED',
+      allowedRoles: ['SECRETARY'],
+      requireReviewerAssigned: true,
+    }
+    expect(statusService.isTransitionAllowed(transition, 'SECRETARY', { reviewerId: null })).toBe(false)
+    expect(statusService.isTransitionAllowed(transition, 'SECRETARY', { reviewerId: 'rev-1' })).toBe(true)
+  })
 })

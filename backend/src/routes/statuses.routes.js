@@ -74,12 +74,18 @@ const actionQuerySchema = z.object({
   status: statusCodeSchema,
 })
 
+const configQuerySchema = z.object({
+  submissionId: z.string().uuid().optional(),
+  status: statusCodeSchema.optional(),
+})
+
 const userRouter = Router()
 const adminRouter = Router()
 
 userRouter.get(
   '/config',
   authenticate,
+  validateQuery(configQuerySchema),
   controller.getStatusConfig
 )
 

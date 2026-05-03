@@ -72,6 +72,11 @@ export default function SubmissionDecisionPage() {
   const [note,       setNote]       = useState('')
   const [error,      setError]      = useState('')
   const [pendingDecision, setPendingDecision] = useState(null)
+  const DECISION_TO_STATUS = {
+    APPROVED: 'APPROVED',
+    REJECTED: 'REJECTED',
+    REVISION_REQUIRED: 'PENDING_REVISION',
+  }
   const backTo       =
     typeof location.state?.from === 'string' ? location.state.from : '/chairman/queue'
 
@@ -103,7 +108,14 @@ export default function SubmissionDecisionPage() {
         decision: pendingDecision.key,
         note: note.trim() || undefined,
       })
-      navigate(backTo)
+      const nextStatus = DECISION_TO_STATUS[pendingDecision.key]
+      navigate(backTo, {
+        state: {
+          statusMessage: t('chairman.decision.decisionRecordedTo', {
+            status: t(`submission.status.${nextStatus}`),
+          }),
+        },
+      })
     } catch (err) {
       setError(t(`errors.${err.code}`, t('errors.SERVER_ERROR')))
       setDeciding(false)

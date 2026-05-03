@@ -9,7 +9,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   Search, Filter, ChevronLeft, ChevronRight,
 } from 'lucide-react'
@@ -40,6 +40,7 @@ export default function SubmissionsListPage() {
   const isRtl         = i18n.dir() === 'rtl'
   const location      = useLocation()
   const navigate      = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const { statuses }  = useStatusConfig()
 
   const [submissions,  setSubmissions]  = useState([])
@@ -47,7 +48,7 @@ export default function SubmissionsListPage() {
   const [loading,      setLoading]      = useState(true)
   const [error,        setError]        = useState('')
   const [search,       setSearch]       = useState('')
-  const [statusFilter, setStatusFilter] = useState('')
+  const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || '')
   const [page,         setPage]         = useState(1)
   const returnPath                      = `${location.pathname}${location.search}`
 
@@ -70,6 +71,14 @@ export default function SubmissionsListPage() {
   }, [page, search, statusFilter, t])
 
   useEffect(() => { fetchSubmissions() }, [fetchSubmissions])
+
+  useEffect(() => {
+    const nextParams = new URLSearchParams(location.search)
+    if (statusFilter) nextParams.set('status', statusFilter)
+    else nextParams.delete('status')
+    if (nextParams.toString() === searchParams.toString()) return
+    setSearchParams(nextParams, { replace: true })
+  }, [location.search, searchParams, setSearchParams, statusFilter])
 
   /**
    * Resets page to 1 whenever a filter changes.

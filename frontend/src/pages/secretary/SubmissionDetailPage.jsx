@@ -11,6 +11,7 @@ import { useParams, useLocation } from 'react-router-dom'
 import { Download, CheckCircle2, AlertCircle, MessageSquare } from 'lucide-react'
 import api from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
+import useStatusConfig from '../../hooks/useStatusConfig'
 import StatusBadge from '../../components/submissions/StatusBadge'
 import CommentThread from '../../components/submissions/CommentThread'
 import StatusTransitionPanel from '../../components/submissions/StatusTransitionPanel'
@@ -32,7 +33,7 @@ import {
  * @returns {JSX.Element}
  */
 export default function SubmissionDetailPage() {
-  const { t }            = useTranslation()
+  const { t, i18n }      = useTranslation()
   const { id }           = useParams()
   const location         = useLocation()
   const { user }         = useAuth()
@@ -43,6 +44,18 @@ export default function SubmissionDetailPage() {
   const [assigningId,    setAssigningId]    = useState('')
   const [successMsg,     setSuccessMsg]     = useState('')
   const [pdfLoading,     setPdfLoading]     = useState(null)
+  const { statusMap }    = useStatusConfig({ submissionId: id })
+
+  /**
+   * Resolves status label by locale with i18n fallback.
+   * @param {string} statusCode
+   * @returns {string}
+   */
+  function getStatusLabel(statusCode) {
+    const statusMeta = statusMap[statusCode]
+    const fromDb = i18n.language === 'he' ? statusMeta?.labelHe : statusMeta?.labelEn
+    return t(`submission.status.${statusCode}`, fromDb || statusCode)
+  }
 
   /**
    * Loads submission data from API.
@@ -72,7 +85,7 @@ export default function SubmissionDetailPage() {
     setSuccessMsg('')
     try {
       await api.patch(`/submissions/${id}/status`, { status: newStatus })
-      setSuccessMsg(t('submission.detail.statusUpdated'))
+      setSuccessMsg(t('submission.detail.statusUpdatedTo', { status: getStatusLabel(newStatus) }))
       await fetchSubmission()
     } catch (err) {
       setError(t(`errors.${err.code}`, t('errors.SERVER_ERROR')))
@@ -307,6 +320,7 @@ export default function SubmissionDetailPage() {
               <StatusTransitionPanel
                 currentStatus={submission?.status}
                 userRole={user?.role}
+                submissionId={submission?.id}
                 onTransition={handleTransition}
                 loading={transitioning}
               />

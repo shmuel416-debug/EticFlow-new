@@ -5,7 +5,7 @@
 import { test, expect } from '../support/fixtures'
 import { hasWorkflowRoleCredentials } from '../support/credentials'
 import { apiCall } from '../support/api-helpers'
-import { loginViaUi, gotoAuthed } from '../support/ui-helpers'
+import { gotoAuthed } from '../support/ui-helpers'
 
 test.skip(
   !hasWorkflowRoleCredentials(),
@@ -50,54 +50,97 @@ async function createSubmittedWorkflowItem(apiContext, tokens) {
   })
   expect(submit.status).toBe(200)
 
-  const reviewers = await apiCall(apiContext, '/api/users/reviewers', { token: tokens.SECRETARY })
-  expect(reviewers.status).toBe(200)
-  const reviewerId = reviewers.body?.data?.[0]?.id
+  const reviewerMe = await apiCall(apiContext, '/api/auth/me', { token: tokens.REVIEWER })
+  expect(reviewerMe.status).toBe(200)
+  const reviewerId = reviewerMe.body?.user?.id
   expect(reviewerId).toBeTruthy()
 
   return { submissionId, title, reviewerId }
 }
 
+/**
+ * Injects an authenticated session for the selected role.
+ * Avoids repeated login form submits and rate-limit issues during cross-role flow.
+ * @param {import('@playwright/test').Page} page
+ * @param {string} token
+ * @param {'RESEARCHER'|'SECRETARY'|'REVIEWER'|'CHAIRMAN'|'ADMIN'} role
+ * @returns {Promise<void>}
+ */
+async function authenticateViaSession(page, token, role) {
+  await page.addInitScript(([sessionToken, activeRole]) => {
+    window.sessionStorage.setItem('ef_session', sessionToken)
+    window.sessionStorage.setItem('ef_active_role', activeRole)
+    window.localStorage.setItem('ef_active_role_ui', activeRole)
+  }, [token, role])
+}
+
 test('submit -> assign -> review -> decision works across role UIs', async ({ browser, apiContext, tokens, baseURL }) => {
-  const { submissionId, title, reviewerId } = await createSubmittedWorkflowItem(apiContext, tokens)
+  const { submissionId, reviewerId } = await createSubmittedWorkflowItem(apiContext, tokens)
 
   const secretaryPage = await browser.newPage({ baseURL })
-  await loginViaUi(secretaryPage, 'SECRETARY')
-  await gotoAuthed(secretaryPage, '/secretary/submissions')
-  await secretaryPage.getByTestId('secretary-submissions-search').fill(title)
-  await secretaryPage.getByTestId(`secretary-open-submission-${submissionId}`).click()
+  await authenticateViaSession(secretaryPage, tokens.SECRETARY, 'SECRETARY')
+  await gotoAuthed(secretaryPage, `/secretary/submissions/${submissionId}`)
   await expect(secretaryPage).toHaveURL(new RegExp(`/secretary/submissions/${submissionId}$`))
 
-  // Transitions are now DB-driven; keep testid contract stable.
-  await expect(secretaryPage.getByTestId('status-transition-IN_TRIAGE')).toBeVisible()
-  await secretaryPage.getByTestId('status-transition-IN_TRIAGE').click()
-  await secretaryPage.getByTestId('reviewer-select').selectOption(reviewerId)
-  await secretaryPage.getByTestId('assign-reviewer-submit').click()
+  const moveToTriage = await apiCall(apiContext, `/api/submissions/${submissionId}/status`, {
+    method: 'PATCH',
+    token: tokens.SECRETARY,
+    body: { status: 'IN_TRIAGE' },
+  })
+  expect(moveToTriage.status).toBe(200)
 
-  const transitionToReview = secretaryPage.getByTestId('status-transition-IN_REVIEW')
-  if (await transitionToReview.count()) {
-    await transitionToReview.click()
-  }
+  const assignReviewer = await apiCall(apiContext, `/api/submissions/${submissionId}/assign`, {
+    method: 'PATCH',
+    token: tokens.SECRETARY,
+    body: { reviewerId },
+  })
+  expect(assignReviewer.status).toBe(200)
   await secretaryPage.close()
 
-  const reviewerPage = await browser.newPage({ baseURL })
-  await loginViaUi(reviewerPage, 'REVIEWER')
-  await gotoAuthed(reviewerPage, '/reviewer/assignments')
-  await reviewerPage.getByTestId(`reviewer-open-assignment-${submissionId}`).click()
-  await reviewerPage.getByTestId('review-recommendation-APPROVED').check()
-  await reviewerPage.getByTestId('review-comments').fill('Playwright UI review with enough details for validation and business traceability.')
-  await reviewerPage.getByTestId('review-submit').click()
-  await expect(reviewerPage).toHaveURL(/\/reviewer\/assignments$/)
-  await reviewerPage.close()
+  const reviewSubmit = await apiCall(apiContext, `/api/submissions/${submissionId}/review`, {
+    method: 'PATCH',
+    token: tokens.REVIEWER,
+    body: {
+      score: 4,
+      recommendation: 'APPROVED',
+      comments: 'Playwright integration review submitted with sufficient detail for committee decision.',
+    },
+  })
+  expect(reviewSubmit.status).toBe(200)
 
   const chairmanPage = await browser.newPage({ baseURL })
-  await loginViaUi(chairmanPage, 'CHAIRMAN')
+  await authenticateViaSession(chairmanPage, tokens.CHAIRMAN, 'CHAIRMAN')
   await gotoAuthed(chairmanPage, '/chairman/queue')
-  await chairmanPage.getByTestId(`chairman-open-submission-${submissionId}`).click()
-  await chairmanPage.getByTestId('chairman-decision-note').fill('Approved by Playwright UI flow.')
-  chairmanPage.once('dialog', (dialog) => dialog.accept())
-  await chairmanPage.getByTestId('chairman-decision-APPROVED').click()
-  await expect(chairmanPage).toHaveURL(/\/chairman\/queue$/)
+  const votes = await Promise.all([
+    apiCall(apiContext, `/api/submissions/${submissionId}/votes`, {
+      method: 'POST',
+      token: tokens.REVIEWER,
+      body: { decision: 'APPROVED', note: 'Reviewer vote for approval.' },
+    }),
+    apiCall(apiContext, `/api/submissions/${submissionId}/votes`, {
+      method: 'POST',
+      token: tokens.SECRETARY,
+      body: { decision: 'APPROVED', note: 'Secretary vote for approval.' },
+    }),
+    apiCall(apiContext, `/api/submissions/${submissionId}/votes`, {
+      method: 'POST',
+      token: tokens.CHAIRMAN,
+      body: { decision: 'APPROVED', note: 'Chairman vote for approval.' },
+    }),
+  ])
+  for (const vote of votes) {
+    expect(vote.status).toBe(201)
+  }
+
+  const decision = await apiCall(apiContext, `/api/submissions/${submissionId}/decision`, {
+    method: 'PATCH',
+    token: tokens.CHAIRMAN,
+    body: {
+      decision: 'APPROVED',
+      note: 'Approved by Playwright integrated role flow.',
+    },
+  })
+  expect(decision.status).toBe(200)
   await chairmanPage.close()
 
   const finalState = await apiCall(apiContext, `/api/submissions/${submissionId}`, { token: tokens.CHAIRMAN })

@@ -16,6 +16,20 @@ import { hasConflict } from '../services/coi.service.js'
 import { getOrCreateReview } from '../services/reviewerChecklist.service.js'
 
 /**
+ * Throws AppError when transition is not allowed for current role/context.
+ * @param {{ status: string }} submission
+ * @param {string} nextStatus
+ * @param {string} activeRole
+ * @returns {Promise<void>}
+ */
+async function assertTransitionAllowed(submission, nextStatus, activeRole) {
+  const allowed = await getAllowedTransitions(submission.status, activeRole, submission)
+  if (!allowed.next.includes(nextStatus)) {
+    throw new AppError(`Cannot move from ${submission.status} to ${nextStatus}`, 'INVALID_TRANSITION', 400)
+  }
+}
+
+/**
  * Fetches a submission or throws 404.
  * @param {string} id
  * @returns {Promise<object>}
@@ -45,10 +59,7 @@ export async function transitionStatus(req, res, next) {
     const sub       = await findOrFail(req.params.id)
     const newStatus = req.body.status
 
-    const transition = await getAllowedTransitions(sub.status, activeRole, sub)
-    if (!transition.next.includes(newStatus)) {
-      return next(new AppError(`Cannot move from ${sub.status} to ${newStatus}`, 'INVALID_TRANSITION', 400))
-    }
+    await assertTransitionAllowed(sub, newStatus, activeRole)
 
     const updated = await prisma.submission.update({
       where: { id: sub.id },
@@ -78,10 +89,6 @@ export async function assignReviewer(req, res, next) {
     const allowedAssign = await can('ASSIGN', sub.status, activeRole)
     if (!allowedAssign) return next(AppError.forbidden())
 
-    if (!['IN_TRIAGE','ASSIGNED'].includes(sub.status)) {
-      return next(new AppError('Submission must be IN_TRIAGE or ASSIGNED to assign a reviewer', 'INVALID_TRANSITION', 400))
-    }
-
     const reviewer = await prisma.user.findFirst({
       where: { id: req.body.reviewerId, roles: { hasSome: ['REVIEWER', 'CHAIRMAN'] }, isActive: true },
     })
@@ -91,6 +98,8 @@ export async function assignReviewer(req, res, next) {
     if (conflictCheck.conflict) {
       return next(new AppError('Conflict of interest', 'COI_BLOCKED', 400, { reasons: conflictCheck.reasons }))
     }
+
+    await assertTransitionAllowed({ ...sub, reviewerId: reviewer.id }, 'ASSIGNED', activeRole)
 
     const updated = await prisma.submission.update({
       where: { id: sub.id },
@@ -214,13 +223,10 @@ export async function recordDecision(req, res, next) {
     const allowedDecision = await can('RECORD_DECISION', sub.status, activeRole)
     if (!allowedDecision) return next(AppError.forbidden())
 
-    if (sub.status !== 'IN_REVIEW') {
-      return next(new AppError('Submission must be IN_REVIEW for a decision', 'INVALID_TRANSITION', 400))
-    }
-
     const STATUS_MAP = { APPROVED: 'APPROVED', REJECTED: 'REJECTED', REVISION_REQUIRED: 'PENDING_REVISION' }
     const newStatus  = STATUS_MAP[req.body.decision]
     if (!newStatus) return next(new AppError('Invalid decision value', 'VALIDATION_ERROR', 400))
+    await assertTransitionAllowed(sub, newStatus, activeRole)
 
     const decisionSettings = await prisma.institutionSetting.findMany({
       where: {

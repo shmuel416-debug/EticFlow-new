@@ -149,7 +149,8 @@
       "title": "דשבורד מזכירה",
       "pendingReview": "ממתינות לבדיקה",
       "slaWarning": "אזהרת SLA",
-      "completedThisMonth": "הושלמו החודש"
+      "completedThisMonth": "הושלמו החודש",
+      "openFilteredList": "פתח רשימה מסוננת"
     },
     "reviewer": {
       "title": "דשבורד סוקר",
@@ -163,7 +164,8 @@
     "chairman": {
       "title": "דשבורד יו\"ר",
       "pendingDecision": "ממתינות להחלטה",
-      "upcomingMeetings": "פגישות קרובות"
+      "upcomingMeetings": "פגישות קרובות",
+      "openFilteredList": "פתח רשימה מסוננת"
     },
     "admin": {
       "title": "דשבורד מנהל",
@@ -228,6 +230,7 @@
       "sectionStatus": "סטטוס ופעולות",
       "sectionReviewer": "סוקר מוקצה",
       "changeStatus": "שינוי סטטוס",
+      "transitionToStatus": "העבר סטטוס אל {{status}}",
       "assignReviewer": "הקצה סוקר",
       "noReviewer": "לא הוקצה סוקר",
       "addComment": "הוסף הערה",
@@ -235,6 +238,7 @@
       "internalLabel": "הערה פנימית (לא גלויה לחוקר)",
       "submitComment": "שלח הערה",
       "statusUpdated": "הסטטוס עודכן בהצלחה",
+      "statusUpdatedTo": "הסטטוס עודכן ל־{{status}}",
       "reviewerAssigned": "הסוקר הוקצה בהצלחה",
       "noAnswer": "לא ניתנה תשובה",
       "loadError": "שגיאה בטעינת ההגשה",
@@ -308,6 +312,10 @@
     "timeline": "ציר זמן",
     "comments": "הערות",
     "documents": "מסמכים",
+    "currentStatusLabel": "סטטוס נוכחי:",
+    "nextPossibleStatuses": "הסטטוסים הבאים האפשריים: {{statuses}}",
+    "noFurtherTransition": "אין כרגע מעבר נוסף אפשרי עד לעדכון הגורם המטפל.",
+    "nextOwner": "השלב הבא באחריות: {{role}}",
     "progressLabel": "שלב {{current}} מתוך {{total}}",
     "fixAndResubmit": "תקן ושלח מחדש",
     "withdraw": "בטל הגשה",
@@ -586,7 +594,8 @@
       "confirmApprove": "האם לאשר את ההגשה?",
       "confirmReject": "האם לדחות את ההגשה?",
       "confirmRevision": "האם לבקש תיקון?",
-      "decisionRecorded": "ההחלטה נרשמה בהצלחה"
+      "decisionRecorded": "ההחלטה נרשמה בהצלחה",
+      "decisionRecordedTo": "ההחלטה נשמרה והסטטוס עודכן ל־{{status}}"
     }
   },
   "notifications": {

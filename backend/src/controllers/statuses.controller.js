@@ -53,12 +53,31 @@ async function assertInitialInvariant(statusId, nextIsInitial) {
 export async function getStatusConfig(req, res, next) {
   try {
     const activeRole = getRequestRole(req)
+    const submissionId = String(req.query.submissionId || '').trim()
+    const statusFilter = String(req.query.status || '').trim().toUpperCase()
     const statuses = await listStatuses()
+    const statusCodes = statusFilter ? [statusFilter] : statuses.map((status) => status.code)
+    let submission = null
+
+    if (submissionId) {
+      submission = await prisma.submission.findFirst({
+        where: { id: submissionId, isActive: true },
+        select: { id: true, status: true, reviewerId: true, authorId: true },
+      })
+      if (!submission) throw AppError.notFound('Submission')
+    }
+
     const transitionsByFromCode = {}
 
-    for (const status of statuses) {
-      const allowed = await getAllowedTransitions(status.code, activeRole, null)
-      transitionsByFromCode[status.code] = allowed.transitions
+    for (const statusCode of statusCodes) {
+      const contextSubmission =
+        submission && (!submission.status || submission.status === statusCode)
+          ? submission
+          : submission
+            ? { ...submission, status: statusCode }
+            : null
+      const allowed = await getAllowedTransitions(statusCode, activeRole, contextSubmission)
+      transitionsByFromCode[statusCode] = allowed.transitions
     }
 
     res.json({

@@ -205,16 +205,27 @@ export async function can(action, statusCode, userRole) {
 export async function getAllowedTransitions(currentCode, userRole, submission = null) {
   const config = await loadConfig()
   const allTransitions = config.transitionsByFromCode[currentCode] ?? []
-  const transitions = allTransitions.filter((transition) => {
-    const roleAllowed = (transition.allowedRoles || []).includes(userRole)
-    if (!roleAllowed) return false
-    if (transition.requireReviewerAssigned && !submission?.reviewerId) return false
-    return true
-  })
+  const transitions = allTransitions.filter((transition) =>
+    isTransitionAllowed(transition, userRole, submission)
+  )
   return {
     next: transitions.map((transition) => transition.toCode),
     transitions,
   }
+}
+
+/**
+ * Resolves whether a single transition is valid for role and submission context.
+ * @param {{ allowedRoles?: string[], requireReviewerAssigned?: boolean }} transition
+ * @param {string} userRole
+ * @param {object|null} [submission]
+ * @returns {boolean}
+ */
+export function isTransitionAllowed(transition, userRole, submission = null) {
+  const roleAllowed = (transition.allowedRoles || []).includes(userRole)
+  if (!roleAllowed) return false
+  if (transition.requireReviewerAssigned && !submission?.reviewerId) return false
+  return true
 }
 
 /**

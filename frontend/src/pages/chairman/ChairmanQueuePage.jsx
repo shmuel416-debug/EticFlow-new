@@ -7,7 +7,7 @@
 
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import api from '../../services/api'
 import StatusBadge from '../../components/submissions/StatusBadge'
 import {
@@ -32,15 +32,22 @@ export default function ChairmanQueuePage() {
   const { t }         = useTranslation()
   const location      = useLocation()
   const navigate      = useNavigate()
+  const [searchParams] = useSearchParams()
   const [submissions, setSubmissions] = useState([])
   const [loading,     setLoading]     = useState(true)
   const [error,       setError]       = useState('')
+  const selectedStatuses = (searchParams.get('statuses') || 'IN_REVIEW')
+    .split(',')
+    .map((value) => value.trim().toUpperCase())
+    .filter(Boolean)
   const returnPath    = `${location.pathname}${location.search}`
 
   useEffect(() => {
     async function fetchQueue() {
       try {
-        const { data } = await api.get('/submissions?status=IN_REVIEW')
+        const params = new URLSearchParams()
+        params.set('statuses', selectedStatuses.join(','))
+        const { data } = await api.get(`/submissions?${params.toString()}`)
         setSubmissions(data.data)
       } catch {
         setError(t('chairman.queue.loadError'))
@@ -49,7 +56,7 @@ export default function ChairmanQueuePage() {
       }
     }
     fetchQueue()
-  }, [t])
+  }, [t, selectedStatuses.join(',')])
 
   const columns = [
     {
@@ -109,6 +116,23 @@ export default function ChairmanQueuePage() {
     <main id="main-content" className="p-4 md:p-6 max-w-5xl mx-auto space-y-4">
       <PageHeader title={t('chairman.queue.pageTitle')} />
 
+      {location.state?.statusMessage && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="text-sm font-medium"
+          style={{
+            background: 'var(--status-success-50)',
+            color: 'var(--status-success)',
+            border: '1px solid var(--status-success)',
+            borderRadius: 'var(--radius-lg)',
+            padding: '12px 14px',
+          }}
+        >
+          {location.state.statusMessage}
+        </div>
+      )}
+
       {error && (
         <div
           role="alert"
@@ -135,7 +159,7 @@ export default function ChairmanQueuePage() {
             loading={loading}
             emptyTitle={t('chairman.queue.noItems')}
             onRowClick={(row) => navigate(`/chairman/queue/${row.id}`, { state: { from: returnPath } })}
-            rowAriaLabel={(row) => `${row.title} — ${row.applicationId}`}
+            rowAriaLabel={(row) => `${row.applicationId} — ${row.title} — ${t(`submission.status.${row.status}`)}`}
           />
         </CardBody>
       </Card>

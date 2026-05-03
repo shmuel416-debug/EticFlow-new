@@ -90,11 +90,41 @@ export default function SecretaryDashboard() {
   }, [t])
 
   const cards = stats ? [
-    { label: t('dashboard.secretary.pendingReview'),  value: stats.total,           tone: 'navy',    icon: ClipboardList },
-    { label: t('dashboard.secretary.slaWarning'),     value: stats.slaBreach,       tone: 'danger',  icon: AlertCircle   },
-    { label: t('submission.status.IN_TRIAGE'),        value: stats.inTriage,        tone: 'warning', icon: Clock         },
-    { label: t('submission.status.IN_REVIEW'),        value: stats.inReview,        tone: 'purple',  icon: Search        },
-    { label: t('submission.status.PENDING_REVISION'), value: stats.pendingRevision, tone: 'warning', icon: Pencil        },
+    {
+      label: t('dashboard.secretary.pendingReview'),
+      value: stats.total,
+      tone: 'navy',
+      icon: ClipboardList,
+      to: '/secretary/submissions',
+    },
+    {
+      label: t('dashboard.secretary.slaWarning'),
+      value: stats.slaBreach,
+      tone: 'danger',
+      icon: AlertCircle,
+      to: '/secretary/submissions',
+    },
+    {
+      label: t('submission.status.IN_TRIAGE'),
+      value: stats.inTriage,
+      tone: 'warning',
+      icon: Clock,
+      to: '/secretary/submissions?status=IN_TRIAGE',
+    },
+    {
+      label: t('submission.status.IN_REVIEW'),
+      value: stats.inReview,
+      tone: 'purple',
+      icon: Search,
+      to: '/secretary/submissions?status=IN_REVIEW',
+    },
+    {
+      label: t('submission.status.PENDING_REVISION'),
+      value: stats.pendingRevision,
+      tone: 'warning',
+      icon: Pencil,
+      to: '/secretary/submissions?status=PENDING_REVISION',
+    },
   ] : []
 
   return (
@@ -146,14 +176,16 @@ export default function SecretaryDashboard() {
       {!loading && !error && stats && (
         <>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-            {cards.map(({ label, value, tone, icon }) => (
-              <StatCard
-                key={label}
-                value={value}
-                label={label}
-                tone={tone}
-                icon={icon}
-              />
+            {cards.map(({ label, value, tone, icon, to }) => (
+              <Link key={label} to={to} className="block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2">
+                <StatCard
+                  value={value}
+                  label={label}
+                  tone={tone}
+                  icon={icon}
+                  hint={t('dashboard.secretary.openFilteredList')}
+                />
+              </Link>
             ))}
           </div>
 

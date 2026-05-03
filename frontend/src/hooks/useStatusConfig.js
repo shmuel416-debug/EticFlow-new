@@ -6,9 +6,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import api from '../services/api'
 
-let sharedConfig = null
-let sharedLoadedAt = 0
-let inFlight = null
+const sharedConfigByKey = new Map()
+const sharedLoadedAtByKey = new Map()
+const inFlightByKey = new Map()
 const CACHE_TTL_MS = 30_000
 
 const FALLBACK_STATUSES = [
@@ -38,31 +38,45 @@ const FALLBACK_TRANSITIONS = {
 
 /**
  * Fetches status configuration with short-lived cache.
+ * @param {{ submissionId?: string|null, status?: string|null }} options
  * @returns {Promise<{ statuses: any[], transitionsByFromCode: Record<string, any[]> }>}
  */
-async function fetchConfig() {
-  const cacheFresh = sharedConfig && Date.now() - sharedLoadedAt < CACHE_TTL_MS
-  if (cacheFresh) return sharedConfig
+async function fetchConfig(options = {}) {
+  const submissionId = options.submissionId || null
+  const status = options.status || null
+  const cacheKey = `${submissionId || '_'}:${status || '_'}`
+  const cachedConfig = sharedConfigByKey.get(cacheKey)
+  const loadedAt = sharedLoadedAtByKey.get(cacheKey) || 0
+  const cacheFresh = cachedConfig && Date.now() - loadedAt < CACHE_TTL_MS
+  if (cacheFresh) return cachedConfig
+  const inFlight = inFlightByKey.get(cacheKey)
   if (inFlight) return inFlight
 
-  inFlight = api.get('/statuses/config')
+  const params = new URLSearchParams()
+  if (submissionId) params.set('submissionId', submissionId)
+  if (status) params.set('status', status)
+  const query = params.toString()
+
+  const request = api.get(`/statuses/config${query ? `?${query}` : ''}`)
     .then((response) => {
-      sharedConfig = {
+      const config = {
         statuses: response?.data?.data?.statuses || FALLBACK_STATUSES,
         transitionsByFromCode: response?.data?.data?.transitionsByFromCode || FALLBACK_TRANSITIONS,
       }
-      sharedLoadedAt = Date.now()
-      return sharedConfig
+      sharedConfigByKey.set(cacheKey, config)
+      sharedLoadedAtByKey.set(cacheKey, Date.now())
+      return config
     })
     .catch(() => ({
       statuses: FALLBACK_STATUSES,
       transitionsByFromCode: FALLBACK_TRANSITIONS,
     }))
     .finally(() => {
-      inFlight = null
+      inFlightByKey.delete(cacheKey)
     })
 
-  return inFlight
+  inFlightByKey.set(cacheKey, request)
+  return request
 }
 
 /**
@@ -70,22 +84,26 @@ async function fetchConfig() {
  * @returns {void}
  */
 export function invalidateStatusConfigCache() {
-  sharedConfig = null
-  sharedLoadedAt = 0
+  sharedConfigByKey.clear()
+  sharedLoadedAtByKey.clear()
+  inFlightByKey.clear()
 }
 
 /**
  * Hook that provides statuses and transition metadata.
+ * @param {{ submissionId?: string|null, status?: string|null }} [options]
  * @returns {{ statuses: any[], statusMap: Record<string, any>, transitionsByFromCode: Record<string, any[]>, loading: boolean, reload: () => Promise<void> }}
  */
-export default function useStatusConfig() {
+export default function useStatusConfig(options = {}) {
   const [statuses, setStatuses] = useState(FALLBACK_STATUSES)
   const [transitionsByFromCode, setTransitionsByFromCode] = useState(FALLBACK_TRANSITIONS)
   const [loading, setLoading] = useState(true)
+  const submissionId = options.submissionId || null
+  const status = options.status || null
 
   async function load() {
     setLoading(true)
-    const config = await fetchConfig()
+    const config = await fetchConfig({ submissionId, status })
     setStatuses(config.statuses || FALLBACK_STATUSES)
     setTransitionsByFromCode(config.transitionsByFromCode || FALLBACK_TRANSITIONS)
     setLoading(false)
@@ -93,7 +111,7 @@ export default function useStatusConfig() {
 
   useEffect(() => {
     let mounted = true
-    fetchConfig().then((config) => {
+    fetchConfig({ submissionId, status }).then((config) => {
       if (!mounted) return
       setStatuses(config.statuses || FALLBACK_STATUSES)
       setTransitionsByFromCode(config.transitionsByFromCode || FALLBACK_TRANSITIONS)
@@ -102,7 +120,7 @@ export default function useStatusConfig() {
     return () => {
       mounted = false
     }
-  }, [])
+  }, [submissionId, status])
 
   const statusMap = useMemo(
     () => Object.fromEntries((statuses || []).map((status) => [status.code, status])),

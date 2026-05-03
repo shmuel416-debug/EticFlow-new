@@ -12,14 +12,26 @@ import useStatusConfig from '../../hooks/useStatusConfig'
  * @param {{
  *   currentStatus: string,
  *   userRole: string,
+ *   submissionId?: string,
  *   onTransition: (status: string) => Promise<void>,
  *   loading?: boolean
  * }} props
  */
-export default function StatusTransitionPanel({ currentStatus, userRole, onTransition, loading = false }) {
+export default function StatusTransitionPanel({
+  currentStatus,
+  userRole,
+  submissionId = null,
+  onTransition,
+  loading = false,
+}) {
   const { t, i18n } = useTranslation()
-  const { transitionsByFromCode, statusMap } = useStatusConfig()
-  const transitions = transitionsByFromCode[currentStatus] || []
+  const { transitionsByFromCode, statusMap } = useStatusConfig({
+    submissionId,
+    status: currentStatus,
+  })
+  const transitions = (transitionsByFromCode[currentStatus] || []).filter((transition) =>
+    (transition.allowedRoles || []).includes(userRole)
+  )
   if (transitions.length === 0 || !userRole) return null
 
   return (
@@ -32,6 +44,7 @@ export default function StatusTransitionPanel({ currentStatus, userRole, onTrans
           const nextStatus = transition.toCode
           const statusConfig = statusMap[nextStatus]
           const labelFromDb = i18n.language === 'he' ? statusConfig?.labelHe : statusConfig?.labelEn
+          const descriptionId = `transition-desc-${nextStatus}`
           return (
           <button
             key={nextStatus}
@@ -40,13 +53,21 @@ export default function StatusTransitionPanel({ currentStatus, userRole, onTrans
             disabled={loading}
             className="px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 text-white"
             style={{ minHeight: '44px', backgroundColor: statusConfig?.color || '#64748b' }}
-            aria-describedby="transition-desc"
+            aria-describedby={descriptionId}
+            aria-label={t('submission.detail.transitionToStatus', {
+              status: t(`submission.status.${nextStatus}`, labelFromDb || nextStatus),
+            })}
           >
             {t(`submission.status.${nextStatus}`, labelFromDb || nextStatus)}
           </button>
           )
         })}
       </div>
+      {transitions.map((transition) => (
+        <p key={`desc-${transition.toCode}`} id={`transition-desc-${transition.toCode}`} className="lev-sr-only">
+          {t('submission.detail.changeStatus')}
+        </p>
+      ))}
     </div>
   )
 }

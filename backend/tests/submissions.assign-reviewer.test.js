@@ -58,6 +58,10 @@ describe('submissions.status assignReviewer', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     statusServiceMock.can.mockResolvedValue(true)
+    statusServiceMock.getAllowedTransitions.mockResolvedValue({
+      next: ['ASSIGNED'],
+      transitions: [{ fromCode: 'IN_TRIAGE', toCode: 'ASSIGNED', allowedRoles: ['SECRETARY'] }],
+    })
     prismaMock.submission.findFirst.mockResolvedValue({
       id: 'sub-1',
       status: 'IN_TRIAGE',

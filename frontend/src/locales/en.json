@@ -149,7 +149,8 @@
       "title": "Secretary Dashboard",
       "pendingReview": "Pending Review",
       "slaWarning": "SLA Warning",
-      "completedThisMonth": "Completed This Month"
+      "completedThisMonth": "Completed This Month",
+      "openFilteredList": "Open filtered list"
     },
     "reviewer": {
       "title": "Reviewer Dashboard",
@@ -163,7 +164,8 @@
     "chairman": {
       "title": "Chairman Dashboard",
       "pendingDecision": "Pending Decision",
-      "upcomingMeetings": "Upcoming Meetings"
+      "upcomingMeetings": "Upcoming Meetings",
+      "openFilteredList": "Open filtered list"
     },
     "admin": {
       "title": "Admin Dashboard",
@@ -228,6 +230,7 @@
       "sectionStatus": "Status & Actions",
       "sectionReviewer": "Assigned Reviewer",
       "changeStatus": "Change Status",
+      "transitionToStatus": "Move status to {{status}}",
       "assignReviewer": "Assign Reviewer",
       "noReviewer": "No reviewer assigned",
       "addComment": "Add Comment",
@@ -235,6 +238,7 @@
       "internalLabel": "Internal comment (not visible to researcher)",
       "submitComment": "Submit Comment",
       "statusUpdated": "Status updated successfully",
+      "statusUpdatedTo": "Status updated to {{status}}",
       "reviewerAssigned": "Reviewer assigned successfully",
       "noAnswer": "No answer provided",
       "loadError": "Failed to load submission",
@@ -308,6 +312,10 @@
     "timeline": "Timeline",
     "comments": "Comments",
     "documents": "Documents",
+    "currentStatusLabel": "Current status:",
+    "nextPossibleStatuses": "Possible next statuses: {{statuses}}",
+    "noFurtherTransition": "No additional transition is currently available until the responsible role updates the request.",
+    "nextOwner": "Next step owner: {{role}}",
     "progressLabel": "Step {{current}} of {{total}}",
     "fixAndResubmit": "Fix & Resubmit",
     "withdraw": "Withdraw Submission",
@@ -586,7 +594,8 @@
       "confirmApprove": "Approve this submission?",
       "confirmReject": "Reject this submission?",
       "confirmRevision": "Request revision for this submission?",
-      "decisionRecorded": "Decision recorded successfully"
+      "decisionRecorded": "Decision recorded successfully",
+      "decisionRecordedTo": "Decision saved and status updated to {{status}}"
     }
   },
   "notifications": {

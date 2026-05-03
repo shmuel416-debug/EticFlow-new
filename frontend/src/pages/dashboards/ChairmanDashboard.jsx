@@ -54,10 +54,10 @@ function SlaDot({ slaTracking, labels }) {
 
 /**
  * Single submission card inside a Kanban column.
- * @param {{ submission: object, linkPrefix: string, slaLabels: object }} props
+ * @param {{ submission: object, linkPrefix: string, slaLabels: object, statusLabel: string }} props
  * @returns {JSX.Element}
  */
-function KanbanCard({ submission, linkPrefix, slaLabels }) {
+function KanbanCard({ submission, linkPrefix, slaLabels, statusLabel }) {
   return (
     <Link
       to={`${linkPrefix}/${submission.id}`}
@@ -68,7 +68,7 @@ function KanbanCard({ submission, linkPrefix, slaLabels }) {
         borderRadius: 'var(--radius-lg)',
         boxShadow: 'var(--shadow-xs)',
       }}
-      aria-label={submission.applicationId}
+      aria-label={`${submission.applicationId} — ${submission.title} — ${statusLabel}`}
     >
       <div className="flex items-center gap-2 mb-1">
         <SlaDot slaTracking={submission.slaTracking} labels={slaLabels} />
@@ -138,16 +138,19 @@ export default function ChairmanDashboard() {
       key: 'inReview', label: t('submission.status.IN_REVIEW'),
       items: inReview, tone: 'purple', icon: Search,
       link: '/chairman/queue',
+      statuses: 'IN_REVIEW',
     },
     {
       key: 'approved', label: t('submission.status.APPROVED'),
       items: approved, tone: 'success', icon: CheckCircle2,
       link: '/chairman/queue',
+      statuses: 'APPROVED',
     },
     {
       key: 'rejected', label: t('submission.status.REJECTED'),
       items: rejected, tone: 'danger', icon: XCircle,
       link: '/chairman/queue',
+      statuses: 'REJECTED',
     },
   ]
 
@@ -170,24 +173,33 @@ export default function ChairmanDashboard() {
 
       {!loading && !error && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <StatCard
-            value={inReview.length}
-            label={t('submission.status.IN_REVIEW')}
-            tone="purple"
-            icon={Search}
-          />
-          <StatCard
-            value={approved.length}
-            label={t('submission.status.APPROVED')}
-            tone="success"
-            icon={CheckCircle2}
-          />
-          <StatCard
-            value={rejected.length}
-            label={t('submission.status.REJECTED')}
-            tone="danger"
-            icon={XCircle}
-          />
+          <Link to="/chairman/queue?statuses=IN_REVIEW" className="block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2">
+            <StatCard
+              value={inReview.length}
+              label={t('submission.status.IN_REVIEW')}
+              tone="purple"
+              icon={Search}
+              hint={t('dashboard.chairman.openFilteredList')}
+            />
+          </Link>
+          <Link to="/chairman/queue?statuses=APPROVED" className="block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2">
+            <StatCard
+              value={approved.length}
+              label={t('submission.status.APPROVED')}
+              tone="success"
+              icon={CheckCircle2}
+              hint={t('dashboard.chairman.openFilteredList')}
+            />
+          </Link>
+          <Link to="/chairman/queue?statuses=REJECTED" className="block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2">
+            <StatCard
+              value={rejected.length}
+              label={t('submission.status.REJECTED')}
+              tone="danger"
+              icon={XCircle}
+              hint={t('dashboard.chairman.openFilteredList')}
+            />
+          </Link>
         </div>
       )}
 
@@ -243,12 +255,9 @@ export default function ChairmanDashboard() {
                           'var(--status-danger)',
                       }}
                     />
-                    <h2
-                      className="font-bold text-sm truncate"
-                      style={{ color: 'var(--lev-navy)' }}
-                    >
+                    <Link to={`${col.link}?statuses=${col.statuses}`} className="font-bold text-sm truncate hover:underline" style={{ color: 'var(--lev-navy)' }}>
                       {col.label}
-                    </h2>
+                    </Link>
                   </div>
                   <Badge tone={col.tone} size="sm">
                     {col.items.length}
@@ -272,6 +281,7 @@ export default function ChairmanDashboard() {
                       submission={sub}
                       linkPrefix={col.link}
                       slaLabels={slaLabels}
+                      statusLabel={col.label}
                     />
                   ))}
                 </div>
