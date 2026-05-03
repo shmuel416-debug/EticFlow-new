@@ -5,7 +5,7 @@
  * palette and lucide-react icons. IS 5568 / WCAG 2.2 AA.
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import api from '../../services/api'
@@ -36,17 +36,25 @@ export default function ChairmanQueuePage() {
   const [submissions, setSubmissions] = useState([])
   const [loading,     setLoading]     = useState(true)
   const [error,       setError]       = useState('')
-  const selectedStatuses = (searchParams.get('statuses') || 'IN_REVIEW')
-    .split(',')
-    .map((value) => value.trim().toUpperCase())
-    .filter(Boolean)
+  const statusesParam = searchParams.get('statuses') || 'IN_REVIEW'
+  const selectedStatuses = useMemo(
+    () => statusesParam
+      .split(',')
+      .map((value) => value.trim().toUpperCase())
+      .filter(Boolean),
+    [statusesParam]
+  )
+  const selectedStatusesKey = useMemo(
+    () => selectedStatuses.join(','),
+    [selectedStatuses]
+  )
   const returnPath    = `${location.pathname}${location.search}`
 
   useEffect(() => {
     async function fetchQueue() {
       try {
         const params = new URLSearchParams()
-        params.set('statuses', selectedStatuses.join(','))
+        params.set('statuses', selectedStatusesKey)
         const { data } = await api.get(`/submissions?${params.toString()}`)
         setSubmissions(data.data)
       } catch {
@@ -56,7 +64,7 @@ export default function ChairmanQueuePage() {
       }
     }
     fetchQueue()
-  }, [t, selectedStatuses.join(',')])
+  }, [t, selectedStatuses, selectedStatusesKey])
 
   const columns = [
     {
