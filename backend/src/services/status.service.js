@@ -6,6 +6,8 @@
 import prisma from '../config/database.js'
 
 const CACHE_TTL_MS = 60_000
+const DEFAULT_ROLES = ['RESEARCHER', 'SECRETARY', 'REVIEWER', 'CHAIRMAN', 'ADMIN']
+const DEFAULT_ACTIONS = ['VIEW', 'EDIT', 'COMMENT', 'UPLOAD_DOC', 'DELETE_DOC', 'VIEW_INTERNAL', 'TRANSITION', 'ASSIGN', 'SUBMIT_REVIEW', 'RECORD_DECISION']
 
 const DEFAULT_STATUS_CONFIG = [
   { code: 'DRAFT', labelHe: 'טיוטה', labelEn: 'Draft', color: '#64748b', orderIndex: 10, isInitial: true, isTerminal: false, slaPhase: null, notificationType: null },
@@ -19,6 +21,7 @@ const DEFAULT_STATUS_CONFIG = [
   { code: 'WITHDRAWN', labelHe: 'בוטל', labelEn: 'Withdrawn', color: '#6b7280', orderIndex: 90, isInitial: false, isTerminal: true, slaPhase: 'COMPLETED', notificationType: null },
   { code: 'CONTINUED', labelHe: 'המשך', labelEn: 'Continued', color: '#0d9488', orderIndex: 100, isInitial: false, isTerminal: true, slaPhase: 'COMPLETED', notificationType: null },
 ]
+const DEFAULT_STATUS_CODES = new Set(DEFAULT_STATUS_CONFIG.map((status) => status.code))
 
 const DEFAULT_TRANSITIONS = [
   { fromCode: 'DRAFT', toCode: 'WITHDRAWN', allowedRoles: ['RESEARCHER', 'SECRETARY', 'ADMIN'], requireReviewerAssigned: false },
@@ -34,6 +37,33 @@ const DEFAULT_TRANSITIONS = [
   { fromCode: 'PENDING_REVISION', toCode: 'WITHDRAWN', allowedRoles: ['RESEARCHER', 'SECRETARY', 'ADMIN'], requireReviewerAssigned: false },
   { fromCode: 'PENDING_REVISION', toCode: 'SUBMITTED', allowedRoles: ['SECRETARY', 'ADMIN'], requireReviewerAssigned: false },
 ]
+
+/**
+ * Resolves the built-in permission for system statuses when DB rows are missing.
+ * @param {string} statusCode
+ * @param {string} role
+ * @param {string} action
+ * @returns {boolean}
+ */
+function defaultPermissionAllowed(statusCode, role, action) {
+  if (action === 'VIEW') return true
+  if (action === 'EDIT') {
+    return ['ADMIN', 'SECRETARY'].includes(role) || (role === 'RESEARCHER' && ['DRAFT', 'PENDING_REVISION'].includes(statusCode))
+  }
+  if (action === 'COMMENT') return ['SECRETARY', 'REVIEWER', 'CHAIRMAN', 'ADMIN'].includes(role)
+  if (action === 'UPLOAD_DOC' || action === 'DELETE_DOC') {
+    return ['ADMIN', 'SECRETARY'].includes(role) || (role === 'RESEARCHER' && ['DRAFT', 'SUBMITTED', 'PENDING_REVISION'].includes(statusCode))
+  }
+  if (action === 'VIEW_INTERNAL') return ['SECRETARY', 'REVIEWER', 'CHAIRMAN', 'ADMIN'].includes(role)
+  if (action === 'TRANSITION') {
+    return (['SUBMITTED', 'IN_TRIAGE', 'ASSIGNED', 'PENDING_REVISION'].includes(statusCode) && ['SECRETARY', 'ADMIN'].includes(role))
+      || (statusCode === 'IN_REVIEW' && ['CHAIRMAN', 'ADMIN'].includes(role))
+  }
+  if (action === 'ASSIGN') return ['SECRETARY', 'ADMIN'].includes(role) && ['IN_TRIAGE', 'ASSIGNED'].includes(statusCode)
+  if (action === 'SUBMIT_REVIEW') return role === 'REVIEWER' && statusCode === 'ASSIGNED'
+  if (action === 'RECORD_DECISION') return ['CHAIRMAN', 'ADMIN'].includes(role) && statusCode === 'IN_REVIEW'
+  return false
+}
 
 let cache = null
 let cacheAt = 0
@@ -68,13 +98,11 @@ function buildFallbackConfig() {
   }
 
   const permissionByStatusRoleAction = {}
-  const roles = ['RESEARCHER', 'SECRETARY', 'REVIEWER', 'CHAIRMAN', 'ADMIN']
-  const actions = ['VIEW', 'EDIT', 'COMMENT', 'UPLOAD_DOC', 'DELETE_DOC', 'VIEW_INTERNAL', 'TRANSITION', 'ASSIGN', 'SUBMIT_REVIEW', 'RECORD_DECISION']
   for (const status of DEFAULT_STATUS_CONFIG) {
-    for (const role of roles) {
-      for (const action of actions) {
+    for (const role of DEFAULT_ROLES) {
+      for (const action of DEFAULT_ACTIONS) {
         const key = `${status.code}:${role}:${action}`
-        permissionByStatusRoleAction[key] = false
+        permissionByStatusRoleAction[key] = defaultPermissionAllowed(status.code, role, action)
       }
     }
   }
@@ -191,6 +219,9 @@ export async function can(action, statusCode, userRole) {
   const key = `${statusCode}:${userRole}:${action}`
   if (Object.prototype.hasOwnProperty.call(config.permissionByStatusRoleAction, key)) {
     return Boolean(config.permissionByStatusRoleAction[key])
+  }
+  if (DEFAULT_STATUS_CODES.has(statusCode) && Object.prototype.hasOwnProperty.call(config.statusByCode, statusCode)) {
+    return defaultPermissionAllowed(statusCode, userRole, action)
   }
   return false
 }
