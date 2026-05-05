@@ -11,6 +11,7 @@ import { useParams, Link, useNavigate, useLocation } from 'react-router-dom'
 import { Eye, ArrowRight, ArrowLeft, MessageSquare } from 'lucide-react'
 import api from '../../services/api'
 import StatusBadge from '../../components/submissions/StatusBadge'
+import SubmissionLifecycle from '../../components/submissions/SubmissionLifecycle'
 import FormAnswersViewer from '../../components/submissions/FormAnswersViewer'
 import CommentThread from '../../components/submissions/CommentThread'
 import ChecklistRenderer from '../../components/submissions/ChecklistRenderer'
@@ -144,6 +145,19 @@ export default function ReviewDetailPage() {
         backLabel={t('submission.detail.backToList')}
         actions={headerActions}
       />
+
+      <Card as="section">
+        <CardHeader title={t('submissionLifecycle.sectionTitle')} />
+        <CardBody>
+          <SubmissionLifecycle
+            submissionId={submission?.id}
+            currentStatus={submission?.status}
+            reviewer={submission?.reviewer}
+            userRole="REVIEWER"
+            variant="full"
+          />
+        </CardBody>
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card as="section" className="lg:col-span-2">

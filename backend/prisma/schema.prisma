@@ -453,6 +453,8 @@ model SubmissionStatus {
   code             String           @unique @db.VarChar(40)
   labelHe          String           @map("label_he")
   labelEn          String           @map("label_en")
+  descriptionHe    String?          @map("description_he")
+  descriptionEn    String?          @map("description_en")
   color            String           @default("#64748b")
   orderIndex       Int              @default(0) @map("order_index")
   isInitial        Boolean          @default(false) @map("is_initial")

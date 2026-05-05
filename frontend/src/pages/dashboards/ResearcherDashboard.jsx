@@ -12,10 +12,11 @@ import { useAuth } from '../../context/AuthContext'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import {
   Plus, FileText, AlertTriangle, CheckCircle2,
-  Clock, ArrowRight, ArrowLeft, Check, Download, Pencil, Inbox,
+  Clock, ArrowRight, ArrowLeft, Download, Pencil, Inbox,
 } from 'lucide-react'
 import api from '../../services/api'
 import StatusBadge from '../../components/submissions/StatusBadge'
+import SubmissionLifecycle from '../../components/submissions/SubmissionLifecycle'
 import TemplateDownloadCard from '../../components/templates/TemplateDownloadCard'
 import {
   Button, Card, CardHeader, PageHeader, StatCard, EmptyState, Spinner,
@@ -28,14 +29,6 @@ function submissionRoute(sub) {
   }
   return `/submissions/${sub.id}`
 }
-
-/** Status → workflow step index (0-based, max 4) */
-const STATUS_STEP = {
-  DRAFT: 0, SUBMITTED: 1, IN_TRIAGE: 1, ASSIGNED: 2,
-  IN_REVIEW: 3, PENDING_REVISION: 3, APPROVED: 4, REJECTED: 4, WITHDRAWN: 4,
-}
-
-const STEPS = ['SUBMITTED', 'IN_TRIAGE', 'ASSIGNED', 'IN_REVIEW', 'APPROVED']
 
 /**
  * SLA status info (color via CSS vars, days-remaining label).
@@ -140,7 +133,6 @@ function TimelinePane({ sub, returnPath }) {
   const { t, i18n } = useTranslation()
   const isRtl = i18n.dir() === 'rtl'
   const NextIcon = isRtl ? ArrowLeft : ArrowRight
-  const currentStep = STATUS_STEP[sub.status] ?? 1
 
   return (
     <div className="flex flex-col h-full p-5 overflow-y-auto">
@@ -176,100 +168,14 @@ function TimelinePane({ sub, returnPath }) {
         </Link>
       </div>
 
-      <div className="mb-5">
-        <div
-          className="flex justify-between text-xs mb-1"
-          style={{ color: 'var(--text-muted)' }}
-        >
-          <span>{t('statusPage.steps.SUBMITTED')}</span>
-          <span className="hidden sm:block">{t('statusPage.steps.IN_TRIAGE')}</span>
-          <span>{t('statusPage.steps.IN_REVIEW')}</span>
-          <span>{t('statusPage.steps.APPROVED')}</span>
-        </div>
-        <div
-          className="h-2 rounded-full overflow-hidden"
-          style={{ background: 'var(--surface-sunken)' }}
-          role="progressbar"
-          aria-valuenow={currentStep} aria-valuemin={0} aria-valuemax={4}
-        >
-          <div
-            className="h-full rounded-full transition-all duration-500"
-            style={{
-              width: `${(currentStep / 4) * 100}%`,
-              background: 'var(--gradient-brand-flat)',
-            }}
-          />
-        </div>
-        <p
-          className="text-xs text-center mt-1"
-          style={{ color: 'var(--lev-teal-text)' }}
-        >
-          {t('dashboard.researcher.step', { current: currentStep + 1, total: 5 })}
-        </p>
-      </div>
-
-      <div className="flex-1 space-y-0" role="list" aria-label={t('statusPage.timeline')}>
-        {STEPS.map((step, i) => {
-          const done = i < currentStep
-          const active = i === currentStep
-          const pending = i > currentStep
-
-          const bubbleStyle = done
-            ? { background: 'var(--lev-teal-text)', color: '#fff' }
-            : active
-              ? { background: 'var(--lev-navy)', color: '#fff', boxShadow: '0 0 0 3px var(--lev-navy-50)' }
-              : { background: 'var(--surface-sunken)', color: 'var(--text-muted)' }
-
-          return (
-            <div key={step} role="listitem" className="flex gap-3">
-              <div className="flex flex-col items-center">
-                <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0 transition-all"
-                  style={bubbleStyle}
-                  aria-label={`${t(`statusPage.steps.${step}`)}${done ? ` — ${t('common.completed')}` : active ? ` — ${t('common.current')}` : ` — ${t('common.future')}`}`}
-                >
-                  {done
-                    ? <Check size={16} strokeWidth={2.25} aria-hidden="true" focusable="false" />
-                    : i + 1}
-                </div>
-                {i < STEPS.length - 1 && (
-                  <div
-                    className="w-0.5 my-1 flex-1 min-h-[20px]"
-                    style={{ background: done ? 'var(--lev-teal-text)' : 'var(--border-default)' }}
-                  />
-                )}
-              </div>
-
-              <div className={`pb-4 ${pending ? 'opacity-40' : ''}`}>
-                <p
-                  className="text-sm font-semibold"
-                  style={{
-                    color: active
-                      ? 'var(--lev-navy)'
-                      : done
-                        ? 'var(--text-secondary)'
-                        : 'var(--text-muted)',
-                  }}
-                >
-                  {t(`statusPage.steps.${step}`)}
-                  {active && (
-                    <span
-                      className="text-xs font-normal ms-2"
-                      style={{ color: 'var(--lev-teal-text)' }}
-                    >
-                      {t('statusPage.currentStep')}
-                    </span>
-                  )}
-                </p>
-                {step === 'ASSIGNED' && sub.reviewer && (
-                  <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
-                    {sub.reviewer.fullName}
-                  </p>
-                )}
-              </div>
-            </div>
-          )
-        })}
+      <div className="flex-1">
+        <SubmissionLifecycle
+          submissionId={sub.id}
+          currentStatus={sub.status}
+          reviewer={sub.reviewer}
+          userRole="RESEARCHER"
+          variant="compact"
+        />
       </div>
 
       {sub.status === 'PENDING_REVISION' && (

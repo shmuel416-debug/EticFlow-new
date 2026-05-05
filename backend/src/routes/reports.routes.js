@@ -11,6 +11,7 @@ import { z }            from 'zod'
 import { validateQuery } from '../middleware/validate.js'
 import { authenticate } from '../middleware/auth.js'
 import { authorize }    from '../middleware/role.js'
+import { reportsExportLimiter } from '../middleware/rateLimit.js'
 import * as controller  from '../controllers/reports.controller.js'
 
 const router = Router()
@@ -20,8 +21,8 @@ const router = Router()
 // ─────────────────────────────────────────────
 
 const exportQuerySchema = z.object({
-  status: z.string().optional(),
-  track:  z.string().optional(),
+  status: z.string().trim().regex(/^[A-Z_]{2,40}$/).optional(),
+  track:  z.enum(['FULL', 'EXPEDITED', 'EXEMPT']).optional(),
   from:   z.string().datetime().optional(),
   to:     z.string().datetime().optional(),
   lang:   z.enum(['he', 'en']).optional(),
@@ -52,6 +53,7 @@ router.get(
   '/export/submissions',
   authenticate,
   authorize('SECRETARY', 'CHAIRMAN', 'ADMIN'),
+  reportsExportLimiter,
   validateQuery(exportQuerySchema),
   controller.exportSubmissions
 )

@@ -332,7 +332,8 @@
       "PENDING_REVISION": "Revision required",
       "APPROVED": "Approved",
       "REJECTED": "Rejected",
-      "WITHDRAWN": "Withdrawn"
+      "WITHDRAWN": "Withdrawn",
+      "CONTINUED": "Continued"
     },
     "currentStep": "← current",
     "slaLabel": "SLA",
@@ -340,6 +341,39 @@
     "reviewer": "Reviewer",
     "noComments": "No comments yet",
     "pdfError": "Failed to generate PDF — please try again"
+  },
+  "submissionLifecycle": {
+    "sectionTitle": "Submission Lifecycle",
+    "nextOwner": "Next step owner: {{role}}",
+    "descriptions": {
+      "DRAFT": "The submission is saved as draft and has not been sent for review yet.",
+      "SUBMITTED": "The submission was received and is waiting for secretary intake review.",
+      "IN_TRIAGE": "The request is being triaged for completeness before reviewer assignment.",
+      "ASSIGNED": "A reviewer has been assigned and can now start the formal review.",
+      "IN_REVIEW": "The review is in progress or completed and awaiting chairman decision.",
+      "PENDING_REVISION": "The committee requested revisions before the process can continue.",
+      "APPROVED": "The submission has been formally approved by the committee.",
+      "REJECTED": "The submission was rejected and the review workflow is closed.",
+      "WITHDRAWN": "The submission was withdrawn by the researcher or secretary.",
+      "CONTINUED": "The submission was marked for continuation in a separate process."
+    },
+    "actionHints": {
+      "SECRETARY": {
+        "SUBMITTED": "Open the submission and move it into triage.",
+        "IN_TRIAGE": "Verify required documents and assign the appropriate reviewer.",
+        "PENDING_REVISION": "Wait for researcher updates, then re-queue the submission."
+      },
+      "REVIEWER": {
+        "ASSIGNED": "Open the submission and complete the reviewer checklist.",
+        "IN_REVIEW": "Finalize notes and wait for chairman decision."
+      },
+      "CHAIRMAN": {
+        "IN_REVIEW": "Review the recommendation and record the final committee decision."
+      },
+      "RESEARCHER": {
+        "PENDING_REVISION": "Update the submission and resubmit it for continued review."
+      }
+    }
   },
   "pages": {
     "submissions": "Submissions",
@@ -1127,6 +1161,8 @@
       "code": "Code",
       "labelHe": "Hebrew label",
       "labelEn": "English label",
+      "descriptionHe": "Hebrew description",
+      "descriptionEn": "English description",
       "color": "Color",
       "isInitial": "Initial status",
       "isTerminal": "Terminal status"

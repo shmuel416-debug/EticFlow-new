@@ -13,7 +13,7 @@ import api from '../../services/api'
 import useStatusConfig, { invalidateStatusConfigCache } from '../../hooks/useStatusConfig'
 import {
   Button, IconButton, Card, CardHeader, CardBody,
-  Badge, PageHeader, Input, Tabs, Select,
+  Badge, PageHeader, Input, Tabs, Select, Textarea,
 } from '../../components/ui'
 
 const ROLES = ['RESEARCHER', 'SECRETARY', 'REVIEWER', 'CHAIRMAN', 'ADMIN']
@@ -65,6 +65,8 @@ function createEmptyStatusForm() {
     code: '',
     labelHe: '',
     labelEn: '',
+    descriptionHe: '',
+    descriptionEn: '',
     color: '#64748b',
     orderIndex: 0,
     isInitial: false,
@@ -402,6 +404,24 @@ export default function StatusManagementPage() {
                         placeholder={t('statusManagement.fields.labelEn')}
                         aria-label={t('statusManagement.fields.labelEn')}
                       />
+                      <Textarea
+                        data-testid="status-mgmt-add-description-he"
+                        dir="rtl"
+                        rows={2}
+                        value={newStatus.descriptionHe}
+                        onChange={(e) => setNewStatus((prev) => ({ ...prev, descriptionHe: e.target.value }))}
+                        placeholder={t('statusManagement.fields.descriptionHe')}
+                        aria-label={t('statusManagement.fields.descriptionHe')}
+                      />
+                      <Textarea
+                        data-testid="status-mgmt-add-description-en"
+                        dir="ltr"
+                        rows={2}
+                        value={newStatus.descriptionEn}
+                        onChange={(e) => setNewStatus((prev) => ({ ...prev, descriptionEn: e.target.value }))}
+                        placeholder={t('statusManagement.fields.descriptionEn')}
+                        aria-label={t('statusManagement.fields.descriptionEn')}
+                      />
                     </>
                   ) : (
                     <>
@@ -420,6 +440,24 @@ export default function StatusManagementPage() {
                         onChange={(e) => setNewStatus((prev) => ({ ...prev, labelHe: e.target.value }))}
                         placeholder={t('statusManagement.fields.labelHe')}
                         aria-label={t('statusManagement.fields.labelHe')}
+                      />
+                      <Textarea
+                        data-testid="status-mgmt-add-description-en"
+                        dir="ltr"
+                        rows={2}
+                        value={newStatus.descriptionEn}
+                        onChange={(e) => setNewStatus((prev) => ({ ...prev, descriptionEn: e.target.value }))}
+                        placeholder={t('statusManagement.fields.descriptionEn')}
+                        aria-label={t('statusManagement.fields.descriptionEn')}
+                      />
+                      <Textarea
+                        data-testid="status-mgmt-add-description-he"
+                        dir="rtl"
+                        rows={2}
+                        value={newStatus.descriptionHe}
+                        onChange={(e) => setNewStatus((prev) => ({ ...prev, descriptionHe: e.target.value }))}
+                        placeholder={t('statusManagement.fields.descriptionHe')}
+                        aria-label={t('statusManagement.fields.descriptionHe')}
                       />
                     </>
                   )}
@@ -477,7 +515,7 @@ export default function StatusManagementPage() {
                     borderRadius: 'var(--radius-lg)',
                   }}
                 >
-                  <table className="w-full min-w-[520px] text-sm">
+                  <table className="w-full min-w-[860px] text-sm">
                     <thead>
                       <tr style={{ background: 'var(--surface-sunken)' }}>
                         <th scope="col" className="px-3 py-2 text-start text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>{t('statusManagement.fields.code')}</th>
@@ -486,6 +524,12 @@ export default function StatusManagementPage() {
                         </th>
                         <th scope="col" className="px-3 py-2 text-start text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>
                           {isHeUI ? t('statusManagement.fields.labelEn') : t('statusManagement.fields.labelHe')}
+                        </th>
+                        <th scope="col" className="px-3 py-2 text-start text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>
+                          {isHeUI ? t('statusManagement.fields.descriptionHe') : t('statusManagement.fields.descriptionEn')}
+                        </th>
+                        <th scope="col" className="px-3 py-2 text-start text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>
+                          {isHeUI ? t('statusManagement.fields.descriptionEn') : t('statusManagement.fields.descriptionHe')}
                         </th>
                         <th scope="col" className="px-3 py-2 text-start text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>{t('statusManagement.fields.color')}</th>
                         <th scope="col" className="px-3 py-2 text-start text-xs font-semibold" style={{ color: 'var(--text-muted)' }}>{t('statusManagement.fields.isTerminal')}</th>
@@ -504,6 +548,38 @@ export default function StatusManagementPage() {
                           </td>
                           <td className="px-3 py-2" dir={isHeUI ? 'rtl' : 'ltr'}>{isHeUI ? status.labelHe : status.labelEn}</td>
                           <td className="px-3 py-2" dir={isHeUI ? 'ltr' : 'rtl'}>{isHeUI ? status.labelEn : status.labelHe}</td>
+                          <td className="px-3 py-2" dir={isHeUI ? 'rtl' : 'ltr'}>
+                            <Textarea
+                              rows={2}
+                              value={isHeUI ? status.descriptionHe || '' : status.descriptionEn || ''}
+                              onChange={(e) => setStatuses((prev) => prev.map((row) => (
+                                row.id === status.id
+                                  ? {
+                                      ...row,
+                                      [isHeUI ? 'descriptionHe' : 'descriptionEn']: e.target.value,
+                                    }
+                                  : row
+                              )))}
+                              placeholder={isHeUI ? t('statusManagement.fields.descriptionHe') : t('statusManagement.fields.descriptionEn')}
+                              aria-label={`${status.code} ${isHeUI ? t('statusManagement.fields.descriptionHe') : t('statusManagement.fields.descriptionEn')}`}
+                            />
+                          </td>
+                          <td className="px-3 py-2" dir={isHeUI ? 'ltr' : 'rtl'}>
+                            <Textarea
+                              rows={2}
+                              value={isHeUI ? status.descriptionEn || '' : status.descriptionHe || ''}
+                              onChange={(e) => setStatuses((prev) => prev.map((row) => (
+                                row.id === status.id
+                                  ? {
+                                      ...row,
+                                      [isHeUI ? 'descriptionEn' : 'descriptionHe']: e.target.value,
+                                    }
+                                  : row
+                              )))}
+                              placeholder={isHeUI ? t('statusManagement.fields.descriptionEn') : t('statusManagement.fields.descriptionHe')}
+                              aria-label={`${status.code} ${isHeUI ? t('statusManagement.fields.descriptionEn') : t('statusManagement.fields.descriptionHe')}`}
+                            />
+                          </td>
                           <td className="px-3 py-2">
                             <span
                               className="inline-block"

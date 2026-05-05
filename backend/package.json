@@ -7,10 +7,11 @@
   "scripts": {
     "dev": "nodemon src/index.js",
     "start": "node src/index.js",
+    "lint": "node scripts/lint-backend.mjs",
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
-    "prisma:seed": "prisma db seed",
+    "prisma:seed": "prisma generate && prisma db seed",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand",
     "bootstrap:prod": "node scripts/prod-bootstrap.mjs",
     "smoke:sso": "node tests/manual/sso-production-smoke.mjs",

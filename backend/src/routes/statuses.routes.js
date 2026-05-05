@@ -20,6 +20,8 @@ const statusSchema = z.object({
   code: statusCodeSchema,
   labelHe: z.string().min(1).max(100),
   labelEn: z.string().min(1).max(100),
+  descriptionHe: z.string().trim().max(500).nullable().optional(),
+  descriptionEn: z.string().trim().max(500).nullable().optional(),
   color: hexColorSchema.default('#64748b'),
   orderIndex: z.number().int().min(0).max(9999).default(0),
   isInitial: z.boolean().default(false),

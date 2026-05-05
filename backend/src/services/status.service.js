@@ -8,16 +8,16 @@ import prisma from '../config/database.js'
 const CACHE_TTL_MS = 60_000
 
 const DEFAULT_STATUS_CONFIG = [
-  { code: 'DRAFT', labelHe: 'טיוטה', labelEn: 'Draft', color: '#64748b', orderIndex: 10, isInitial: true, isTerminal: false, slaPhase: null, notificationType: null },
-  { code: 'SUBMITTED', labelHe: 'הוגש', labelEn: 'Submitted', color: '#2563eb', orderIndex: 20, isInitial: false, isTerminal: false, slaPhase: 'TRIAGE', notificationType: 'SUBMISSION_RECEIVED' },
-  { code: 'IN_TRIAGE', labelHe: 'בבדיקה ראשונית', labelEn: 'In Triage', color: '#ca8a04', orderIndex: 30, isInitial: false, isTerminal: false, slaPhase: 'TRIAGE', notificationType: null },
-  { code: 'ASSIGNED', labelHe: 'הוקצה לסוקר', labelEn: 'Assigned', color: '#ea580c', orderIndex: 40, isInitial: false, isTerminal: false, slaPhase: 'REVIEW', notificationType: 'SUBMISSION_ASSIGNED' },
-  { code: 'IN_REVIEW', labelHe: 'בביקורת', labelEn: 'In Review', color: '#7c3aed', orderIndex: 50, isInitial: false, isTerminal: false, slaPhase: 'APPROVAL', notificationType: 'REVIEW_REQUESTED' },
-  { code: 'PENDING_REVISION', labelHe: 'ממתין לתיקון', labelEn: 'Pending Revision', color: '#dc2626', orderIndex: 60, isInitial: false, isTerminal: false, slaPhase: null, notificationType: 'REVISION_REQUIRED' },
-  { code: 'APPROVED', labelHe: 'אושר', labelEn: 'Approved', color: '#16a34a', orderIndex: 70, isInitial: false, isTerminal: true, slaPhase: 'COMPLETED', notificationType: 'APPROVED' },
-  { code: 'REJECTED', labelHe: 'נדחה', labelEn: 'Rejected', color: '#b91c1c', orderIndex: 80, isInitial: false, isTerminal: true, slaPhase: 'COMPLETED', notificationType: 'REJECTED' },
-  { code: 'WITHDRAWN', labelHe: 'בוטל', labelEn: 'Withdrawn', color: '#6b7280', orderIndex: 90, isInitial: false, isTerminal: true, slaPhase: 'COMPLETED', notificationType: null },
-  { code: 'CONTINUED', labelHe: 'המשך', labelEn: 'Continued', color: '#0d9488', orderIndex: 100, isInitial: false, isTerminal: true, slaPhase: 'COMPLETED', notificationType: null },
+  { code: 'DRAFT', labelHe: 'טיוטה', labelEn: 'Draft', descriptionHe: 'הבקשה נשמרה כטיוטה ועדיין לא נשלחה לבדיקה.', descriptionEn: 'The submission is saved as draft and has not been sent for review yet.', color: '#64748b', orderIndex: 10, isInitial: true, isTerminal: false, slaPhase: null, notificationType: null },
+  { code: 'SUBMITTED', labelHe: 'הוגש', labelEn: 'Submitted', descriptionHe: 'הבקשה התקבלה במערכת וממתינה לבדיקת מזכירת הוועדה.', descriptionEn: 'The submission was received and is waiting for secretary intake review.', color: '#2563eb', orderIndex: 20, isInitial: false, isTerminal: false, slaPhase: 'TRIAGE', notificationType: 'SUBMISSION_RECEIVED' },
+  { code: 'IN_TRIAGE', labelHe: 'בבדיקה ראשונית', labelEn: 'In Triage', descriptionHe: 'מבוצעת בדיקת שלמות מסמכים והתאמה לתהליך לפני הקצאה לסוקר.', descriptionEn: 'The request is being triaged for completeness before reviewer assignment.', color: '#ca8a04', orderIndex: 30, isInitial: false, isTerminal: false, slaPhase: 'TRIAGE', notificationType: null },
+  { code: 'ASSIGNED', labelHe: 'הוקצה לסוקר', labelEn: 'Assigned', descriptionHe: 'הבקשה הוקצתה לסוקר שמתחיל כעת בבדיקה מקצועית.', descriptionEn: 'A reviewer has been assigned and can now start the formal review.', color: '#ea580c', orderIndex: 40, isInitial: false, isTerminal: false, slaPhase: 'REVIEW', notificationType: 'SUBMISSION_ASSIGNED' },
+  { code: 'IN_REVIEW', labelHe: 'בביקורת', labelEn: 'In Review', descriptionHe: 'הסקירה המקצועית הוגשה וממתינים להחלטת יו״ר הוועדה.', descriptionEn: 'The review is in progress or completed and awaiting chairman decision.', color: '#7c3aed', orderIndex: 50, isInitial: false, isTerminal: false, slaPhase: 'APPROVAL', notificationType: 'REVIEW_REQUESTED' },
+  { code: 'PENDING_REVISION', labelHe: 'ממתין לתיקון', labelEn: 'Pending Revision', descriptionHe: 'נדרשים תיקונים מצד החוקר/ת לפני המשך הדיון בבקשה.', descriptionEn: 'The committee requested revisions before the process can continue.', color: '#dc2626', orderIndex: 60, isInitial: false, isTerminal: false, slaPhase: null, notificationType: 'REVISION_REQUIRED' },
+  { code: 'APPROVED', labelHe: 'אושר', labelEn: 'Approved', descriptionHe: 'הבקשה אושרה סופית על ידי הוועדה.', descriptionEn: 'The submission has been formally approved by the committee.', color: '#16a34a', orderIndex: 70, isInitial: false, isTerminal: true, slaPhase: 'COMPLETED', notificationType: 'APPROVED' },
+  { code: 'REJECTED', labelHe: 'נדחה', labelEn: 'Rejected', descriptionHe: 'הבקשה נדחתה וההליך נסגר ללא אישור.', descriptionEn: 'The submission was rejected and the review workflow is closed.', color: '#b91c1c', orderIndex: 80, isInitial: false, isTerminal: true, slaPhase: 'COMPLETED', notificationType: 'REJECTED' },
+  { code: 'WITHDRAWN', labelHe: 'בוטל', labelEn: 'Withdrawn', descriptionHe: 'הבקשה בוטלה על ידי החוקר/ת או המזכירות.', descriptionEn: 'The submission was withdrawn by the researcher or secretary.', color: '#6b7280', orderIndex: 90, isInitial: false, isTerminal: true, slaPhase: 'COMPLETED', notificationType: null },
+  { code: 'CONTINUED', labelHe: 'המשך', labelEn: 'Continued', descriptionHe: 'הבקשה הועברה להמשך טיפול בתהליך נפרד.', descriptionEn: 'The submission was marked for continuation in a separate process.', color: '#0d9488', orderIndex: 100, isInitial: false, isTerminal: true, slaPhase: 'COMPLETED', notificationType: null },
 ]
 
 const DEFAULT_TRANSITIONS = [
@@ -123,6 +123,8 @@ async function loadConfig() {
         code: status.code,
         labelHe: status.labelHe,
         labelEn: status.labelEn,
+        descriptionHe: status.descriptionHe,
+        descriptionEn: status.descriptionEn,
         color: status.color,
         orderIndex: status.orderIndex,
         isInitial: status.isInitial,

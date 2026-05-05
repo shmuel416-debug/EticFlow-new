@@ -88,3 +88,15 @@ export const aiAnalysisLimiter = rateLimit({
   legacyHeaders: false,
   handler: rateLimitHandler,
 })
+
+/**
+ * Reports export rate limiter — keeps export endpoint abuse-resistant.
+ * Default: 10 export attempts per 10 minutes per IP.
+ */
+export const reportsExportLimiter = rateLimit({
+  windowMs: parseInt(process.env.REPORTS_EXPORT_RATE_LIMIT_WINDOW_MS ?? String(10 * 60 * 1000), 10),
+  max: parseInt(process.env.REPORTS_EXPORT_RATE_LIMIT_MAX ?? '10', 10),
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: rateLimitHandler,
+})

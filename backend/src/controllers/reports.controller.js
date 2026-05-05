@@ -10,6 +10,11 @@
 
 import ExcelJS from 'exceljs'
 import prisma  from '../config/database.js'
+import { recordAuditEntry } from '../middleware/audit.js'
+import { AppError } from '../utils/errors.js'
+
+const MAX_EXPORT_ROWS = parseInt(process.env.REPORTS_EXPORT_MAX_ROWS ?? '5000', 10)
+const MAX_EXPORT_RANGE_DAYS = parseInt(process.env.REPORTS_EXPORT_MAX_RANGE_DAYS ?? '366', 10)
 
 const STATUS_LABELS = {
   SUBMITTED:        { he: 'הוגש',            en: 'Submitted' },
@@ -28,6 +33,43 @@ const TRACK_LABELS = {
   FULL:      { he: 'מסלול מלא',   en: 'Full' },
   EXPEDITED: { he: 'מסלול מואץ',  en: 'Expedited' },
   EXEMPT:    { he: 'פטור',        en: 'Exempt' },
+}
+
+/**
+ * Sanitizes values before writing to spreadsheet cells.
+ * Prevents formula injection in spreadsheet clients.
+ * @param {unknown} value
+ * @returns {string}
+ */
+function sanitizeSpreadsheetCell(value) {
+  const raw = String(value ?? '')
+  const compact = raw.replace(/[\r\n]+/g, ' ').trim()
+  if (!compact) return ''
+  return /^[=+\-@\t]/.test(compact) ? `'${compact}` : compact
+}
+
+/**
+ * Validates export date range and keeps it bounded.
+ * @param {string|undefined} from
+ * @param {string|undefined} to
+ * @returns {void}
+ */
+function assertExportRange(from, to) {
+  if (!from || !to) return
+  const fromDate = new Date(from)
+  const toDate = new Date(to)
+  if (Number.isNaN(fromDate.getTime()) || Number.isNaN(toDate.getTime())) return
+  if (toDate < fromDate) {
+    throw new AppError('Invalid export date range', 'VALIDATION_ERROR', 400, {
+      from: 'from date must be earlier than or equal to to date',
+    })
+  }
+  const diffDays = (toDate.getTime() - fromDate.getTime()) / 86400000
+  if (diffDays > MAX_EXPORT_RANGE_DAYS) {
+    throw new AppError('Export date range exceeds allowed limit', 'VALIDATION_ERROR', 400, {
+      maxDays: MAX_EXPORT_RANGE_DAYS,
+    })
+  }
 }
 
 // ─────────────────────────────────────────────
@@ -204,6 +246,7 @@ export async function exportSubmissions(req, res, next) {
   try {
     const { status, track, from, to } = req.query
     const lang = req.query.lang === 'en' ? 'en' : 'he'
+    assertExportRange(from, to)
 
     const where = { isActive: true }
     if (status) where.status = status
@@ -217,6 +260,7 @@ export async function exportSubmissions(req, res, next) {
     const submissions = await prisma.submission.findMany({
       where,
       orderBy: { createdAt: 'desc' },
+      take: MAX_EXPORT_ROWS + 1,
       select: {
         applicationId: true,
         title:         true,
@@ -229,6 +273,11 @@ export async function exportSubmissions(req, res, next) {
         slaTracking:   { select: { isBreached: true } },
       },
     })
+    if (submissions.length > MAX_EXPORT_ROWS) {
+      throw new AppError('Export limit exceeded. Narrow down filters and try again.', 'EXPORT_LIMIT_EXCEEDED', 400, {
+        maxRows: MAX_EXPORT_ROWS,
+      })
+    }
 
     const workbook  = new ExcelJS.Workbook()
     const worksheet = workbook.addWorksheet('Submissions')
@@ -268,23 +317,35 @@ export async function exportSubmissions(req, res, next) {
 
     for (const s of submissions) {
       worksheet.addRow({
-        applicationId: s.applicationId,
-        title:         s.title,
-        status:        STATUS_LABELS[s.status]?.[lang] ?? s.status,
-        track:         TRACK_LABELS[s.track]?.[lang] ?? s.track,
-        author:        s.author?.fullName ?? '',
-        email:         s.author?.email ?? '',
-        reviewer:      s.reviewer?.fullName ?? '',
-        slaBreach:     s.slaTracking?.isBreached
+        applicationId: sanitizeSpreadsheetCell(s.applicationId),
+        title:         sanitizeSpreadsheetCell(s.title),
+        status:        sanitizeSpreadsheetCell(STATUS_LABELS[s.status]?.[lang] ?? s.status),
+        track:         sanitizeSpreadsheetCell(TRACK_LABELS[s.track]?.[lang] ?? s.track),
+        author:        sanitizeSpreadsheetCell(s.author?.fullName ?? ''),
+        email:         sanitizeSpreadsheetCell(s.author?.email ?? ''),
+        reviewer:      sanitizeSpreadsheetCell(s.reviewer?.fullName ?? ''),
+        slaBreach:     sanitizeSpreadsheetCell(s.slaTracking?.isBreached
           ? (lang === 'he' ? 'כן' : 'Yes')
-          : (lang === 'he' ? 'לא' : 'No'),
-        createdAt:     s.createdAt.toISOString().slice(0, 10),
-        updatedAt:     s.updatedAt.toISOString().slice(0, 10),
+          : (lang === 'he' ? 'לא' : 'No')),
+        createdAt:     sanitizeSpreadsheetCell(s.createdAt.toISOString().slice(0, 10)),
+        updatedAt:     sanitizeSpreadsheetCell(s.updatedAt.toISOString().slice(0, 10)),
       })
     }
 
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     res.setHeader('Content-Disposition', `attachment; filename="ethicflow-submissions-${lang}-${Date.now()}.xlsx"`)
+    res.locals.auditMeta = {
+      format: 'xlsx',
+      rowCount: submissions.length,
+      filters: { status: status ?? null, track: track ?? null, from: from ?? null, to: to ?? null, lang },
+    }
+    res.on('finish', () => {
+      if (res.statusCode < 400) {
+        recordAuditEntry(req, res, 'report.submissions_exported', 'Report').catch((err) => {
+          console.error('[Audit] Failed to write audit log:', err.message)
+        })
+      }
+    })
 
     await workbook.xlsx.write(res)
     res.end()

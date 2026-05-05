@@ -16,6 +16,7 @@ import StatusBadge from '../../components/submissions/StatusBadge'
 import CommentThread from '../../components/submissions/CommentThread'
 import StatusTransitionPanel from '../../components/submissions/StatusTransitionPanel'
 import ReviewerSelect from '../../components/submissions/ReviewerSelect'
+import SubmissionLifecycle from '../../components/submissions/SubmissionLifecycle'
 import FormAnswersViewer from '../../components/submissions/FormAnswersViewer'
 import DocumentList from '../../components/submissions/DocumentList'
 import AiPanel from '../../components/submissions/AiPanel'
@@ -212,6 +213,19 @@ export default function SubmissionDetailPage() {
         backLabel={t('submission.detail.backToList')}
         actions={headerActions}
       />
+
+      <Card as="section">
+        <CardHeader title={t('submissionLifecycle.sectionTitle')} />
+        <CardBody>
+          <SubmissionLifecycle
+            submissionId={submission?.id}
+            currentStatus={submission?.status}
+            reviewer={submission?.reviewer}
+            userRole={user?.role || 'SECRETARY'}
+            variant="full"
+          />
+        </CardBody>
+      </Card>
 
       {successMsg && (
         <div

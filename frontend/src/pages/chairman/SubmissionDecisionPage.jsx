@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import api from '../../services/api'
 import StatusBadge from '../../components/submissions/StatusBadge'
+import SubmissionLifecycle from '../../components/submissions/SubmissionLifecycle'
 import FormAnswersViewer from '../../components/submissions/FormAnswersViewer'
 import CommentThread from '../../components/submissions/CommentThread'
 import {
@@ -175,6 +176,19 @@ export default function SubmissionDecisionPage() {
         backLabel={t('submission.detail.backToList')}
         actions={headerActions}
       />
+
+      <Card as="section">
+        <CardHeader title={t('submissionLifecycle.sectionTitle')} />
+        <CardBody>
+          <SubmissionLifecycle
+            submissionId={submission?.id}
+            currentStatus={submission?.status}
+            reviewer={submission?.reviewer}
+            userRole="CHAIRMAN"
+            variant="full"
+          />
+        </CardBody>
+      </Card>
 
       {error && (
         <div
