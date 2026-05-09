@@ -16,6 +16,20 @@ import { getRequestRole } from '../utils/roles.js'
 const SYSTEM_CODES = new Set(['DRAFT', 'SUBMITTED', 'APPROVED', 'REJECTED'])
 
 /**
+ * Builds the visibility filter for one submission in role-scoped config lookups.
+ * @param {{ id: string }} user
+ * @param {string} activeRole
+ * @param {string} submissionId
+ * @returns {object}
+ */
+function buildVisibleSubmissionWhere(user, activeRole, submissionId) {
+  const where = { id: submissionId, isActive: true }
+  if (activeRole === 'RESEARCHER') where.authorId = user.id
+  if (activeRole === 'REVIEWER') where.reviewerId = user.id
+  return where
+}
+
+/**
  * Returns one active status by ID or throws 404.
  * @param {string} statusId
  * @returns {Promise<any>}
@@ -61,7 +75,7 @@ export async function getStatusConfig(req, res, next) {
 
     if (submissionId) {
       submission = await prisma.submission.findFirst({
-        where: { id: submissionId, isActive: true },
+        where: buildVisibleSubmissionWhere(req.user, activeRole, submissionId),
         select: { id: true, status: true, reviewerId: true, authorId: true },
       })
       if (!submission) throw AppError.notFound('Submission')
