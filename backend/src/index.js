@@ -18,6 +18,7 @@ import { startSlaCron }    from './jobs/sla.cron.js'
 import { startCalendarSyncCron } from './jobs/calendar-sync.cron.js'
 import { startContinuingReviewCron } from './jobs/continuing-review.cron.js'
 import { initializeObservability } from './services/observability.service.js'
+import { assertPuppeteerAvailable } from './services/pdf/renderer.js'
 import healthRouter        from './routes/health.routes.js'
 import authRouter          from './routes/auth.routes.js'
 import formsRouter         from './routes/forms.routes.js'
@@ -120,6 +121,14 @@ async function start() {
     console.log('✅ Database connected')
   } catch (err) {
     console.error('❌ Database connection failed:', err.message)
+    process.exit(1)
+  }
+
+  try {
+    await assertPuppeteerAvailable()
+    console.log('✅ Puppeteer renderer ready')
+  } catch (err) {
+    console.error('❌ PDF renderer initialization failed:', err.message)
     process.exit(1)
   }
 

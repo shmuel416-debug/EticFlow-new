@@ -345,6 +345,17 @@
   "submissionLifecycle": {
     "sectionTitle": "Submission Lifecycle",
     "nextOwner": "Next step owner: {{role}}",
+    "phases": {
+      "INTAKE": "Intake",
+      "REVIEW": "Review and Assessment",
+      "DECISION": "Decision"
+    },
+    "phaseDescriptions": {
+      "INTAKE": "The secretary confirms intake and required document completeness.",
+      "REVIEW": "The reviewer and chairman assess the submission.",
+      "DECISION": "Final outcome — approved, rejected, withdrawn, or continued."
+    },
+    "pendingRevisionBadge": "Researcher revisions required",
     "descriptions": {
       "DRAFT": "The submission is saved as draft and has not been sent for review yet.",
       "SUBMITTED": "The submission was received and is waiting for secretary intake review.",
@@ -983,8 +994,11 @@
     "finalizeConfirm": "After finalizing, editing is disabled. Continue?",
     "requestSignatures": "Request Signatures",
     "selectSigners": "Select signers",
+    "downloadLanguage": "Download language",
+    "downloadPdfSelected": "Download PDF",
     "downloadPdf": "Download PDF (Hebrew)",
     "downloadPdfEn": "Download PDF (English)",
+    "downloadPdfBoth": "Download PDF (Bilingual)",
     "backToList": "Back to list",
     "createFor": "Create protocol for: {{meeting}}",
     "alreadyExists": "A protocol already exists for this meeting",

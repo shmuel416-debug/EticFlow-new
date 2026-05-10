@@ -9,7 +9,20 @@ WORKDIR /app
 
 # Create non-root user for security
 RUN addgroup -S app && adduser -S app -G app
-RUN apk add --no-cache openssl su-exec
+RUN apk add --no-cache \
+  openssl \
+  su-exec \
+  chromium \
+  nss \
+  freetype \
+  harfbuzz \
+  ca-certificates \
+  ttf-freefont \
+  font-noto \
+  font-noto-hebrew
+
+ENV PUPPETEER_SKIP_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 # Install dependencies (includes devDeps so prisma CLI is available for migrations)
 COPY package*.json ./
 COPY prisma/ ./prisma/

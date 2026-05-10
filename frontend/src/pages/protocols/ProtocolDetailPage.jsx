@@ -104,6 +104,7 @@ export default function ProtocolDetailPage() {
   const [selectedSigners, setSelectedSigners] = useState([])
   const [requestingSign,  setRequestingSign]  = useState(false)
   const [finalizing,      setFinalizing]      = useState(false)
+  const [pdfLang,         setPdfLang]         = useState(i18n.language === 'en' ? 'en' : 'he')
 
   // ── Fetch or Create ──────────────────────────
 
@@ -208,10 +209,28 @@ export default function ProtocolDetailPage() {
 
   /**
    * Downloads protocol PDF in selected language.
-   * @param {'he'|'en'} lang
+   * @param {'he'|'en'|'both'} lang
    */
-  function handlePdf(lang) {
-    window.open(`/api/protocols/${id}/pdf?lang=${lang}`, '_blank')
+  async function handlePdf(lang) {
+    try {
+      const response = await api.get(`/protocols/${id}/pdf?lang=${lang}`, { responseType: 'blob' })
+      const url = URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }))
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+      if (isIOS) {
+        window.location.assign(url)
+      } else {
+        const link = document.createElement('a')
+        link.href = url
+        const suffix = lang === 'both' ? 'bilingual' : lang
+        link.download = `protocol-${suffix}-${protocol?.id ?? id}.pdf`
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+      }
+      setTimeout(() => URL.revokeObjectURL(url), 2000)
+    } catch {
+      showToast(t('protocols.saveError'), 'error')
+    }
   }
 
   // ── Section helpers ───────────────────────────
@@ -301,19 +320,23 @@ export default function ProtocolDetailPage() {
         <Button
           className="w-full min-[600px]:w-auto"
           variant="secondary"
-          onClick={() => handlePdf('he')}
+          onClick={() => handlePdf(pdfLang)}
           leftIcon={<AccessibleIcon icon={Download} size={16} decorative />}
         >
-          {t('protocols.downloadPdf')}
+          {t('protocols.downloadPdfSelected')}
         </Button>
-        <Button
-          className="w-full min-[600px]:w-auto"
-          variant="ghost"
-          onClick={() => handlePdf('en')}
-          leftIcon={<AccessibleIcon icon={Download} size={16} decorative />}
-        >
-          {t('protocols.downloadPdfEn')}
-        </Button>
+        <label className="w-full min-[600px]:w-auto flex items-center gap-2 text-sm" style={{ color: 'var(--text-muted)' }}>
+          <span>{t('protocols.downloadLanguage')}</span>
+          <select
+            value={pdfLang}
+            onChange={(e) => setPdfLang(e.target.value)}
+            className="min-h-[44px] rounded-md border px-2 py-1 bg-white"
+          >
+            <option value="he">{t('protocols.downloadPdf')}</option>
+            <option value="en">{t('protocols.downloadPdfEn')}</option>
+            <option value="both">{t('protocols.downloadPdfBoth')}</option>
+          </select>
+        </label>
       </div>
     </div>
   )
@@ -575,10 +598,10 @@ export default function ProtocolDetailPage() {
             <Button
               variant="secondary"
               fullWidth
-              onClick={() => handlePdf(i18n.language === 'en' ? 'en' : 'he')}
+              onClick={() => handlePdf(pdfLang)}
               leftIcon={<AccessibleIcon icon={Download} size={16} decorative />}
             >
-              {i18n.language === 'en' ? t('protocols.downloadPdfEn') : t('protocols.downloadPdf')}
+              {t('protocols.downloadPdfSelected')}
             </Button>
           </CardBody>
         </Card>

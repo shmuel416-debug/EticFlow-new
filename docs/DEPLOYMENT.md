@@ -59,6 +59,186 @@ curl https://your-domain.ac.il/api/health
 docker compose logs -f backend
 ```
 
+## Azure App Service Deployment (Recommended)
+
+This is the recommended production topology for stability:
+
+- `app-ethicflow-web` (frontend container, Linux App Service)
+- `app-ethicflow-api` (backend container, Linux App Service)
+- PostgreSQL Flexible Server (private networking)
+- Key Vault + Managed Identity
+- App Insights + Log Analytics
+
+For a concise Hebrew operator checklist, see:
+
+- `docs/ops/azure-appservice-checklist-he.md`
+
+### Prerequisites (Azure)
+
+- Azure subscription + rights to create role assignments.
+- Entra tenant with admin consent ability.
+- Azure CLI + Bicep installed.
+- Production DNS control for:
+  - `ethics.<institution>.ac.il` (frontend)
+  - `api.ethics.<institution>.ac.il` (backend)
+- Chromium available in the backend container image (required for Puppeteer PDF rendering).
+- Hebrew-capable fonts available in backend runtime (at least Noto Hebrew or embedded Heebo/David Libre).
+
+### Step 1: Provision Azure resources
+
+```bash
+cd infra/azure/appservice
+cp parameters.example.json parameters.prod.json
+# Edit parameters.prod.json
+az login
+az account set --subscription "<SUBSCRIPTION_ID>"
+az group create --name "rg-ethicflow-prod" --location "westeurope"
+az deployment group create \
+  --resource-group "rg-ethicflow-prod" \
+  --template-file "main.bicep" \
+  --parameters "@parameters.prod.json"
+```
+
+Or use the helper script:
+
+```powershell
+pwsh ./ops/scripts/deploy-azure-baseline.ps1 `
+  -SubscriptionId "<SUBSCRIPTION_ID>" `
+  -ResourceGroupName "rg-ethicflow-prod" `
+  -TemplateFile "infra/azure/appservice/main.bicep" `
+  -ParametersFile "infra/azure/appservice/parameters.prod.json"
+```
+
+The template provisions:
+
+- App Service Plan (PremiumV3)
+- Web App + API App (Linux containers)
+- ACR
+- PostgreSQL Flexible Server + private DNS
+- Storage account + file shares (`uploads`, `generated`)
+- Key Vault
+- Log Analytics + App Insights
+
+### Step 2: Build and push container images
+
+```bash
+ACR_NAME="acrethicflowprod"
+TAG="$(git rev-parse --short HEAD)"
+
+az acr login --name "$ACR_NAME"
+docker build -t "$ACR_NAME.azurecr.io/ethicflow-api:$TAG" ./backend
+docker build -t "$ACR_NAME.azurecr.io/ethicflow-web:$TAG" ./frontend
+docker push "$ACR_NAME.azurecr.io/ethicflow-api:$TAG"
+docker push "$ACR_NAME.azurecr.io/ethicflow-web:$TAG"
+```
+
+### Step 3: Configure Microsoft integrations (single-tenant)
+
+Run the provisioning script:
+
+```bash
+pwsh ./ops/scripts/setup-microsoft-integrations.ps1 \
+  -TenantId "<TENANT_GUID>" \
+  -BaseUrl "https://api.ethics.<institution>.ac.il" \
+  -OrganizerEmail "ethics@<institution>.ac.il" \
+  -FrontendLogoutUrl "https://ethics.<institution>.ac.il/login" \
+  -KeyVaultName "kv-ethicflow-prod" \
+  -SecretPrefix "ethicflow-prod"
+```
+
+The script creates three app registrations:
+
+- `EthicFlow SSO` (Delegated: `openid profile email User.Read`)
+- `EthicFlow Mail` (Application: `Mail.Send`)
+- `EthicFlow Calendar` (Application: `Calendars.ReadWrite`)
+
+All are created as **single-tenant** (`AzureADMyOrg`).
+
+### Step 4: Configure App Settings
+
+Set these on API App Service:
+
+```env
+NODE_ENV=production
+PORT=3000
+WEBSITES_PORT=3000
+PUPPETEER_SKIP_DOWNLOAD=true
+PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+FRONTEND_URL=https://ethics.<institution>.ac.il
+AUTH_PROVIDER=microsoft
+EMAIL_PROVIDER=microsoft
+CALENDAR_PROVIDER=microsoft
+STORAGE_PROVIDER=local
+MICROSOFT_AUTH_REDIRECT_URI=https://api.ethics.<institution>.ac.il/api/auth/microsoft/callback
+MICROSOFT_CALENDAR_ORGANIZER_EMAIL=ethics@<institution>.ac.il
+```
+
+PDF generation notes:
+
+- Backend now uses a single HTML -> PDF pipeline via Puppeteer for approval letters and protocols.
+- On Linux containers, install `chromium` plus Hebrew fonts (`font-noto-hebrew` recommended).
+- If `PUPPETEER_EXECUTABLE_PATH` is missing or invalid, backend startup should fail fast rather than silently rendering degraded Hebrew output.
+
+Set these on frontend App Service:
+
+```env
+WEBSITES_PORT=80
+BACKEND_URL=https://api.ethics.<institution>.ac.il
+```
+
+Store sensitive values (`DATABASE_URL`, JWT secrets, Microsoft client secrets) in Key Vault and map via Key Vault references.
+The provided Bicep template already creates a `database-url` secret and wires `DATABASE_URL` to that Key Vault reference.
+
+You can apply the API app settings + Key Vault references with:
+
+```powershell
+pwsh ./ops/scripts/set-azure-api-keyvault-settings.ps1 `
+  -ResourceGroupName "rg-ethicflow-prod" `
+  -ApiAppName "app-ethicflow-api-prod" `
+  -KeyVaultName "kv-ethicflow-prod" `
+  -FrontendUrl "https://ethics.<institution>.ac.il" `
+  -ApiBaseUrl "https://api.ethics.<institution>.ac.il" `
+  -OrganizerEmail "ethics@<institution>.ac.il" `
+  -SecretPrefix "ethicflow-prod"
+```
+
+### Step 5: Domain and TLS
+
+- Add custom domains to each app:
+  - Web app: `ethics.<institution>.ac.il`
+  - API app: `api.ethics.<institution>.ac.il`
+- Complete DNS validation (`asuid` TXT/CNAME as requested by App Service).
+- Enable Managed Certificates on both domains.
+
+### Step 6: Bootstrap database
+
+```bash
+cd backend
+ADMIN_EMAIL=admin@<institution>.ac.il ADMIN_PASSWORD="<strong-password>" npm run bootstrap:prod
+```
+
+### Step 7: Smoke and go-live
+
+```bash
+SMOKE_BASE_URL=https://api.ethics.<institution>.ac.il SMOKE_ASSERT=1 npm run smoke:sso
+```
+
+Manual verification:
+
+- Microsoft login succeeds from the production login page.
+- Exchange code replay fails (one-time use).
+- Password reset email is sent from Microsoft mailbox.
+- Calendar event creation appears in Outlook organizer calendar.
+
+### Step 8: Staged releases (recommended)
+
+- Create `staging` deployment slots for both apps.
+- Deploy to slot first (`auto_swap=false`), run smoke tests, then slot swap.
+- Keep rollback by swapping back to previous slot.
+- Use this as the default environment strategy:
+  - `staging` = cloud DEV/UAT
+  - `production` = live traffic only
+
 ## Environment Comparison
 
 | Aspect | DEV | PROD |
@@ -236,13 +416,13 @@ MICROSOFT_CALENDAR_ORGANIZER_EMAIL=ethics@yourinstitution.ac.il
 | Setting | Value |
 |---------|-------|
 | Name | EthicFlow SSO |
-| Supported account types | Single tenant (or multi-tenant) |
+| Supported account types | Single tenant (organization only) |
 | Redirect URI | `https://yourdomain.com/api/auth/microsoft/callback` |
 
 **Authentication:**
 - Platform: Web
 - Redirect URI: `https://yourdomain.com/api/auth/microsoft/callback`
-- Front-channel logout URL: (optional)
+- Front-channel logout URL: `https://your-frontend-domain/login`
 - ID tokens: ✅ (under Implicit grant)
 
 **API permissions → Delegated (not Application):**

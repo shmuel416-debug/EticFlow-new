@@ -345,6 +345,17 @@
   "submissionLifecycle": {
     "sectionTitle": "מסלול הבקשה",
     "nextOwner": "השלב הבא באחריות: {{role}}",
+    "phases": {
+      "INTAKE": "טיפול ראשוני",
+      "REVIEW": "בדיקה ובחינה",
+      "DECISION": "החלטה"
+    },
+    "phaseDescriptions": {
+      "INTAKE": "המזכירות מאשרת קליטה ושלמות מסמכים.",
+      "REVIEW": "סוקר ויו״ר הוועדה בוחנים את הבקשה.",
+      "DECISION": "תוצאה סופית — אישור, דחייה, ביטול או המשך."
+    },
+    "pendingRevisionBadge": "נדרש תיקון מהחוקר/ת",
     "descriptions": {
       "DRAFT": "הבקשה נשמרה כטיוטה ועדיין לא נשלחה לבדיקה.",
       "SUBMITTED": "הבקשה התקבלה במערכת וממתינה לבדיקת מזכירת הוועדה.",
@@ -983,8 +994,11 @@
     "finalizeConfirm": "לאחר הגמר לא ניתן לערוך. להמשיך?",
     "requestSignatures": "בקש חתימות",
     "selectSigners": "בחר חותמים",
+    "downloadLanguage": "שפת הורדה",
+    "downloadPdfSelected": "הורד PDF",
     "downloadPdf": "הורד PDF (עברית)",
     "downloadPdfEn": "הורד PDF (אנגלית)",
+    "downloadPdfBoth": "הורד PDF דו-לשוני",
     "backToList": "חזור לרשימה",
     "createFor": "צור פרוטוקול לפגישה: {{meeting}}",
     "alreadyExists": "לפגישה זו כבר קיים פרוטוקול",

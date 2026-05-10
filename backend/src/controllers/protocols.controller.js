@@ -18,6 +18,7 @@ import prisma  from '../config/database.js'
 import { AppError } from '../utils/errors.js'
 import { sendEmail } from '../services/email/email.service.js'
 import { generateProtocolPdf } from '../services/pdf.service.js'
+import { resolvePath } from '../services/storage.service.js'
 import { recordAuditEntry } from '../middleware/audit.js'
 import { COMMITTEE_ROLES } from '../constants/roles.js'
 import { getPrimaryRole } from '../utils/roles.js'
@@ -525,7 +526,7 @@ export async function getSignInfo(req, res, next) {
 export async function getPdf(req, res, next) {
   try {
     const { id } = req.params
-    const lang = req.query.lang === 'en' ? 'en' : 'he'
+    const lang = req.query.lang === 'en' ? 'en' : req.query.lang === 'both' ? 'both' : 'he'
 
     const protocol = await prisma.protocol.findUnique({
       where:   { id },
@@ -581,10 +582,16 @@ export async function getPdf(req, res, next) {
 
     const recusalHeading = lang === 'en'
       ? 'Members Recused Due To Conflict Of Interest'
-      : 'חברים שנעדרו מהדיון בשל ניגוד עניינים'
+      : lang === 'both'
+        ? 'חברים שנעדרו מהדיון בשל ניגוד עניינים / Members Recused Due To Conflict Of Interest'
+        : 'חברים שנעדרו מהדיון בשל ניגוד עניינים'
     const recusalContent = recusalLines.length > 0
       ? recusalLines.join('\n')
-      : (lang === 'en' ? 'No recusals were recorded.' : 'לא נרשמו היעדרויות עקב ניגוד עניינים.')
+      : (lang === 'en'
+          ? 'No recusals were recorded.'
+          : lang === 'both'
+            ? 'לא נרשמו היעדרויות עקב ניגוד עניינים. / No recusals were recorded.'
+            : 'לא נרשמו היעדרויות עקב ניגוד עניינים.')
 
     const baseSections = Array.isArray(protocol.contentJson?.sections) ? protocol.contentJson.sections : []
     const contentJson = {
@@ -598,7 +605,9 @@ export async function getPdf(req, res, next) {
     const { storagePath } = await generateProtocolPdf({ ...protocol, contentJson }, lang)
 
     res.locals.entityId = id
-    res.download(storagePath, `protocol-${lang}-${id}.pdf`)
+    const absPath = resolvePath(storagePath)
+    const outName = lang === 'both' ? `protocol-bilingual-${id}.pdf` : `protocol-${lang}-${id}.pdf`
+    res.download(absPath, outName)
   } catch (err) {
     next(err)
   }
