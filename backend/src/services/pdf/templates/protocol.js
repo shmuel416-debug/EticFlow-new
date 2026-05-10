@@ -7,9 +7,39 @@ import { escapeHtml, pageShell } from '../layout.js'
 /**
  * Builds the protocol section rows.
  * @param {{ heading?: string, content?: string }[]} sections
+ * @param {'he'|'en'} lang
  * @returns {string}
  */
-function renderSections(sections) {
+function renderSections(sections, lang) {
+  const hasHebrew = (text) => /[\u0590-\u05FF]/.test(String(text ?? ''))
+  const headingMap = {
+    'פתיחה': 'Opening',
+    'סדר יום': 'Agenda',
+    'דיון והחלטות': 'Discussion and Decisions',
+    'סיום': 'Closing',
+    'חברים שנעדרו מהדיון בשל ניגוד עניינים': 'Members Recused Due To Conflict Of Interest',
+  }
+
+  if (lang === 'en') {
+    return sections
+      .map((section) => {
+        const sourceHeading = String(section?.heading ?? '').trim()
+        const sourceContent = String(section?.content ?? '').trim()
+        const heading = escapeHtml(section?.headingEn ?? headingMap[sourceHeading] ?? 'Section')
+        const content = String(section?.contentEn ?? '').trim()
+        const finalContent = content
+          ? escapeHtml(content).replace(/\n/g, '<br>')
+          : hasHebrew(sourceContent)
+            ? 'See the Hebrew page for the full committee discussion details.'
+            : escapeHtml(sourceContent).replace(/\n/g, '<br>')
+        return `<section style="margin-bottom:16px;">
+  <h3 style="font-size:13pt; color:#1e3a5f; margin-bottom:6px;">${heading}</h3>
+  <p class="body-text">${finalContent}</p>
+</section>`
+      })
+      .join('')
+  }
+
   return sections
     .map((section) => {
       const heading = escapeHtml(section?.heading ?? '')
@@ -58,6 +88,7 @@ function renderSignatures(signatures, lang) {
  */
 function buildProtocolSection(protocol, labels, lang) {
   const isHebrew = lang === 'he'
+  const title = isHebrew ? (protocol.title ?? labels.titleLabel) : labels.titleLabel
   return `<div class="page">
   <div class="header">
     <div class="brand-row">
@@ -69,7 +100,7 @@ function buildProtocolSection(protocol, labels, lang) {
     </div>
   </div>
   <div class="content">
-    <div class="doc-title"><h2>${escapeHtml(protocol.title ?? labels.titleLabel)}</h2></div>
+    <div class="doc-title"><h2>${escapeHtml(title)}</h2></div>
     <div class="issue-date">${escapeHtml(labels.meetingLabel)}: ${escapeHtml(labels.meetingDate)}</div>
     <hr>
     <div class="details-box">
@@ -77,7 +108,7 @@ function buildProtocolSection(protocol, labels, lang) {
         <tr><td class="lbl">${escapeHtml(labels.statusFieldLabel)}</td><td class="val">${escapeHtml(labels.statusLabel)}</td></tr>
       </table>
     </div>
-    ${renderSections(Array.isArray(protocol.contentJson?.sections) ? protocol.contentJson.sections : [])}
+    ${renderSections(Array.isArray(protocol.contentJson?.sections) ? protocol.contentJson.sections : [], lang)}
     ${renderSignatures(protocol.signatures, lang)}
     <div class="footer">${escapeHtml(labels.footer)}</div>
   </div>

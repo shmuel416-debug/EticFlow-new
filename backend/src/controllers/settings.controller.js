@@ -39,6 +39,8 @@ const ADMIN_ONLY_KEYS = new Set([
   'allowed_file_types',
   'email_sender_name',
   'email_sender_address',
+  'approval_chairman_name_he',
+  'approval_chairman_name_en',
   ACCESSIBILITY_STATEMENT_KEY,
 ])
 const TEMPLATE_MANAGED_KEYS = new Set([...APPROVAL_TEMPLATE_KEYS, APPROVAL_SIGNATURE_KEY])

@@ -197,6 +197,7 @@ hr.light { border-color: #e2e8f0; border-width: 1px; }
 }
 .signature-section { text-align: center; margin-top: 14px; }
 .sig-line { border-top: 1px solid #94a3b8; width: 260px; margin: 0 auto 8px; }
+.sig-name { font-size: 11pt; color: #1f2937; font-weight: 700; margin-bottom: 3px; }
 .sig-label { color: ${brandPrimary}; font-weight: 700; font-size: 11pt; }
 .sig-fields { margin-top: 10px; width: 100%; border-collapse: separate; border-spacing: 16px 0; }
 .sig-fields td {
@@ -210,6 +211,7 @@ hr.light { border-color: #e2e8f0; border-width: 1px; }
 }
 .sig-img { max-height: 52px; max-width: 100%; object-fit: contain; display: block; margin: 4px 0 8px; }
 .box-label { color: #64748b; font-size: 9pt; margin-bottom: 12px; text-align: start; }
+.box-value { color: #0f172a; font-size: 10pt; font-weight: 600; margin-bottom: 6px; text-align: start; }
 .box-line { border-top: 1px solid #94a3b8; margin-top: 8px; }
 .footer {
   margin-top: auto;

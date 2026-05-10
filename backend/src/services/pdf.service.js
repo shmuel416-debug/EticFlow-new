@@ -22,6 +22,8 @@ const PROTOCOL_GENERATED_DIR = path.resolve('uploads', 'generated', 'protocols')
 const BRAND_PRIMARY = '#1e3a5f'
 const INSTITUTION_NAME_HE = process.env.INSTITUTION_NAME_HE || 'המוסד האקדמי'
 const INSTITUTION_NAME_EN = process.env.INSTITUTION_NAME_EN || 'Academic Institution'
+const CHAIRMAN_NAME_HE = process.env.APPROVAL_CHAIRMAN_NAME_HE || process.env.CHAIRMAN_NAME_HE || ''
+const CHAIRMAN_NAME_EN = process.env.APPROVAL_CHAIRMAN_NAME_EN || process.env.CHAIRMAN_NAME_EN || ''
 
 /**
  * Formats date as dd/MM/yyyy for Hebrew locale.
@@ -147,6 +149,30 @@ async function getStoredChairmanSignature() {
 }
 
 /**
+ * Resolves chairman display name by language from settings, DB role, or env fallback.
+ * @param {'he'|'en'} lang
+ * @returns {Promise<string>}
+ */
+async function getChairmanDisplayName(lang) {
+  const key = lang === 'en' ? 'approval_chairman_name_en' : 'approval_chairman_name_he'
+  const setting = await prisma.institutionSetting.findUnique({
+    where: { key },
+    select: { value: true },
+  })
+  const explicitName = String(setting?.value ?? '').trim()
+  if (explicitName) return explicitName
+
+  const chairmanUser = await prisma.user.findFirst({
+    where: { isActive: true, roles: { has: 'CHAIRMAN' } },
+    select: { fullName: true },
+    orderBy: { createdAt: 'asc' },
+  })
+  if (chairmanUser?.fullName) return String(chairmanUser.fullName).trim()
+
+  return lang === 'en' ? CHAIRMAN_NAME_EN : CHAIRMAN_NAME_HE
+}
+
+/**
  * Returns configured institution primary color.
  * @returns {Promise<string>}
  */
@@ -196,6 +222,7 @@ function buildApprovalTemplateContext(lang, submission) {
     researcherName: String(submission.author?.fullName ?? ''),
     researcherEmail: String(submission.author?.email ?? ''),
     institutionName: lang === 'he' ? INSTITUTION_NAME_HE : INSTITUTION_NAME_EN,
+    chairmanName: '',
   }
 }
 
@@ -249,6 +276,7 @@ export async function generateApprovalLetter(submissionId, lang = 'he') {
     getInstitutionPrimaryColorHex(),
   ])
   const ctx = buildApprovalTemplateContext(safeLang, submission)
+  ctx.chairmanName = await getChairmanDisplayName(safeLang)
   const hydratedTemplate = fitApprovalTemplateToSinglePage(materializeTemplate(template, ctx))
   const html = safeLang === 'he'
     ? buildHeHtml(submission, hydratedTemplate, ctx, signatureDataUrl, brandPrimary)
@@ -285,6 +313,8 @@ export async function generateBilingualApprovalLetter(submissionId) {
   ])
   const heCtx = buildApprovalTemplateContext('he', submission)
   const enCtx = buildApprovalTemplateContext('en', submission)
+  heCtx.chairmanName = await getChairmanDisplayName('he')
+  enCtx.chairmanName = await getChairmanDisplayName('en')
   const html = buildBilingualHtml(
     submission,
     fitApprovalTemplateToSinglePage(materializeTemplate(heTemplate, heCtx)),
@@ -320,6 +350,7 @@ export async function generateApprovalLetterPreview(submissionId, lang = 'he', t
   const signatureDataUrl = await getStoredChairmanSignature()
   const brandPrimary = await getInstitutionPrimaryColorHex()
   const ctx = buildApprovalTemplateContext(safeLang, submission)
+  ctx.chairmanName = await getChairmanDisplayName(safeLang)
   const hydratedTemplate = fitApprovalTemplateToSinglePage(materializeTemplate(template, ctx))
   const html = safeLang === 'he'
     ? buildHeHtml(submission, hydratedTemplate, ctx, signatureDataUrl, brandPrimary)

@@ -52,6 +52,7 @@ function buildHeSection(submission, template, ctx, signatureDataUrl, brandPrimar
     <p class="body-text">חוקר/ת: ${escapeHtml(ctx.researcherName)}<br>(<span class="ltr-val">${escapeHtml(ctx.researcherEmail)}</span>)</p>
     <div class="signature-section">
       <div class="sig-line"></div>
+      ${ctx.chairmanName ? `<div class="sig-name">${escapeHtml(ctx.chairmanName)}</div>` : ''}
       <div class="sig-label">${escapeHtml(template.signatureLabel)}</div>
       <table class="sig-fields">
         <tr>
@@ -62,6 +63,7 @@ function buildHeSection(submission, template, ctx, signatureDataUrl, brandPrimar
           </td>
           <td>
             <div class="box-label">תאריך חתימה</div>
+            <div class="box-value">${ltr(ctx.approvedDate)}</div>
             <div class="box-line"></div>
           </td>
         </tr>
@@ -121,6 +123,7 @@ function buildEnSection(submission, template, ctx, signatureDataUrl) {
     <p class="body-text">Researcher: ${escapeHtml(ctx.researcherName)}<br>(${escapeHtml(ctx.researcherEmail)})</p>
     <div class="signature-section">
       <div class="sig-line"></div>
+      ${ctx.chairmanName ? `<div class="sig-name">${escapeHtml(ctx.chairmanName)}</div>` : ''}
       <div class="sig-label">${escapeHtml(template.signatureLabel)}</div>
       <table class="sig-fields">
         <tr>
@@ -131,6 +134,7 @@ function buildEnSection(submission, template, ctx, signatureDataUrl) {
           </td>
           <td>
             <div class="box-label">Date signed</div>
+            <div class="box-value">${escapeHtml(ctx.approvedDate)}</div>
             <div class="box-line"></div>
           </td>
         </tr>
