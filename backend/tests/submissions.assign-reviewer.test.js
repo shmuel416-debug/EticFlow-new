@@ -101,6 +101,30 @@ describe('submissions.status assignReviewer', () => {
     expect(next).not.toHaveBeenCalled()
   })
 
+  test('reassigns reviewer when submission is already assigned', async () => {
+    prismaMock.submission.findFirst.mockResolvedValue({
+      id: 'sub-1',
+      status: 'ASSIGNED',
+      authorId: 'author-1',
+      reviewerId: 'old-reviewer',
+      author: { id: 'author-1' },
+      reviewer: { id: 'old-reviewer' },
+    })
+    statusServiceMock.getAllowedTransitions.mockResolvedValue({
+      next: ['IN_REVIEW'],
+      transitions: [{ fromCode: 'ASSIGNED', toCode: 'IN_REVIEW', allowedRoles: ['SECRETARY'] }],
+    })
+
+    const { req, res, next } = makeContext()
+    await assignReviewer(req, res, next)
+
+    expect(prismaMock.submission.update).toHaveBeenCalledWith(expect.objectContaining({
+      data: { reviewerId: 'rev-1', status: 'ASSIGNED' },
+    }))
+    expect(res.json).toHaveBeenCalledWith({ submission: expect.any(Object) })
+    expect(next).not.toHaveBeenCalled()
+  })
+
   test('accepts chairman as reviewer assignee', async () => {
     prismaMock.user.findFirst.mockResolvedValue({
       id: 'chair-1',

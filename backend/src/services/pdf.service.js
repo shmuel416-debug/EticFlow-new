@@ -98,29 +98,6 @@ function materializeTemplate(template, context) {
 }
 
 /**
- * Clamps approval template text to keep a single-page layout.
- * Prevents long user-customized copy from spilling into extra pages.
- * @param {ReturnType<typeof getDefaultApprovalTemplate>} template
- * @returns {ReturnType<typeof getDefaultApprovalTemplate>}
- */
-function fitApprovalTemplateToSinglePage(template) {
-  const trimWithEllipsis = (value, max) => {
-    if (typeof value !== 'string') return ''
-    const trimmed = value.trim()
-    return trimmed.length > max ? `${trimmed.slice(0, max - 1).trim()}…` : trimmed
-  }
-  return {
-    ...template,
-    intro: trimWithEllipsis(template.intro, 720),
-    conditions: (template.conditions || [])
-      .slice(0, 4)
-      .map((line) => trimWithEllipsis(line, 170))
-      .filter(Boolean),
-    legalFooter: trimWithEllipsis(template.legalFooter, 220),
-  }
-}
-
-/**
  * Loads approval template by language.
  * @param {'he'|'en'} lang
  * @returns {Promise<ReturnType<typeof getDefaultApprovalTemplate>>}
@@ -277,7 +254,7 @@ export async function generateApprovalLetter(submissionId, lang = 'he') {
   ])
   const ctx = buildApprovalTemplateContext(safeLang, submission)
   ctx.chairmanName = await getChairmanDisplayName(safeLang)
-  const hydratedTemplate = fitApprovalTemplateToSinglePage(materializeTemplate(template, ctx))
+  const hydratedTemplate = materializeTemplate(template, ctx)
   const html = safeLang === 'he'
     ? buildHeHtml(submission, hydratedTemplate, ctx, signatureDataUrl, brandPrimary)
     : buildEnHtml(submission, hydratedTemplate, ctx, signatureDataUrl, brandPrimary)
@@ -317,8 +294,8 @@ export async function generateBilingualApprovalLetter(submissionId) {
   enCtx.chairmanName = await getChairmanDisplayName('en')
   const html = buildBilingualHtml(
     submission,
-    fitApprovalTemplateToSinglePage(materializeTemplate(heTemplate, heCtx)),
-    fitApprovalTemplateToSinglePage(materializeTemplate(enTemplate, enCtx)),
+    materializeTemplate(heTemplate, heCtx),
+    materializeTemplate(enTemplate, enCtx),
     heCtx,
     enCtx,
     signatureDataUrl,
@@ -351,7 +328,7 @@ export async function generateApprovalLetterPreview(submissionId, lang = 'he', t
   const brandPrimary = await getInstitutionPrimaryColorHex()
   const ctx = buildApprovalTemplateContext(safeLang, submission)
   ctx.chairmanName = await getChairmanDisplayName(safeLang)
-  const hydratedTemplate = fitApprovalTemplateToSinglePage(materializeTemplate(template, ctx))
+  const hydratedTemplate = materializeTemplate(template, ctx)
   const html = safeLang === 'he'
     ? buildHeHtml(submission, hydratedTemplate, ctx, signatureDataUrl, brandPrimary)
     : buildEnHtml(submission, hydratedTemplate, ctx, signatureDataUrl, brandPrimary)
