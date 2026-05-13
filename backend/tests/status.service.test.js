@@ -102,6 +102,51 @@ describe('status.service', () => {
     expect(await statusService.can('EDIT', 'ASSIGNED', 'REVIEWER')).toBe(false)
   })
 
+  test('can() falls back to default permissions when migrated rows are missing', async () => {
+    prismaMock.submissionStatus.findMany.mockResolvedValue([
+      {
+        code: 'IN_TRIAGE',
+        labelHe: 'בבדיקה ראשונית',
+        labelEn: 'In Triage',
+        color: '#ca8a04',
+        orderIndex: 30,
+        isInitial: false,
+        isTerminal: false,
+        slaPhase: 'TRIAGE',
+        notificationType: null,
+        isSystem: true,
+        transitionsFrom: [],
+        permissions: [],
+      },
+    ])
+
+    expect(await statusService.can('ASSIGN', 'IN_TRIAGE', 'SECRETARY')).toBe(true)
+    expect(await statusService.can('ASSIGN', 'IN_TRIAGE', 'REVIEWER')).toBe(false)
+  })
+
+  test('can() preserves explicit deny rows over fallback defaults', async () => {
+    prismaMock.submissionStatus.findMany.mockResolvedValue([
+      {
+        code: 'IN_TRIAGE',
+        labelHe: 'בבדיקה ראשונית',
+        labelEn: 'In Triage',
+        color: '#ca8a04',
+        orderIndex: 30,
+        isInitial: false,
+        isTerminal: false,
+        slaPhase: 'TRIAGE',
+        notificationType: null,
+        isSystem: true,
+        transitionsFrom: [],
+        permissions: [
+          { role: 'SECRETARY', action: 'ASSIGN', allowed: false },
+        ],
+      },
+    ])
+
+    expect(await statusService.can('ASSIGN', 'IN_TRIAGE', 'SECRETARY')).toBe(false)
+  })
+
   test('isTransitionAllowed blocks when reviewer is required but missing', () => {
     const transition = {
       fromCode: 'IN_TRIAGE',
