@@ -13,7 +13,7 @@ import prisma   from '../config/database.js'
 import { AppError } from '../utils/errors.js'
 import { validateFile, saveFile, deleteFile, resolvePath } from '../services/storage.service.js'
 import { can as canByStatusPermission } from '../services/status.service.js'
-import { getRequestRole, hasAnyRole } from '../utils/roles.js'
+import { getRequestRole } from '../utils/roles.js'
 import path     from 'path'
 import fs       from 'fs'
 
@@ -23,13 +23,13 @@ import fs       from 'fs'
 
 /**
  * Returns true when the user may access the submission.
- * @param {{ id: string, role: string }} user
+ * @param {{ id: string, activeRole?: string }} user
  * @param {object} submission - Prisma submission record
  * @returns {boolean}
  */
 function canAccess(user, submission) {
   const activeRole = user.activeRole ?? 'RESEARCHER'
-  if (hasAnyRole(user, 'SECRETARY', 'CHAIRMAN', 'ADMIN')) return true
+  if (['SECRETARY', 'CHAIRMAN', 'ADMIN'].includes(activeRole)) return true
   if (activeRole === 'RESEARCHER')  return submission.authorId   === user.id
   if (activeRole === 'REVIEWER')    return submission.reviewerId === user.id
   return false
@@ -38,13 +38,13 @@ function canAccess(user, submission) {
 /**
  * Returns true when the user may upload/delete documents for the submission.
  * Researchers may only modify their own, and only while not yet final.
- * @param {{ id: string, role: string }} user
+ * @param {{ id: string, activeRole?: string }} user
  * @param {object} submission
  * @returns {boolean}
  */
 async function canWrite(user, submission) {
   const activeRole = user.activeRole ?? 'RESEARCHER'
-  if (hasAnyRole(user, 'SECRETARY', 'ADMIN')) return true
+  if (['SECRETARY', 'ADMIN'].includes(activeRole)) return true
   if (activeRole === 'RESEARCHER') {
     const allowed = await canByStatusPermission('UPLOAD_DOC', submission.status, activeRole)
     return submission.authorId === user.id && allowed

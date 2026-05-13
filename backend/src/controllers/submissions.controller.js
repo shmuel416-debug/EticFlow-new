@@ -296,9 +296,9 @@ export async function update(req, res, next) {
     })
     if (!existing) return next(AppError.notFound('Submission'))
 
-    // Only owner or privileged roles can edit
+    // Only owner or active privileged roles can edit
     const isOwner = existing.authorId === req.user.id
-    const canEdit = hasAnyRole(req.user, 'SECRETARY', 'ADMIN')
+    const canEdit = ['SECRETARY', 'ADMIN'].includes(activeRole)
     if (!isOwner && !canEdit) return next(AppError.forbidden())
 
     // Only DRAFT submissions can be edited by researcher
