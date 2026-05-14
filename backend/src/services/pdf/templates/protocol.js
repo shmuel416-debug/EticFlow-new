@@ -8,9 +8,10 @@ import { escapeHtml, pageShell } from '../layout.js'
  * Builds the protocol section rows.
  * @param {{ heading?: string, content?: string }[]} sections
  * @param {'he'|'en'} lang
+ * @param {boolean} hasHebrewCompanion
  * @returns {string}
  */
-function renderSections(sections, lang) {
+function renderSections(sections, lang, hasHebrewCompanion = false) {
   const hasHebrew = (text) => /[\u0590-\u05FF]/.test(String(text ?? ''))
   const headingMap = {
     'פתיחה': 'Opening',
@@ -29,7 +30,7 @@ function renderSections(sections, lang) {
         const content = String(section?.contentEn ?? '').trim()
         const finalContent = content
           ? escapeHtml(content).replace(/\n/g, '<br>')
-          : hasHebrew(sourceContent)
+          : hasHebrewCompanion && hasHebrew(sourceContent)
             ? 'See the Hebrew page for the full committee discussion details.'
             : escapeHtml(sourceContent).replace(/\n/g, '<br>')
         return `<section style="margin-bottom:16px;">
@@ -84,9 +85,10 @@ function renderSignatures(signatures, lang) {
  * @param {object} protocol
  * @param {{ issueDate: string, meetingDate: string, statusLabel: string, titleLabel: string, meetingLabel: string, statusFieldLabel: string, footer: string, institutionName: string }} labels
  * @param {'he'|'en'} lang
+ * @param {boolean} hasHebrewCompanion
  * @returns {string}
  */
-function buildProtocolSection(protocol, labels, lang) {
+function buildProtocolSection(protocol, labels, lang, hasHebrewCompanion = false) {
   const isHebrew = lang === 'he'
   const title = isHebrew ? (protocol.title ?? labels.titleLabel) : labels.titleLabel
   return `<div class="page">
@@ -108,7 +110,7 @@ function buildProtocolSection(protocol, labels, lang) {
         <tr><td class="lbl">${escapeHtml(labels.statusFieldLabel)}</td><td class="val">${escapeHtml(labels.statusLabel)}</td></tr>
       </table>
     </div>
-    ${renderSections(Array.isArray(protocol.contentJson?.sections) ? protocol.contentJson.sections : [], lang)}
+    ${renderSections(Array.isArray(protocol.contentJson?.sections) ? protocol.contentJson.sections : [], lang, hasHebrewCompanion)}
     ${renderSignatures(protocol.signatures, lang)}
     <div class="footer">${escapeHtml(labels.footer)}</div>
   </div>
@@ -142,7 +144,7 @@ export function buildProtocolHtml(protocol, lang, context) {
 export function buildBilingualProtocolHtml(protocol, context) {
   const bodyHtml = `${buildProtocolSection(protocol, context.he, 'he')}
 <div style="page-break-before: always;"></div>
-${buildProtocolSection(protocol, context.en, 'en')}`
+${buildProtocolSection(protocol, context.en, 'en', true)}`
   return pageShell({
     dir: 'rtl',
     lang: 'he',
