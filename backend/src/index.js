@@ -18,7 +18,7 @@ import { startSlaCron }    from './jobs/sla.cron.js'
 import { startCalendarSyncCron } from './jobs/calendar-sync.cron.js'
 import { startContinuingReviewCron } from './jobs/continuing-review.cron.js'
 import { initializeObservability } from './services/observability.service.js'
-import { assertPuppeteerAvailable } from './services/pdf/renderer.js'
+import { checkPdfRendererStartup } from './startupChecks.js'
 import healthRouter        from './routes/health.routes.js'
 import authRouter          from './routes/auth.routes.js'
 import formsRouter         from './routes/forms.routes.js'
@@ -124,13 +124,7 @@ async function start() {
     process.exit(1)
   }
 
-  try {
-    await assertPuppeteerAvailable()
-    console.log('✅ Puppeteer renderer ready')
-  } catch (err) {
-    console.error('❌ PDF renderer initialization failed:', err.message)
-    process.exit(1)
-  }
+  await checkPdfRendererStartup()
 
   app.listen(PORT, () => {
     console.log(`🚀 EthicFlow API running on http://localhost:${PORT}`)
