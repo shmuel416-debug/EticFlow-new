@@ -8,6 +8,7 @@ import prisma from '../config/database.js';
 import { AppError } from '../utils/errors.js';
 import { notifyStatusChange } from './notification.service.js';
 import { setDueDates } from './sla.service.js';
+import { can } from './status.service.js';
 
 // ─── Template queries ────────────────────────────────────────────────────────
 
@@ -408,17 +409,22 @@ export async function saveDraft(reviewId, reviewerId, payload) {
  * @param {string} reviewId
  * @param {string} reviewerId
  * @param {object} payload - Must include recommendation
+ * @param {string} activeRole - Current role selected by the reviewer
+ * @returns {Promise<object>}
  */
-export async function submitReview(reviewId, reviewerId, payload) {
+export async function submitReview(reviewId, reviewerId, payload, activeRole = 'REVIEWER') {
   const review = await prisma.reviewerChecklistReview.findUnique({ where: { id: reviewId } });
   if (!review) throw new AppError('Review not found', 'REVIEW_NOT_FOUND', 404);
   if (review.reviewerId !== reviewerId) throw new AppError('Forbidden', 'FORBIDDEN', 403);
   if (review.status === 'SUBMITTED') throw new AppError('Review already submitted', 'ALREADY_SUBMITTED', 409);
   const submission = await prisma.submission.findUnique({
     where: { id: review.submissionId },
-    select: { status: true },
+    select: { status: true, reviewerId: true },
   });
   if (!submission) throw new AppError('Submission not found', 'SUBMISSION_NOT_FOUND', 404);
+  const allowedSubmitReview = await can('SUBMIT_REVIEW', submission.status, activeRole);
+  const assignedChairman = activeRole === 'CHAIRMAN' && submission.reviewerId === reviewerId;
+  if (!allowedSubmitReview && !assignedChairman) throw AppError.forbidden();
   if (submission.status !== 'ASSIGNED') {
     throw new AppError('Submission must be ASSIGNED', 'INVALID_TRANSITION', 409);
   }

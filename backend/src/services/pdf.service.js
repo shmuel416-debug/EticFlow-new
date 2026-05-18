@@ -10,6 +10,7 @@ import prisma from '../config/database.js'
 import { renderHtmlToPdf } from './pdf/renderer.js'
 import { buildHeHtml, buildEnHtml, buildBilingualHtml } from './pdf/templates/approvalLetter.js'
 import { buildProtocolHtml, buildBilingualProtocolHtml } from './pdf/templates/protocol.js'
+import { AppError } from '../utils/errors.js'
 import {
   APPROVAL_SIGNATURE_KEY,
   getDefaultApprovalTemplate,
@@ -199,8 +200,10 @@ async function getApprovalSubmission(submissionId) {
       slaTracking: true,
     },
   })
-  if (!submission) throw new Error('Submission not found')
-  if (submission.status !== 'APPROVED') throw new Error('Submission is not approved')
+  if (!submission) throw AppError.notFound('Submission')
+  if (submission.status !== 'APPROVED') {
+    throw new AppError('Submission must be APPROVED before generating an approval letter', 'SUBMISSION_NOT_APPROVED', 400)
+  }
   return submission
 }
 
@@ -228,16 +231,20 @@ function buildApprovalTemplateContext(lang, submission) {
 
 /**
  * Upserts document metadata row for generated PDFs.
- * @param {{ submissionId?: string, filename: string, storagePath: string, originalName: string, sizeBytes: number }} input
+ * @param {{ submissionId?: string, protocolId?: string, filename: string, storagePath: string, originalName: string, sizeBytes: number }} input
  * @returns {Promise<{ id: string }>}
  */
 async function upsertGeneratedDocument(input) {
-  const where = input.submissionId ? { submissionId: input.submissionId, storagePath: input.storagePath } : { storagePath: input.storagePath }
-  const existing = await prisma.document.findFirst({ where })
+  const existing = await prisma.document.findFirst({ where: { storagePath: input.storagePath } })
   if (existing) {
     return prisma.document.update({
       where: { id: existing.id },
-      data: { sizeBytes: input.sizeBytes, isActive: true },
+      data: {
+        sizeBytes: input.sizeBytes,
+        submissionId: input.submissionId ?? existing.submissionId ?? null,
+        protocolId: input.protocolId ?? existing.protocolId ?? null,
+        isActive: true,
+      },
       select: { id: true },
     })
   }
@@ -250,6 +257,7 @@ async function upsertGeneratedDocument(input) {
       storagePath: input.storagePath,
       source: 'GENERATED',
       submissionId: input.submissionId ?? null,
+      protocolId: input.protocolId ?? null,
       uploadedById: null,
     },
     select: { id: true },
@@ -419,6 +427,7 @@ export async function generateProtocolPdf(protocol, lang = 'he') {
   await renderHtmlToPdf(html, absPath)
   const stat = await fs.stat(absPath)
   const dbDoc = await upsertGeneratedDocument({
+    protocolId: protocol.id,
     filename,
     storagePath,
     originalName: `${filename.replace('.pdf', '')}-${protocol.id}.pdf`,

@@ -7,6 +7,7 @@
 
 import { z } from 'zod';
 import * as service from '../services/reviewerChecklist.service.js';
+import { getRequestRole } from '../utils/roles.js';
 
 // ─── Zod schemas ─────────────────────────────────────────────────────────────
 
@@ -280,6 +281,7 @@ export async function saveDraft(req, res, next) {
 export async function submitReview(req, res, next) {
   try {
     const payload = submitSchema.parse(req.body);
+    const activeRole = getRequestRole(req);
 
     if (payload.exemptConsentRequested && !payload.exemptConsentReviewerView) {
       return res.status(422).json({
@@ -289,7 +291,7 @@ export async function submitReview(req, res, next) {
     }
 
     const { review } = await service.getOrCreateReview(req.params.id, req.user.id);
-    const submitted = await service.submitReview(review.id, req.user.id, payload);
+    const submitted = await service.submitReview(review.id, req.user.id, payload, activeRole);
     res.json({ data: submitted });
   } catch (err) {
     next(err);
