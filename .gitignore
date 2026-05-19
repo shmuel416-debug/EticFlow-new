@@ -50,3 +50,17 @@ frontend/test-results/
 
 # Prisma
 backend/prisma/migrations/**/migration_lock.toml
+
+# Azure infra parameter files (contain secrets!)
+# Keep only .example variants committed to git.
+infra/azure/appservice/parameters.prod.json
+infra/azure/appservice/parameters.dev.json
+infra/azure/appservice/parameters.staging.json
+infra/azure/appservice/parameters.local.json
+infra/azure/terraform/terraform.tfvars
+infra/azure/terraform/*.auto.tfvars
+infra/azure/terraform/*.tfstate
+infra/azure/terraform/*.tfstate.*
+infra/azure/terraform/.terraform/
+ops/secrets/
+*.secrets.json

@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>EthicFlow — תרשימי ארכיטקטורה</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', 'Heebo', Arial, sans-serif;
+    background: #f8fafc;
+    color: #1e293b;
+    margin: 0;
+    padding: 40px 20px;
+    line-height: 1.6;
+  }
+  .container { max-width: 1400px; margin: 0 auto; }
+  h1 {
+    color: #1e3a8a;
+    font-size: 2.4em;
+    margin-bottom: 8px;
+    border-bottom: 3px solid #3b82f6;
+    padding-bottom: 12px;
+  }
+  .subtitle {
+    color: #64748b;
+    margin-bottom: 40px;
+    font-size: 1.1em;
+  }
+  .diagram-card {
+    background: white;
+    border-radius: 12px;
+    padding: 32px;
+    margin-bottom: 32px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    border-right: 4px solid #1e3a8a;
+  }
+  .diagram-card h2 {
+    color: #1e3a8a;
+    margin-top: 0;
+    font-size: 1.5em;
+  }
+  .diagram-card .description {
+    color: #475569;
+    margin-bottom: 24px;
+    font-size: 1.05em;
+  }
+  .mermaid {
+    background: #fafafa;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    overflow: auto;
+  }
+  .legend {
+    margin-top: 20px;
+    padding: 16px 20px;
+    background: #eff6ff;
+    border-radius: 8px;
+    border-right: 3px solid #3b82f6;
+  }
+  .legend strong { color: #1e3a8a; }
+  .legend ul { margin: 8px 0; padding-right: 20px; }
+  .nav {
+    position: sticky;
+    top: 0;
+    background: white;
+    border-radius: 8px;
+    padding: 16px 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    z-index: 100;
+  }
+  .nav a {
+    color: #1e3a8a;
+    text-decoration: none;
+    margin-left: 24px;
+    font-weight: 500;
+    font-size: 0.95em;
+  }
+  .nav a:hover { text-decoration: underline; }
+  @media print {
+    .nav { display: none; }
+    .diagram-card { page-break-inside: avoid; box-shadow: none; border: 1px solid #cbd5e1; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>EthicFlow — תרשימי ארכיטקטורה</h1>
+<p class="subtitle">מסמך תרשימים נלווה למצגת ההצעה ל-IT • מאי 2026</p>
+
+<div class="nav">
+  <a href="#diagram1">1. ארכיטקטורת תשתית כוללת</a>
+  <a href="#diagram2">2. תהליך CI/CD</a>
+  <a href="#diagram3">3. אינטגרציות M365</a>
+  <a href="#diagram4">4. תהליך משתמש</a>
+  <a href="#diagram5">5. שכבות אבטחה</a>
+  <a href="#diagram6">6. מסלול Request</a>
+</div>
+
+<!-- DIAGRAM 1: Overall Architecture -->
+<div class="diagram-card" id="diagram1">
+  <h2>1. ארכיטקטורת תשתית כוללת</h2>
+  <p class="description">
+    תצוגה כללית של כל התשתית: שתי סביבות מופרדות (Dev + Production), חיבור ל-Microsoft 365 הארגוני, ומסלול CI/CD מ-Azure DevOps.
+  </p>
+  <div class="mermaid">
+flowchart TB
+    subgraph Users["👥 משתמשי המוסד"]
+        U1[חוקרים]
+        U2[מזכירות]
+        U3[סוקרים]
+        U4[יו״ר ועדה]
+        U5[מנהל מערכת]
+    end
+
+    subgraph EntraID["🔐 Microsoft Entra ID Tenant"]
+        SSO[SSO Authentication<br/>חיבור יחיד לכל המערכות]
+    end
+
+    subgraph DevOps["⚙️ Azure DevOps"]
+        REPO[Git Repository]
+        PIPE[CI/CD Pipelines]
+    end
+
+    subgraph M365["📧 Microsoft 365 Services"]
+        MAIL[Microsoft Graph<br/>Mail API]
+        CAL[Outlook Calendar]
+    end
+
+    subgraph DEV["🧪 סביבת Dev — rg-ethicflow-dev"]
+        DEVAPP[App Service B1<br/>Frontend + Backend]
+        DEVDB[(PostgreSQL B1ms<br/>נתוני בדיקה)]
+        DEVKV[Key Vault Dev]
+        DEVBLOB[Blob Storage Dev]
+    end
+
+    subgraph PROD["🚀 סביבת Production — rg-ethicflow-prod"]
+        PRODAPP[App Service B1<br/>ethics.university.ac.il]
+        PRODDB[(PostgreSQL B1ms<br/>נתוני אמת)]
+        PRODKV[Key Vault Prod]
+        PRODBLOB[Blob Storage Prod]
+        AI[Application Insights<br/>ניטור 24/7]
+    end
+
+    Users --> SSO
+    SSO --> PRODAPP
+    SSO -.SSO לבדיקות.-> DEVAPP
+
+    REPO --> PIPE
+    PIPE -.auto deploy<br/>מ-develop.-> DEVAPP
+    PIPE -.manual approval<br/>מ-main.-> PRODAPP
+
+    DEVAPP --> DEVDB
+    DEVAPP --> DEVKV
+    DEVAPP --> DEVBLOB
+
+    PRODAPP --> PRODDB
+    PRODAPP --> PRODKV
+    PRODAPP --> PRODBLOB
+    PRODAPP --> AI
+
+    PRODAPP --> MAIL
+    PRODAPP --> CAL
+
+    classDef userStyle fill:#dbeafe,stroke:#1e40af,stroke-width:2px,color:#1e3a8a
+    classDef prodStyle fill:#dcfce7,stroke:#15803d,stroke-width:2px,color:#14532d
+    classDef devStyle fill:#fef3c7,stroke:#b45309,stroke-width:2px,color:#78350f
+    classDef extStyle fill:#f3e8ff,stroke:#7e22ce,stroke-width:2px,color:#581c87
+
+    class U1,U2,U3,U4,U5 userStyle
+    class PRODAPP,PRODDB,PRODKV,PRODBLOB,AI prodStyle
+    class DEVAPP,DEVDB,DEVKV,DEVBLOB devStyle
+    class SSO,MAIL,CAL,REPO,PIPE extStyle
+  </div>
+  <div class="legend">
+    <strong>מקרא:</strong>
+    <ul>
+      <li><span style="color:#1e3a8a">כחול</span> — משתמשי קצה</li>
+      <li><span style="color:#15803d">ירוק</span> — סביבת Production (אמיתית)</li>
+      <li><span style="color:#b45309">צהוב</span> — סביבת Development (בדיקות)</li>
+      <li><span style="color:#7e22ce">סגול</span> — שירותים חיצוניים של המוסד / Microsoft</li>
+    </ul>
+  </div>
+</div>
+
+<!-- DIAGRAM 2: CI/CD Flow -->
+<div class="diagram-card" id="diagram2">
+  <h2>2. תהליך CI/CD — מקוד לפרודקשן</h2>
+  <p class="description">
+    התהליך האוטומטי שכל שינוי קוד עובר, מהמפתח ועד למשתמש הקצה. שערי בקרה מבטיחים איכות בכל שלב.
+  </p>
+  <div class="mermaid">
+flowchart TD
+    DEV[👨‍💻 מפתח עובד מקומית] --> PUSH[git push<br/>בעניף feature]
+    PUSH --> PR1[📋 Pull Request<br/>ל-develop]
+
+    PR1 --> CI1{🔍 CI Checks}
+    CI1 -->|✅ עובר| MERGE1[Merge ל-develop]
+    CI1 -->|❌ נכשל| FIX1[חזרה לתיקון]
+    FIX1 --> PUSH
+
+    MERGE1 --> AUTODEV[🚀 Auto Deploy ל-Dev<br/>ללא אישור]
+    AUTODEV --> TESTDEV[🧪 בדיקות ידניות<br/>בסביבת Dev]
+
+    TESTDEV --> PR2[📋 Pull Request<br/>מ-develop ל-main]
+    PR2 --> CI2{🔍 CI Checks}
+    CI2 -->|✅ עובר| GATE[🚪 Approval Gate<br/>Wait Timer: 5 דקות<br/>Required: מנהל מערכת]
+    CI2 -->|❌ נכשל| FIX2[חזרה לתיקון]
+    FIX2 --> PUSH
+
+    GATE --> APPROVE{אישור?}
+    APPROVE -->|❌ לא| HOLD[המתנה / ביטול]
+    APPROVE -->|✅ כן| BACKUP[💾 Backup DB<br/>אוטומטי]
+
+    BACKUP --> DEPLOYPROD[🚀 Deploy ל-Production]
+    DEPLOYPROD --> HEALTH{🏥 Health Check<br/>על /api/health}
+
+    HEALTH -->|✅ תקין| LIVE[🎉 Live]
+    HEALTH -->|❌ נכשל| ROLLBACK[⏮️ Auto Rollback<br/>לגרסה הקודמת]
+
+    LIVE --> NOTIFY[📧 Notification<br/>ל-IT + Slack]
+    ROLLBACK --> ALERT[🚨 Alert<br/>למנהל המערכת]
+
+    style DEV fill:#dbeafe,stroke:#1e40af
+    style LIVE fill:#dcfce7,stroke:#15803d,stroke-width:3px
+    style ROLLBACK fill:#fee2e2,stroke:#dc2626,stroke-width:3px
+    style GATE fill:#fef3c7,stroke:#b45309,stroke-width:2px
+    style CI1 fill:#fef3c7,stroke:#b45309
+    style CI2 fill:#fef3c7,stroke:#b45309
+    style HEALTH fill:#fef3c7,stroke:#b45309
+    style APPROVE fill:#fef3c7,stroke:#b45309
+  </div>
+  <div class="legend">
+    <strong>זמני יעד:</strong>
+    <ul>
+      <li>Pull Request ועד deploy ל-Dev: <strong>5-10 דקות</strong></li>
+      <li>Pull Request ועד deploy ל-Prod: <strong>15-30 דקות</strong> (כולל wait timer)</li>
+      <li>Health check + rollback אוטומטי: <strong>תוך 60 שניות</strong> מתחילת deploy</li>
+    </ul>
+  </div>
+</div>
+
+<!-- DIAGRAM 3: M365 Integrations -->
+<div class="diagram-card" id="diagram3">
+  <h2>3. אינטגרציות עם Microsoft 365 הארגוני</h2>
+  <p class="description">
+    שלוש אינטגרציות native המנצלות את התשתית הקיימת של המוסד, ללא צורך בכלי צד שלישי נוספים.
+  </p>
+  <div class="mermaid">
+flowchart LR
+    subgraph EthicFlow["🟦 EthicFlow Backend"]
+        AUTH[Auth Module]
+        EMAIL[Email Service]
+        CAL[Calendar Service]
+    end
+
+    subgraph M365Tenant["🏛️ Microsoft 365 Tenant של המוסד"]
+        ENTRA[Entra ID<br/>Identity Provider]
+        EXCHANGE[Exchange Online<br/>Mail + Calendar]
+        GRAPH[Microsoft Graph API<br/>שער יחיד לכל השירותים]
+    end
+
+    subgraph Users["👥 משתמשים"]
+        U1[חוקר עם<br/>חשבון מוסד]
+        U2[חבר ועדה]
+        U3[מזכירה]
+    end
+
+    U1 -->|"1. כניסה עם<br/>החשבון הארגוני"| AUTH
+    AUTH -->|"2. OAuth 2.0<br/>redirect"| ENTRA
+    ENTRA -->|"3. Token<br/>(role + email)"| AUTH
+    AUTH -->|"4. JWT למערכת"| U1
+
+    EMAIL -->|"שליחת התראה<br/>מתיבה ארגונית"| GRAPH
+    GRAPH --> EXCHANGE
+    EXCHANGE -->|"📧 הודעת מייל"| U2
+
+    CAL -->|"יצירת ישיבה<br/>+ הזמנת חברים"| GRAPH
+    GRAPH --> EXCHANGE
+    EXCHANGE -->|"📅 הזמנה ליומן"| U3
+
+    classDef ethicflow fill:#dbeafe,stroke:#1e40af,stroke-width:2px
+    classDef m365 fill:#e0e7ff,stroke:#4338ca,stroke-width:2px
+    classDef user fill:#fce7f3,stroke:#be185d,stroke-width:2px
+
+    class AUTH,EMAIL,CAL ethicflow
+    class ENTRA,EXCHANGE,GRAPH m365
+    class U1,U2,U3 user
+  </div>
+  <div class="legend">
+    <strong>יתרונות האינטגרציה:</strong>
+    <ul>
+      <li><strong>SSO:</strong> משתמשים נכנסים עם החשבון הארגוני — אין סיסמאות נוספות לזכור</li>
+      <li><strong>Email:</strong> התראות יוצאות מתיבה ארגונית רשמית — לא דרך ספק חיצוני</li>
+      <li><strong>Calendar:</strong> ישיבות ועדה מופיעות אוטומטית ב-Outlook של החברים</li>
+      <li><strong>Audit:</strong> כל פעולה רשומה גם ב-Entra ID logs של המוסד</li>
+    </ul>
+  </div>
+</div>
+
+<!-- DIAGRAM 4: User Journey -->
+<div class="diagram-card" id="diagram4">
+  <h2>4. מסלול משתמש — מהגשה ועד אישור</h2>
+  <p class="description">
+    כיצד בקשת אישור אתיקה זורמת במערכת, מהגשת החוקר ועד למכתב האישור הסופי.
+  </p>
+  <div class="mermaid">
+flowchart TD
+    START([👨‍🔬 חוקר רוצה להגיש<br/>בקשת אישור אתיקה]) --> LOGIN[כניסה עם SSO]
+    LOGIN --> NEWFORM[בחירת טופס<br/>מתאים למסלול]
+    NEWFORM --> FILL[מילוי שדות<br/>+ העלאת מסמכים]
+    FILL --> SAVE{שמירה?}
+    SAVE -->|טיוטה| DRAFT[💾 שמירה כטיוטה]
+    DRAFT --> FILL
+    SAVE -->|הגשה| SUBMIT[📤 שליחה למזכירות]
+
+    SUBMIT --> EMAIL1[📧 התראה אוטומטית<br/>למזכירות]
+    EMAIL1 --> TRIAGE[👩‍💼 מזכירה<br/>בודקת תקינות]
+
+    TRIAGE --> AIPRE[🤖 AI Pre-check<br/>זיהוי דגלים אדומים]
+    AIPRE --> ASSIGN[הקצאת סוקרים<br/>2-3 חברי ועדה]
+
+    ASSIGN --> EMAIL2[📧 התראה לסוקרים]
+    EMAIL2 --> REVIEW[👨‍🔬 סוקר ממלא<br/>צ׳קליסט + ציון]
+
+    REVIEW --> ALLDONE{כל הסוקרים<br/>סיימו?}
+    ALLDONE -->|לא| WAIT[המתנה לסוקר נוסף]
+    WAIT --> REVIEW
+    ALLDONE -->|כן| CHAIRMAN[👨‍⚖️ יו״ר<br/>בוחן המלצות]
+
+    CHAIRMAN --> DECISION{החלטה}
+    DECISION -->|✅ אישור| APPROVE[יצירת מכתב אישור<br/>📄 PDF חתום]
+    DECISION -->|❌ דחייה| REJECT[מכתב דחייה<br/>+ נימוקים]
+    DECISION -->|🔄 דרושות הבהרות| REVISION[החזרה לחוקר<br/>עם הערות]
+
+    APPROVE --> EMAILDONE[📧 מייל לחוקר<br/>+ קישור להורדה]
+    REJECT --> EMAILREJECT[📧 מייל לחוקר]
+    REVISION --> FILL
+
+    EMAILDONE --> END([🎉 תהליך הושלם])
+    EMAILREJECT --> END
+
+    classDef startEnd fill:#dbeafe,stroke:#1e40af,stroke-width:3px
+    classDef action fill:#dcfce7,stroke:#15803d
+    classDef decision fill:#fef3c7,stroke:#b45309
+    classDef notify fill:#fce7f3,stroke:#be185d
+    classDef ai fill:#f3e8ff,stroke:#7e22ce
+
+    class START,END startEnd
+    class LOGIN,FILL,DRAFT,SUBMIT,TRIAGE,ASSIGN,REVIEW,CHAIRMAN,APPROVE,REJECT,REVISION action
+    class SAVE,ALLDONE,DECISION decision
+    class EMAIL1,EMAIL2,EMAILDONE,EMAILREJECT notify
+    class AIPRE ai
+  </div>
+  <div class="legend">
+    <strong>זמני יעד (לפי SLA):</strong>
+    <ul>
+      <li>טריאז' מזכירות: <strong>2 ימי עסקים</strong></li>
+      <li>סקירה: <strong>14 ימי עסקים</strong></li>
+      <li>החלטת יו״ר: <strong>3 ימי עסקים</strong></li>
+      <li><strong>סה"כ זמן יעד:</strong> ~3-4 שבועות מהגשה ועד החלטה</li>
+    </ul>
+  </div>
+</div>
+
+<!-- DIAGRAM 5: Security Layers -->
+<div class="diagram-card" id="diagram5">
+  <h2>5. שכבות אבטחה — Defense in Depth</h2>
+  <p class="description">
+    גישת רב-שכבתית — תוקף שעובר שכבה אחת נתקל בעוד שכבות בדרך לנתונים. כל שכבה עצמאית.
+  </p>
+  <div class="mermaid">
+flowchart TB
+    INTERNET([🌐 אינטרנט]) --> WAF[🛡️ Layer 1: WAF<br/>חסימת SQL Injection, XSS, Bots]
+    WAF --> TLS[🔒 Layer 2: TLS 1.2+ HTTPS<br/>הצפנת תעבורה end-to-end]
+    TLS --> RATE[⏱️ Layer 3: Rate Limiting<br/>100 req/min, 5 login/15min]
+    RATE --> SSO[👤 Layer 4: Entra ID SSO<br/>אימות דו-שלבי אופציונלי]
+    SSO --> JWT[🎟️ Layer 5: JWT Validation<br/>בדיקת חתימה + תפוגה]
+    JWT --> RBAC[🔑 Layer 6: RBAC<br/>בדיקת הרשאות לפי תפקיד]
+    RBAC --> INPUT[✅ Layer 7: Input Validation<br/>Zod schemas על כל endpoint]
+    INPUT --> BUSINESS[🧠 Business Logic<br/>בדיקות לוגיות נוספות]
+    BUSINESS --> DB[(💾 Layer 8: DB Encryption<br/>TDE + Private Endpoint)]
+    BUSINESS --> SECRETS[🔐 Layer 9: Key Vault<br/>סודות לא ב-code/env]
+    BUSINESS --> AUDIT[📋 Layer 10: Audit Log<br/>תיעוד כל פעולה רגישה]
+
+    DB --> BACKUP[💾 Backup<br/>PITR 30 ימים]
+    AUDIT --> SIEM[📊 Log Analytics<br/>ניטור והתראות]
+
+    classDef external fill:#fee2e2,stroke:#dc2626
+    classDef defense fill:#dbeafe,stroke:#1e40af
+    classDef data fill:#dcfce7,stroke:#15803d
+
+    class INTERNET external
+    class WAF,TLS,RATE,SSO,JWT,RBAC,INPUT defense
+    class DB,SECRETS,BACKUP,AUDIT,SIEM,BUSINESS data
+  </div>
+  <div class="legend">
+    <strong>תאימות לתקנים:</strong>
+    <ul>
+      <li><strong>OWASP Top 10:</strong> כל 10 הסעיפים מטופלים בשכבות שונות</li>
+      <li><strong>חוק הגנת הפרטיות:</strong> שכבות 4, 6, 8, 10 מספקות תאימות</li>
+      <li><strong>ISO 27001:</strong> Azure מספק את שכבות התשתית (1, 2, 8) out-of-the-box</li>
+    </ul>
+  </div>
+</div>
+
+<!-- DIAGRAM 6: Request Lifecycle -->
+<div class="diagram-card" id="diagram6">
+  <h2>6. מסלול Request — רגע אחד בחיי המערכת</h2>
+  <p class="description">
+    מה קורה בתוך המערכת כשמשתמש לוחץ על כפתור. תרשים זה מציג את כל הרכיבים שמעורבים בבקשה אחת.
+  </p>
+  <div class="mermaid">
+sequenceDiagram
+    autonumber
+    participant U as 👤 משתמש
+    participant B as 🌐 Browser
+    participant AS as ⚡ App Service
+    participant KV as 🔐 Key Vault
+    participant DB as 💾 PostgreSQL
+    participant BS as 📦 Blob Storage
+    participant AI as 📊 App Insights
+    participant MG as 📧 MS Graph
+
+    U->>B: לחיצה: "הגש בקשה"
+    B->>AS: POST /api/submissions<br/>+ JWT
+    AS->>AS: 1. Validate JWT
+    AS->>AS: 2. Validate Input (Zod)
+    AS->>KV: 3. שליפת DB password
+    KV-->>AS: secret value
+    AS->>DB: 4. INSERT submission
+    DB-->>AS: submission ID
+    AS->>BS: 5. שמירת קבצים
+    BS-->>AS: file URLs
+    AS->>DB: 6. INSERT documents
+    AS->>MG: 7. שליחת התראה למזכירה
+    MG-->>AS: ✓ נשלח
+    AS->>AI: 8. תיעוד metric + log
+    AS-->>B: 200 OK + submission JSON
+    B-->>U: ✓ הצגת אישור הגשה
+
+    Note over AS,DB: כל הקריאות נמצאות בתוך<br/>Private Network
+    Note over AI: מטריקות אוטומטיות:<br/>response time, errors, dependencies
+  </div>
+  <div class="legend">
+    <strong>זמן תגובה יעד:</strong>
+    <ul>
+      <li>בקשה רגילה (קריאה מ-DB): <strong>&lt; 200ms</strong></li>
+      <li>בקשה עם העלאת קבצים: <strong>&lt; 2 שניות</strong> (תלוי בגודל)</li>
+      <li>בקשה עם AI pre-check: <strong>&lt; 3 שניות</strong></li>
+      <li>אם חורגים מ-3 שניות → התראה אוטומטית ב-Application Insights</li>
+    </ul>
+  </div>
+</div>
+
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'default',
+    themeVariables: {
+      fontFamily: '"Segoe UI", Heebo, Arial, sans-serif',
+      fontSize: '14px',
+      primaryColor: '#dbeafe',
+      primaryTextColor: '#1e3a8a',
+      primaryBorderColor: '#1e40af',
+      lineColor: '#475569',
+      secondaryColor: '#fef3c7',
+      tertiaryColor: '#dcfce7'
+    },
+    flowchart: {
+      htmlLabels: true,
+      curve: 'basis',
+      padding: 20
+    },
+    sequence: {
+      mirrorActors: false,
+      bottomMarginAdj: 10
+    }
+  });
+</script>
+</body>
+</html>

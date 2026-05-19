@@ -65,6 +65,24 @@ param frontendOrigin string = 'https://ethics.example.ac.il'
 @description('Organizer mailbox used by Microsoft Calendar provider.')
 param organizerEmail string = 'ethics@example.ac.il'
 
+@description('App Service plan SKU code (e.g. B1, S1, P0v3).')
+param appServicePlanSku string = 'P0v3'
+
+@description('App Service plan SKU tier (e.g. Basic, Standard, PremiumV3).')
+param appServicePlanTier string = 'PremiumV3'
+
+@description('Enable Always On for App Service. Must be false for Free/Shared tiers; supported on B1+.')
+param alwaysOn bool = true
+
+@description('PostgreSQL Flexible Server SKU name (e.g. Standard_B1ms, Standard_D2s_v3).')
+param postgresSku string = 'Standard_D2s_v3'
+
+@description('PostgreSQL Flexible Server tier (Burstable, GeneralPurpose, MemoryOptimized).')
+param postgresTier string = 'GeneralPurpose'
+
+@description('PostgreSQL storage in GB (min 32 for Burstable).')
+param postgresStorageGb int = 128
+
 var tags = {
   project: 'EthicFlow'
   env: environmentName
@@ -227,8 +245,8 @@ resource postgresServer 'Microsoft.DBforPostgreSQL/flexibleServers@2023-12-01-pr
   location: location
   tags: tags
   sku: {
-    name: 'Standard_D2s_v3'
-    tier: 'GeneralPurpose'
+    name: postgresSku
+    tier: postgresTier
   }
   properties: {
     administratorLogin: postgresAdminLogin
@@ -240,7 +258,7 @@ resource postgresServer 'Microsoft.DBforPostgreSQL/flexibleServers@2023-12-01-pr
       publicNetworkAccess: 'Disabled'
     }
     storage: {
-      storageSizeGB: 128
+      storageSizeGB: postgresStorageGb
     }
     highAvailability: {
       mode: 'Disabled'
@@ -268,8 +286,8 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2023-12-01' = {
   location: location
   tags: tags
   sku: {
-    name: 'P0v3'
-    tier: 'PremiumV3'
+    name: appServicePlanSku
+    tier: appServicePlanTier
     capacity: 1
   }
   kind: 'linux'
@@ -292,7 +310,7 @@ resource apiApp 'Microsoft.Web/sites@2023-12-01' = {
     siteConfig: {
       linuxFxVersion: 'DOCKER|${acr.properties.loginServer}/${apiImageName}:${imageTag}'
       acrUseManagedIdentityCreds: true
-      alwaysOn: true
+      alwaysOn: alwaysOn
       healthCheckPath: '/api/health'
       http20Enabled: true
       minimumTlsVersion: '1.2'
@@ -387,7 +405,7 @@ resource webApp 'Microsoft.Web/sites@2023-12-01' = {
     siteConfig: {
       linuxFxVersion: 'DOCKER|${acr.properties.loginServer}/${webImageName}:${imageTag}'
       acrUseManagedIdentityCreds: true
-      alwaysOn: true
+      alwaysOn: alwaysOn
       http20Enabled: true
       minimumTlsVersion: '1.2'
       ftpsState: 'Disabled'

@@ -1,0 +1,66 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "value": "westeurope"
+    },
+    "environmentName": {
+      "value": "prod"
+    },
+    "appServicePlanName": {
+      "value": "asp-ethicflow-prod"
+    },
+    "apiAppName": {
+      "value": "app-ethicflow-api-prod"
+    },
+    "webAppName": {
+      "value": "app-ethicflow-web-prod"
+    },
+    "acrName": {
+      "value": "acrethicflowprod"
+    },
+    "apiImageName": {
+      "value": "ethicflow-api"
+    },
+    "webImageName": {
+      "value": "ethicflow-web"
+    },
+    "imageTag": {
+      "value": "latest"
+    },
+    "postgresServerName": {
+      "value": "pg-ethicflow-prod"
+    },
+    "postgresAdminLogin": {
+      "value": "ethicflowadmin"
+    },
+    "postgresAdminPassword": {
+      "value": "REPLACE_WITH_SECURE_PASSWORD"
+    },
+    "postgresDatabaseName": {
+      "value": "ethicflow"
+    },
+    "storageAccountName": {
+      "value": "stethicflowprod01"
+    },
+    "keyVaultName": {
+      "value": "kv-ethicflow-prod"
+    },
+    "logAnalyticsName": {
+      "value": "law-ethicflow-prod"
+    },
+    "appInsightsName": {
+      "value": "appi-ethicflow-prod"
+    },
+    "vnetName": {
+      "value": "vnet-ethicflow-prod"
+    },
+    "frontendOrigin": {
+      "value": "https://ethics.example.ac.il"
+    },
+    "organizerEmail": {
+      "value": "ethics@example.ac.il"
+    }
+  }
+}

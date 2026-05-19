@@ -1,0 +1,269 @@
+# EthicFlow Azure deployment workflow.
+#
+# Supports two deployment modes:
+#   - direct (default): Push container images and update the App Service directly.
+#                       Required for tiers without slot support (Basic B1, B2, B3).
+#                       Brief downtime (~5-15s) during container swap.
+#   - slots:            Deploy to the staging slot, run smoke, then swap staging -> production.
+#                       Requires Standard/Premium tier (S1+).
+#
+# Secrets expected in the GitHub Environment matching `environment` input:
+#   AZURE_CLIENT_ID            App ID of the Service Principal (OIDC, no client secret needed)
+#   AZURE_TENANT_ID            Microsoft Entra tenant containing the SP
+#   AZURE_SUBSCRIPTION_ID      Target Azure subscription
+#   AZURE_RESOURCE_GROUP       e.g. rg-ethicnet-jct
+#   AZURE_ACR_NAME             e.g. acrethicnetjct
+#   AZURE_API_APP_NAME         e.g. app-ethicnet-jct-api
+#   AZURE_WEB_APP_NAME         e.g. app-ethicnet-jct-web
+#   AZURE_API_BASE_URL         URL where smoke runs after deploy (production URL in direct
+#                              mode, staging slot URL in slots mode)
+
+name: Deploy Azure App Service
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment name (must match a configured GitHub Environment)"
+        required: true
+        default: "production"
+      image_tag:
+        description: "Optional image tag override (defaults to commit SHA)"
+        required: false
+        default: ""
+      deploy_mode:
+        description: "direct = update App Service directly (B1 tier); slots = deploy to staging slot"
+        required: true
+        default: "direct"
+        type: choice
+        options:
+          - "direct"
+          - "slots"
+      auto_swap:
+        description: "(slots mode only) Swap staging -> production automatically after smoke"
+        required: true
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  REGISTRY: ${{ secrets.AZURE_ACR_NAME }}.azurecr.io
+  API_IMAGE_NAME: ethicflow-api
+  WEB_IMAGE_NAME: ethicflow-web
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.meta.outputs.image_tag }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve image tag
+        id: meta
+        run: |
+          if [ -n "${{ github.event.inputs.image_tag }}" ]; then
+            echo "image_tag=${{ github.event.inputs.image_tag }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "image_tag=${GITHUB_SHA::12}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: ACR login
+        run: az acr login --name "${{ secrets.AZURE_ACR_NAME }}"
+
+      - name: Build and push API image
+        run: |
+          docker build -t "$REGISTRY/$API_IMAGE_NAME:${{ steps.meta.outputs.image_tag }}" ./backend
+          docker push "$REGISTRY/$API_IMAGE_NAME:${{ steps.meta.outputs.image_tag }}"
+
+      - name: Build and push Web image
+        run: |
+          docker build -t "$REGISTRY/$WEB_IMAGE_NAME:${{ steps.meta.outputs.image_tag }}" ./frontend
+          docker push "$REGISTRY/$WEB_IMAGE_NAME:${{ steps.meta.outputs.image_tag }}"
+
+  deploy-direct:
+    if: ${{ github.event.inputs.deploy_mode == 'direct' }}
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    environment: ${{ github.event.inputs.environment }}
+    steps:
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Update API container image (direct)
+        run: |
+          az webapp config container set \
+            --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
+            --name "${{ secrets.AZURE_API_APP_NAME }}" \
+            --container-image-name "${{ env.REGISTRY }}/${{ env.API_IMAGE_NAME }}:${{ needs.build-and-push.outputs.image_tag }}"
+          az webapp restart \
+            --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
+            --name "${{ secrets.AZURE_API_APP_NAME }}"
+
+      - name: Update Web container image (direct)
+        run: |
+          az webapp config container set \
+            --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
+            --name "${{ secrets.AZURE_WEB_APP_NAME }}" \
+            --container-image-name "${{ env.REGISTRY }}/${{ env.WEB_IMAGE_NAME }}:${{ needs.build-and-push.outputs.image_tag }}"
+          az webapp restart \
+            --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
+            --name "${{ secrets.AZURE_WEB_APP_NAME }}"
+
+      - name: Wait for containers to boot
+        run: sleep 60
+
+      - name: Health check API
+        run: |
+          for i in 1 2 3 4 5; do
+            status=$(curl -o /dev/null -s -w "%{http_code}" "${{ secrets.AZURE_API_BASE_URL }}/api/health" || echo "000")
+            echo "Attempt $i: HTTP $status"
+            if [ "$status" = "200" ]; then
+              echo "API healthy"
+              exit 0
+            fi
+            sleep 15
+          done
+          echo "API did not become healthy in time"
+          exit 1
+
+  smoke-direct:
+    if: ${{ github.event.inputs.deploy_mode == 'direct' }}
+    runs-on: ubuntu-latest
+    needs: deploy-direct
+    environment: ${{ github.event.inputs.environment }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Run Microsoft SSO smoke against live API
+        working-directory: backend
+        env:
+          SMOKE_BASE_URL: ${{ secrets.AZURE_API_BASE_URL }}
+          SMOKE_ASSERT: "1"
+        run: npm run smoke:sso
+
+      - name: Deployment summary (direct)
+        run: |
+          echo "Direct deployment completed."
+          echo "Image tag: ${{ needs.build-and-push.outputs.image_tag }}"
+          echo "API URL: ${{ secrets.AZURE_API_BASE_URL }}"
+
+  deploy-slots:
+    if: ${{ github.event.inputs.deploy_mode == 'slots' }}
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    environment: ${{ github.event.inputs.environment }}
+    steps:
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy API image to staging slot
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ secrets.AZURE_API_APP_NAME }}
+          slot-name: staging
+          images: ${{ env.REGISTRY }}/${{ env.API_IMAGE_NAME }}:${{ needs.build-and-push.outputs.image_tag }}
+
+      - name: Deploy Web image to staging slot
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ secrets.AZURE_WEB_APP_NAME }}
+          slot-name: staging
+          images: ${{ env.REGISTRY }}/${{ env.WEB_IMAGE_NAME }}:${{ needs.build-and-push.outputs.image_tag }}
+
+      - name: Wait for staging boot
+        run: sleep 45
+
+  smoke-and-swap:
+    if: ${{ github.event.inputs.deploy_mode == 'slots' }}
+    runs-on: ubuntu-latest
+    needs: deploy-slots
+    environment: ${{ github.event.inputs.environment }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Run Microsoft SSO smoke on staging API
+        working-directory: backend
+        env:
+          SMOKE_BASE_URL: ${{ secrets.AZURE_API_BASE_URL }}
+          SMOKE_ASSERT: "1"
+        run: npm run smoke:sso
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Swap API staging -> production
+        if: ${{ github.event.inputs.auto_swap == 'true' }}
+        run: |
+          az webapp deployment slot swap \
+            --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
+            --name "${{ secrets.AZURE_API_APP_NAME }}" \
+            --slot staging \
+            --target-slot production
+
+      - name: Swap Web staging -> production
+        if: ${{ github.event.inputs.auto_swap == 'true' }}
+        run: |
+          az webapp deployment slot swap \
+            --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
+            --name "${{ secrets.AZURE_WEB_APP_NAME }}" \
+            --slot staging \
+            --target-slot production
+
+      - name: Deployment summary (slots)
+        run: |
+          echo "Slots deployment completed with image tag: ${{ needs.build-and-push.outputs.image_tag }}"
+          echo "Auto swap enabled: ${{ github.event.inputs.auto_swap }}"
+          if [ "${{ github.event.inputs.auto_swap }}" != "true" ]; then
+            echo "Staging is ready for DEV/UAT validation. Run manual slot swap when approved."
+          fi
