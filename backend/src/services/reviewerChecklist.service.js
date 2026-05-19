@@ -267,6 +267,7 @@ export async function updateSection(sectionId, data) {
 export async function deleteSection(sectionId) {
   const section = await prisma.reviewerChecklistSection.findUnique({ where: { id: sectionId } });
   if (!section) throw new AppError('Section not found', 'SECTION_NOT_FOUND', 404);
+  await assertTemplateEditable(section.templateId);
 
   const reviewCount = await prisma.reviewerChecklistReview.count({
     where: { templateId: section.templateId },
@@ -292,6 +293,7 @@ export async function deleteSection(sectionId) {
 export async function createItem(sectionId, data) {
   const section = await prisma.reviewerChecklistSection.findUnique({ where: { id: sectionId } });
   if (!section) throw new AppError('Section not found', 'SECTION_NOT_FOUND', 404);
+  await assertTemplateEditable(section.templateId);
   return prisma.reviewerChecklistItem.create({ data: { ...data, sectionId } });
 }
 
@@ -301,8 +303,12 @@ export async function createItem(sectionId, data) {
  * @param {object} data
  */
 export async function updateItem(itemId, data) {
-  const item = await prisma.reviewerChecklistItem.findUnique({ where: { id: itemId } });
+  const item = await prisma.reviewerChecklistItem.findUnique({
+    where: { id: itemId },
+    include: { section: { select: { templateId: true } } },
+  });
   if (!item) throw new AppError('Item not found', 'ITEM_NOT_FOUND', 404);
+  await assertTemplateEditable(item.section.templateId);
   return prisma.reviewerChecklistItem.update({ where: { id: itemId }, data });
 }
 
@@ -311,8 +317,12 @@ export async function updateItem(itemId, data) {
  * @param {string} itemId
  */
 export async function deactivateItem(itemId) {
-  const item = await prisma.reviewerChecklistItem.findUnique({ where: { id: itemId } });
+  const item = await prisma.reviewerChecklistItem.findUnique({
+    where: { id: itemId },
+    include: { section: { select: { templateId: true } } },
+  });
   if (!item) throw new AppError('Item not found', 'ITEM_NOT_FOUND', 404);
+  await assertTemplateEditable(item.section.templateId);
   return prisma.reviewerChecklistItem.update({ where: { id: itemId }, data: { isActive: false } });
 }
 
@@ -321,11 +331,30 @@ export async function deactivateItem(itemId) {
  * @param {Array<{ id: string, orderIndex: number }>} items
  */
 export async function reorderItems(items) {
+  await assertItemsEditable(items.map(({ id }) => id));
   return prisma.$transaction(
     items.map(({ id, orderIndex }) =>
       prisma.reviewerChecklistItem.update({ where: { id }, data: { orderIndex } })
     )
   );
+}
+
+/**
+ * Throws when any item belongs to a published checklist template.
+ * @param {string[]} itemIds
+ * @returns {Promise<void>}
+ */
+async function assertItemsEditable(itemIds) {
+  const uniqueIds = [...new Set(itemIds)];
+  const items = await prisma.reviewerChecklistItem.findMany({
+    where: { id: { in: uniqueIds } },
+    include: { section: { select: { templateId: true } } },
+  });
+  if (items.length !== uniqueIds.length) {
+    throw new AppError('Item not found', 'ITEM_NOT_FOUND', 404);
+  }
+  const templateIds = [...new Set(items.map((item) => item.section.templateId))];
+  await Promise.all(templateIds.map((templateId) => assertTemplateEditable(templateId)));
 }
 
 // ─── Review lifecycle ────────────────────────────────────────────────────────
