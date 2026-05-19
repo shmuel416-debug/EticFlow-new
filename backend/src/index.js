@@ -128,8 +128,7 @@ async function start() {
     await assertPuppeteerAvailable()
     console.log('✅ Puppeteer renderer ready')
   } catch (err) {
-    console.error('❌ PDF renderer initialization failed:', err.message)
-    process.exit(1)
+    console.warn('⚠️ PDF renderer unavailable; PDF endpoints will fail until fixed:', err.message)
   }
 
   app.listen(PORT, () => {

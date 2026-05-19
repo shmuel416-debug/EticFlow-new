@@ -121,32 +121,32 @@ export async function uploadNewVersion(key, lang, file, userId) {
 
   const nextVersion = (lastVersion?.version ?? 0) + 1;
 
-  // Deactivate previous active version for this key+lang
-  await prisma.systemTemplate.updateMany({
-    where: { key, lang, isActive: true },
-    data: { isActive: false },
-  });
-
-  // Save file to storage
   const ext = file.mimetype === 'application/pdf' ? 'pdf' : 'docx';
   const storagePath = `templates/${key}/v${nextVersion}/${lang}.${ext}`;
 
+  // Save before changing DB state so a storage failure keeps the current active version available.
   await storage.save(storagePath, file.buffer, file.mimetype);
 
-  // Create database record
-  const template = await prisma.systemTemplate.create({
-    data: {
-      key,
-      lang,
-      version: nextVersion,
-      filename: file.originalname,
-      storagePath,
-      mimeType: file.mimetype,
-      size: file.size,
-      uploadedBy: userId,
-      isActive: true,
-    },
-    include: { uploader: { select: { fullName: true } } },
+  const template = await prisma.$transaction(async (tx) => {
+    await tx.systemTemplate.updateMany({
+      where: { key, lang, isActive: true },
+      data: { isActive: false },
+    });
+
+    return tx.systemTemplate.create({
+      data: {
+        key,
+        lang,
+        version: nextVersion,
+        filename: file.originalname,
+        storagePath,
+        mimeType: file.mimetype,
+        size: file.size,
+        uploadedBy: userId,
+        isActive: true,
+      },
+      include: { uploader: { select: { fullName: true } } },
+    });
   });
 
   // Defensive check: user could be deleted mid-upload (race condition)
@@ -176,17 +176,17 @@ export async function rollbackToVersion(key, lang, version) {
     throw new AppError('Version not found', 'VERSION_NOT_FOUND', 404);
   }
 
-  // Deactivate current active version
-  await prisma.systemTemplate.updateMany({
-    where: { key, lang, isActive: true },
-    data: { isActive: false },
-  });
+  const restored = await prisma.$transaction(async (tx) => {
+    await tx.systemTemplate.updateMany({
+      where: { key, lang, isActive: true },
+      data: { isActive: false },
+    });
 
-  // Activate target version
-  const restored = await prisma.systemTemplate.update({
-    where: { id: target.id },
-    data: { isActive: true },
-    include: { uploader: { select: { fullName: true } } },
+    return tx.systemTemplate.update({
+      where: { id: target.id },
+      data: { isActive: true },
+      include: { uploader: { select: { fullName: true } } },
+    });
   });
 
   return restored;
