@@ -86,6 +86,7 @@ const prismaMock = {
       return { ...hit }
     }),
   },
+  $transaction: jest.fn(async (callback) => callback(prismaMock)),
 }
 
 const storageMock = {
