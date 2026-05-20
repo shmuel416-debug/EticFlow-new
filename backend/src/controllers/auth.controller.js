@@ -506,7 +506,7 @@ export async function resetPassword(req, res, next) {
 
 /**
  * Finds an existing user by Microsoft externalId or email, or creates a new one.
- * Returns null if there is an email conflict with a LOCAL account.
+ * Returns null if there is an email conflict with a non-Microsoft account.
  * @param {{ externalId: string, email: string, fullName: string }} profile - Microsoft profile
  * @returns {Promise<{ user: object|null, conflict: boolean }>}
  */
@@ -516,7 +516,7 @@ async function findOrCreateMicrosoftUser({ externalId, email, fullName }) {
   })
 
   if (existing) {
-    if (existing.authProvider === 'LOCAL') return { user: null, conflict: true }
+    if (existing.authProvider !== 'MICROSOFT') return { user: null, conflict: true }
     // Update display name if it changed
     const user = existing.fullName !== fullName
       ? await prisma.user.update({ where: { id: existing.id }, data: { fullName, externalId } })
