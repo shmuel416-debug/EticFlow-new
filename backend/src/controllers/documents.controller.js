@@ -23,7 +23,7 @@ import fs       from 'fs'
 
 /**
  * Returns true when the user may access the submission.
- * @param {{ id: string, role: string }} user
+ * @param {{ id: string, role?: string, roles?: string[], activeRole?: string }} user
  * @param {object} submission - Prisma submission record
  * @returns {boolean}
  */
@@ -36,9 +36,29 @@ function canAccess(user, submission) {
 }
 
 /**
+ * Returns true when the user may read generated protocol documents.
+ * @param {{ role?: string, roles?: string[] }} user
+ * @param {object|null} protocol - Prisma protocol record
+ * @returns {boolean}
+ */
+function canReadProtocolDocument(user, protocol) {
+  return Boolean(protocol?.isActive) && hasAnyRole(user, 'SECRETARY', 'CHAIRMAN', 'ADMIN')
+}
+
+/**
+ * Returns true when the user may delete generated protocol documents.
+ * @param {{ role?: string, roles?: string[] }} user
+ * @param {object|null} protocol - Prisma protocol record
+ * @returns {boolean}
+ */
+function canDeleteProtocolDocument(user, protocol) {
+  return Boolean(protocol?.isActive) && hasAnyRole(user, 'SECRETARY', 'ADMIN')
+}
+
+/**
  * Returns true when the user may upload/delete documents for the submission.
  * Researchers may only modify their own, and only while not yet final.
- * @param {{ id: string, role: string }} user
+ * @param {{ id: string, role?: string, roles?: string[], activeRole?: string }} user
  * @param {object} submission
  * @returns {boolean}
  */
@@ -178,13 +198,19 @@ export async function download(req, res, next) {
 
     const doc = await prisma.document.findUnique({
       where:   { id },
-      include: { submission: true },
+      include: { submission: true, protocol: true },
     })
 
     if (!doc || !doc.isActive) {
       throw new AppError('Document not found', 'NOT_FOUND', 404)
     }
     if (doc.submission && !canAccess(req.user, doc.submission)) {
+      throw new AppError('Forbidden', 'FORBIDDEN', 403)
+    }
+    if (doc.protocol && !canReadProtocolDocument(req.user, doc.protocol)) {
+      throw new AppError('Forbidden', 'FORBIDDEN', 403)
+    }
+    if (!doc.submission && !doc.protocol) {
       throw new AppError('Forbidden', 'FORBIDDEN', 403)
     }
 
@@ -221,13 +247,19 @@ export async function remove(req, res, next) {
 
     const doc = await prisma.document.findUnique({
       where:   { id },
-      include: { submission: true },
+      include: { submission: true, protocol: true },
     })
 
     if (!doc || !doc.isActive) {
       throw new AppError('Document not found', 'NOT_FOUND', 404)
     }
     if (doc.submission && !(await canWrite(req.user, doc.submission))) {
+      throw new AppError('Forbidden', 'FORBIDDEN', 403)
+    }
+    if (doc.protocol && !canDeleteProtocolDocument(req.user, doc.protocol)) {
+      throw new AppError('Forbidden', 'FORBIDDEN', 403)
+    }
+    if (!doc.submission && !doc.protocol) {
       throw new AppError('Forbidden', 'FORBIDDEN', 403)
     }
 
