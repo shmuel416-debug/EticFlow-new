@@ -14,9 +14,11 @@ import { AlertTriangle }            from 'lucide-react'
 import api          from '../../services/api'
 import FormPreview  from '../../components/formBuilder/FormPreview'
 import { Button, PageHeader } from '../../components/ui'
+import { getSchemaFields } from '../../utils/formSchema'
 
 /**
  * Loads a published (or draft) form from the API and renders it in preview mode.
+ * @returns {JSX.Element}
  */
 export default function FormPreviewPage() {
   const { id }     = useParams()
@@ -75,7 +77,7 @@ export default function FormPreviewPage() {
     )
   }
 
-  const fields = form.schemaJson?.fields ?? []
+  const fields = getSchemaFields(form.schemaJson)
 
   return (
     <div className="-m-4 md:-m-6 flex flex-col" style={{ height: 'calc(100vh - 64px)' }}>

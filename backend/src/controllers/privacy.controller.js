@@ -87,7 +87,7 @@ export async function exportMyData(req, res, next) {
           id: true,
           email: true,
           fullName: true,
-          role: true,
+          roles: true,
           department: true,
           phone: true,
           createdAt: true,

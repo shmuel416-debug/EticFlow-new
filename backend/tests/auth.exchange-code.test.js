@@ -6,6 +6,11 @@
 import { jest } from '@jest/globals'
 
 const prismaMock = {
+  user: {
+    findFirst: jest.fn(),
+    update: jest.fn(),
+    create: jest.fn(),
+  },
   authExchangeCode: {
     create: jest.fn(),
     findUnique: jest.fn(),
@@ -38,7 +43,8 @@ jest.unstable_mockModule('../src/services/auth/microsoft.provider.js', () => ({
   exchangeCode: jest.fn(),
 }))
 
-const { exchangeCode } = await import('../src/controllers/auth.controller.js')
+const microsoftAuth = await import('../src/services/auth/microsoft.provider.js')
+const { exchangeCode, microsoftCallback } = await import('../src/controllers/auth.controller.js')
 const { AppError } = await import('../src/utils/errors.js')
 
 /**
@@ -51,6 +57,26 @@ function makeContext(code = 'a'.repeat(64)) {
   const res = {
     locals: {},
     json: jest.fn(),
+  }
+  const next = jest.fn()
+  return { req, res, next }
+}
+
+/**
+ * Builds minimal Express-like req/res mocks for OAuth callback tests.
+ * @returns {{ req: object, res: object, next: Function }}
+ */
+function makeCallbackContext() {
+  const req = {
+    query: { code: 'oauth-code', state: 'state-1' },
+    cookies: { ms_oauth_state: 'state-1' },
+    get: jest.fn(() => null),
+    requestId: 'req-1',
+  }
+  const res = {
+    locals: {},
+    clearCookie: jest.fn(),
+    redirect: jest.fn(),
   }
   const next = jest.fn()
   return { req, res, next }
@@ -135,5 +161,36 @@ describe('auth.controller exchangeCode', () => {
     expect(next.mock.calls[0][0]).toBeInstanceOf(AppError)
     expect(next.mock.calls[0][0].code).toBe('INVALID_EXCHANGE_CODE')
     expect(next.mock.calls[0][0].statusCode).toBe(401)
+  })
+})
+
+describe('auth.controller microsoftCallback', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
+  test('rejects email collision with a Google SSO account', async () => {
+    microsoftAuth.exchangeCode.mockResolvedValue({
+      externalId: 'microsoft-object-id',
+      email: 'shared@example.edu',
+      fullName: 'Microsoft User',
+    })
+    prismaMock.user.findFirst.mockResolvedValue({
+      id: 'google-user-id',
+      email: 'shared@example.edu',
+      fullName: 'Google User',
+      authProvider: 'GOOGLE',
+      externalId: 'google-object-id',
+      roles: ['RESEARCHER'],
+      isActive: true,
+    })
+
+    const { req, res, next } = makeCallbackContext()
+    await microsoftCallback(req, res, next)
+
+    expect(res.redirect).toHaveBeenCalledWith('http://localhost:5173/login?error=sso_email_conflict')
+    expect(prismaMock.authExchangeCode.create).not.toHaveBeenCalled()
+    expect(prismaMock.user.update).not.toHaveBeenCalled()
+    expect(next).not.toHaveBeenCalled()
   })
 })
