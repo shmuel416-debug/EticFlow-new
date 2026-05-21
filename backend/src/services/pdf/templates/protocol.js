@@ -4,6 +4,29 @@
 
 import { escapeHtml, pageShell } from '../layout.js'
 
+const PROTOCOL_PAGINATION_CSS = `
+.protocol-page {
+  max-height: none;
+  display: block;
+  page-break-inside: auto;
+  break-inside: auto;
+  overflow: visible;
+}
+.protocol-page .content {
+  display: block;
+  min-height: auto;
+}
+.protocol-page section,
+.protocol-page .details-box,
+.protocol-page .footer {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+.protocol-page .footer {
+  margin-top: 24px;
+}
+`
+
 /**
  * Builds the protocol section rows.
  * @param {{ heading?: string, content?: string }[]} sections
@@ -89,7 +112,7 @@ function renderSignatures(signatures, lang) {
 function buildProtocolSection(protocol, labels, lang) {
   const isHebrew = lang === 'he'
   const title = isHebrew ? (protocol.title ?? labels.titleLabel) : labels.titleLabel
-  return `<div class="page">
+  return `<div class="page protocol-page">
   <div class="header">
     <div class="brand-row">
       <div>
@@ -130,6 +153,7 @@ export function buildProtocolHtml(protocol, lang, context) {
     lang: safeLang === 'he' ? 'he-IL' : 'en',
     bodyHtml,
     brandPrimary: context.brandPrimary,
+    extraCss: PROTOCOL_PAGINATION_CSS,
   })
 }
 
@@ -148,5 +172,6 @@ ${buildProtocolSection(protocol, context.en, 'en')}`
     lang: 'he',
     bodyHtml,
     brandPrimary: context.brandPrimary,
+    extraCss: PROTOCOL_PAGINATION_CSS,
   })
 }

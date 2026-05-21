@@ -249,16 +249,17 @@ hr.light { border-color: #e2e8f0; border-width: 1px; }
 
 /**
  * Wraps the provided body content in a complete HTML shell.
- * @param {{ dir: 'rtl'|'ltr', lang: string, bodyHtml: string, brandPrimary: string }} params
+ * @param {{ dir: 'rtl'|'ltr', lang: string, bodyHtml: string, brandPrimary: string, extraCss?: string }} params
  * @returns {string}
  */
-export function pageShell({ dir, lang, bodyHtml, brandPrimary }) {
+export function pageShell({ dir, lang, bodyHtml, brandPrimary, extraCss = '' }) {
   return `<!DOCTYPE html>
 <html dir="${dir}" lang="${lang}">
 <head>
 <meta charset="utf-8">
 <style>
 ${baseCss(brandPrimary)}
+${extraCss}
 </style>
 </head>
 <body>

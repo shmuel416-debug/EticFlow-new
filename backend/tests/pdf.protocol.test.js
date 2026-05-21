@@ -62,6 +62,28 @@ const context = {
 }
 
 /**
+ * Builds a protocol with enough sections to require multiple PDF pages.
+ * @returns {object}
+ */
+function buildLongProtocol() {
+  return {
+    ...protocol,
+    id: 'protocol-long-test',
+    contentJson: {
+      sections: Array.from({ length: 36 }, (_item, index) => ({
+        heading: `דיון ${index + 1}`,
+        content: `סיכום דיון מפורט מספר ${index + 1}. `.repeat(8),
+      })).concat([
+        {
+          heading: 'סיכום סופי',
+          content: 'END_OF_PROTOCOL_MARKER_2026',
+        },
+      ]),
+    },
+  }
+}
+
+/**
  * Renders HTML to PDF and parses text.
  * @param {string} html
  * @returns {Promise<{ text: string, size: number }>}
@@ -107,5 +129,12 @@ describe('protocol PDFs', () => {
     expect(size).toBeGreaterThan(6000)
     expect(text).toContain('Meeting Date')
     expect(text).toContain('ETH-2026-1001')
+  })
+
+  it('does not clip protocol content after the first page', async () => {
+    const html = buildProtocolHtml(buildLongProtocol(), 'he', context)
+    const { text, size } = await renderAndParse(html)
+    expect(size).toBeGreaterThan(8000)
+    expect(text).toContain('END_OF_PROTOCOL_MARKER_2026')
   })
 })

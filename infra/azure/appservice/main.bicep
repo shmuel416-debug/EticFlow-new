@@ -65,6 +65,24 @@ param frontendOrigin string = 'https://ethics.example.ac.il'
 @description('Organizer mailbox used by Microsoft Calendar provider.')
 param organizerEmail string = 'ethics@example.ac.il'
 
+@description('Public backend API origin used for Microsoft auth callback redirects.')
+param apiBaseUrl string
+
+@description('Microsoft SSO application client ID.')
+param microsoftAuthClientId string
+
+@description('Microsoft Calendar application client ID.')
+param microsoftCalendarClientId string
+
+@description('Microsoft Mail application client ID.')
+param microsoftMailClientId string
+
+@description('Microsoft Entra tenant ID for application registrations.')
+param microsoftTenantId string
+
+@description('Key Vault secret prefix used by Microsoft integration setup.')
+param microsoftSecretPrefix string = 'ethicflow-prod'
+
 @description('App Service plan SKU code (e.g. B1, S1, P0v3).')
 param appServicePlanSku string = 'P0v3'
 
@@ -87,6 +105,7 @@ var tags = {
   project: 'EthicFlow'
   env: environmentName
 }
+var normalizedApiBaseUrl = endsWith(apiBaseUrl, '/') ? substring(apiBaseUrl, 0, length(apiBaseUrl) - 1) : apiBaseUrl
 
 resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
   name: logAnalyticsName
@@ -345,6 +364,14 @@ resource apiApp 'Microsoft.Web/sites@2023-12-01' = {
           value: '@Microsoft.KeyVault(SecretUri=${dbUrlSecret.properties.secretUriWithVersion})'
         }
         {
+          name: 'JWT_SECRET_CURRENT'
+          value: '@Microsoft.KeyVault(VaultName=${keyVault.name};SecretName=jwt-secret-current)'
+        }
+        {
+          name: 'CALENDAR_TOKEN_ENCRYPTION_KEY'
+          value: '@Microsoft.KeyVault(VaultName=${keyVault.name};SecretName=calendar-token-encryption-key)'
+        }
+        {
           name: 'AUTH_PROVIDER'
           value: 'microsoft'
         }
@@ -361,16 +388,44 @@ resource apiApp 'Microsoft.Web/sites@2023-12-01' = {
           value: 'local'
         }
         {
+          name: 'MICROSOFT_AUTH_CLIENT_ID'
+          value: microsoftAuthClientId
+        }
+        {
+          name: 'MICROSOFT_AUTH_CLIENT_SECRET'
+          value: '@Microsoft.KeyVault(VaultName=${keyVault.name};SecretName=${microsoftSecretPrefix}-microsoft-auth-client-secret)'
+        }
+        {
           name: 'MICROSOFT_AUTH_TENANT_ID'
-          value: subscription().tenantId
+          value: microsoftTenantId
+        }
+        {
+          name: 'MICROSOFT_AUTH_REDIRECT_URI'
+          value: '${normalizedApiBaseUrl}/api/auth/microsoft/callback'
+        }
+        {
+          name: 'MICROSOFT_CALENDAR_CLIENT_ID'
+          value: microsoftCalendarClientId
+        }
+        {
+          name: 'MICROSOFT_CALENDAR_CLIENT_SECRET'
+          value: '@Microsoft.KeyVault(VaultName=${keyVault.name};SecretName=${microsoftSecretPrefix}-microsoft-calendar-client-secret)'
         }
         {
           name: 'MICROSOFT_CALENDAR_TENANT_ID'
-          value: subscription().tenantId
+          value: microsoftTenantId
+        }
+        {
+          name: 'MICROSOFT_MAIL_CLIENT_ID'
+          value: microsoftMailClientId
+        }
+        {
+          name: 'MICROSOFT_MAIL_CLIENT_SECRET'
+          value: '@Microsoft.KeyVault(VaultName=${keyVault.name};SecretName=${microsoftSecretPrefix}-microsoft-mail-client-secret)'
         }
         {
           name: 'MICROSOFT_MAIL_TENANT_ID'
-          value: subscription().tenantId
+          value: microsoftTenantId
         }
         {
           name: 'MICROSOFT_CALENDAR_ORGANIZER_EMAIL'
