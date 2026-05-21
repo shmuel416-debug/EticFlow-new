@@ -105,7 +105,7 @@ var tags = {
   project: 'EthicFlow'
   env: environmentName
 }
-var normalizedApiBaseUrl = trim(apiBaseUrl, '/')
+var normalizedApiBaseUrl = endsWith(apiBaseUrl, '/') ? substring(apiBaseUrl, 0, length(apiBaseUrl) - 1) : apiBaseUrl
 
 resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
   name: logAnalyticsName
