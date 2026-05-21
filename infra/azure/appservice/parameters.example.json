@@ -61,6 +61,24 @@
     },
     "organizerEmail": {
       "value": "ethics@example.ac.il"
+    },
+    "apiBaseUrl": {
+      "value": "https://api.ethics.example.ac.il"
+    },
+    "microsoftAuthClientId": {
+      "value": "REPLACE_WITH_MICROSOFT_AUTH_APP_ID"
+    },
+    "microsoftCalendarClientId": {
+      "value": "REPLACE_WITH_MICROSOFT_CALENDAR_APP_ID"
+    },
+    "microsoftMailClientId": {
+      "value": "REPLACE_WITH_MICROSOFT_MAIL_APP_ID"
+    },
+    "microsoftTenantId": {
+      "value": "REPLACE_WITH_MICROSOFT_TENANT_ID"
+    },
+    "microsoftSecretPrefix": {
+      "value": "ethicflow-prod"
     }
   }
 }
