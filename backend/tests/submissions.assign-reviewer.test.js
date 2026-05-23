@@ -39,7 +39,7 @@ jest.unstable_mockModule('../src/services/notification.service.js', () => notifi
 jest.unstable_mockModule('../src/services/sla.service.js', () => slaServiceMock)
 jest.unstable_mockModule('../src/services/coi.service.js', () => coiServiceMock)
 
-const { assignReviewer } = await import('../src/controllers/submissions.status.controller.js')
+const { assignReviewer, transitionStatus } = await import('../src/controllers/submissions.status.controller.js')
 
 function makeContext() {
   const req = {
@@ -123,5 +123,20 @@ describe('submissions.status assignReviewer', () => {
     expect(prismaMock.submission.update).toHaveBeenCalledTimes(1)
     expect(res.json).toHaveBeenCalledWith({ submission: expect.any(Object) })
     expect(next).not.toHaveBeenCalled()
+  })
+
+  test('blocks generic status transition when TRANSITION permission is disabled', async () => {
+    statusServiceMock.can.mockResolvedValue(false)
+    const { req, res, next } = makeContext()
+    req.body = { status: 'ASSIGNED' }
+
+    await transitionStatus(req, res, next)
+
+    expect(statusServiceMock.can).toHaveBeenCalledWith('TRANSITION', 'IN_TRIAGE', 'SECRETARY')
+    expect(statusServiceMock.getAllowedTransitions).not.toHaveBeenCalled()
+    expect(prismaMock.submission.update).not.toHaveBeenCalled()
+    expect(res.json).not.toHaveBeenCalled()
+    expect(next).toHaveBeenCalledTimes(1)
+    expect(next.mock.calls[0][0].code).toBe('FORBIDDEN')
   })
 })

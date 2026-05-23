@@ -59,6 +59,9 @@ export async function transitionStatus(req, res, next) {
     const sub       = await findOrFail(req.params.id)
     const newStatus = req.body.status
 
+    const allowedTransition = await can('TRANSITION', sub.status, activeRole)
+    if (!allowedTransition) return next(AppError.forbidden())
+
     await assertTransitionAllowed(sub, newStatus, activeRole)
 
     const updated = await prisma.submission.update({
