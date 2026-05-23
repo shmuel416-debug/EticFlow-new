@@ -108,4 +108,24 @@ describe('protocol PDFs', () => {
     expect(text).toContain('Meeting Date')
     expect(text).toContain('ETH-2026-1001')
   })
+
+  it('keeps protocol sections that overflow the first PDF page', async () => {
+    const longProtocol = {
+      ...protocol,
+      contentJson: {
+        sections: [
+          {
+            heading: 'דיון והחלטות',
+            content: `${'שורת דיון מפורטת עם החלטות הוועדה.\n'.repeat(110)}FINAL_PROTOCOL_DECISION_SENTINEL`,
+          },
+        ],
+      },
+    }
+
+    const html = buildProtocolHtml(longProtocol, 'he', context)
+    const { text, size } = await renderAndParse(html)
+
+    expect(size).toBeGreaterThan(6000)
+    expect(text).toContain('FINAL_PROTOCOL_DECISION_SENTINEL')
+  })
 })

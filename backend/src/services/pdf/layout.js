@@ -116,12 +116,11 @@ body {
 .page {
   width: 210mm;
   min-height: 296mm;
-  max-height: 296mm;
   display: flex;
   flex-direction: column;
-  page-break-inside: avoid;
-  break-inside: avoid-page;
-  overflow: hidden;
+  page-break-inside: auto;
+  break-inside: auto;
+  overflow: visible;
 }
 .header {
   background: ${brandPrimary};
@@ -223,6 +222,13 @@ hr.light { border-color: #e2e8f0; border-width: 1px; }
   line-height: 1.6;
 }
 .footer-legal { margin-bottom: 6px; }
+.details-box,
+.signature-section,
+.sig-fields,
+section {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
 .ltr-val { direction: ltr; unicode-bidi: isolate; display: inline-block; }
 .rtl-root { direction: rtl; }
 .rtl-root .brand-row,

@@ -147,7 +147,17 @@ if (-not [string]::IsNullOrWhiteSpace($KeyVaultName)) {
 Write-Host ""
 Write-Host "# Paste into production app settings (single-tenant)"
 foreach ($entry in $envValues.GetEnumerator()) {
-  Write-Host "$($entry.Key)=$($entry.Value)"
+  if (-not [string]::IsNullOrWhiteSpace($KeyVaultName) -and $entry.Key.EndsWith("_SECRET")) {
+    $secretName = switch ($entry.Key) {
+      "MICROSOFT_AUTH_CLIENT_SECRET" { "$SecretPrefix-microsoft-auth-client-secret" }
+      "MICROSOFT_CALENDAR_CLIENT_SECRET" { "$SecretPrefix-microsoft-calendar-client-secret" }
+      "MICROSOFT_MAIL_CLIENT_SECRET" { "$SecretPrefix-microsoft-mail-client-secret" }
+      default { "<stored-in-key-vault>" }
+    }
+    Write-Host "$($entry.Key)=@Microsoft.KeyVault(VaultName=$KeyVaultName;SecretName=$secretName)"
+  } else {
+    Write-Host "$($entry.Key)=$($entry.Value)"
+  }
 }
 
 if (-not [string]::IsNullOrWhiteSpace($KeyVaultName)) {
