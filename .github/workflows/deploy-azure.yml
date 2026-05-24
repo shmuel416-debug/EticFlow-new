@@ -1,6 +1,9 @@
 # EthicFlow Azure deployment workflow.
 #
-# Supports two deployment modes:
+# Supports three deployment modes:
+#   - build-only:       Build and push images to ACR, skip App Service updates.
+#                       Useful for CI/CD plumbing validation before SSO/Key Vault are configured,
+#                       or when a deploy must be staged manually later.
 #   - direct (default): Push container images and update the App Service directly.
 #                       Required for tiers without slot support (Basic B1, B2, B3).
 #                       Brief downtime (~5-15s) during container swap.
@@ -32,11 +35,12 @@ on:
         required: false
         default: ""
       deploy_mode:
-        description: "direct = update App Service directly (B1 tier); slots = deploy to staging slot"
+        description: "build-only = push images only; direct = update App Service (B1); slots = staging slot"
         required: true
         default: "direct"
         type: choice
         options:
+          - "build-only"
           - "direct"
           - "slots"
       auto_swap:
@@ -94,6 +98,14 @@ jobs:
         run: |
           docker build -t "$REGISTRY/$WEB_IMAGE_NAME:${{ steps.meta.outputs.image_tag }}" ./frontend
           docker push "$REGISTRY/$WEB_IMAGE_NAME:${{ steps.meta.outputs.image_tag }}"
+
+      - name: Build-only summary
+        if: ${{ github.event.inputs.deploy_mode == 'build-only' }}
+        run: |
+          echo "::notice title=Build-only mode::Images pushed; App Service updates were skipped."
+          echo "API image: $REGISTRY/$API_IMAGE_NAME:${{ steps.meta.outputs.image_tag }}"
+          echo "Web image: $REGISTRY/$WEB_IMAGE_NAME:${{ steps.meta.outputs.image_tag }}"
+          echo "Next: re-run workflow with deploy_mode=direct (or slots) once SSO + Key Vault are wired."
 
   deploy-direct:
     if: ${{ github.event.inputs.deploy_mode == 'direct' }}

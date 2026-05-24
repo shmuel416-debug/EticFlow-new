@@ -161,7 +161,8 @@ resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
 }
 
 resource dbUrlSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
-  name: '${keyVault.name}/database-url'
+  parent: keyVault
+  name: 'database-url'
   properties: {
     value: 'postgresql://${postgresAdminLogin}:${postgresAdminPassword}@${postgresServer.name}.postgres.database.azure.com:5432/${postgresDatabaseName}?sslmode=require'
   }
@@ -230,7 +231,8 @@ resource postgresPrivateDns 'Microsoft.Network/privateDnsZones@2020-06-01' = {
 }
 
 resource postgresDnsLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2020-06-01' = {
-  name: '${postgresPrivateDns.name}/link-${vnet.name}'
+  parent: postgresPrivateDns
+  name: 'link-${vnet.name}'
   location: 'global'
   properties: {
     registrationEnabled: false
@@ -274,7 +276,8 @@ resource postgresServer 'Microsoft.DBforPostgreSQL/flexibleServers@2023-12-01-pr
 }
 
 resource postgresDatabase 'Microsoft.DBforPostgreSQL/flexibleServers/databases@2023-12-01-preview' = {
-  name: '${postgresServer.name}/${postgresDatabaseName}'
+  parent: postgresServer
+  name: postgresDatabaseName
   properties: {
     charset: 'UTF8'
     collation: 'en_US.utf8'
@@ -313,7 +316,7 @@ resource apiApp 'Microsoft.Web/sites@2023-12-01' = {
       alwaysOn: alwaysOn
       healthCheckPath: '/api/health'
       http20Enabled: true
-      minimumTlsVersion: '1.2'
+      minTlsVersion: '1.2'
       ftpsState: 'Disabled'
       appSettings: [
         {
@@ -407,7 +410,7 @@ resource webApp 'Microsoft.Web/sites@2023-12-01' = {
       acrUseManagedIdentityCreds: true
       alwaysOn: alwaysOn
       http20Enabled: true
-      minimumTlsVersion: '1.2'
+      minTlsVersion: '1.2'
       ftpsState: 'Disabled'
       appSettings: [
         {
@@ -428,27 +431,29 @@ resource webApp 'Microsoft.Web/sites@2023-12-01' = {
 }
 
 resource apiStorageMounts 'Microsoft.Web/sites/config@2023-12-01' = {
-  name: '${apiApp.name}/azurestorageaccounts'
+  parent: apiApp
+  name: 'azurestorageaccounts'
   properties: {
     uploads: {
       type: 'AzureFiles'
       accountName: storage.name
       shareName: 'uploads'
-      accessKey: listKeys(storage.id, storage.apiVersion).keys[0].value
+      accessKey: storage.listKeys().keys[0].value
       mountPath: '/app/uploads'
     }
     generated: {
       type: 'AzureFiles'
       accountName: storage.name
       shareName: 'generated'
-      accessKey: listKeys(storage.id, storage.apiVersion).keys[0].value
+      accessKey: storage.listKeys().keys[0].value
       mountPath: '/app/generated'
     }
   }
 }
 
 resource apiVnetIntegration 'Microsoft.Web/sites/networkConfig@2023-12-01' = {
-  name: '${apiApp.name}/virtualNetwork'
+  parent: apiApp
+  name: 'virtualNetwork'
   properties: {
     subnetResourceId: '${vnet.id}/subnets/appsvc-integration'
     swiftSupported: true
