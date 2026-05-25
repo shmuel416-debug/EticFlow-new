@@ -15,6 +15,19 @@ import { getRequestRole } from '../utils/roles.js'
 import { hasConflict } from '../services/coi.service.js'
 import { getOrCreateReview } from '../services/reviewerChecklist.service.js'
 
+const DECISION_STATUS_CODES = new Set(['APPROVED', 'REJECTED', 'PENDING_REVISION'])
+
+/**
+ * Blocks generic status updates that must pass through the decision endpoint.
+ * @param {string} nextStatus
+ * @returns {void}
+ */
+function assertNotDecisionStatus(nextStatus) {
+  if (DECISION_STATUS_CODES.has(nextStatus)) {
+    throw new AppError('Use the decision endpoint for committee decisions', 'DECISION_ENDPOINT_REQUIRED', 400)
+  }
+}
+
 /**
  * Throws AppError when transition is not allowed for current role/context.
  * @param {{ status: string }} submission
@@ -59,6 +72,7 @@ export async function transitionStatus(req, res, next) {
     const sub       = await findOrFail(req.params.id)
     const newStatus = req.body.status
 
+    assertNotDecisionStatus(newStatus)
     await assertTransitionAllowed(sub, newStatus, activeRole)
 
     const updated = await prisma.submission.update({
