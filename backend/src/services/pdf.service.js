@@ -103,7 +103,7 @@ function materializeTemplate(template, context) {
  * @param {ReturnType<typeof getDefaultApprovalTemplate>} template
  * @returns {ReturnType<typeof getDefaultApprovalTemplate>}
  */
-function fitApprovalTemplateToSinglePage(template) {
+export function fitApprovalTemplateToSinglePage(template) {
   const trimWithEllipsis = (value, max) => {
     if (typeof value !== 'string') return ''
     const trimmed = value.trim()
@@ -113,8 +113,8 @@ function fitApprovalTemplateToSinglePage(template) {
     ...template,
     intro: trimWithEllipsis(template.intro, 720),
     conditions: (template.conditions || [])
-      .slice(0, 4)
-      .map((line) => trimWithEllipsis(line, 170))
+      .slice(0, 8)
+      .map((line) => trimWithEllipsis(line, (template.conditions || []).length > 4 ? 120 : 170))
       .filter(Boolean),
     legalFooter: trimWithEllipsis(template.legalFooter, 220),
   }

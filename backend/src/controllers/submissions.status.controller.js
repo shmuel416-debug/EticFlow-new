@@ -15,6 +15,30 @@ import { getRequestRole } from '../utils/roles.js'
 import { hasConflict } from '../services/coi.service.js'
 import { getOrCreateReview } from '../services/reviewerChecklist.service.js'
 
+const MANAGED_STATUS_ENDPOINTS = {
+  ASSIGNED: '/assign',
+  IN_REVIEW: '/review',
+  APPROVED: '/decision',
+  REJECTED: '/decision',
+  PENDING_REVISION: '/decision',
+  WITHDRAWN: '/withdraw',
+}
+
+/**
+ * Blocks workflow states that have endpoint-specific invariants.
+ * @param {string} nextStatus
+ * @returns {void}
+ */
+function assertGenericTransitionAllowed(nextStatus) {
+  const endpoint = MANAGED_STATUS_ENDPOINTS[nextStatus]
+  if (!endpoint) return
+  throw new AppError(
+    `Use the dedicated ${endpoint} endpoint for ${nextStatus}`,
+    'MANAGED_TRANSITION_ENDPOINT_REQUIRED',
+    400
+  )
+}
+
 /**
  * Throws AppError when transition is not allowed for current role/context.
  * @param {{ status: string }} submission
@@ -59,6 +83,7 @@ export async function transitionStatus(req, res, next) {
     const sub       = await findOrFail(req.params.id)
     const newStatus = req.body.status
 
+    assertGenericTransitionAllowed(newStatus)
     await assertTransitionAllowed(sub, newStatus, activeRole)
 
     const updated = await prisma.submission.update({
@@ -314,15 +339,18 @@ export async function addComment(req, res, next) {
  */
 export async function withdrawSubmission(req, res, next) {
   try {
+    const activeRole = getRequestRole(req)
     const sub = await findOrFail(req.params.id)
     const isOwner = sub.authorId === req.user.id
-    const isPrivileged = ['SECRETARY', 'ADMIN'].includes(req.user.role)
+    const isPrivileged = ['SECRETARY', 'ADMIN'].includes(activeRole)
     if (!isOwner && !isPrivileged) return next(AppError.forbidden())
 
     const blockedStatuses = ['APPROVED', 'REJECTED', 'WITHDRAWN', 'CONTINUED']
     if (blockedStatuses.includes(sub.status)) {
       return next(new AppError('Submission cannot be withdrawn in its current status', 'INVALID_TRANSITION', 400))
     }
+
+    await assertTransitionAllowed(sub, 'WITHDRAWN', activeRole)
 
     const txOps = [
       prisma.submission.update({
