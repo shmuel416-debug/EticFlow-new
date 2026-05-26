@@ -346,21 +346,26 @@ export async function requestSignatures(req, res, next) {
     // Fetch all existing signature records in one query — avoids N+1
     const existingSigs = await prisma.protocolSignature.findMany({
       where:  { protocolId: id, userId: { in: signers.map(s => s.id) } },
-      select: { userId: true },
+      select: { id: true, userId: true, status: true },
     })
-    const alreadySigned = new Set(existingSigs.map(s => s.userId))
+    const existingByUserId = new Map(existingSigs.map((signature) => [signature.userId, signature]))
 
     const created = []
 
     for (const signer of signers) {
-      if (alreadySigned.has(signer.id)) continue
-
       const rawToken    = crypto.randomBytes(32).toString('hex')
       const tokenExpiry = new Date(Date.now() + TOKEN_TTL_HOURS * 60 * 60 * 1000)
+      const existingSig = existingByUserId.get(signer.id)
+      if (existingSig?.status === 'PENDING' || existingSig?.status === 'SIGNED') continue
 
-      const sig = await prisma.protocolSignature.create({
-        data: { protocolId: id, userId: signer.id, token: hashToken(rawToken), tokenExpiry, status: 'PENDING' },
-      })
+      const sig = existingSig
+        ? await prisma.protocolSignature.update({
+            where: { id: existingSig.id },
+            data:  { token: hashToken(rawToken), tokenExpiry, status: 'PENDING', signedAt: null, ipAddress: null, isActive: true },
+          })
+        : await prisma.protocolSignature.create({
+            data: { protocolId: id, userId: signer.id, token: hashToken(rawToken), tokenExpiry, status: 'PENDING' },
+          })
 
       const signUrl = `${frontendUrl}/protocol/sign/${rawToken}`
       await sendEmail({
@@ -441,11 +446,11 @@ export async function signByToken(req, res, next) {
       },
     })
 
-    // Check if all required signatures are now SIGNED (none remain PENDING)
-    const pendingCount = await prisma.protocolSignature.count({
-      where: { protocolId: sig.protocolId, status: 'PENDING', isActive: true },
+    // Check if all required signatures are now SIGNED.
+    const unsignedCount = await prisma.protocolSignature.count({
+      where: { protocolId: sig.protocolId, status: { not: 'SIGNED' }, isActive: true },
     })
-    if (pendingCount === 0 && newStatus === 'SIGNED') {
+    if (unsignedCount === 0 && newStatus === 'SIGNED') {
       await prisma.protocol.update({
         where: { id: sig.protocolId },
         data:  { status: 'SIGNED' },
