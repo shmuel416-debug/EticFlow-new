@@ -2,7 +2,27 @@
 
 > מסמך **קצר ופעיל** עם כל מה שצריך לעשות בסשן הבא כדי להמשיך מאיפה שעצרנו.
 
-## עדכון אחרון (24 במאי 2026, ~22:00)
+## עדכון אחרון (27 במאי 2026, ~15:30)
+
+### 🔄 עדכון מ-IT — Application Access Policies → RBAC for Applications
+
+IT הגיבו לdoc של Phase 3 והבהירו ש-**Application Access Policies** ב-Exchange Online בדרך ל-deprecation, ושצריך להשתמש במקום זאת ב-**Role Based Access Control (RBAC) for Applications**.
+
+עדכנתי את `docs/ops/jct-it-handoff-phase3.md` — צעד 4 (סעיף א):
+- ✅ `New-ApplicationAccessPolicy` → `New-ManagementRoleAssignment` + `New-ManagementScope`
+- ✅ הוסר הצורך ב-Distribution Group (`ethicflow-svc@jct.ac.il`)
+- ✅ ה-scope מוגדר ישירות לפי `RecipientRestrictionFilter` על תיבת `ethicscommittee@jct.ac.il`
+- ✅ Validation עבר ל-`Test-ServicePrincipalAuthorization` (במקום `Test-ApplicationAccessPolicy`)
+- ✅ דורש `Connect-MgGraph` בנוסף ל-`Connect-ExchangeOnline` (לשליפת Enterprise App ObjectIds)
+- ✅ הוסף קישור ל-[Microsoft Learn — RBAC for Applications in Exchange Online](https://learn.microsoft.com/en-us/exchange/permissions-exo/application-rbac)
+
+**ההשפעה על הצד שלי:** אפס — `setup-microsoft-integrations.ps1` רק צורך App IDs + secrets, לא עוסק ב-Exchange RBAC. הסקריפט נשאר כפי שהוא.
+
+**מה עכשיו:** לשלוח ל-IT את הdoc המעודכן, להמתין שירוצו את צעד 4 (RBAC) + יחזירו את ה-credentials.
+
+---
+
+## עדכון קודם (24 במאי 2026, ~22:00)
 
 ### ✅ מה שהושלם היום
 
