@@ -1,6 +1,6 @@
 /**
  * EthicFlow — Production DB bootstrap helper.
- * Runs migrate deploy + seed and rotates the admin password.
+ * Runs migrations and creates or rotates the initial production admin user.
  */
 
 import { spawn } from 'node:child_process'
@@ -29,11 +29,12 @@ function run(command, args) {
 }
 
 /**
- * Validates required env values for password rotation.
- * @returns {{ adminEmail: string, adminPassword: string }}
+ * Validates required env values for admin bootstrap.
+ * @returns {{ adminEmail: string, adminName: string|null, adminPassword: string }}
  */
 function readEnv() {
-  const adminEmail = process.env.ADMIN_EMAIL
+  const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase()
+  const adminName = process.env.ADMIN_NAME?.trim() || null
   const adminPassword = process.env.ADMIN_PASSWORD
   if (!adminEmail || !adminPassword) {
     throw new Error('Missing required env: ADMIN_EMAIL and ADMIN_PASSWORD')
@@ -41,26 +42,36 @@ function readEnv() {
   if (adminPassword.length < 12) {
     throw new Error('ADMIN_PASSWORD must be at least 12 characters.')
   }
-  return { adminEmail, adminPassword }
+  return { adminEmail, adminName, adminPassword }
 }
 
 /**
- * Rotates admin user password hash after seeding.
+ * Creates or rotates the production admin user without loading dev seed data.
  * @param {string} adminEmail
+ * @param {string|null} adminName
  * @param {string} adminPassword
  * @returns {Promise<void>}
  */
-async function rotateAdminPassword(adminEmail, adminPassword) {
+async function upsertProductionAdmin(adminEmail, adminName, adminPassword) {
   const rounds = Number(process.env.BCRYPT_ROUNDS || 12)
   const passwordHash = await bcrypt.hash(adminPassword, rounds)
-  const admin = await prisma.user.findUnique({ where: { email: adminEmail } })
-  if (!admin) {
-    throw new Error(`Admin user not found: ${adminEmail}`)
-  }
-  await prisma.user.update({
-    where: { id: admin.id },
-    data: {
+  await prisma.user.upsert({
+    where: { email: adminEmail },
+    update: {
       passwordHash,
+      ...(adminName ? { fullName: adminName } : {}),
+      roles: ['RESEARCHER', 'ADMIN'],
+      authProvider: 'LOCAL',
+      externalId: null,
+      failedLoginAttempts: 0,
+      lockoutUntil: null,
+      isActive: true,
+    },
+    create: {
+      email: adminEmail,
+      passwordHash,
+      fullName: adminName || 'System Administrator',
+      roles: ['RESEARCHER', 'ADMIN'],
       authProvider: 'LOCAL',
       isActive: true,
     },
@@ -72,10 +83,9 @@ async function rotateAdminPassword(adminEmail, adminPassword) {
  * @returns {Promise<void>}
  */
 async function main() {
-  const { adminEmail, adminPassword } = readEnv()
+  const { adminEmail, adminName, adminPassword } = readEnv()
   await run('npx', ['prisma', 'migrate', 'deploy'])
-  await run('npx', ['prisma', 'db', 'seed'])
-  await rotateAdminPassword(adminEmail, adminPassword)
+  await upsertProductionAdmin(adminEmail, adminName, adminPassword)
   console.log('[EthicFlow] Production bootstrap completed successfully.')
 }
 

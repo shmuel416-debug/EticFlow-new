@@ -314,15 +314,13 @@ export async function addComment(req, res, next) {
  */
 export async function withdrawSubmission(req, res, next) {
   try {
+    const activeRole = getRequestRole(req)
     const sub = await findOrFail(req.params.id)
     const isOwner = sub.authorId === req.user.id
-    const isPrivileged = ['SECRETARY', 'ADMIN'].includes(req.user.role)
+    const isPrivileged = ['SECRETARY', 'ADMIN'].includes(activeRole)
     if (!isOwner && !isPrivileged) return next(AppError.forbidden())
 
-    const blockedStatuses = ['APPROVED', 'REJECTED', 'WITHDRAWN', 'CONTINUED']
-    if (blockedStatuses.includes(sub.status)) {
-      return next(new AppError('Submission cannot be withdrawn in its current status', 'INVALID_TRANSITION', 400))
-    }
+    await assertTransitionAllowed(sub, 'WITHDRAWN', activeRole)
 
     const txOps = [
       prisma.submission.update({
