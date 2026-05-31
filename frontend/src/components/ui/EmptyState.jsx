@@ -1,5 +1,5 @@
 /**
- * EthicFlow — EmptyState primitive
+ * Ethic-Net — EmptyState primitive
  * Friendly empty/zero-data screen with optional CTA.
  */
 

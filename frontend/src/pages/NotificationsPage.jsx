@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Notifications Page
+ * Ethic-Net — Notifications Page
  * Displays user notifications with mark-as-read functionality.
  * Refreshed to Lev design system (PageHeader + Card primitives + Badge).
  * IS 5568: role="list", aria-live for updates.

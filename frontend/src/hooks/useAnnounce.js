@@ -1,5 +1,5 @@
 /**
- * EthicFlow — useAnnounce hook
+ * Ethic-Net — useAnnounce hook
  * Imperatively announces a message to screen readers via an aria-live region.
  * Mount <AnnounceRegion /> once at the app root. The hook writes text to it.
  *
@@ -11,8 +11,8 @@
 
 import { useCallback } from 'react'
 
-export const LIVE_ID = 'ethicflow-live-region'
-export const ASSERTIVE_ID = 'ethicflow-live-region-assertive'
+export const LIVE_ID = 'ethic-net-live-region'
+export const ASSERTIVE_ID = 'ethic-net-live-region-assertive'
 
 /**
  * Returns a function that announces a message to SR users.

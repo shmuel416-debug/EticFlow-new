@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Audit Log Page
+ * Ethic-Net — Audit Log Page
  * Paginated, filterable audit-event list using Table primitive with
  * responsive mobile card fallback. Role: ADMIN only.
  */

@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "EthicFlow",
+    "appName": "Ethic-Net",
     "institution": "המרכז האקדמי לב",
     "loading": "טוען...",
     "save": "שמור",
@@ -1012,7 +1012,7 @@
     "saveError": "שגיאה בשמירת הפרוטוקול",
     "sign": {
       "title": "חתימה על פרוטוקול",
-      "brand": "EthicFlow — ועדת האתיקה",
+      "brand": "Ethic-Net — ועדת האתיקה",
       "protocolLabel": "פרוטוקול",
       "dateLabel": "תאריך פגישה",
       "signerLabel": "שלום,",

@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Secret Encryption Utilities
+ * Ethic-Net — Secret Encryption Utilities
  * Encrypts/decrypts sensitive per-user tokens before database persistence.
  */
 

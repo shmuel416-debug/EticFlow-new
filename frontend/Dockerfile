@@ -1,11 +1,11 @@
 ###############################################################
-# EthicFlow — Frontend Dockerfile
+# Ethic-Net — Frontend Dockerfile
 # Two-stage build:
 #   Stage 1 (builder): Node.js builds the Vite React app
 #   Stage 2 (runner):  nginx serves the static dist + proxies /api
 #
 # Required env var at runtime: BACKEND_URL
-#   e.g. https://ethicflow-api-xxxx.up.railway.app
+#   e.g. https://ethic-net-api-xxxx.up.railway.app
 ###############################################################
 
 # ── Stage 1: Build ───────────────────────────────────────────

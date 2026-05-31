@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Reviewer Dashboard
+ * Ethic-Net — Reviewer Dashboard
  * Lev palette + design-system primitives. KPIs: assigned submissions,
  * closed outcomes where the reviewer was assignee (approved / rejected / continued).
  * IS 5568 / WCAG 2.2 AA.

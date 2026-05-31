@@ -1,5 +1,5 @@
 /**
- * EthicFlow — migration smoke test
+ * Ethic-Net — migration smoke test
  * Verifies the multi-role migration SQL contains required operations.
  */
 

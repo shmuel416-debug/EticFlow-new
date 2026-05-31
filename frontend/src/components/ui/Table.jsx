@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Table + MobileCardList primitives
+ * Ethic-Net — Table + MobileCardList primitives
  * Declarative table with desktop <table> + automatic mobile card fallback.
  * IS 5568: scope="col" headers, optional <caption>, row keyboard focus.
  */

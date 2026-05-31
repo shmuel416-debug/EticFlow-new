@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Approval Letter Template Defaults and Validation
+ * Ethic-Net — Approval Letter Template Defaults and Validation
  * Shared by settings controller, PDF renderer, and seed data.
  */
 

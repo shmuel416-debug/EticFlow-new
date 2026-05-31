@@ -1,5 +1,5 @@
 /**
- * EthicFlow — ChecklistRenderer
+ * Ethic-Net — ChecklistRenderer
  * Renders a dynamic reviewer checklist for one submission.
  */
 

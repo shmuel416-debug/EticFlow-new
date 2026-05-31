@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Production DB bootstrap helper.
+ * Ethic-Net — Production DB bootstrap helper.
  * Runs migrate deploy + seed and rotates the admin password.
  */
 
@@ -76,12 +76,12 @@ async function main() {
   await run('npx', ['prisma', 'migrate', 'deploy'])
   await run('npx', ['prisma', 'db', 'seed'])
   await rotateAdminPassword(adminEmail, adminPassword)
-  console.log('[EthicFlow] Production bootstrap completed successfully.')
+  console.log('[Ethic-Net] Production bootstrap completed successfully.')
 }
 
 main()
   .catch((error) => {
-    console.error('[EthicFlow] Bootstrap failed:', error.message)
+    console.error('[Ethic-Net] Bootstrap failed:', error.message)
     process.exitCode = 1
   })
   .finally(async () => {

@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Database Seed File
+ * Ethic-Net — Database Seed File
  * Populates the database with initial test data for development.
  * Idempotent: safe to run multiple times (uses upsert).
  *
@@ -471,7 +471,7 @@ async function seedSubmissions(users, form) {
  * @returns {Promise<void>}
  */
 async function main() {
-  console.log('🌱 Starting EthicFlow seed...')
+  console.log('🌱 Starting Ethic-Net seed...')
 
   const users = await seedUsers()
   await seedStatusManagement()

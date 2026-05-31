@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Google Auth Provider (Google OAuth2 SSO)
+ * Ethic-Net — Google Auth Provider (Google OAuth2 SSO)
  * Implements OAuth2 Authorization Code flow using the googleapis library.
  *
  * Flow:

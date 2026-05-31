@@ -1,5 +1,5 @@
 /**
- * EthicFlow E2E — reviewer diff V2 UI behavior.
+ * Ethic-Net E2E — reviewer diff V2 UI behavior.
  */
 
 import { test, expect } from '../support/fixtures'

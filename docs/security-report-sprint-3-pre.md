@@ -100,7 +100,7 @@ Medium findings must be addressed before production deployment.
 | Field | Value |
 |-------|-------|
 | **File** | `backend/.env` |
-| **Issue** | `JWT_SECRET=dev_jwt_secret_ethicflow_2024_not_for_production_use_only` (47 chars, dictionary words). Code validates min 32 chars. |
+| **Issue** | `JWT_SECRET=dev_jwt_secret_ethic-net_2024_not_for_production_use_only` (47 chars, dictionary words). Code validates min 32 chars. |
 | **Impact** | In dev only. For production: use 64+ random bytes (`openssl rand -hex 64`). .env.example should document this requirement. |
 | **Remediation** | Already labeled "not for production". Document in .env.example: `JWT_SECRET=<run: openssl rand -hex 64>` |
 

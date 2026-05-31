@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Reports Controller
+ * Ethic-Net — Reports Controller
  * Provides aggregated statistics, XLSX export, and paginated audit log.
  *
  * Endpoints:
@@ -333,7 +333,7 @@ export async function exportSubmissions(req, res, next) {
     }
 
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    res.setHeader('Content-Disposition', `attachment; filename="ethicflow-submissions-${lang}-${Date.now()}.xlsx"`)
+    res.setHeader('Content-Disposition', `attachment; filename="ethic-net-submissions-${lang}-${Date.now()}.xlsx"`)
     res.locals.auditMeta = {
       format: 'xlsx',
       rowCount: submissions.length,

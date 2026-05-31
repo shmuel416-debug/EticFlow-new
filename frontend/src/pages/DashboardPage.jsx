@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Dashboard Router
+ * Ethic-Net — Dashboard Router
  * Renders the correct dashboard based on the authenticated user's role.
  */
 

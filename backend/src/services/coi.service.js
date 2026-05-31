@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Conflict of Interest Service
+ * Ethic-Net — Conflict of Interest Service
  * Central COI resolution logic for reviewer assignment and agenda recusals.
  */
 

@@ -1,5 +1,5 @@
 /**
- * EthicFlow — FormBuilderPage
+ * Ethic-Net — FormBuilderPage
  * Secretary drag-and-drop form builder with API save + publish.
  * Desktop: split-screen (palette/settings | canvas).
  * Mobile: 3-tab layout (שדות / טופס / הגדרות).

@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Microsoft Auth Provider (Entra ID / Azure AD SSO)
+ * Ethic-Net — Microsoft Auth Provider (Entra ID / Azure AD SSO)
  * Implements OAuth2 / OIDC flow using @azure/msal-node.
  *
  * Flow:
@@ -60,12 +60,14 @@ function getMsalClient() {
 }
 
 /**
- * Returns the OAuth2 redirect URI from env.
+ * Returns the OAuth2 redirect URI from override/env.
+ * @param {string|undefined|null} overrideUri
  * @returns {string}
  * @throws {Error} If env var is missing
  */
-function getRedirectUri() {
-  const uri = process.env.MICROSOFT_AUTH_REDIRECT_URI
+function getRedirectUri(overrideUri) {
+  const uri = overrideUri
+    || process.env.MICROSOFT_AUTH_REDIRECT_URI
     || process.env.MICROSOFT_REDIRECT_URI
     || (process.env.FRONTEND_URL ? `${process.env.FRONTEND_URL}/api/auth/microsoft/callback` : '')
   if (!uri) {
@@ -77,14 +79,15 @@ function getRedirectUri() {
 /**
  * Generates the Microsoft login URL to redirect the user to.
  * @param {string} state - Random CSRF-prevention token
+ * @param {string|undefined|null} redirectUri - Optional callback URL override
  * @returns {Promise<string>} Microsoft authorization URL
  */
-export async function getAuthUrl(state) {
+export async function getAuthUrl(state, redirectUri = null) {
   const client = getMsalClient()
 
   const authUrl = await client.getAuthCodeUrl({
     scopes:      SCOPES,
-    redirectUri: getRedirectUri(),
+    redirectUri: getRedirectUri(redirectUri),
     state,
     prompt:      'select_account',
   })
@@ -100,17 +103,18 @@ export async function getAuthUrl(state) {
  * Exchanges an authorization code for user profile information.
  * @param {string} code  - Auth code from Microsoft callback query param
  * @param {string} state - State param (already validated by caller)
+ * @param {string|undefined|null} redirectUri - Optional callback URL override
  * @returns {Promise<{ externalId: string, email: string, fullName: string, tenantId: string }>}
  * @throws {Error} If code exchange or profile fetch fails
  */
-export async function exchangeCode(code, state) {
+export async function exchangeCode(code, state, redirectUri = null) {
   const client = getMsalClient()
 
   // Exchange code for token
   const tokenResponse = await client.acquireTokenByCode({
     code,
     scopes:      SCOPES,
-    redirectUri: getRedirectUri(),
+    redirectUri: getRedirectUri(redirectUri),
   })
 
   const { account, accessToken } = tokenResponse

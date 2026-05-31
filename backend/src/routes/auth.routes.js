@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Auth Routes
+ * Ethic-Net — Auth Routes
  * POST /api/auth/register              — create account
  * POST /api/auth/login                 — authenticate + get JWT
  * GET  /api/auth/me                    — get current user (protected)

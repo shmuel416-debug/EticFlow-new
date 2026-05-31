@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Login Page (brand refresh)
+ * Ethic-Net — Login Page (brand refresh)
  * Split-screen: hero/brand panel + form panel. In Hebrew (RTL) form appears
  * on the LEFT visually and hero on the RIGHT (DOM order: hero → form so that
  * flex-row in RTL flips them to right-then-left).
@@ -12,7 +12,6 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Mail, Lock, ArrowRight, ArrowLeft, FileCheck2, Timer, Signature } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
-import { buildApiUrl } from '../services/api'
 import {
   Button, Input, FormField, LanguageSwitcher,
 } from '../components/ui'
@@ -108,6 +107,11 @@ export default function LoginPage() {
     { icon: Timer,      text: t('auth.login.feature2') },
     { icon: Signature,  text: t('auth.login.feature3') },
   ]
+  const frontendOrigin = typeof window !== 'undefined' ? window.location.origin : ''
+  const microsoftSsoHref = frontendOrigin
+    ? `/api/auth/microsoft?frontend_origin=${encodeURIComponent(frontendOrigin)}`
+    : '/api/auth/microsoft'
+  const googleSsoHref = '/api/auth/google'
 
   return (
     <>
@@ -321,7 +325,7 @@ export default function LoginPage() {
               </div>
 
               <a
-                href={buildApiUrl('/auth/microsoft')}
+                href={microsoftSsoHref}
                 role="button"
                 aria-label={t('auth.loginWithMicrosoft')}
                 className="w-full flex items-center justify-center gap-3 transition hover:bg-gray-50"
@@ -341,7 +345,7 @@ export default function LoginPage() {
               </a>
 
               <a
-                href={buildApiUrl('/auth/google')}
+                href={googleSsoHref}
                 role="button"
                 aria-label={t('auth.loginWithGoogle')}
                 className="mt-3 w-full flex items-center justify-center gap-3 transition hover:bg-gray-50"

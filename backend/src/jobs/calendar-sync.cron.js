@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Personal Calendar Sync Retry Cron
+ * Ethic-Net — Personal Calendar Sync Retry Cron
  * Retries pending personal calendar sync jobs with backoff.
  */
 

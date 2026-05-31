@@ -143,7 +143,7 @@ services:
     environment:
       - NODE_ENV=production
       - FRONTEND_URL=https://yourdomain.com
-      - DATABASE_URL=postgresql://user:pass@db:5432/ethicflow
+      - DATABASE_URL=postgresql://user:pass@db:5432/ethic-net
   
   db:
     image: postgres:16

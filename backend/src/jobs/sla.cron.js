@@ -1,5 +1,5 @@
 /**
- * EthicFlow — SLA Cron Job
+ * Ethic-Net — SLA Cron Job
  * Runs nightly at midnight (Israel time) to check SLA breaches and send warnings.
  * Registered in index.js on server startup.
  */

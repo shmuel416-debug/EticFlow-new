@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Meetings Controller
+ * Ethic-Net — Meetings Controller
  * Handles committee meeting lifecycle: create, list, agenda, attendance.
  * Integrates with the pluggable Calendar Service for optional Outlook sync.
  *

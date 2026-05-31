@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Privacy Controller
+ * Ethic-Net — Privacy Controller
  * Handles consent capture and data subject requests (access/erasure).
  */
 

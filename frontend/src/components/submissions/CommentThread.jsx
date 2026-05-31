@@ -1,5 +1,5 @@
 /**
- * EthicFlow — CommentThread Component
+ * Ethic-Net — CommentThread Component
  * Renders a list of comments and a form to add new ones.
  * Internal comments shown only to non-researcher roles.
  * IS 5568: role="log", aria-live="polite", form semantics.

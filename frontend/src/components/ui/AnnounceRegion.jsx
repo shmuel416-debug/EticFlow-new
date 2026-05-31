@@ -1,5 +1,5 @@
 /**
- * EthicFlow — AnnounceRegion
+ * Ethic-Net — AnnounceRegion
  * Mount once at the app root. Renders two SR-only aria-live regions
  * (polite + assertive) used by the useAnnounce() hook.
  */

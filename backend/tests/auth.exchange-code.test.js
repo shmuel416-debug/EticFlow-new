@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Auth exchange-code controller tests
+ * Ethic-Net — Auth exchange-code controller tests
  * Verifies one-time code exchange success and failure paths.
  */
 

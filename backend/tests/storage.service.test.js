@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Storage service tests
+ * Ethic-Net — Storage service tests
  * Covers magic-byte validation and path resolution behavior.
  */
 

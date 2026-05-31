@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Language Switcher
+ * Ethic-Net — Language Switcher
  * Toggles between Hebrew (RTL) and English (LTR).
  * IS 5568: aria-label, aria-pressed, min 44px touch target.
  */

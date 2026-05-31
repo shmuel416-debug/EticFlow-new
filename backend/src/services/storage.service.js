@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Storage Service (local provider)
+ * Ethic-Net — Storage Service (local provider)
  * Handles file save/delete on the local filesystem.
  * Swap to S3/Azure via STORAGE_PROVIDER env in production.
  */

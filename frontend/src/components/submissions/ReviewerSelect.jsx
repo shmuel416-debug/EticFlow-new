@@ -1,5 +1,5 @@
 /**
- * EthicFlow — ReviewerSelect Component
+ * Ethic-Net — ReviewerSelect Component
  * Async-loaded dropdown of active REVIEWER users.
  * Used by secretary on SubmissionDetailPage to assign a reviewer.
  */

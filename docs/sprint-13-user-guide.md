@@ -231,7 +231,7 @@ When a researcher loads a form to fill it out:
 ## Support
 
 - **Technical issues**: Contact your admin or file a ticket
-- **Feature requests**: Suggest on Slack #ethicflow-feedback
+- **Feature requests**: Suggest on Slack #ethic-net-feedback
 - **Urgent**: Escalate to @אדמין (Admin) on Slack
 
 **Version:** Sprint 13 (v1.3.0)  

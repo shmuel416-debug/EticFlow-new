@@ -1,7 +1,7 @@
 /**
- * EthicFlow — Reviewer Assignments Page
+ * Ethic-Net — Reviewer Assignments Page
  * Lists submissions assigned to the authenticated reviewer with status ASSIGNED.
- * Uses the EthicFlow design system (PageHeader, Card, Table) with the Lev
+ * Uses the Ethic-Net design system (PageHeader, Card, Table) with the Lev
  * palette and lucide-react icons. IS 5568 / WCAG 2.2 AA.
  */
 

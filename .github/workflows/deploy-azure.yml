@@ -1,4 +1,4 @@
-# EthicFlow Azure deployment workflow.
+# Ethic-Net Azure deployment workflow.
 #
 # Supports two deployment modes:
 #   - direct (default): Push container images and update the App Service directly.
@@ -54,8 +54,8 @@ permissions:
 
 env:
   REGISTRY: ${{ secrets.AZURE_ACR_NAME }}.azurecr.io
-  API_IMAGE_NAME: ethicflow-api
-  WEB_IMAGE_NAME: ethicflow-web
+  API_IMAGE_NAME: ethic-net-api
+  WEB_IMAGE_NAME: ethic-net-web
 
 jobs:
   build-and-push:

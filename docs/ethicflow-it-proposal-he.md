@@ -1,4 +1,4 @@
-# EthicFlow — הצעה לתשתית ענן והפעלה
+# Ethic-Net — הצעה לתשתית ענן והפעלה
 ## מסמך לדיון עם הנהלת ה-IT של המוסד
 
 **תאריך:** מאי 2026
@@ -10,7 +10,7 @@
 
 ## שקופית 1 — שער
 
-**EthicFlow**
+**Ethic-Net**
 מערכת לניהול ועדת אתיקה מחקרית
 
 הצעה לארכיטקטורת ענן והפעלה בסביבת המוסד
@@ -36,7 +36,7 @@
 
 **הבעיה:** ועדת האתיקה של המוסד מנהלת את תהליך אישור המחקרים בכלים ידניים (Word, Excel, Email). התהליך איטי, לא מתועד, ולא עומד בדרישות תקני נגישות ופרטיות.
 
-**הפתרון:** EthicFlow — מערכת SaaS פנימית שפותחה ב-12 ספרינטים, עומדת בתקנים IS 5568, WCAG 2.2 AA, OWASP Top 10, ובהוראות הרשות להגנת הפרטיות. תומכת בכל חמשת התפקידים (חוקרים, מזכירות, סוקרים, יו"ר, מנהל).
+**הפתרון:** Ethic-Net — מערכת SaaS פנימית שפותחה ב-12 ספרינטים, עומדת בתקנים IS 5568, WCAG 2.2 AA, OWASP Top 10, ובהוראות הרשות להגנת הפרטיות. תומכת בכל חמשת התפקידים (חוקרים, מזכירות, סוקרים, יו"ר, מנהל).
 
 **הבקשה:** העלאה לתשתית Azure של המוסד עם שתי סביבות (Dev + Production), אינטגרציה מלאה עם Microsoft 365 הארגוני (Entra ID SSO, Outlook Calendar, Graph Mail).
 
@@ -183,7 +183,7 @@ Azure מספק **out-of-the-box**:
         ▼                                                    ▼
 ┌─────────────────────────────┐              ┌─────────────────────────────┐
 │  סביבת DEV                  │              │  סביבת PRODUCTION           │
-│  ethicflow-dev              │              │  ethicflow                  │
+│  ethic-net-dev              │              │  ethic-net                  │
 │  ←─── auto deploy ────      │              │  ←─── manual approval ──    │
 │       מ-branch develop      │              │        מ-branch main        │
 ├─────────────────────────────┤              ├─────────────────────────────┤
@@ -216,9 +216,9 @@ Azure מספק **out-of-the-box**:
 
 | היבט | DEV | PRODUCTION |
 |------|-----|------------|
-| **Resource Group** | rg-ethicflow-dev | rg-ethicflow-prod |
+| **Resource Group** | rg-ethic-net-dev | rg-ethic-net-prod |
 | **גישה** | מפתחים בלבד | מוגבל ל-IT + מנהל המערכת |
-| **Domain** | ethicflow-dev.azurewebsites.net | ethics.[university].ac.il |
+| **Domain** | ethic-net-dev.azurewebsites.net | ethics.[university].ac.il |
 | **DB** | נתוני בדיקה זרועים | נתוני אמת |
 | **Secrets** | dev Key Vault | prod Key Vault (מבודד) |
 | **Deploy** | אוטומטי מ-develop branch | ידני באישור מ-main branch |

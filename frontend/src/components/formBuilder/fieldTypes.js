@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Form Builder Field Type Definitions
+ * Ethic-Net — Form Builder Field Type Definitions
  * Palette categories with lucide icons (monochrome, brand-consistent).
  * Labels use i18n keys under secretary.fieldTypes.*
  */

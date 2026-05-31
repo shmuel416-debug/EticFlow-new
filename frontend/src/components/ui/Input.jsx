@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Input primitive
+ * Ethic-Net — Input primitive
  * Text / email / password / search input. Supports leading icon.
  * When invalid, aria-invalid and red border are applied.
  */

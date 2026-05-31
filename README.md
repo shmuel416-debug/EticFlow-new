@@ -1,9 +1,9 @@
-# 📦 EthicFlow — Complete Project Package
+# 📦 Ethic-Net — Complete Project Package
 
 ## What's Inside
 
 ```
-EthicFlow-Ready/
+Ethic-Net-Ready/
 ├── CLAUDE.md                      ← Claude Code instructions
 ├── .gitignore                     ← Git ignore rules
 ├── .env.example                   ← All environment variables (template)
@@ -41,7 +41,7 @@ EthicFlow-Ready/
 │       └── sprint-end.md          ← Full pipeline: CR→QA→A11Y→SEC
 │
 └── reference-docs/                ← For your reading (NOT in Git)
-    ├── EthicFlow-Spec-V2.docx     ← Full Word specification
+    ├── Ethic-Net-Spec-V2.docx     ← Full Word specification
     ├── 01-diagrams.html           ← 8 diagrams (workflow, ERD, architecture)
     ├── 02-file-structure.html     ← Complete file tree
     ├── 03-screens-27.html         ← All 27 screens (desktop + mobile)
@@ -55,7 +55,7 @@ EthicFlow-Ready/
 
 ### 1. Copy everything EXCEPT reference-docs/ into your Git repo
 ```bash
-cd C:\EthicFlow
+cd C:\Ethic-Net
 # Copy: CLAUDE.md, .gitignore, .env.example, setup.sh,
 #        docker-compose*.yml, docs/, .claude/
 # Keep reference-docs/ separately on your computer

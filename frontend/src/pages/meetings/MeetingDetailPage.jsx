@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Meeting Detail Page (brand refresh)
+ * Ethic-Net — Meeting Detail Page (brand refresh)
  * Shows full meeting details: agenda items, attendees tab (invite/remove), attendance.
  * Secretary/Admin can manage agenda, invite new attendees, and record attendance.
  * Shows external calendar sync status (Microsoft / Google).

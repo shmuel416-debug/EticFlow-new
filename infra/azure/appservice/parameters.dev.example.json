@@ -9,52 +9,52 @@
       "value": "dev"
     },
     "appServicePlanName": {
-      "value": "asp-ethicflow-dev"
+      "value": "asp-ethic-net-dev"
     },
     "apiAppName": {
-      "value": "app-ethicflow-api-dev"
+      "value": "app-ethic-net-api-dev"
     },
     "webAppName": {
-      "value": "app-ethicflow-web-dev"
+      "value": "app-ethic-net-web-dev"
     },
     "acrName": {
-      "value": "acrethicflowdev"
+      "value": "acrethic-netdev"
     },
     "apiImageName": {
-      "value": "ethicflow-api"
+      "value": "ethic-net-api"
     },
     "webImageName": {
-      "value": "ethicflow-web"
+      "value": "ethic-net-web"
     },
     "imageTag": {
       "value": "latest"
     },
     "postgresServerName": {
-      "value": "pg-ethicflow-dev"
+      "value": "pg-ethic-net-dev"
     },
     "postgresAdminLogin": {
-      "value": "ethicflowadmin"
+      "value": "ethic-netadmin"
     },
     "postgresAdminPassword": {
       "value": "REPLACE_WITH_SECURE_PASSWORD"
     },
     "postgresDatabaseName": {
-      "value": "ethicflow"
+      "value": "ethic-net"
     },
     "storageAccountName": {
-      "value": "stethicflowdev01"
+      "value": "stethic-netdev01"
     },
     "keyVaultName": {
-      "value": "kv-ethicflow-dev"
+      "value": "kv-ethic-net-dev"
     },
     "logAnalyticsName": {
-      "value": "law-ethicflow-dev"
+      "value": "law-ethic-net-dev"
     },
     "appInsightsName": {
-      "value": "appi-ethicflow-dev"
+      "value": "appi-ethic-net-dev"
     },
     "vnetName": {
-      "value": "vnet-ethicflow-dev"
+      "value": "vnet-ethic-net-dev"
     },
     "frontendOrigin": {
       "value": "https://dev.ethics.example.ac.il"

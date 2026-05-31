@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Continuing Review Cron Job
+ * Ethic-Net — Continuing Review Cron Job
  * Sends annual review reminders for approved submissions.
  */
 

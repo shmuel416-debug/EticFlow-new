@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Conflict of Interest Declarations Page (brand refresh)
+ * Ethic-Net — Conflict of Interest Declarations Page (brand refresh)
  * Lets users create and manage their own COI declarations.
  *
  * Visual: PageHeader + Card shells, monochrome lucide icons, brand tokens.

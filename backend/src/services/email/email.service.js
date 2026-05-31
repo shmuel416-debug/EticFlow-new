@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Email Service Factory
+ * Ethic-Net — Email Service Factory
  * Dispatches to the active provider based on EMAIL_PROVIDER env var.
  * All providers implement: send({ to, subject, html }) → Promise<void>
  *

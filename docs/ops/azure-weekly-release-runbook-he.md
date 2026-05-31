@@ -1,4 +1,4 @@
-# EthicFlow — ראנבוק שחרור שבועי ל-Azure
+# Ethic-Net — ראנבוק שחרור שבועי ל-Azure
 
 מסמך תפעולי קצר להרצת שחרור שבועי עם הפרדה ברורה בין DEV/UAT לבין Production.
 
@@ -13,7 +13,7 @@
 ```powershell
 pwsh ./ops/scripts/deploy-azure-baseline.ps1 `
   -SubscriptionId "<subscription-id>" `
-  -ResourceGroupName "rg-ethicflow-prod" `
+  -ResourceGroupName "rg-ethic-net-prod" `
   -Location "westeurope" `
   -TemplateFile "infra/azure/appservice/main.bicep" `
   -ParametersFile "infra/azure/appservice/parameters.prod.json"
@@ -25,9 +25,9 @@ pwsh ./ops/scripts/deploy-azure-baseline.ps1 `
 
 ```powershell
 pwsh ./ops/scripts/configure-appservice-domains.ps1 `
-  -ResourceGroupName "rg-ethicflow-prod" `
-  -WebAppName "app-ethicflow-web-prod" `
-  -ApiAppName "app-ethicflow-api-prod" `
+  -ResourceGroupName "rg-ethic-net-prod" `
+  -WebAppName "app-ethic-net-web-prod" `
+  -ApiAppName "app-ethic-net-api-prod" `
   -WebHostname "ethics.<institution>.ac.il" `
   -ApiHostname "api.ethics.<institution>.ac.il"
 ```
@@ -42,19 +42,19 @@ pwsh ./ops/scripts/setup-microsoft-integrations.ps1 `
   -BaseUrl "https://api.ethics.<institution>.ac.il" `
   -OrganizerEmail "ethics@<institution>.ac.il" `
   -FrontendLogoutUrl "https://ethics.<institution>.ac.il/login" `
-  -KeyVaultName "kv-ethicflow-prod" `
-  -SecretPrefix "ethicflow-prod"
+  -KeyVaultName "kv-ethic-net-prod" `
+  -SecretPrefix "ethic-net-prod"
 ```
 
 ```powershell
 pwsh ./ops/scripts/set-azure-api-keyvault-settings.ps1 `
-  -ResourceGroupName "rg-ethicflow-prod" `
-  -ApiAppName "app-ethicflow-api-prod" `
-  -KeyVaultName "kv-ethicflow-prod" `
+  -ResourceGroupName "rg-ethic-net-prod" `
+  -ApiAppName "app-ethic-net-api-prod" `
+  -KeyVaultName "kv-ethic-net-prod" `
   -FrontendUrl "https://ethics.<institution>.ac.il" `
   -ApiBaseUrl "https://api.ethics.<institution>.ac.il" `
   -OrganizerEmail "ethics@<institution>.ac.il" `
-  -SecretPrefix "ethicflow-prod"
+  -SecretPrefix "ethic-net-prod"
 ```
 
 ## שלב 4 — שחרור ל-staging (ללא swap)
@@ -84,17 +84,17 @@ pwsh ./ops/scripts/set-azure-api-keyvault-settings.ps1 `
 אפשרות B (ידני):
 
 ```bash
-az webapp deployment slot swap --resource-group "rg-ethicflow-prod" --name "app-ethicflow-api-prod" --slot staging --target-slot production
-az webapp deployment slot swap --resource-group "rg-ethicflow-prod" --name "app-ethicflow-web-prod" --slot staging --target-slot production
+az webapp deployment slot swap --resource-group "rg-ethic-net-prod" --name "app-ethic-net-api-prod" --slot staging --target-slot production
+az webapp deployment slot swap --resource-group "rg-ethic-net-prod" --name "app-ethic-net-web-prod" --slot staging --target-slot production
 ```
 
 ## שלב 7 — תרגיל rollback
 
 ```powershell
 pwsh ./ops/scripts/run-azure-slot-rollback-drill.ps1 `
-  -ResourceGroupName "rg-ethicflow-prod" `
-  -ApiAppName "app-ethicflow-api-prod" `
-  -WebAppName "app-ethicflow-web-prod" `
+  -ResourceGroupName "rg-ethic-net-prod" `
+  -ApiAppName "app-ethic-net-api-prod" `
+  -WebAppName "app-ethic-net-web-prod" `
   -ApiHealthUrl "https://api.ethics.<institution>.ac.il/api/health"
 ```
 

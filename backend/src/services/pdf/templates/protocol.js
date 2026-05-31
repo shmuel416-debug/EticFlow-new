@@ -1,5 +1,5 @@
 /**
- * EthicFlow — protocol PDF HTML templates.
+ * Ethic-Net — protocol PDF HTML templates.
  */
 
 import { escapeHtml, pageShell } from '../layout.js'
@@ -93,7 +93,7 @@ function buildProtocolSection(protocol, labels, lang) {
   <div class="header">
     <div class="brand-row">
       <div>
-        <div class="brand-name">${isHebrew ? 'מערכת ועדת אתיקה' : 'EthicFlow'}</div>
+        <div class="brand-name">${isHebrew ? 'מערכת ועדת אתיקה' : 'Ethic-Net'}</div>
         <div class="header-sub">${escapeHtml(labels.institutionName)}</div>
       </div>
       <div class="header-date">${escapeHtml(labels.issueDate)}</div>

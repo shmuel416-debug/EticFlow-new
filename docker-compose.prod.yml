@@ -1,5 +1,5 @@
 # ═══════════════════════════════════════════════════
-# EthicFlow — PROD Environment Override
+# Ethic-Net — PROD Environment Override
 # Usage: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 # ═══════════════════════════════════════════════════
 
@@ -15,7 +15,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: ethicflow-api
+    container_name: ethic-net-api
     restart: unless-stopped
     environment:
       NODE_ENV: production
@@ -45,7 +45,7 @@ services:
       dockerfile: Dockerfile
       args:
         VITE_API_URL: ${VITE_API_URL:-/api}
-    container_name: ethicflow-web
+    container_name: ethic-net-web
     restart: unless-stopped
     ports:
       - "${WEB_PORT:-80}:80"
@@ -57,6 +57,6 @@ services:
 
 volumes:
   uploads:
-    name: ethicflow-uploads
+    name: ethic-net-uploads
   generated:
-    name: ethicflow-generated
+    name: ethic-net-generated

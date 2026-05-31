@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Admin Dashboard
+ * Ethic-Net — Admin Dashboard
  * Lev palette + design-system primitives. KPIs from API: user count,
  * form library size, health check. Quick links to common admin tasks.
  * IS 5568 / WCAG 2.2 AA.

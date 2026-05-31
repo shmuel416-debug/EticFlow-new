@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Role Constants
+ * Ethic-Net — Role Constants
  * Shared role lists used for authorization checks and role-based filtering.
  */
 

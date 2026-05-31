@@ -1,5 +1,5 @@
 /**
- * EthicFlow — User Calendar Sync Service
+ * Ethic-Net — User Calendar Sync Service
  * Orchestrates per-user personal calendar sync for meeting lifecycle events.
  */
 

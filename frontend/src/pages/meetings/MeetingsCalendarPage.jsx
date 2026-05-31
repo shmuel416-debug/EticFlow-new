@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Meetings Calendar Page
+ * Ethic-Net — Meetings Calendar Page
  * Monthly calendar view for committee meetings with day drill-down.
  * Page shell now uses the design system; calendar grid logic untouched.
  * IS 5568 / WCAG 2.2 AA. Lev color palette only.

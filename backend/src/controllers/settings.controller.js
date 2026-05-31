@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Settings Controller
+ * Ethic-Net — Settings Controller
  * Manages InstitutionSetting records (admin-only configuration).
  *
  * Endpoints:

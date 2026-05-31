@@ -1,4 +1,4 @@
-# EthicFlow Post-Launch Deferred Items
+# Ethic-Net Post-Launch Deferred Items
 
 ## Decision
 

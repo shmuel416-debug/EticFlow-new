@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Statistics & Reports Page
+ * Ethic-Net — Statistics & Reports Page
  * Uses design-system StatCard KPIs + Card-wrapped charts.
  * Brand palette only via CSS vars. Roles: SECRETARY, CHAIRMAN, ADMIN.
  */

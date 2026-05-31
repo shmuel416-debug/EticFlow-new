@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Notifications Routes
+ * Ethic-Net — Notifications Routes
  * GET    /api/notifications              — list user notifications (paginated)
  * PATCH  /api/notifications/read-all    — mark all as read
  * PATCH  /api/notifications/:id/read    — mark single as read

@@ -1,5 +1,5 @@
 /**
- * EthicFlow — StatusBadge Component
+ * Ethic-Net — StatusBadge Component
  * Renders a colored badge for any SubStatus enum value.
  * Used across all submission list and detail pages.
  */

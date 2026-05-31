@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Reports Routes
+ * Ethic-Net — Reports Routes
  *
  * GET /api/reports/stats                — aggregated statistics (SECRETARY, CHAIRMAN, ADMIN)
  * GET /api/reports/export/submissions   — XLSX export (SECRETARY, CHAIRMAN, ADMIN)

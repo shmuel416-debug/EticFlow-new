@@ -1,5 +1,5 @@
 /**
- * EthicFlow — User Google Calendar Provider
+ * Ethic-Net — User Google Calendar Provider
  * OAuth + per-user event operations for personal Google calendars.
  */
 

@@ -1,5 +1,5 @@
 /**
- * EthicFlow — StatCard primitive
+ * Ethic-Net — StatCard primitive
  * KPI card with large number and label. Optional tone + trend + icon.
  */
 

@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Accessibility Statement defaults and schema.
+ * Ethic-Net — Accessibility Statement defaults and schema.
  * Provides a single source of truth for public fallback content and validation.
  */
 
@@ -48,7 +48,7 @@ export function getDefaultAccessibilityStatement() {
           title: 'מחויבות לנגישות',
           variant: 'default',
           body: [
-            'מערכת **EthicFlow** של ועדת האתיקה למחקר במרכז האקדמי לב מחויבת לספק שירות נגיש לכל המשתמשים, לרבות אנשים עם מוגבלות.',
+            'מערכת **Ethic-Net** של ועדת האתיקה למחקר במרכז האקדמי לב מחויבת לספק שירות נגיש לכל המשתמשים, לרבות אנשים עם מוגבלות.',
             '',
             'המערכת פועלת בהתאם לחוק שוויון זכויות לאנשים עם מוגבלות, תשנ"ח-1998,',
             'ולתקנות שוויון זכויות לאנשים עם מוגבלות (התאמות נגישות לשירות), תשע"ג-2013.',
@@ -126,7 +126,7 @@ export function getDefaultAccessibilityStatement() {
           title: 'Commitment to Accessibility',
           variant: 'default',
           body: [
-            '**EthicFlow**, used by the Lev Academic Center Ethics Committee, is committed to providing accessible service to all users, including people with disabilities.',
+            '**Ethic-Net**, used by the Lev Academic Center Ethics Committee, is committed to providing accessible service to all users, including people with disabilities.',
             '',
             'The system is maintained in accordance with Israeli accessibility law and the Equal Rights for Persons with Disabilities regulations.',
           ].join('\n'),

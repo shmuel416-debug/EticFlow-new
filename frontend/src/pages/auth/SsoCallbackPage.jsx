@@ -1,5 +1,5 @@
 /**
- * EthicFlow — SSO Callback Page (brand refresh)
+ * Ethic-Net — SSO Callback Page (brand refresh)
  * Handles the redirect from the backend after SSO login (Google/Microsoft).
  * Exchanges a short-lived one-time code for JWT, then redirects to dashboard.
  *

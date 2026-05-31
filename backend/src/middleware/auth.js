@@ -1,5 +1,5 @@
 /**
- * EthicFlow — JWT Authentication Middleware
+ * Ethic-Net — JWT Authentication Middleware
  * Verifies Bearer token and attaches req.user = { id, email, roles, activeRole }.
  * Full RBAC middleware (role.js) is added in S1.3.2.
  */

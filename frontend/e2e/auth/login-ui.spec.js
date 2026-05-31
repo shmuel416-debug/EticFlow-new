@@ -1,5 +1,5 @@
 /**
- * EthicFlow E2E — UI authentication flows.
+ * Ethic-Net E2E — UI authentication flows.
  */
 
 import { test, expect } from '../support/fixtures'
@@ -17,7 +17,7 @@ for (const role of ROLES) {
 
 test('login shows error on invalid credentials', async ({ page }) => {
   await page.goto('/login')
-  await page.locator('[data-testid="login-email"], #login-email').first().fill('invalid@ethicflow.test')
+  await page.locator('[data-testid="login-email"], #login-email').first().fill('invalid@ethic-net.test')
   await page.locator('[data-testid="login-password"], #login-password').first().fill('wrong-password')
   await page.locator('[data-testid="login-submit"], button[type="submit"]').first().click()
   await expect(page).toHaveURL(/\/login$/)

@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>EthicFlow — תרשימי ארכיטקטורה</title>
+<title>Ethic-Net — תרשימי ארכיטקטורה</title>
 <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 <style>
   * { box-sizing: border-box; }
@@ -88,7 +88,7 @@
 <body>
 <div class="container">
 
-<h1>EthicFlow — תרשימי ארכיטקטורה</h1>
+<h1>Ethic-Net — תרשימי ארכיטקטורה</h1>
 <p class="subtitle">מסמך תרשימים נלווה למצגת ההצעה ל-IT • מאי 2026</p>
 
 <div class="nav">
@@ -130,14 +130,14 @@ flowchart TB
         CAL[Outlook Calendar]
     end
 
-    subgraph DEV["🧪 סביבת Dev — rg-ethicflow-dev"]
+    subgraph DEV["🧪 סביבת Dev — rg-ethic-net-dev"]
         DEVAPP[App Service B1<br/>Frontend + Backend]
         DEVDB[(PostgreSQL B1ms<br/>נתוני בדיקה)]
         DEVKV[Key Vault Dev]
         DEVBLOB[Blob Storage Dev]
     end
 
-    subgraph PROD["🚀 סביבת Production — rg-ethicflow-prod"]
+    subgraph PROD["🚀 סביבת Production — rg-ethic-net-prod"]
         PRODAPP[App Service B1<br/>ethics.university.ac.il]
         PRODDB[(PostgreSQL B1ms<br/>נתוני אמת)]
         PRODKV[Key Vault Prod]
@@ -251,7 +251,7 @@ flowchart TD
   </p>
   <div class="mermaid">
 flowchart LR
-    subgraph EthicFlow["🟦 EthicFlow Backend"]
+    subgraph Ethic-Net["🟦 Ethic-Net Backend"]
         AUTH[Auth Module]
         EMAIL[Email Service]
         CAL[Calendar Service]
@@ -282,11 +282,11 @@ flowchart LR
     GRAPH --> EXCHANGE
     EXCHANGE -->|"📅 הזמנה ליומן"| U3
 
-    classDef ethicflow fill:#dbeafe,stroke:#1e40af,stroke-width:2px
+    classDef ethic-net fill:#dbeafe,stroke:#1e40af,stroke-width:2px
     classDef m365 fill:#e0e7ff,stroke:#4338ca,stroke-width:2px
     classDef user fill:#fce7f3,stroke:#be185d,stroke-width:2px
 
-    class AUTH,EMAIL,CAL ethicflow
+    class AUTH,EMAIL,CAL ethic-net
     class ENTRA,EXCHANGE,GRAPH m365
     class U1,U2,U3 user
   </div>

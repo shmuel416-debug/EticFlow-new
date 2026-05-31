@@ -1,9 +1,9 @@
-# EthicFlow — מדריך פריסה מלא לשתי סביבות נפרדות ב-Azure (Dev + Production)
+# Ethic-Net — מדריך פריסה מלא לשתי סביבות נפרדות ב-Azure (Dev + Production)
 
-מסמך זה מתאר שלב‑אחר‑שלב איך להקים, לפרוס ולתחזק את EthicFlow ב-Azure בשתי סביבות **נפרדות לחלוטין**:
+מסמך זה מתאר שלב‑אחר‑שלב איך להקים, לפרוס ולתחזק את Ethic-Net ב-Azure בשתי סביבות **נפרדות לחלוטין**:
 
-- **Dev** — סביבת פיתוח/בדיקות בענן (`rg-ethicflow-dev`).
-- **Production** — סביבת ייצור חיה (`rg-ethicflow-prod`).
+- **Dev** — סביבת פיתוח/בדיקות בענן (`rg-ethic-net-dev`).
+- **Production** — סביבת ייצור חיה (`rg-ethic-net-prod`).
 
 > זהו המסמך המומלץ אם רוצים בידוד מלא בין סביבות. אם מעדיפים מודל סלוטים (production + staging באותו RG) — ראה `docs/ops/azure-appservice-checklist-he.md` ו-`docs/ops/azure-weekly-release-runbook-he.md`.
 
@@ -40,28 +40,28 @@
 
 ```text
 Subscription
-├── rg-ethicflow-dev   ← סביבת פיתוח (לא חיה)
-│   ├── App Service Plan (asp-ethicflow-dev)
-│   ├── Backend  (app-ethicflow-api-dev)
-│   ├── Frontend (app-ethicflow-web-dev)
-│   ├── ACR (acrethicflowdev)
-│   ├── PostgreSQL Flexible Server (pg-ethicflow-dev)
-│   ├── Key Vault (kv-ethicflow-dev)
-│   ├── Storage Account + File Shares (stethicflowdev01)
+├── rg-ethic-net-dev   ← סביבת פיתוח (לא חיה)
+│   ├── App Service Plan (asp-ethic-net-dev)
+│   ├── Backend  (app-ethic-net-api-dev)
+│   ├── Frontend (app-ethic-net-web-dev)
+│   ├── ACR (acrethic-netdev)
+│   ├── PostgreSQL Flexible Server (pg-ethic-net-dev)
+│   ├── Key Vault (kv-ethic-net-dev)
+│   ├── Storage Account + File Shares (stethic-netdev01)
 │   ├── Log Analytics + App Insights
-│   ├── VNet (vnet-ethicflow-dev)
+│   ├── VNet (vnet-ethic-net-dev)
 │   └── Microsoft Entra Apps עם redirect URIs של Dev
 │
-└── rg-ethicflow-prod  ← סביבת ייצור חיה
-    ├── App Service Plan (asp-ethicflow-prod)
-    ├── Backend  (app-ethicflow-api-prod)
-    ├── Frontend (app-ethicflow-web-prod)
-    ├── ACR (acrethicflowprod)
-    ├── PostgreSQL Flexible Server (pg-ethicflow-prod)
-    ├── Key Vault (kv-ethicflow-prod)
-    ├── Storage Account + File Shares (stethicflowprod01)
+└── rg-ethic-net-prod  ← סביבת ייצור חיה
+    ├── App Service Plan (asp-ethic-net-prod)
+    ├── Backend  (app-ethic-net-api-prod)
+    ├── Frontend (app-ethic-net-web-prod)
+    ├── ACR (acrethic-netprod)
+    ├── PostgreSQL Flexible Server (pg-ethic-net-prod)
+    ├── Key Vault (kv-ethic-net-prod)
+    ├── Storage Account + File Shares (stethic-netprod01)
     ├── Log Analytics + App Insights
-    ├── VNet (vnet-ethicflow-prod)
+    ├── VNet (vnet-ethic-net-prod)
     └── Microsoft Entra Apps עם redirect URIs של Prod
 ```
 
@@ -79,21 +79,21 @@ Subscription
 
 | משאב | Dev | Production |
 | --- | --- | --- |
-| Resource Group | `rg-ethicflow-dev` | `rg-ethicflow-prod` |
-| App Service Plan | `asp-ethicflow-dev` | `asp-ethicflow-prod` |
-| Backend App | `app-ethicflow-api-dev` | `app-ethicflow-api-prod` |
-| Frontend App | `app-ethicflow-web-dev` | `app-ethicflow-web-prod` |
-| ACR | `acrethicflowdev` | `acrethicflowprod` |
-| PostgreSQL | `pg-ethicflow-dev` | `pg-ethicflow-prod` |
-| Key Vault | `kv-ethicflow-dev` | `kv-ethicflow-prod` |
-| Storage | `stethicflowdev01` | `stethicflowprod01` |
-| App Insights | `appi-ethicflow-dev` | `appi-ethicflow-prod` |
-| Log Analytics | `law-ethicflow-dev` | `law-ethicflow-prod` |
-| VNet | `vnet-ethicflow-dev` | `vnet-ethicflow-prod` |
+| Resource Group | `rg-ethic-net-dev` | `rg-ethic-net-prod` |
+| App Service Plan | `asp-ethic-net-dev` | `asp-ethic-net-prod` |
+| Backend App | `app-ethic-net-api-dev` | `app-ethic-net-api-prod` |
+| Frontend App | `app-ethic-net-web-dev` | `app-ethic-net-web-prod` |
+| ACR | `acrethic-netdev` | `acrethic-netprod` |
+| PostgreSQL | `pg-ethic-net-dev` | `pg-ethic-net-prod` |
+| Key Vault | `kv-ethic-net-dev` | `kv-ethic-net-prod` |
+| Storage | `stethic-netdev01` | `stethic-netprod01` |
+| App Insights | `appi-ethic-net-dev` | `appi-ethic-net-prod` |
+| Log Analytics | `law-ethic-net-dev` | `law-ethic-net-prod` |
+| VNet | `vnet-ethic-net-dev` | `vnet-ethic-net-prod` |
 | Frontend domain | `dev.ethics.<institution>.ac.il` | `ethics.<institution>.ac.il` |
 | API domain | `api.dev.ethics.<institution>.ac.il` | `api.ethics.<institution>.ac.il` |
 
-> שמות של ACR, Storage Account, Postgres ו-Key Vault חייבים להיות **ייחודיים בכל ה-Azure**. אם השמות תפוסים — הוסף סיומת מספרית (`acrethicflowdev01` וכו').
+> שמות של ACR, Storage Account, Postgres ו-Key Vault חייבים להיות **ייחודיים בכל ה-Azure**. אם השמות תפוסים — הוסף סיומת מספרית (`acrethic-netdev01` וכו').
 
 ---
 
@@ -193,7 +193,7 @@ Copy-Item parameters.example.json parameters.prod.json
 ```powershell
 pwsh ./ops/scripts/deploy-azure-baseline.ps1 `
   -SubscriptionId "<SUBSCRIPTION_ID>" `
-  -ResourceGroupName "rg-ethicflow-dev" `
+  -ResourceGroupName "rg-ethic-net-dev" `
   -Location "westeurope" `
   -TemplateFile "infra/azure/appservice/main.bicep" `
   -ParametersFile "infra/azure/appservice/parameters.dev.json"
@@ -202,7 +202,7 @@ pwsh ./ops/scripts/deploy-azure-baseline.ps1 `
 הסקריפט:
 
 1. מתחבר ל-Azure ובוחר את ה-Subscription.
-2. יוצר את `rg-ethicflow-dev` אם לא קיים.
+2. יוצר את `rg-ethic-net-dev` אם לא קיים.
 3. מריץ את `main.bicep` עם הפרמטרים.
 4. מאמת שכל סוגי המשאבים נוצרו (`Microsoft.Web/sites`, `Microsoft.DBforPostgreSQL/flexibleServers`, `Microsoft.KeyVault/vaults`, וכו').
 
@@ -212,7 +212,7 @@ pwsh ./ops/scripts/deploy-azure-baseline.ps1 `
 
 ```powershell
 az deployment group show `
-  --resource-group "rg-ethicflow-dev" `
+  --resource-group "rg-ethic-net-dev" `
   --name "main" `
   --query "properties.outputs" -o json
 ```
@@ -228,7 +228,7 @@ az deployment group show `
 ```powershell
 pwsh ./ops/scripts/deploy-azure-baseline.ps1 `
   -SubscriptionId "<SUBSCRIPTION_ID>" `
-  -ResourceGroupName "rg-ethicflow-prod" `
+  -ResourceGroupName "rg-ethic-net-prod" `
   -Location "westeurope" `
   -TemplateFile "infra/azure/appservice/main.bicep" `
   -ParametersFile "infra/azure/appservice/parameters.prod.json"
@@ -242,9 +242,9 @@ pwsh ./ops/scripts/deploy-azure-baseline.ps1 `
 
 צריך **שלושה App Registrations נפרדים לכל סביבה** (סה"כ 6 אפליקציות):
 
-- `EthicFlow SSO Dev` / `EthicFlow SSO Prod` — התחברות (Delegated)
-- `EthicFlow Mail Dev` / `EthicFlow Mail Prod` — שליחת מיילים (Application: `Mail.Send`)
-- `EthicFlow Calendar Dev` / `EthicFlow Calendar Prod` — יומן (Application: `Calendars.ReadWrite`)
+- `Ethic-Net SSO Dev` / `Ethic-Net SSO Prod` — התחברות (Delegated)
+- `Ethic-Net Mail Dev` / `Ethic-Net Mail Prod` — שליחת מיילים (Application: `Mail.Send`)
+- `Ethic-Net Calendar Dev` / `Ethic-Net Calendar Prod` — יומן (Application: `Calendars.ReadWrite`)
 
 הפרדה זו חיונית כדי ש:
 
@@ -259,8 +259,8 @@ pwsh ./ops/scripts/setup-microsoft-integrations.ps1 `
   -BaseUrl "https://api.dev.ethics.<institution>.ac.il" `
   -OrganizerEmail "ethics-dev@<institution>.ac.il" `
   -FrontendLogoutUrl "https://dev.ethics.<institution>.ac.il/login" `
-  -KeyVaultName "kv-ethicflow-dev" `
-  -SecretPrefix "ethicflow-dev"
+  -KeyVaultName "kv-ethic-net-dev" `
+  -SecretPrefix "ethic-net-dev"
 ```
 
 ### Production
@@ -271,8 +271,8 @@ pwsh ./ops/scripts/setup-microsoft-integrations.ps1 `
   -BaseUrl "https://api.ethics.<institution>.ac.il" `
   -OrganizerEmail "ethics@<institution>.ac.il" `
   -FrontendLogoutUrl "https://ethics.<institution>.ac.il/login" `
-  -KeyVaultName "kv-ethicflow-prod" `
-  -SecretPrefix "ethicflow-prod"
+  -KeyVaultName "kv-ethic-net-prod" `
+  -SecretPrefix "ethic-net-prod"
 ```
 
 לאחר ההרצה, בפורטל Entra:
@@ -292,7 +292,7 @@ pwsh ./ops/scripts/setup-microsoft-integrations.ps1 `
 ```powershell
 pwsh ./ops/scripts/generate-prod-secrets.ps1 `
   -FrontendUrl "https://dev.ethics.<institution>.ac.il" `
-  -KeyVaultName "kv-ethicflow-dev"
+  -KeyVaultName "kv-ethic-net-dev"
 ```
 
 #### Production
@@ -300,7 +300,7 @@ pwsh ./ops/scripts/generate-prod-secrets.ps1 `
 ```powershell
 pwsh ./ops/scripts/generate-prod-secrets.ps1 `
   -FrontendUrl "https://ethics.<institution>.ac.il" `
-  -KeyVaultName "kv-ethicflow-prod"
+  -KeyVaultName "kv-ethic-net-prod"
 ```
 
 הסקריפט שם ב-Key Vault: `jwt-secret-current`, `db-password`, `calendar-token-encryption-key`.
@@ -313,26 +313,26 @@ pwsh ./ops/scripts/generate-prod-secrets.ps1 `
 
 ```powershell
 pwsh ./ops/scripts/set-azure-api-keyvault-settings.ps1 `
-  -ResourceGroupName "rg-ethicflow-dev" `
-  -ApiAppName "app-ethicflow-api-dev" `
-  -KeyVaultName "kv-ethicflow-dev" `
+  -ResourceGroupName "rg-ethic-net-dev" `
+  -ApiAppName "app-ethic-net-api-dev" `
+  -KeyVaultName "kv-ethic-net-dev" `
   -FrontendUrl "https://dev.ethics.<institution>.ac.il" `
   -ApiBaseUrl "https://api.dev.ethics.<institution>.ac.il" `
   -OrganizerEmail "ethics-dev@<institution>.ac.il" `
-  -SecretPrefix "ethicflow-dev"
+  -SecretPrefix "ethic-net-dev"
 ```
 
 #### Production
 
 ```powershell
 pwsh ./ops/scripts/set-azure-api-keyvault-settings.ps1 `
-  -ResourceGroupName "rg-ethicflow-prod" `
-  -ApiAppName "app-ethicflow-api-prod" `
-  -KeyVaultName "kv-ethicflow-prod" `
+  -ResourceGroupName "rg-ethic-net-prod" `
+  -ApiAppName "app-ethic-net-api-prod" `
+  -KeyVaultName "kv-ethic-net-prod" `
   -FrontendUrl "https://ethics.<institution>.ac.il" `
   -ApiBaseUrl "https://api.ethics.<institution>.ac.il" `
   -OrganizerEmail "ethics@<institution>.ac.il" `
-  -SecretPrefix "ethicflow-prod"
+  -SecretPrefix "ethic-net-prod"
 ```
 
 ---
@@ -343,9 +343,9 @@ pwsh ./ops/scripts/set-azure-api-keyvault-settings.ps1 `
 
 ```powershell
 pwsh ./ops/scripts/configure-appservice-domains.ps1 `
-  -ResourceGroupName "rg-ethicflow-dev" `
-  -WebAppName "app-ethicflow-web-dev" `
-  -ApiAppName "app-ethicflow-api-dev" `
+  -ResourceGroupName "rg-ethic-net-dev" `
+  -WebAppName "app-ethic-net-web-dev" `
+  -ApiAppName "app-ethic-net-api-dev" `
   -WebHostname "dev.ethics.<institution>.ac.il" `
   -ApiHostname "api.dev.ethics.<institution>.ac.il"
 ```
@@ -356,9 +356,9 @@ pwsh ./ops/scripts/configure-appservice-domains.ps1 `
 
 ```powershell
 pwsh ./ops/scripts/configure-appservice-domains.ps1 `
-  -ResourceGroupName "rg-ethicflow-dev" `
-  -WebAppName "app-ethicflow-web-dev" `
-  -ApiAppName "app-ethicflow-api-dev" `
+  -ResourceGroupName "rg-ethic-net-dev" `
+  -WebAppName "app-ethic-net-web-dev" `
+  -ApiAppName "app-ethic-net-api-dev" `
   -WebHostname "dev.ethics.<institution>.ac.il" `
   -ApiHostname "api.dev.ethics.<institution>.ac.il" `
   -ApplyBindings
@@ -369,17 +369,17 @@ pwsh ./ops/scripts/configure-appservice-domains.ps1 `
 ```powershell
 # שלב 1 — אימות
 pwsh ./ops/scripts/configure-appservice-domains.ps1 `
-  -ResourceGroupName "rg-ethicflow-prod" `
-  -WebAppName "app-ethicflow-web-prod" `
-  -ApiAppName "app-ethicflow-api-prod" `
+  -ResourceGroupName "rg-ethic-net-prod" `
+  -WebAppName "app-ethic-net-web-prod" `
+  -ApiAppName "app-ethic-net-api-prod" `
   -WebHostname "ethics.<institution>.ac.il" `
   -ApiHostname "api.ethics.<institution>.ac.il"
 
 # שלב 2 — Bind
 pwsh ./ops/scripts/configure-appservice-domains.ps1 `
-  -ResourceGroupName "rg-ethicflow-prod" `
-  -WebAppName "app-ethicflow-web-prod" `
-  -ApiAppName "app-ethicflow-api-prod" `
+  -ResourceGroupName "rg-ethic-net-prod" `
+  -WebAppName "app-ethic-net-web-prod" `
+  -ApiAppName "app-ethic-net-api-prod" `
   -WebHostname "ethics.<institution>.ac.il" `
   -ApiHostname "api.ethics.<institution>.ac.il" `
   -ApplyBindings
@@ -394,17 +394,17 @@ pwsh ./ops/scripts/configure-appservice-domains.ps1 `
 מומלץ לפצל ל-**שני Service Principals** — אחד לכל סביבה — כדי לבודד הרשאות:
 
 ```powershell
-# Service Principal עבור Dev (Contributor רק על rg-ethicflow-dev)
+# Service Principal עבור Dev (Contributor רק על rg-ethic-net-dev)
 az ad sp create-for-rbac `
-  --name "sp-ethicflow-github-dev" `
+  --name "sp-ethic-net-github-dev" `
   --role "Contributor" `
-  --scopes "/subscriptions/<SUBSCRIPTION_ID>/resourceGroups/rg-ethicflow-dev"
+  --scopes "/subscriptions/<SUBSCRIPTION_ID>/resourceGroups/rg-ethic-net-dev"
 
-# Service Principal עבור Prod (Contributor רק על rg-ethicflow-prod)
+# Service Principal עבור Prod (Contributor רק על rg-ethic-net-prod)
 az ad sp create-for-rbac `
-  --name "sp-ethicflow-github-prod" `
+  --name "sp-ethic-net-github-prod" `
   --role "Contributor" `
-  --scopes "/subscriptions/<SUBSCRIPTION_ID>/resourceGroups/rg-ethicflow-prod"
+  --scopes "/subscriptions/<SUBSCRIPTION_ID>/resourceGroups/rg-ethic-net-prod"
 ```
 
 לכל אחד הוסף **Federated Credential** ל-GitHub OIDC (ללא סיסמה אמיתית):
@@ -412,7 +412,7 @@ az ad sp create-for-rbac `
 ```powershell
 # דוגמה ל-Dev
 $body = @{
-  name = "github-ethicflow-dev"
+  name = "github-ethic-net-dev"
   issuer = "https://token.actions.githubusercontent.com"
   subject = "repo:<OWNER>/<REPO>:environment:dev"
   audiences = @("api://AzureADTokenExchange")
@@ -435,12 +435,12 @@ az ad app federated-credential create `
 
 ```powershell
 # דוגמה ל-Dev
-$spDevId = az ad sp list --display-name "sp-ethicflow-github-dev" --query "[0].id" -o tsv
+$spDevId = az ad sp list --display-name "sp-ethic-net-github-dev" --query "[0].id" -o tsv
 
 az role assignment create `
   --assignee $spDevId `
   --role "AcrPush" `
-  --scope $(az acr show --name "acrethicflowdev" --query id -o tsv)
+  --scope $(az acr show --name "acrethic-netdev" --query id -o tsv)
 ```
 
 חזור על זה ל-Prod.
@@ -456,13 +456,13 @@ az role assignment create `
 
 | Secret | Dev value | Prod value |
 | --- | --- | --- |
-| `AZURE_CLIENT_ID` | App ID של `sp-ethicflow-github-dev` | App ID של `sp-ethicflow-github-prod` |
+| `AZURE_CLIENT_ID` | App ID של `sp-ethic-net-github-dev` | App ID של `sp-ethic-net-github-prod` |
 | `AZURE_TENANT_ID` | זהה | זהה |
 | `AZURE_SUBSCRIPTION_ID` | זהה | זהה |
-| `AZURE_RESOURCE_GROUP` | `rg-ethicflow-dev` | `rg-ethicflow-prod` |
-| `AZURE_ACR_NAME` | `acrethicflowdev` | `acrethicflowprod` |
-| `AZURE_API_APP_NAME` | `app-ethicflow-api-dev` | `app-ethicflow-api-prod` |
-| `AZURE_WEB_APP_NAME` | `app-ethicflow-web-dev` | `app-ethicflow-web-prod` |
+| `AZURE_RESOURCE_GROUP` | `rg-ethic-net-dev` | `rg-ethic-net-prod` |
+| `AZURE_ACR_NAME` | `acrethic-netdev` | `acrethic-netprod` |
+| `AZURE_API_APP_NAME` | `app-ethic-net-api-dev` | `app-ethic-net-api-prod` |
+| `AZURE_WEB_APP_NAME` | `app-ethic-net-web-dev` | `app-ethic-net-web-prod` |
 | `AZURE_STAGING_API_BASE_URL` | `https://api.dev.ethics.<institution>.ac.il` | `https://api.ethics.<institution>.ac.il` (או slot URL) |
 
 ### 7.5 התאמת ה-Workflow לשתי הסביבות
@@ -476,7 +476,7 @@ az role assignment create `
 
 המלצה: **שכפל את ה-workflow** לשניים נפרדים:
 
-- `.github/workflows/deploy-azure-dev.yml` — ללא slots, פריסה ישירה ל-`app-ethicflow-api-dev` ו-`app-ethicflow-web-dev`.
+- `.github/workflows/deploy-azure-dev.yml` — ללא slots, פריסה ישירה ל-`app-ethic-net-api-dev` ו-`app-ethic-net-web-dev`.
 - `.github/workflows/deploy-azure-prod.yml` — עם slots (production + staging) או ישירות, לפי בחירתך.
 
 > אם רוצים, אפשר להוסיף את הקובץ הזה כמשימה נפרדת. יידע אותי אם תרצה גם את זה.
@@ -488,34 +488,34 @@ az role assignment create `
 ### Dev — ידנית (פעם ראשונה)
 
 ```powershell
-$ACR = "acrethicflowdev"
+$ACR = "acrethic-netdev"
 $TAG = "init-$(git rev-parse --short HEAD)"
 
 az acr login --name $ACR
 
-docker build -t "$ACR.azurecr.io/ethicflow-api:$TAG" ./backend
-docker build -t "$ACR.azurecr.io/ethicflow-web:$TAG" ./frontend
+docker build -t "$ACR.azurecr.io/ethic-net-api:$TAG" ./backend
+docker build -t "$ACR.azurecr.io/ethic-net-web:$TAG" ./frontend
 
-docker push "$ACR.azurecr.io/ethicflow-api:$TAG"
-docker push "$ACR.azurecr.io/ethicflow-web:$TAG"
+docker push "$ACR.azurecr.io/ethic-net-api:$TAG"
+docker push "$ACR.azurecr.io/ethic-net-web:$TAG"
 
 # עדכן את ה-App Services לטעון את ה-tag החדש
 az webapp config container set `
-  --resource-group "rg-ethicflow-dev" `
-  --name "app-ethicflow-api-dev" `
-  --container-image-name "$ACR.azurecr.io/ethicflow-api:$TAG"
+  --resource-group "rg-ethic-net-dev" `
+  --name "app-ethic-net-api-dev" `
+  --container-image-name "$ACR.azurecr.io/ethic-net-api:$TAG"
 
 az webapp config container set `
-  --resource-group "rg-ethicflow-dev" `
-  --name "app-ethicflow-web-dev" `
-  --container-image-name "$ACR.azurecr.io/ethicflow-web:$TAG"
+  --resource-group "rg-ethic-net-dev" `
+  --name "app-ethic-net-web-dev" `
+  --container-image-name "$ACR.azurecr.io/ethic-net-web:$TAG"
 
 # הפעל מחדש
-az webapp restart --resource-group "rg-ethicflow-dev" --name "app-ethicflow-api-dev"
-az webapp restart --resource-group "rg-ethicflow-dev" --name "app-ethicflow-web-dev"
+az webapp restart --resource-group "rg-ethic-net-dev" --name "app-ethic-net-api-dev"
+az webapp restart --resource-group "rg-ethic-net-dev" --name "app-ethic-net-web-dev"
 ```
 
-### Production — אותו דבר עם `acrethicflowprod` ו-`rg-ethicflow-prod`
+### Production — אותו דבר עם `acrethic-netprod` ו-`rg-ethic-net-prod`
 
 > אחרי ההרצה הראשונית, כל הפריסות הבאות יילכו דרך ה-GitHub Actions workflow.
 
@@ -532,7 +532,7 @@ az webapp restart --resource-group "rg-ethicflow-dev" --name "app-ethicflow-web-
 ודא שזה אכן קורה:
 
 ```powershell
-az webapp log tail --resource-group "rg-ethicflow-dev" --name "app-ethicflow-api-dev"
+az webapp log tail --resource-group "rg-ethic-net-dev" --name "app-ethic-net-api-dev"
 ```
 
 חפש שורות כמו `Applying migration...`.
@@ -548,7 +548,7 @@ az webapp log tail --resource-group "rg-ethicflow-dev" --name "app-ethicflow-api
 
 ```powershell
 # מתוך ה-API container, אחרי שהוא רץ:
-az webapp ssh --resource-group "rg-ethicflow-dev" --name "app-ethicflow-api-dev"
+az webapp ssh --resource-group "rg-ethic-net-dev" --name "app-ethic-net-api-dev"
 # ובתוך ה-shell:
 node prisma/seed.js
 ```
@@ -595,13 +595,13 @@ npm run smoke:sso
 הזרימה היומיומית:
 
 1. מפתח דוחף ל-`develop` או פותח PR ל-`main`.
-2. CI build → push image ל-`acrethicflowdev` → deploy ל-Dev → smoke אוטומטי.
+2. CI build → push image ל-`acrethic-netdev` → deploy ל-Dev → smoke אוטומטי.
 3. PO/QA מאשר ב-Dev.
 4. Merge ל-`main`.
 5. Workflow ידני (`workflow_dispatch`) מריץ פריסה ל-`production`:
    - Build חדש מאותו commit (או pull של אותו image מ-Dev ותיוג מחדש ל-Prod ACR).
-   - Push ל-`acrethicflowprod`.
-   - Deploy ל-`app-ethicflow-api-prod` ו-`app-ethicflow-web-prod`.
+   - Push ל-`acrethic-netprod`.
+   - Deploy ל-`app-ethic-net-api-prod` ו-`app-ethic-net-web-prod`.
    - Smoke אוטומטי.
 6. אם הכל ירוק → ה-environment `production` ב-GitHub מבקש Required reviewer לאשר.
 7. Merge to main + tag (`v1.x.y`).
@@ -623,18 +623,18 @@ npm run smoke:sso
 ```powershell
 # לפנים — רשימת tags זמינים
 az acr repository show-tags `
-  --name "acrethicflowprod" `
-  --repository "ethicflow-api" `
+  --name "acrethic-netprod" `
+  --repository "ethic-net-api" `
   --orderby time_desc `
   --top 10
 
 # החלף ל-tag קודם יציב
 az webapp config container set `
-  --resource-group "rg-ethicflow-prod" `
-  --name "app-ethicflow-api-prod" `
-  --container-image-name "acrethicflowprod.azurecr.io/ethicflow-api:<PREVIOUS_GOOD_TAG>"
+  --resource-group "rg-ethic-net-prod" `
+  --name "app-ethic-net-api-prod" `
+  --container-image-name "acrethic-netprod.azurecr.io/ethic-net-api:<PREVIOUS_GOOD_TAG>"
 
-az webapp restart --resource-group "rg-ethicflow-prod" --name "app-ethicflow-api-prod"
+az webapp restart --resource-group "rg-ethic-net-prod" --name "app-ethic-net-api-prod"
 ```
 
 זמן rollback צפוי: **2-4 דקות**.
@@ -645,9 +645,9 @@ az webapp restart --resource-group "rg-ethicflow-prod" --name "app-ethicflow-api
 
 ```powershell
 az postgres flexible-server restore `
-  --resource-group "rg-ethicflow-prod" `
-  --name "pg-ethicflow-prod-restore-$(Get-Date -Format yyyyMMddHHmm)" `
-  --source-server "pg-ethicflow-prod" `
+  --resource-group "rg-ethic-net-prod" `
+  --name "pg-ethic-net-prod-restore-$(Get-Date -Format yyyyMMddHHmm)" `
+  --source-server "pg-ethic-net-prod" `
   --restore-time "2026-05-10T20:00:00Z"
 ```
 
@@ -657,9 +657,9 @@ az postgres flexible-server restore `
 
 ```powershell
 pwsh ./ops/scripts/run-azure-slot-rollback-drill.ps1 `
-  -ResourceGroupName "rg-ethicflow-dev" `
-  -ApiAppName "app-ethicflow-api-dev" `
-  -WebAppName "app-ethicflow-web-dev" `
+  -ResourceGroupName "rg-ethic-net-dev" `
+  -ApiAppName "app-ethic-net-api-dev" `
+  -WebAppName "app-ethic-net-web-dev" `
   -ApiHealthUrl "https://api.dev.ethics.<institution>.ac.il/api/health"
 ```
 
@@ -692,14 +692,14 @@ pwsh ./ops/scripts/run-azure-slot-rollback-drill.ps1 `
 ```powershell
 # הקטנת App Service Plan ל-B1
 az appservice plan update `
-  --resource-group "rg-ethicflow-dev" `
-  --name "asp-ethicflow-dev" `
+  --resource-group "rg-ethic-net-dev" `
+  --name "asp-ethic-net-dev" `
   --sku B1
 
 # הקטנת Postgres ל-Burstable
 az postgres flexible-server update `
-  --resource-group "rg-ethicflow-dev" `
-  --name "pg-ethicflow-dev" `
+  --resource-group "rg-ethic-net-dev" `
+  --name "pg-ethic-net-dev" `
   --sku-name Standard_B1ms `
   --tier Burstable
 ```
@@ -719,12 +719,12 @@ az postgres flexible-server update `
 
 ```powershell
 # Stop בסוף יום העבודה
-az webapp stop --resource-group "rg-ethicflow-dev" --name "app-ethicflow-api-dev"
-az webapp stop --resource-group "rg-ethicflow-dev" --name "app-ethicflow-web-dev"
+az webapp stop --resource-group "rg-ethic-net-dev" --name "app-ethic-net-api-dev"
+az webapp stop --resource-group "rg-ethic-net-dev" --name "app-ethic-net-web-dev"
 
 # Start בבוקר
-az webapp start --resource-group "rg-ethicflow-dev" --name "app-ethicflow-api-dev"
-az webapp start --resource-group "rg-ethicflow-dev" --name "app-ethicflow-web-dev"
+az webapp start --resource-group "rg-ethic-net-dev" --name "app-ethic-net-api-dev"
+az webapp start --resource-group "rg-ethic-net-dev" --name "app-ethic-net-web-dev"
 ```
 
 אפשר לאוטומט עם Azure Automation Runbook מתוזמן.
@@ -737,24 +737,24 @@ az webapp start --resource-group "rg-ethicflow-dev" --name "app-ethicflow-web-de
 ┌──────────────────────┬─────────────────────────────┬─────────────────────────────┐
 │ משאב                 │ Dev                         │ Production                  │
 ├──────────────────────┼─────────────────────────────┼─────────────────────────────┤
-│ Resource Group       │ rg-ethicflow-dev            │ rg-ethicflow-prod           │
-│ ASP                  │ asp-ethicflow-dev (B1)      │ asp-ethicflow-prod (P0v3)   │
-│ API App              │ app-ethicflow-api-dev       │ app-ethicflow-api-prod      │
-│ Web App              │ app-ethicflow-web-dev       │ app-ethicflow-web-prod      │
-│ ACR                  │ acrethicflowdev             │ acrethicflowprod            │
-│ Postgres             │ pg-ethicflow-dev (B1ms)     │ pg-ethicflow-prod (D2s_v3)  │
-│ Database             │ ethicflow                   │ ethicflow                   │
-│ Key Vault            │ kv-ethicflow-dev            │ kv-ethicflow-prod           │
-│ Storage              │ stethicflowdev01            │ stethicflowprod01           │
-│ App Insights         │ appi-ethicflow-dev          │ appi-ethicflow-prod         │
-│ Log Analytics        │ law-ethicflow-dev           │ law-ethicflow-prod          │
-│ VNet                 │ vnet-ethicflow-dev          │ vnet-ethicflow-prod         │
+│ Resource Group       │ rg-ethic-net-dev            │ rg-ethic-net-prod           │
+│ ASP                  │ asp-ethic-net-dev (B1)      │ asp-ethic-net-prod (P0v3)   │
+│ API App              │ app-ethic-net-api-dev       │ app-ethic-net-api-prod      │
+│ Web App              │ app-ethic-net-web-dev       │ app-ethic-net-web-prod      │
+│ ACR                  │ acrethic-netdev             │ acrethic-netprod            │
+│ Postgres             │ pg-ethic-net-dev (B1ms)     │ pg-ethic-net-prod (D2s_v3)  │
+│ Database             │ ethic-net                   │ ethic-net                   │
+│ Key Vault            │ kv-ethic-net-dev            │ kv-ethic-net-prod           │
+│ Storage              │ stethic-netdev01            │ stethic-netprod01           │
+│ App Insights         │ appi-ethic-net-dev          │ appi-ethic-net-prod         │
+│ Log Analytics        │ law-ethic-net-dev           │ law-ethic-net-prod          │
+│ VNet                 │ vnet-ethic-net-dev          │ vnet-ethic-net-prod         │
 │ Frontend domain      │ dev.ethics.<inst>.ac.il     │ ethics.<inst>.ac.il         │
 │ API domain           │ api.dev.ethics.<inst>.ac.il │ api.ethics.<inst>.ac.il     │
 │ GitHub environment   │ dev                         │ production                  │
-│ Service Principal    │ sp-ethicflow-github-dev     │ sp-ethicflow-github-prod    │
-│ Microsoft App prefix │ EthicFlow * Dev             │ EthicFlow * Prod            │
-│ Secret prefix in KV  │ ethicflow-dev               │ ethicflow-prod              │
+│ Service Principal    │ sp-ethic-net-github-dev     │ sp-ethic-net-github-prod    │
+│ Microsoft App prefix │ Ethic-Net * Dev             │ Ethic-Net * Prod            │
+│ Secret prefix in KV  │ ethic-net-dev               │ ethic-net-prod              │
 └──────────────────────┴─────────────────────────────┴─────────────────────────────┘
 ```
 
@@ -764,7 +764,7 @@ az webapp start --resource-group "rg-ethicflow-dev" --name "app-ethicflow-web-de
 
 ### "Resource name already exists"
 
-ACR / Storage / Postgres / Key Vault דורשים **שם ייחודי בכל Azure**. הוסף סיומת מספרית (`acrethicflowdev01`) ועדכן את `parameters.dev.json`.
+ACR / Storage / Postgres / Key Vault דורשים **שם ייחודי בכל Azure**. הוסף סיומת מספרית (`acrethic-netdev01`) ועדכן את `parameters.dev.json`.
 
 ### "Postgres deployment timeout"
 
@@ -774,10 +774,10 @@ ACR / Storage / Postgres / Key Vault דורשים **שם ייחודי בכל Azu
 
 ```powershell
 # הצג logs בזמן אמת
-az webapp log tail --resource-group "rg-ethicflow-dev" --name "app-ethicflow-api-dev"
+az webapp log tail --resource-group "rg-ethic-net-dev" --name "app-ethic-net-api-dev"
 
 # הצג logs אחרונים
-az webapp log download --resource-group "rg-ethicflow-dev" --name "app-ethicflow-api-dev" --log-file dev-logs.zip
+az webapp log download --resource-group "rg-ethic-net-dev" --name "app-ethic-net-api-dev" --log-file dev-logs.zip
 ```
 
 הסיבות הנפוצות:
@@ -801,9 +801,9 @@ https://api.dev.ethics.<institution>.ac.il/api/auth/microsoft/callback
 בדוק:
 
 ```powershell
-az webapp identity show --resource-group "rg-ethicflow-dev" --name "app-ethicflow-api-dev"
+az webapp identity show --resource-group "rg-ethic-net-dev" --name "app-ethic-net-api-dev"
 
-az role assignment list --assignee <PRINCIPAL_ID> --scope $(az keyvault show --name "kv-ethicflow-dev" --query id -o tsv)
+az role assignment list --assignee <PRINCIPAL_ID> --scope $(az keyvault show --name "kv-ethic-net-dev" --query id -o tsv)
 ```
 
 ודא שיש `Key Vault Secrets User`. אם לא — צור:
@@ -812,7 +812,7 @@ az role assignment list --assignee <PRINCIPAL_ID> --scope $(az keyvault show --n
 az role assignment create `
   --assignee <PRINCIPAL_ID> `
   --role "Key Vault Secrets User" `
-  --scope $(az keyvault show --name "kv-ethicflow-dev" --query id -o tsv)
+  --scope $(az keyvault show --name "kv-ethic-net-dev" --query id -o tsv)
 ```
 
 ### "GitHub Actions OIDC: AADSTS70021"

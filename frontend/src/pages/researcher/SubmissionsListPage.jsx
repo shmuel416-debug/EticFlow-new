@@ -1,7 +1,7 @@
 /**
- * EthicFlow — Researcher Submissions List Page
+ * Ethic-Net — Researcher Submissions List Page
  * Shows all submissions created by the logged-in researcher.
- * Filters by status + search + pagination. Uses the EthicFlow design system
+ * Filters by status + search + pagination. Uses the Ethic-Net design system
  * (PageHeader, Card, Table, Button, Input, Select) with the Lev palette,
  * lucide-react icons, and IS 5568 / WCAG 2.2 AA accessibility.
  */

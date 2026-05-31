@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Protocol Sign Page (Public)
+ * Ethic-Net — Protocol Sign Page (Public)
  * Standalone page — no sidebar, no authentication required.
  * Accessed via email token link: /protocol/sign/:token
  *

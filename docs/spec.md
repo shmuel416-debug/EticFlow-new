@@ -1,4 +1,4 @@
-# EthicFlow — Specification Summary
+# Ethic-Net — Specification Summary
 
 ## System Purpose
 Digital platform replacing manual (email/Excel) ethics approval process. Manages full lifecycle: submission → review → committee → approval → signed PDF.

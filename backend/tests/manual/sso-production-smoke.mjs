@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Production Microsoft SSO smoke runner.
+ * Ethic-Net — Production Microsoft SSO smoke runner.
  * Validates auth redirect, exchange-code replay defense, and health endpoint.
  */
 

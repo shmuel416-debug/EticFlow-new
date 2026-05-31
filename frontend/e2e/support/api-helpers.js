@@ -1,5 +1,5 @@
 /**
- * EthicFlow E2E — API helpers for setup, assertions, and role auth.
+ * Ethic-Net E2E — API helpers for setup, assertions, and role auth.
  */
 
 import { expect } from '@playwright/test'

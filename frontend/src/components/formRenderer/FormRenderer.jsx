@@ -1,5 +1,5 @@
 /**
- * EthicFlow — FormRenderer
+ * Ethic-Net — FormRenderer
  * Renders dynamic form fields from JSON schema interactively.
  * Supports all 12 field types. IS 5568 / WCAG 2.1 AA. Lev palette only.
  * @module components/formRenderer/FormRenderer

@@ -1,5 +1,5 @@
 /**
- * EthicFlow E2E — back navigation regression coverage.
+ * Ethic-Net E2E — back navigation regression coverage.
  * Verifies "back to list" links return to the source queue/list.
  */
 

@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Meetings Routes
+ * Ethic-Net — Meetings Routes
  *
  * GET    /api/meetings                          — list meetings (SECRETARY, CHAIRMAN, ADMIN)
  * POST   /api/meetings                          — create meeting (SECRETARY, ADMIN)

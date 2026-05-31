@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Protocols Routes
+ * Ethic-Net — Protocols Routes
  *
  * GET    /api/protocols                          — list protocols (SECRETARY, CHAIRMAN, ADMIN)
  * POST   /api/protocols                          — create protocol (SECRETARY, ADMIN)

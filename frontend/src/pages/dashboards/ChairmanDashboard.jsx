@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Chairman Dashboard (brand refresh)
+ * Ethic-Net — Chairman Dashboard (brand refresh)
  * Lev Academic Center palette + design-system primitives: PageHeader, StatCard,
  * Card, EmptyState, Button, Badge. Kanban-style view of submissions by
  * status: IN_REVIEW | APPROVED | REJECTED.

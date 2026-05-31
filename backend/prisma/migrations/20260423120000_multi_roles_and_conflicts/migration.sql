@@ -1,4 +1,4 @@
--- EthicFlow: support multi-role users and COI declarations
+-- Ethic-Net: support multi-role users and COI declarations
 
 -- 1) Users: migrate single role -> roles array
 ALTER TABLE "users"

@@ -1,5 +1,5 @@
 /**
- * EthicFlow — FormField primitive
+ * Ethic-Net — FormField primitive
  * Accessible label + input wrapper with hint and error handling.
  * IS 5568: label↔input association, aria-required, aria-invalid,
  *          aria-describedby pointing to hint+error, role="alert" on error.

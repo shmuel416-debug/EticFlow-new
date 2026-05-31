@@ -1,5 +1,5 @@
 /**
- * EthicFlow — approval PDF rendering tests.
+ * Ethic-Net — approval PDF rendering tests.
  */
 
 import path from 'path'

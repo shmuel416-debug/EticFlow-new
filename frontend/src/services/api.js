@@ -1,5 +1,5 @@
 /**
- * EthicFlow — API Service
+ * Ethic-Net — API Service
  * Centralized Axios instance with JWT injection and error normalization.
  * baseURL: supports environment variable (VITE_API_URL) for production flexibility.
  * Dev: uses '/api' (proxied to :5000 by Vite). Prod: set VITE_API_URL env var.

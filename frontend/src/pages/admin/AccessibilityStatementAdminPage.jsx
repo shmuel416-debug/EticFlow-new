@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Admin accessibility statement editor.
+ * Ethic-Net — Admin accessibility statement editor.
  * Allows ADMIN users to edit bilingual markdown content and metadata.
  */
 

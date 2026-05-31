@@ -1,5 +1,5 @@
 /**
- * EthicFlow E2E — UI helpers for login/logout and route waits.
+ * Ethic-Net E2E — UI helpers for login/logout and route waits.
  */
 
 import { expect } from '@playwright/test'

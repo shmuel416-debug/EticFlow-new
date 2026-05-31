@@ -1,5 +1,5 @@
 /**
- * EthicFlow — FieldPalette
+ * Ethic-Net — FieldPalette
  * Grid of available field types grouped by category.
  * Click → adds field to canvas. Keyboard: Enter/Space also triggers.
  * @module components/formBuilder/FieldPalette

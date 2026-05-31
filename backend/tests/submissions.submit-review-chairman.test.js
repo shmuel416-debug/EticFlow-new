@@ -1,5 +1,5 @@
 /**
- * EthicFlow — submitReview chairman eligibility tests
+ * Ethic-Net — submitReview chairman eligibility tests
  */
 
 import { jest } from '@jest/globals'

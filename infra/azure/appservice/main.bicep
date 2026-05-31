@@ -1,4 +1,4 @@
-// EthicFlow Azure App Service baseline (single-tenant friendly).
+// Ethic-Net Azure App Service baseline (single-tenant friendly).
 // Deploys two Linux App Services (web + api), PostgreSQL Flexible Server (private),
 // Storage/File Shares, Key Vault, ACR, and observability resources.
 
@@ -11,53 +11,53 @@ param location string = resourceGroup().location
 param environmentName string = 'prod'
 
 @description('App Service plan name.')
-param appServicePlanName string = 'asp-ethicflow-prod'
+param appServicePlanName string = 'asp-ethic-net-prod'
 
 @description('Backend App Service name (must be globally unique in azurewebsites.net).')
-param apiAppName string = 'app-ethicflow-api-prod'
+param apiAppName string = 'app-ethic-net-api-prod'
 
 @description('Frontend App Service name (must be globally unique in azurewebsites.net).')
-param webAppName string = 'app-ethicflow-web-prod'
+param webAppName string = 'app-ethic-net-web-prod'
 
 @description('Container registry name (must be globally unique).')
-param acrName string = 'acrethicflowprod'
+param acrName string = 'acrethic-netprod'
 
 @description('Backend image repository name inside ACR.')
-param apiImageName string = 'ethicflow-api'
+param apiImageName string = 'ethic-net-api'
 
 @description('Frontend image repository name inside ACR.')
-param webImageName string = 'ethicflow-web'
+param webImageName string = 'ethic-net-web'
 
 @description('Container image tag to deploy.')
 param imageTag string = 'latest'
 
 @description('PostgreSQL Flexible Server name (must be globally unique).')
-param postgresServerName string = 'pg-ethicflow-prod'
+param postgresServerName string = 'pg-ethic-net-prod'
 
 @description('PostgreSQL admin username.')
-param postgresAdminLogin string = 'ethicflowadmin'
+param postgresAdminLogin string = 'ethic-netadmin'
 
 @secure()
 @description('PostgreSQL admin password.')
 param postgresAdminPassword string
 
 @description('Application database name.')
-param postgresDatabaseName string = 'ethicflow'
+param postgresDatabaseName string = 'ethic-net'
 
 @description('Storage account name for uploads (3-24 lowercase letters/numbers).')
-param storageAccountName string = 'stethicflowprod01'
+param storageAccountName string = 'stethic-netprod01'
 
 @description('Key Vault name.')
-param keyVaultName string = 'kv-ethicflow-prod'
+param keyVaultName string = 'kv-ethic-net-prod'
 
 @description('Log Analytics workspace name.')
-param logAnalyticsName string = 'law-ethicflow-prod'
+param logAnalyticsName string = 'law-ethic-net-prod'
 
 @description('Application Insights resource name.')
-param appInsightsName string = 'appi-ethicflow-prod'
+param appInsightsName string = 'appi-ethic-net-prod'
 
 @description('Virtual network name.')
-param vnetName string = 'vnet-ethicflow-prod'
+param vnetName string = 'vnet-ethic-net-prod'
 
 @description('Frontend public origin used for backend CORS and redirects.')
 param frontendOrigin string = 'https://ethics.example.ac.il'
@@ -84,7 +84,7 @@ param postgresTier string = 'GeneralPurpose'
 param postgresStorageGb int = 128
 
 var tags = {
-  project: 'EthicFlow'
+  project: 'Ethic-Net'
   env: environmentName
 }
 

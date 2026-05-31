@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Settings Routes
+ * Ethic-Net — Settings Routes
  *
  * GET /api/settings/public/accessibility-statement — public accessibility statement
  * GET /api/settings       — list institution settings (ADMIN + SECRETARY [template keys only])

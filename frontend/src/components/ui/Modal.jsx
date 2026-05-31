@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Modal primitive
+ * Ethic-Net — Modal primitive
  * Accessible modal dialog. Focus trap, Escape to close, aria-modal.
  * Use for confirmations, quick forms; keep full pages in routes.
  */

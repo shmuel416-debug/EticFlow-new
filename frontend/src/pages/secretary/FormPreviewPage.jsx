@@ -1,5 +1,5 @@
 /**
- * EthicFlow — FormPreviewPage
+ * Ethic-Net — FormPreviewPage
  * Standalone form preview page for /secretary/forms/:id/preview.
  * Loads form from API and renders it via FormPreview component.
  * Page shell uses the design system; FormPreview child is untouched.

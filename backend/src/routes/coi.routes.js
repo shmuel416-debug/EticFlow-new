@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Conflict of Interest Routes
+ * Ethic-Net — Conflict of Interest Routes
  */
 
 import { Router } from 'express'

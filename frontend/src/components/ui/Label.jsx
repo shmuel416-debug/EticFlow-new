@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Label primitive
+ * Ethic-Net — Label primitive
  * Associates visible text with a control via htmlFor (IS 5568: explicit labels).
  */
 

@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Personal Calendar Controller
+ * Ethic-Net — Personal Calendar Controller
  * Handles per-user OAuth connection and sync preferences for Google/Outlook.
  */
 

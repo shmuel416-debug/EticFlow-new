@@ -1,5 +1,5 @@
 /**
- * EthicFlow — SLA Service
+ * Ethic-Net — SLA Service
  * Business days calculator and SLA due-date management.
  * Business days: Sun–Thu (skip Fri/Sat = Israeli weekend).
  * SLA windows (from spec): triage=3bd, review=14bd, revision=30cd, approval=5bd.

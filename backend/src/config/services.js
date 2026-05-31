@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Pluggable Service Provider Config
+ * Ethic-Net — Pluggable Service Provider Config
  * Loads the active provider name for each service from environment variables.
  * Actual provider implementations live in src/services/<name>/<provider>.provider.js
  *

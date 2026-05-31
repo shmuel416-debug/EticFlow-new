@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Users Controller
+ * Ethic-Net — Users Controller
  * Handles user management (Admin) and reviewer listing (Secretary).
  *
  * Endpoints:

@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Auth Configuration
+ * Ethic-Net — Auth Configuration
  * JWT settings and bcrypt rounds loaded from environment variables.
  * Validates that required secrets are present on startup.
  */

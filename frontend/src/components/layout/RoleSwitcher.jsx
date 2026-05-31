@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Role Switcher
+ * Ethic-Net — Role Switcher
  * Allows multi-role users to select their active role.
  */
 

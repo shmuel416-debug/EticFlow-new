@@ -1,5 +1,5 @@
 // =============================================================
-// EthicFlow — Prisma Schema
+// Ethic-Net — Prisma Schema
 // Database: PostgreSQL 16
 // Conventions: Models=PascalCase→@@map("snake_case"), Fields=camelCase→@map("snake_case")
 // Soft delete: isActive Boolean on all main entities

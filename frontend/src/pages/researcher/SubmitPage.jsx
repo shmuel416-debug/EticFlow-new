@@ -1,5 +1,5 @@
 /**
- * EthicFlow — SubmitPage (Researcher)
+ * Ethic-Net — SubmitPage (Researcher)
  * Loads a published form via /api/forms/available, or the submission’s own form
  * when editing a draft. Multiple published forms show a chooser; optional ?formId=.
  * @module pages/researcher/SubmitPage

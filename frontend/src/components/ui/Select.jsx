@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Select primitive
+ * Ethic-Net — Select primitive
  * Native <select> wrapped with a consistent look and a ChevronDown affordance.
  */
 

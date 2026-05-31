@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Personal Calendar Routes
+ * Ethic-Net — Personal Calendar Routes
  *
  * GET    /api/calendar/status              — current user calendar connection status
  * PATCH  /api/calendar/preferences         — toggle personal sync preference

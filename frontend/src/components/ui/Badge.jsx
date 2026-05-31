@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Badge primitive
+ * Ethic-Net — Badge primitive
  * Soft-pill badge. Tone controls color scheme (tint bg + strong text).
  * Use for status, counts, labels.
  */

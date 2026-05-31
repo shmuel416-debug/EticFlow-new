@@ -1,5 +1,5 @@
 /**
- * EthicFlow — DocumentList Component
+ * Ethic-Net — DocumentList Component
  * Displays uploaded documents for a submission.
  * Allows upload (drag-and-drop or file picker) and delete for authorized users.
  * IS 5568 compliant, mobile-first, Lev palette.

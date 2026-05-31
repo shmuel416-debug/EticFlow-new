@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Reset Password Page (brand refresh)
+ * Ethic-Net — Reset Password Page (brand refresh)
  * Reads ?token= from URL, lets user set a new password.
  * Calls POST /api/auth/reset-password with { token, newPassword }.
  * IS 5568 / WCAG 2.2 AA compliant.

@@ -6,7 +6,7 @@ Environment: local staging clone (prod compose profile)
 ## Sequence
 1. compose down --remove-orphans
 2. deploy candidate (up -d --no-build db backend)
-3. verify container health (ethicflow-api:5000/api/health)
+3. verify container health (ethic-net-api:5000/api/health)
 4. simulate incident (stop backend)
 5. rollback action (up -d --no-build backend)
 6. verify health recovered

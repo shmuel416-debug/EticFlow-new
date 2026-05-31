@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Notifications Controller
+ * Ethic-Net — Notifications Controller
  * Handles in-app notification retrieval and read-state management.
  * All notifications are scoped to the authenticated user.
  */

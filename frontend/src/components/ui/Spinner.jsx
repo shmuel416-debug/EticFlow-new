@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Spinner
+ * Ethic-Net — Spinner
  * Small accessible loading indicator. role="status" + SR-only label.
  * Uses CSS animation; respects prefers-reduced-motion via index.css rule.
  */

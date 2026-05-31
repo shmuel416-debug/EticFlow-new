@@ -1,5 +1,5 @@
 /**
- * EthicFlow — AI Routes
+ * Ethic-Net — AI Routes
  * POST /api/ai/analyze/:subId  — run AI analysis on a submission
  * GET  /api/ai/analyze/:subId  — fetch latest saved analysis
  *

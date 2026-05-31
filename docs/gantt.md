@@ -1,4 +1,4 @@
-# EthicFlow — Project Gantt / Timeline
+# Ethic-Net — Project Gantt / Timeline
 
 ## Overview
 - **Total Duration:** ~22 weeks (6 sprints)

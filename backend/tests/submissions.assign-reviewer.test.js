@@ -1,5 +1,5 @@
 /**
- * EthicFlow — assignReviewer controller tests
+ * Ethic-Net — assignReviewer controller tests
  */
 
 import { jest } from '@jest/globals'

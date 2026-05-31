@@ -1,5 +1,5 @@
 /**
- * EthicFlow — System Templates Compatibility Routes
+ * Ethic-Net — System Templates Compatibility Routes
  * Backward-compatible admin endpoints under /api/admin/system-templates.
  * Keeps older frontend bundles working while canonical routes remain
  * under /api/system-templates/admin/*.

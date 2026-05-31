@@ -1,5 +1,5 @@
 /**
- * EthicFlow — CanvasField
+ * Ethic-Net — CanvasField
  * A single field card on the Form Builder canvas.
  * Sortable via @dnd-kit/sortable. Click → select → open settings.
  * @module components/formBuilder/CanvasField

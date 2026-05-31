@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Reviewer Diff Page
+ * Ethic-Net — Reviewer Diff Page
  * Compares submission versions and highlights changed fields.
  * Refreshed to Lev design system (PageHeader + Card primitives + Select/Input).
  * IS 5568 / WCAG 2.2 AA.

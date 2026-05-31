@@ -1,5 +1,5 @@
 /**
- * EthicFlow — FormPreview
+ * Ethic-Net — FormPreview
  * Full form rendered in preview mode — as a researcher would see it.
  * Shared between FormBuilderPage (live preview) and FormPreviewPage (standalone).
  * Lev color palette only. IS 5568 / WCAG 2.1 AA.

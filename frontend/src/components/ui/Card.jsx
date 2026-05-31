@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Card primitive
+ * Ethic-Net — Card primitive
  * White surface with soft shadow + thin border, consistent rounded corners.
  * Compose with CardHeader / CardBody / CardFooter subcomponents.
  */

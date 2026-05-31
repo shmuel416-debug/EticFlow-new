@@ -1,5 +1,5 @@
 /**
- * EthicFlow — status.service unit tests
+ * Ethic-Net — status.service unit tests
  */
 
 import { jest } from '@jest/globals'

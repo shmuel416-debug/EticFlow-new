@@ -1,5 +1,5 @@
 /**
- * EthicFlow E2E — shared Playwright fixtures.
+ * Ethic-Net E2E — shared Playwright fixtures.
  */
 
 import { test as base, expect, request } from '@playwright/test'

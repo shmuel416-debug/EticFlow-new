@@ -1,5 +1,5 @@
 /**
- * EthicFlow E2E — role credentials for Playwright suites.
+ * Ethic-Net E2E — role credentials for Playwright suites.
  * Values are loaded from environment with safe local defaults.
  */
 

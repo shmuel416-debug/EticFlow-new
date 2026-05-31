@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Prisma Client Singleton
+ * Ethic-Net — Prisma Client Singleton
  * Exports a single shared PrismaClient instance for the entire app.
  * Prevents multiple connections being opened during hot-reload in dev.
  */

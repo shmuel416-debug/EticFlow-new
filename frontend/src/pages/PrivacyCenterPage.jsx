@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Privacy Center (brand refresh)
+ * Ethic-Net — Privacy Center (brand refresh)
  * User self-service for consent capture and data-subject rights requests.
  *
  * Visual: PageHeader + Card shells, monochrome lucide icons, brand tokens.
@@ -99,7 +99,7 @@ export default function PrivacyCenterPage() {
       const url  = URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
-      link.download = `ethicflow-data-export-${Date.now()}.json`
+      link.download = `ethic-net-data-export-${Date.now()}.json`
       document.body.appendChild(link)
       link.click()
       link.remove()

@@ -1,5 +1,5 @@
 /**
- * EthicFlow — PublishDialog
+ * Ethic-Net — PublishDialog
  * Modal confirmation before publishing a form (locks it permanently).
  * role="alertdialog" — IS 5568 / WCAG 2.1 AA compliant.
  * @module components/formBuilder/PublishDialog

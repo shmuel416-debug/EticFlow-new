@@ -1,5 +1,5 @@
 /**
- * EthicFlow — PDF HTML renderer
+ * Ethic-Net — PDF HTML renderer
  * Renders HTML to PDF using Puppeteer/Chromium.
  */
 

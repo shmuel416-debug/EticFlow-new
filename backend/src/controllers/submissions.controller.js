@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Submissions Controller
+ * Ethic-Net — Submissions Controller
  * Manages research submission lifecycle:
  *   list, getById, create, update, continue (clone).
  *

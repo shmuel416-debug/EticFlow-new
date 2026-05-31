@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Role Utility Helpers
+ * Ethic-Net — Role Utility Helpers
  * Central helpers for multi-role users and active-role resolution.
  */
 

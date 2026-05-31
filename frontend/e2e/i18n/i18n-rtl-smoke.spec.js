@@ -1,5 +1,5 @@
 /**
- * EthicFlow E2E — smoke checks for language switch and direction.
+ * Ethic-Net E2E — smoke checks for language switch and direction.
  */
 
 import { test, expect } from '../support/fixtures'

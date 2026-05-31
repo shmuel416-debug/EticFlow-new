@@ -1,4 +1,4 @@
-# EthicFlow — פירוק משימות מלא (Work Breakdown Structure)
+# Ethic-Net — פירוק משימות מלא (Work Breakdown Structure)
 
 ## עקרון מנחה: Preview-First Development
 > כל משימה מסתיימת בדבר שניתן **לראות בדפדפן**.
@@ -572,7 +572,7 @@
 ---
 
 ## P2.1 — Microsoft Integration (2 שבועות)
-**Preview:** פגישה שנוצרת ב-EthicFlow מופיעה גם ביומן Outlook של חברי הוועדה.
+**Preview:** פגישה שנוצרת ב-Ethic-Net מופיעה גם ביומן Outlook של חברי הוועדה.
 
 ### P2.1.1 — Microsoft Calendar Provider
 - [ ] צור `services/calendar/microsoft.provider.js`
@@ -582,7 +582,7 @@
 - [ ] Implement: deleteEvent() → DELETE /events/{id}
 - [ ] Attendees receive Outlook invite with Accept/Decline
 - [ ] Add env vars: MICROSOFT_TENANT_ID, CLIENT_ID, CLIENT_SECRET
-- [ ] Test: create meeting in EthicFlow → appears in Outlook Calendar
+- [ ] Test: create meeting in Ethic-Net → appears in Outlook Calendar
 **📁 קבצים:** `services/calendar/microsoft.provider.js`
 
 ### P2.1.2 — Microsoft Email Provider (Outlook)
@@ -596,7 +596,7 @@
 - [ ] צור `services/auth/entra.provider.js`
 - [ ] OIDC flow: redirect to Microsoft login → callback → JWT
 - [ ] Auto-create user on first login if in allowed tenant
-- [ ] Map Azure AD groups to EthicFlow roles (optional)
+- [ ] Map Azure AD groups to Ethic-Net roles (optional)
 - [ ] Test: "Login with Microsoft" button works
 **📁 קבצים:** `services/auth/entra.provider.js`, update LoginPage.jsx
 

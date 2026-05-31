@@ -1,4 +1,4 @@
-# EthicFlow Go-Live Execution Checklist
+# Ethic-Net Go-Live Execution Checklist
 
 Use this checklist to execute production launch end-to-end.
 
@@ -7,12 +7,12 @@ Use this checklist to execute production launch end-to-end.
 - [ ] Provision baseline with Bicep:
   - `cd infra/azure/appservice`
   - `cp parameters.example.json parameters.prod.json`
-  - `az group create --name "rg-ethicflow-prod" --location "westeurope"`
-  - `az deployment group create --resource-group "rg-ethicflow-prod" --template-file "main.bicep" --parameters "@parameters.prod.json"`
+  - `az group create --name "rg-ethic-net-prod" --location "westeurope"`
+  - `az deployment group create --resource-group "rg-ethic-net-prod" --template-file "main.bicep" --parameters "@parameters.prod.json"`
 - [ ] Verify resources were created:
   - App Service Plan (PremiumV3)
-  - `app-ethicflow-web-*`
-  - `app-ethicflow-api-*`
+  - `app-ethic-net-web-*`
+  - `app-ethic-net-api-*`
   - PostgreSQL Flexible Server (private networking)
   - Key Vault, ACR, Storage, App Insights
 - [ ] Confirm API app has health check path `/api/health` and Always On enabled.
@@ -42,7 +42,7 @@ Use this checklist to execute production launch end-to-end.
 ## 4) Microsoft Integrations (SSO + Calendar + Mail)
 
 - [ ] Create Azure app registrations and permissions:
-  - `pwsh ./ops/scripts/setup-microsoft-integrations.ps1 -TenantId "<tenant-id>" -BaseUrl "https://api.ethics.<institution>.ac.il" -OrganizerEmail "ethics@<institution>.ac.il" -FrontendLogoutUrl "https://ethics.<institution>.ac.il/login" -KeyVaultName "kv-ethicflow-prod"`
+  - `pwsh ./ops/scripts/setup-microsoft-integrations.ps1 -TenantId "<tenant-id>" -BaseUrl "https://api.ethics.<institution>.ac.il" -OrganizerEmail "ethics@<institution>.ac.il" -FrontendLogoutUrl "https://ethics.<institution>.ac.il/login" -KeyVaultName "kv-ethic-net-prod"`
 - [ ] Verify Graph admin consent granted for all created apps.
 - [ ] Ensure SSO app is single-tenant (`AzureADMyOrg`) and callback is on API domain.
 - [ ] Confirm mailbox used by `SMTP_FROM` and organizer is licensed in Microsoft 365.

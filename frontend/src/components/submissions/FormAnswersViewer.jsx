@@ -1,5 +1,5 @@
 /**
- * EthicFlow — FormAnswersViewer Component
+ * Ethic-Net — FormAnswersViewer Component
  * Read-only display of submission answers against the form schema.
  * Renders each field label + answer in a clean two-column layout.
  */

@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Institution Settings Page
+ * Ethic-Net — Institution Settings Page
  * ADMIN manages all system settings; SECRETARY can edit approval templates.
  * Refactored to use design-system primitives (PageHeader, Card, Tabs,
  * FormField, Input, Textarea, Button, Badge).

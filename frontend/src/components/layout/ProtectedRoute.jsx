@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Protected Route
+ * Ethic-Net — Protected Route
  * Redirects to /login if not authenticated.
  * Optionally restricts to specific roles — redirects to /dashboard if unauthorized.
  */

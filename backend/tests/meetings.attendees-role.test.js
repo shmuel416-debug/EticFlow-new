@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Meetings attendee role guard tests
+ * Ethic-Net — Meetings attendee role guard tests
  * Validates server-side role enforcement for attendee creation and invite endpoints.
  */
 

@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Submission Detail Page (Secretary / Chairman / Admin)
+ * Ethic-Net — Submission Detail Page (Secretary / Chairman / Admin)
  * Full submission view with form answers, comments, status transitions, and reviewer assignment.
  * Role-conditioned: secretary sees assign+transition, chairman sees decision buttons.
  * Refreshed to Lev design system (PageHeader + Card primitives + Button).

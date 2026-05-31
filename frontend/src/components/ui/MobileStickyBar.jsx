@@ -1,5 +1,5 @@
 /**
- * EthicFlow — MobileStickyBar
+ * Ethic-Net — MobileStickyBar
  * Fixed bottom action area on small screens; hidden from md up.
  * Respects safe-area-inset-bottom (iOS). Parent page should add bottom padding on mobile.
  */

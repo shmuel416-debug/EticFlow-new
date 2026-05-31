@@ -1,5 +1,5 @@
 /**
- * EthicFlow — App Layout (brand refresh)
+ * Ethic-Net — App Layout (brand refresh)
  * Wraps all authenticated pages. Renders Sidebar + sticky top header + <Outlet>.
  * Mobile: hamburger toggles sidebar drawer. Desktop: sidebar always visible.
  * Monochrome lucide icons replace emojis for professional look.

@@ -1,7 +1,7 @@
-# EthicFlow — New Institution Setup Guide
+# Ethic-Net — New Institution Setup Guide
 
 ## Overview
-EthicFlow is a standalone product. Each institution gets its own deployment with customized branding and settings. This guide explains how to deploy for a new client.
+Ethic-Net is a standalone product. Each institution gets its own deployment with customized branding and settings. This guide explains how to deploy for a new client.
 
 ## What's Customizable Per Institution
 
@@ -24,8 +24,8 @@ EthicFlow is a standalone product. Each institution gets its own deployment with
 ### 1. Server Setup (5 min)
 ```bash
 # On the institution's server:
-git clone https://github.com/shmuel416-debug/EthicFlow.git
-cd EthicFlow
+git clone https://github.com/shmuel416-debug/Ethic-Net.git
+cd Ethic-Net
 chmod +x setup.sh
 ./setup.sh
 ```
@@ -112,7 +112,7 @@ docker compose ps
 docker compose logs -f --tail=100
 
 # DB connections
-docker compose exec db psql -U ethicflow -c "SELECT count(*) FROM pg_stat_activity;"
+docker compose exec db psql -U ethic-net -c "SELECT count(*) FROM pg_stat_activity;"
 ```
 
 ### Common Issues

@@ -1,7 +1,7 @@
 /**
- * EthicFlow — FormLibraryPage
+ * Ethic-Net — FormLibraryPage
  * Secretary views all forms (draft/published/archived), creates, edits, archives.
- * Keeps the existing card-grid UX but rebuilt on the EthicFlow design system
+ * Keeps the existing card-grid UX but rebuilt on the Ethic-Net design system
  * (PageHeader, Card, StatCard, Tabs, Button, Input, EmptyState) with the Lev
  * palette and lucide-react icons. IS 5568 / WCAG 2.2 AA. Mobile-first.
  * @module pages/secretary/FormLibraryPage

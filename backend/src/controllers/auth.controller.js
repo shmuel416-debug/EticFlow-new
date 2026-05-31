@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Auth Controller
+ * Ethic-Net — Auth Controller
  * Handles registration, login, Microsoft SSO, and current-user retrieval.
  * Never returns passwordHash in any response.
  */
@@ -22,12 +22,13 @@ import { emitAlert } from '../services/observability.service.js'
 /**
  * Pre-computed bcrypt hash (12 rounds) used for constant-time comparison
  * when the user does not exist. Prevents timing-based email enumeration.
- * Value: bcrypt('EthicFlowDummy2026!', 12)
+ * Value: bcrypt('Ethic-NetDummy2026!', 12)
  */
 const DUMMY_BCRYPT_HASH = '$2b$12$Z8nII1EDprDhFMZYH2.BVOhjlIjGBtStf/OgyisITv/gZJaXF6Y8y'
 const DEFAULT_AUTH_EXCHANGE_TTL_MS = 90 * 1000
 const LOGIN_LOCKOUT_MAX_ATTEMPTS = Math.max(3, parseInt(process.env.LOGIN_LOCKOUT_MAX_ATTEMPTS ?? '8', 10))
 const LOGIN_LOCKOUT_MINUTES = Math.max(5, parseInt(process.env.LOGIN_LOCKOUT_MINUTES ?? '15', 10))
+const SSO_STATE_TTL_MS = 5 * 60 * 1000
 
 // ─────────────────────────────────────────────
 // HELPERS
@@ -202,6 +203,142 @@ function resolveFrontendUrl(req) {
   if (origin) return origin.replace(/\/$/, '')
 
   return 'http://localhost:5173'
+}
+
+/**
+ * Returns the origin from an absolute URL string.
+ * Accepts only http/https URLs.
+ * @param {string|undefined|null} value
+ * @returns {string|null}
+ */
+function parseAbsoluteOrigin(value) {
+  if (typeof value !== 'string' || !value.trim()) return null
+  try {
+    const parsed = new URL(value)
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null
+    return parsed.origin
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Returns true when two hosts share the same root domain (last 2 labels).
+ * @param {string} hostA
+ * @param {string} hostB
+ * @returns {boolean}
+ */
+function sharesRootDomain(hostA, hostB) {
+  const partsA = hostA.split('.').filter(Boolean)
+  const partsB = hostB.split('.').filter(Boolean)
+  if (partsA.length < 2 || partsB.length < 2) return false
+  const rootA = partsA.slice(-2).join('.')
+  const rootB = partsB.slice(-2).join('.')
+  return rootA === rootB
+}
+
+/**
+ * Resolves a safe frontend URL from explicit candidate or standard resolution.
+ * In production, candidate is accepted only if it shares root domain with FRONTEND_URL.
+ * @param {import('express').Request} req
+ * @param {string|undefined|null} candidate
+ * @returns {string}
+ */
+function resolveFrontendUrlForSso(req, candidate) {
+  const fallback = resolveFrontendUrl(req)
+  const parsedCandidate = parseAbsoluteOrigin(candidate)
+  if (!parsedCandidate) return fallback
+
+  const isProd = process.env.NODE_ENV === 'production'
+  if (!isProd) return parsedCandidate
+
+  const parsedFallback = parseAbsoluteOrigin(fallback)
+  if (!parsedFallback) return fallback
+
+  const sameHost = parsedCandidate === parsedFallback
+  const sameRootDomain = sharesRootDomain(new URL(parsedCandidate).hostname, new URL(parsedFallback).hostname)
+  return (sameHost || sameRootDomain) ? parsedCandidate : fallback
+}
+
+/**
+ * Extracts frontend origin candidate from query param or Referer header.
+ * @param {import('express').Request} req
+ * @returns {string|null}
+ */
+function getRequestedFrontendOrigin(req) {
+  const fromQuery = parseAbsoluteOrigin(req.query?.frontend_origin)
+  if (fromQuery) return fromQuery
+  return parseAbsoluteOrigin(req.get('referer'))
+}
+
+/**
+ * Builds absolute backend callback URL for Microsoft OAuth.
+ * Prefers forwarded headers behind reverse proxies.
+ * @param {import('express').Request} req
+ * @returns {string}
+ */
+function resolveMicrosoftCallbackUrl(req) {
+  const forwardedProto = req.get('x-forwarded-proto')?.split(',')[0]?.trim()
+  const protocol = forwardedProto || req.protocol || 'https'
+  const forwardedHost = req.get('x-forwarded-host')?.split(',')[0]?.trim()
+  const host = forwardedHost || req.get('host')
+  if (!host) {
+    throw new Error('Unable to resolve host for Microsoft OAuth callback URL')
+  }
+  return `${protocol}://${host}/api/auth/microsoft/callback`
+}
+
+/**
+ * Returns signing secret for SSO state token.
+ * @returns {string}
+ */
+function getSsoStateSecret() {
+  return authConfig.jwt.secret
+}
+
+/**
+ * Encodes + signs SSO state payload as "<payload>.<signature>".
+ * @param {{ provider: string, issuedAt: number, nonce: string, frontendOrigin?: string|null }} payload
+ * @returns {string}
+ */
+function createSignedSsoState(payload) {
+  const encodedPayload = Buffer.from(JSON.stringify(payload), 'utf8').toString('base64url')
+  const signature = crypto
+    .createHmac('sha256', getSsoStateSecret())
+    .update(encodedPayload)
+    .digest('base64url')
+  return `${encodedPayload}.${signature}`
+}
+
+/**
+ * Verifies signed SSO state payload and validates TTL/provider.
+ * @param {string|undefined|null} state
+ * @param {string} provider
+ * @returns {{ provider: string, issuedAt: number, nonce: string, frontendOrigin?: string|null }|null}
+ */
+function verifySignedSsoState(state, provider) {
+  if (typeof state !== 'string' || !state.includes('.')) return null
+  const [encodedPayload, givenSignature] = state.split('.')
+  if (!encodedPayload || !givenSignature) return null
+
+  const expectedSignature = crypto
+    .createHmac('sha256', getSsoStateSecret())
+    .update(encodedPayload)
+    .digest('base64url')
+  const givenBuffer = Buffer.from(givenSignature, 'utf8')
+  const expectedBuffer = Buffer.from(expectedSignature, 'utf8')
+  if (givenBuffer.length !== expectedBuffer.length) return null
+  if (!crypto.timingSafeEqual(givenBuffer, expectedBuffer)) return null
+
+  try {
+    const parsed = JSON.parse(Buffer.from(encodedPayload, 'base64url').toString('utf8'))
+    if (parsed.provider !== provider) return null
+    if (typeof parsed.issuedAt !== 'number') return null
+    if (Date.now() - parsed.issuedAt > SSO_STATE_TTL_MS) return null
+    return parsed
+  } catch {
+    return null
+  }
 }
 
 /**
@@ -451,7 +588,7 @@ export async function forgotPassword(req, res, next) {
       const resetUrl = `${process.env.FRONTEND_URL ?? 'http://localhost:5173'}/reset-password?token=${rawToken}`
       await sendEmail({
         to:      email,
-        subject: 'איפוס סיסמה — EthicFlow',
+        subject: 'איפוס סיסמה — Ethic-Net',
         html:    `<p>לחץ על הקישור לאיפוס הסיסמה (תוקף שעה אחת):</p><p><a href="${resetUrl}">${resetUrl}</a></p>`,
       })
     }
@@ -652,15 +789,29 @@ export async function googleCallback(req, res, next) {
  */
 export async function microsoftRedirect(req, res, next) {
   try {
-    const state   = crypto.randomBytes(16).toString('hex')
-    const authUrl = await microsoftAuth.getAuthUrl(state)
+    const frontendOrigin = getRequestedFrontendOrigin(req)
+    const statePayload = {
+      provider: 'microsoft',
+      issuedAt: Date.now(),
+      nonce: crypto.randomBytes(16).toString('hex'),
+      frontendOrigin: frontendOrigin || null,
+    }
+    const state = createSignedSsoState(statePayload)
+    const redirectUri = resolveMicrosoftCallbackUrl(req)
+    const authUrl = await microsoftAuth.getAuthUrl(state, redirectUri)
 
-    // Store state in signed httpOnly cookie (1 min TTL)
+    // Legacy cookie fallback (for older in-flight sessions only).
     res.cookie('ms_oauth_state', state, {
       httpOnly: true,
       secure:   process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge:   60 * 1000,
+      maxAge:   SSO_STATE_TTL_MS,
+    })
+    res.cookie('ms_oauth_frontend', frontendOrigin || '', {
+      httpOnly: true,
+      secure:   process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge:   SSO_STATE_TTL_MS,
     })
 
     res.redirect(authUrl)
@@ -681,26 +832,30 @@ export async function microsoftRedirect(req, res, next) {
  * @param {import('express').NextFunction} next
  */
 export async function microsoftCallback(req, res, next) {
-  const frontendUrl = resolveFrontendUrl(req)
-
   try {
     const { code, state, error } = req.query
 
     // Microsoft returned an error (e.g. user cancelled)
+    const parsedState = verifySignedSsoState(state, 'microsoft')
+    const stateFrontendOrigin = parseAbsoluteOrigin(parsedState?.frontendOrigin)
+    const requestedFrontend = stateFrontendOrigin || req.cookies?.ms_oauth_frontend
+    res.clearCookie('ms_oauth_frontend')
+    const frontendUrl = resolveFrontendUrlForSso(req, requestedFrontend)
     if (error) {
       return res.redirect(`${frontendUrl}/login?error=sso_cancelled`)
     }
 
-    // Validate CSRF state
+    // Validate CSRF state (signed token first, cookie fallback for legacy sessions).
     const savedState = req.cookies?.ms_oauth_state
     res.clearCookie('ms_oauth_state')
-
-    if (!savedState || savedState !== state) {
+    const cookieStateValid = savedState && savedState === state
+    if (!parsedState && !cookieStateValid) {
       return res.redirect(`${frontendUrl}/login?error=sso_state_mismatch`)
     }
 
     // Exchange code for profile
-    const profile = await microsoftAuth.exchangeCode(code, state)
+    const redirectUri = resolveMicrosoftCallbackUrl(req)
+    const profile = await microsoftAuth.exchangeCode(code, state, redirectUri)
     if (!profile.email) {
       return res.redirect(`${frontendUrl}/login?error=sso_no_email`)
     }

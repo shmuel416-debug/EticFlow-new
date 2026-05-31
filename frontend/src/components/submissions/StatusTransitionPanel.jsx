@@ -1,5 +1,5 @@
 /**
- * EthicFlow — StatusTransitionPanel Component
+ * Ethic-Net — StatusTransitionPanel Component
  * Renders allowed next-status action buttons based on current status + user role.
  * Mirrors the server-side transition matrix — no extra API call needed.
  * IS 5568: each button has aria-describedby pointing to status description.

@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Google Calendar Provider
+ * Ethic-Net — Google Calendar Provider
  * Creates, updates, and deletes Google Calendar events via Google Calendar API v3.
  * Attendees automatically receive Google Calendar invitations.
  *
@@ -75,7 +75,7 @@ function getCalendarId() {
 }
 
 /**
- * Converts EthicFlow attendees array to Google Calendar attendees format.
+ * Converts Ethic-Net attendees array to Google Calendar attendees format.
  * @param {Array<{email: string, name: string}>} attendees
  * @returns {Array<{email: string, displayName: string}>}
  */
@@ -88,7 +88,7 @@ function toGoogleAttendees(attendees = []) {
 }
 
 /**
- * Builds a Google Calendar event resource from EthicFlow event data.
+ * Builds a Google Calendar event resource from Ethic-Net event data.
  * @param {{ title: string, description: string, startTime: Date, endTime: Date, location?: string, attendees: Array<{email: string, name: string}> }} eventData
  * @returns {object} Google Calendar event resource
  */

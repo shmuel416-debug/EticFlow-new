@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Status Management Routes
+ * Ethic-Net — Status Management Routes
  * Public config endpoints + admin status management endpoints.
  */
 

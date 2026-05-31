@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Observability Service
+ * Ethic-Net — Observability Service
  * Centralized hooks for correlation logging, error capture, and alerts.
  */
 

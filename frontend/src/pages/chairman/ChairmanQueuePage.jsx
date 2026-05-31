@@ -1,7 +1,7 @@
 /**
- * EthicFlow — Chairman Queue Page
+ * Ethic-Net — Chairman Queue Page
  * Lists submissions in IN_REVIEW status awaiting final decision.
- * Uses the EthicFlow design system (PageHeader, Card, Table) with the Lev
+ * Uses the Ethic-Net design system (PageHeader, Card, Table) with the Lev
  * palette and lucide-react icons. IS 5568 / WCAG 2.2 AA.
  */
 

@@ -1,5 +1,5 @@
 /**
- * EthicFlow E2E CI env verification.
+ * Ethic-Net E2E CI env verification.
  * Fails CI early when required role credentials are missing.
  */
 

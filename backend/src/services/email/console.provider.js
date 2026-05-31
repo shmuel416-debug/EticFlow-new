@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Console Email Provider (DEV)
+ * Ethic-Net — Console Email Provider (DEV)
  * Prints emails to the terminal instead of sending them.
  * Switch to smtp/microsoft/gmail via EMAIL_PROVIDER env var.
  */

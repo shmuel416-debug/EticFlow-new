@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Accessibility Statement (הצהרת נגישות)
+ * Ethic-Net — Accessibility Statement (הצהרת נגישות)
  * Public page with DB-backed bilingual markdown content and safe fallback.
  */
 
@@ -76,7 +76,7 @@ export default function AccessibilityStatementPage() {
               <img src={levLogo} alt="" aria-hidden="true" className="h-9 w-auto" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-bold leading-tight">EthicFlow</p>
+              <p className="text-sm font-bold leading-tight">Ethic-Net</p>
               <p className="text-xs opacity-85 leading-tight">{t('common.institution')}</p>
             </div>
             <LanguageSwitcher />
@@ -161,7 +161,7 @@ export default function AccessibilityStatementPage() {
             </div>
 
             <p className="text-xs text-center mt-6" style={{ color: 'var(--text-muted)' }}>
-              &copy; 2026 {t('common.institution')} — מערכת EthicFlow
+              &copy; 2026 {t('common.institution')} — מערכת Ethic-Net
             </p>
           </div>
         </main>

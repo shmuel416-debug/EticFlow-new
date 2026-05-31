@@ -1,12 +1,12 @@
 <#
-  EthicFlow Azure baseline deployment helper.
+  Ethic-Net Azure baseline deployment helper.
   Deploys Resource Group + Bicep template and validates core resources.
 #>
 param(
   [Parameter(Mandatory = $true)]
   [string]$SubscriptionId,
   [Parameter(Mandatory = $false)]
-  [string]$ResourceGroupName = "rg-ethicflow-prod",
+  [string]$ResourceGroupName = "rg-ethic-net-prod",
   [Parameter(Mandatory = $false)]
   [string]$Location = "westeurope",
   [Parameter(Mandatory = $false)]
@@ -20,7 +20,7 @@ $ErrorActionPreference = "Stop"
 
 function Write-Step {
   param([string]$Message)
-  Write-Host "[EthicFlow/Azure] $Message" -ForegroundColor Cyan
+  Write-Host "[Ethic-Net/Azure] $Message" -ForegroundColor Cyan
 }
 
 function Assert-FileExists {

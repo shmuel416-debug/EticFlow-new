@@ -4,9 +4,9 @@ param(
   [Parameter(Mandatory = $false)]
   [string]$DbService = "db",
   [Parameter(Mandatory = $false)]
-  [string]$DbUser = "ethicflow",
+  [string]$DbUser = "ethic-net",
   [Parameter(Mandatory = $false)]
-  [string]$DbName = "ethicflow",
+  [string]$DbName = "ethic-net",
   [switch]$DryRun
 )
 

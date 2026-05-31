@@ -1,4 +1,4 @@
--- EthicFlow — Migration: add auth_exchange_codes table
+-- Ethic-Net — Migration: add auth_exchange_codes table
 -- Purpose: secure SSO handoff via one-time code exchange (no JWT in URL)
 
 CREATE TABLE "auth_exchange_codes" (

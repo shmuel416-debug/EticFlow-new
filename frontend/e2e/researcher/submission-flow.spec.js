@@ -1,5 +1,5 @@
 /**
- * EthicFlow E2E — researcher submission flow in UI.
+ * Ethic-Net E2E — researcher submission flow in UI.
  */
 
 import { test, expect } from '../support/fixtures'

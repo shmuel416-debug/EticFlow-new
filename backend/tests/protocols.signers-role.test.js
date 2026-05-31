@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Protocol signer role guard tests
+ * Ethic-Net — Protocol signer role guard tests
  * Ensures request-signatures enforces committee roles at backend level.
  */
 

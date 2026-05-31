@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Button primitive
+ * Ethic-Net — Button primitive
  * Variants: primary (navy) | gold (accent CTA) | secondary (outline) |
  *           ghost | danger | subtle.
  * Sizes: sm | md | lg. Full-width optional.

@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Documents Controller
+ * Ethic-Net — Documents Controller
  * Handles file upload, listing, download, and deletion for submission documents.
  *
  * Endpoints:

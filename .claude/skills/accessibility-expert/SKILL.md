@@ -66,7 +66,7 @@ grep -rn 'onClick' frontend/src/ | grep -E '<(div|span|p|li)' | grep -v 'role='
 - [ ] SVG icons have `role="img"` and `aria-label`
 
 **1.2 Time-based Media**
-- [ ] If any video/audio exists — provide captions/transcripts (N/A for EthicFlow currently)
+- [ ] If any video/audio exists — provide captions/transcripts (N/A for Ethic-Net currently)
 
 **1.3 Adaptable**
 - [ ] Headings follow logical hierarchy: h1 → h2 → h3 (no skipping levels)
@@ -122,7 +122,7 @@ grep -rn 'onClick' frontend/src/ | grep -E '<(div|span|p|li)' | grep -v 'role='
 - [ ] No auto-playing animations that can't be paused
 
 **2.4 Navigable**
-- [ ] Page has descriptive `<title>`: "דשבורד חוקר — EthicFlow"
+- [ ] Page has descriptive `<title>`: "דשבורד חוקר — Ethic-Net"
 - [ ] Skip navigation link (see 2.1 above)
 - [ ] Focus order is logical and predictable
 - [ ] Link text is descriptive (not "לחץ כאן" — use "צפה בבקשה ETH-2026-041")
@@ -215,7 +215,7 @@ For Israeli public/academic institutions:
 - [ ] PDF documents are accessible (tagged PDF) — approval letters
 - [ ] Form timeout is at least 20 minutes with extension option
 
-### Step 6: Common EthicFlow-Specific Checks
+### Step 6: Common Ethic-Net-Specific Checks
 
 - [ ] **Form Builder (Secretary):** Drag & drop has click alternative + keyboard shortcut
 - [ ] **Split Screen (Reviewer):** Both panels keyboard-navigable, can switch with shortcut

@@ -1,5 +1,5 @@
 # 🧪 תוכנית בדיקה קומפרהנסיבית — כל Sprints (1-8)
-## בדיקה מלאה של EthicFlow מהתחלה עד סוף
+## בדיקה מלאה של Ethic-Net מהתחלה עד סוף
 
 **תאריך:** 19 באפריל 2026  
 **סביבה:** Production (frontend-eticflow-dev.up.railway.app)  

@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Zod Validation Middleware
+ * Ethic-Net — Zod Validation Middleware
  * Wraps a Zod schema into an Express middleware.
  * On failure: passes a 400 AppError to next().
  * On success: replaces req.body with the parsed (typed) data.

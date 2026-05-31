@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Request Context Middleware
+ * Ethic-Net — Request Context Middleware
  * Adds per-request correlation ID for logs and tracing.
  */
 

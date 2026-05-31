@@ -9,52 +9,52 @@
       "value": "prod"
     },
     "appServicePlanName": {
-      "value": "asp-ethicflow-prod"
+      "value": "asp-ethic-net-prod"
     },
     "apiAppName": {
-      "value": "app-ethicflow-api-prod"
+      "value": "app-ethic-net-api-prod"
     },
     "webAppName": {
-      "value": "app-ethicflow-web-prod"
+      "value": "app-ethic-net-web-prod"
     },
     "acrName": {
-      "value": "acrethicflowprod"
+      "value": "acrethic-netprod"
     },
     "apiImageName": {
-      "value": "ethicflow-api"
+      "value": "ethic-net-api"
     },
     "webImageName": {
-      "value": "ethicflow-web"
+      "value": "ethic-net-web"
     },
     "imageTag": {
       "value": "latest"
     },
     "postgresServerName": {
-      "value": "pg-ethicflow-prod"
+      "value": "pg-ethic-net-prod"
     },
     "postgresAdminLogin": {
-      "value": "ethicflowadmin"
+      "value": "ethic-netadmin"
     },
     "postgresAdminPassword": {
       "value": "REPLACE_WITH_SECURE_PASSWORD"
     },
     "postgresDatabaseName": {
-      "value": "ethicflow"
+      "value": "ethic-net"
     },
     "storageAccountName": {
-      "value": "stethicflowprod01"
+      "value": "stethic-netprod01"
     },
     "keyVaultName": {
-      "value": "kv-ethicflow-prod"
+      "value": "kv-ethic-net-prod"
     },
     "logAnalyticsName": {
-      "value": "law-ethicflow-prod"
+      "value": "law-ethic-net-prod"
     },
     "appInsightsName": {
-      "value": "appi-ethicflow-prod"
+      "value": "appi-ethic-net-prod"
     },
     "vnetName": {
-      "value": "vnet-ethicflow-prod"
+      "value": "vnet-ethic-net-prod"
     },
     "frontendOrigin": {
       "value": "https://ethics.example.ac.il"

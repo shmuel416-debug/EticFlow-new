@@ -1,5 +1,5 @@
 ###############################################################
-# EthicFlow — Backend Dockerfile
+# Ethic-Net — Backend Dockerfile
 # Builds the Node.js / Express API for production.
 # Runs Prisma migrations at startup, then starts the server.
 ###############################################################

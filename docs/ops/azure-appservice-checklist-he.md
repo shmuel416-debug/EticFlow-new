@@ -1,6 +1,6 @@
-# EthicFlow — צ'קליסט Azure App Service (פרודקשן)
+# Ethic-Net — צ'קליסט Azure App Service (פרודקשן)
 
-מסמך זה מרכז רק את המשימות שאתה צריך לבצע ב-Azure כדי להעלות את EthicFlow לאוויר עם:
+מסמך זה מרכז רק את המשימות שאתה צריך לבצע ב-Azure כדי להעלות את Ethic-Net לאוויר עם:
 
 - התחברות Microsoft (Single-tenant)
 - מיילים דרך Microsoft Graph
@@ -15,7 +15,7 @@
 
 ## 2) פתיחת תשתית Azure (חד-פעמי)
 
-- [ ] צור Resource Group לפרודקשן (לדוגמה `rg-ethicflow-prod`).
+- [ ] צור Resource Group לפרודקשן (לדוגמה `rg-ethic-net-prod`).
 - [ ] הרץ את תבנית Bicep:
   - `infra/azure/appservice/main.bicep`
   - `infra/azure/appservice/parameters.example.json` (להעתיק ל-`parameters.prod.json` ולעדכן)
@@ -45,8 +45,8 @@
 ## 4) Microsoft Apps (Single-tenant בלבד)
 
 - [ ] הרץ:
-  - `pwsh ./ops/scripts/setup-microsoft-integrations.ps1 -TenantId "<tenant-guid>" -BaseUrl "https://api.ethics.<institution>.ac.il" -OrganizerEmail "ethics@<institution>.ac.il" -FrontendLogoutUrl "https://ethics.<institution>.ac.il/login" -KeyVaultName "kv-ethicflow-prod"`
-- [ ] ודא ש-`EthicFlow SSO` מוגדר `Single tenant` (AzureADMyOrg).
+  - `pwsh ./ops/scripts/setup-microsoft-integrations.ps1 -TenantId "<tenant-guid>" -BaseUrl "https://api.ethics.<institution>.ac.il" -OrganizerEmail "ethics@<institution>.ac.il" -FrontendLogoutUrl "https://ethics.<institution>.ac.il/login" -KeyVaultName "kv-ethic-net-prod"`
+- [ ] ודא ש-`Ethic-Net SSO` מוגדר `Single tenant` (AzureADMyOrg).
 - [ ] ודא שניתן `Admin consent` לכל ההרשאות:
   - SSO: `openid`, `profile`, `email`, `User.Read` (Delegated)
   - Mail: `Mail.Send` (Application)
@@ -73,8 +73,8 @@
 ## 6) פריסה והרצה
 
 - [ ] בנה ודחוף images ל-ACR:
-  - `ethicflow-api:<tag>`
-  - `ethicflow-web:<tag>`
+  - `ethic-net-api:<tag>`
+  - `ethic-net-web:<tag>`
 - [ ] פרוס ל-`staging` slots של web+api (ללא swap אוטומטי בשחרור ראשון).
 - [ ] הרץ smoke:
   - `SMOKE_BASE_URL=https://api.ethics.<institution>.ac.il SMOKE_ASSERT=1 npm run smoke:sso`

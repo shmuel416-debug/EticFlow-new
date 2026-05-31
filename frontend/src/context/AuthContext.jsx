@@ -1,6 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 /**
- * EthicFlow — Auth Context
+ * Ethic-Net — Auth Context
  * Stores JWT in memory (never localStorage). Provides login/logout/user state.
  * Also manages i18n language + HTML dir/lang attribute on language change.
  * Sprint 5: adds impersonation state + startImpersonation/stopImpersonation actions.
@@ -151,7 +151,7 @@ export function AuthProvider({ children }) {
    * @param {string} token - Signed JWT from backend
    * @returns {void}
    */
-  function loginWithToken(token) {
+  const loginWithToken = useCallback((token) => {
     setToken(token)
     const payload = decodePayload(token)
     const roles = Array.isArray(payload.roles) && payload.roles.length > 0
@@ -163,7 +163,7 @@ export function AuthProvider({ children }) {
       : (ROLE_PRIORITY.find((role) => roles.includes(role)) || 'RESEARCHER')
     persistActiveRole(activeRole)
     setUser({ id: payload.id, email: payload.email, roles, activeRole, role: activeRole })
-  }
+  }, [])
 
   /**
    * Clears auth state and removes JWT from memory.

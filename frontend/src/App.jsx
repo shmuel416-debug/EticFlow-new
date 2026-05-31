@@ -1,5 +1,5 @@
 /**
- * EthicFlow — App Router
+ * Ethic-Net — App Router
  * Public routes: /login, /forgot-password, /reset-password, /sso-callback
  * Protected routes: /dashboard, /submissions, /meetings, /users, /reports, /settings
  * Role-based access enforced by ProtectedRoute.

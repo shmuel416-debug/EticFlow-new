@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Audit Log Middleware
+ * Ethic-Net — Audit Log Middleware
  * Patches res.json (and auth SSO res.redirect) so a successful response records
  * an audit row. Must be registered *before* the route handler, otherwise Express
  * never runs post-handlers when the handler only calls res.json without next().

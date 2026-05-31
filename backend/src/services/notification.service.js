@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Notification Service
+ * Ethic-Net — Notification Service
  * Creates in-app Notification records and sends email notifications.
  * All status-change controllers call notifyUser() as a fire-and-forget side effect.
  */

@@ -9,7 +9,7 @@
 
 ## רקע מהיר
 
-EthicFlow = מערכת ועדת אתיקה אקדמית של JCT (`ethics.jct.ac.il`). בסיום Phase 2 ה-baseline של Azure פרוס ב-tenant האקדמי (`acad.jct.ac.il`, `7b410031-...`).
+Ethic-Net = מערכת ועדת אתיקה אקדמית של JCT (`ethics.jct.ac.il`). בסיום Phase 2 ה-baseline של Azure פרוס ב-tenant האקדמי (`acad.jct.ac.il`, `7b410031-...`).
 
 עכשיו אני זקוק לשתי פעולות מוגדרות מצדכם:
 
@@ -45,12 +45,12 @@ Get-Mailbox -Identity "ethicscommittee@jct.ac.il" | `
 
 אם התיבה לא קיימת — צרו אותה כ-Shared Mailbox רגיל לפני שממשיכים.
 
-### צעד 2: יצירת `EthicFlow Mail` App Registration
+### צעד 2: יצירת `Ethic-Net Mail` App Registration
 
 **Portal:** Entra ID → App registrations → New registration
 
 ```text
-Name:             EthicFlow Mail
+Name:             Ethic-Net Mail
 Supported account types:  Accounts in this organizational directory only (single-tenant)
 Redirect URI:     (leave empty — application-only flow)
 ```
@@ -63,18 +63,18 @@ Redirect URI:     (leave empty — application-only flow)
 
 **יצירת secret:**
 1. Certificates & secrets → New client secret
-2. Description: `ethicflow-mail-prod`
+2. Description: `ethic-net-mail-prod`
 3. Expires: **24 months**
 4. **שמרו את ה-`Value` מיד** — לא ה-`Secret ID`. ה-Value מוצג פעם אחת בלבד.
 
-### צעד 3: יצירת `EthicFlow Calendar` App Registration
+### צעד 3: יצירת `Ethic-Net Calendar` App Registration
 
 זהה לצעד 2 עם השינויים הבאים:
 
 ```text
-Name:                   EthicFlow Calendar
+Name:                   Ethic-Net Calendar
 API permission:         Microsoft Graph → Application → Calendars.ReadWrite
-Secret description:     ethicflow-calendar-prod
+Secret description:     ethic-net-calendar-prod
 Secret expires:         24 months
 ```
 
@@ -94,8 +94,8 @@ Connect-ExchangeOnline -UserPrincipalName admin@jct.ac.il
 Connect-MgGraph -TenantId "<jct.ac.il tenant id>" -Scopes "Application.Read.All"
 
 # 1. שליפת ה-Service Principal ObjectIds (שונה מ-App Registration ObjectId)
-$mailApp = Get-MgServicePrincipal -Filter "appId eq '<EthicFlow Mail appId>'"
-$calApp  = Get-MgServicePrincipal -Filter "appId eq '<EthicFlow Calendar appId>'"
+$mailApp = Get-MgServicePrincipal -Filter "appId eq '<Ethic-Net Mail appId>'"
+$calApp  = Get-MgServicePrincipal -Filter "appId eq '<Ethic-Net Calendar appId>'"
 
 Write-Host "Mail SP ObjectId:     $($mailApp.Id)"
 Write-Host "Calendar SP ObjectId: $($calApp.Id)"
@@ -103,28 +103,28 @@ Write-Host "Calendar SP ObjectId: $($calApp.Id)"
 # 2. רישום ה-Apps כ-Service Principals פנימיים ב-Exchange
 #    (אם Grant admin consent כבר רץ — ייתכן שהם כבר רשומים; אם כן הפקודה תזרוק שגיאה
 #     "already exists" — אפשר להתעלם)
-New-ServicePrincipal -AppId $mailApp.AppId -ObjectId $mailApp.Id -DisplayName "EthicFlow Mail"
-New-ServicePrincipal -AppId $calApp.AppId  -ObjectId $calApp.Id  -DisplayName "EthicFlow Calendar"
+New-ServicePrincipal -AppId $mailApp.AppId -ObjectId $mailApp.Id -DisplayName "Ethic-Net Mail"
+New-ServicePrincipal -AppId $calApp.AppId  -ObjectId $calApp.Id  -DisplayName "Ethic-Net Calendar"
 
 # 3. יצירת Management Scope שמגביל לתיבת ועדת האתיקה בלבד
-New-ManagementScope -Name "EthicFlow-EthicsCommittee" `
+New-ManagementScope -Name "Ethic-Net-EthicsCommittee" `
   -RecipientRestrictionFilter "EmailAddresses -eq 'smtp:ethicscommittee@jct.ac.il'"
 
 # 4. שיוך תפקיד Mail.Send ל-Mail App עם ה-Scope
 New-ManagementRoleAssignment `
   -App $mailApp.Id `
   -Role "Application Mail.Send" `
-  -CustomResourceScope "EthicFlow-EthicsCommittee" `
-  -Name "EthicFlow-Mail-Send"
+  -CustomResourceScope "Ethic-Net-EthicsCommittee" `
+  -Name "Ethic-Net-Mail-Send"
 
 # 5. שיוך תפקיד Calendars.ReadWrite ל-Calendar App עם אותו Scope
 New-ManagementRoleAssignment `
   -App $calApp.Id `
   -Role "Application Calendars.ReadWrite" `
-  -CustomResourceScope "EthicFlow-EthicsCommittee" `
-  -Name "EthicFlow-Calendar-ReadWrite"
+  -CustomResourceScope "Ethic-Net-EthicsCommittee" `
+  -Name "Ethic-Net-Calendar-ReadWrite"
 
-# 6. וידוא — צריך להחזיר את התפקיד עם ה-CustomResourceScope = EthicFlow-EthicsCommittee
+# 6. וידוא — צריך להחזיר את התפקיד עם ה-CustomResourceScope = Ethic-Net-EthicsCommittee
 Get-ManagementRoleAssignment -RoleAssignee $mailApp.Id |
   Format-Table Name, Role, CustomResourceScope
 Get-ManagementRoleAssignment -RoleAssignee $calApp.Id |
@@ -142,7 +142,7 @@ Test-ServicePrincipalAuthorization -Identity $mailApp.Id `
 ```
 
 **יתרונות הגישה החדשה:**
-- אין צורך ב-Distribution Group נוסף (`ethicflow-svc@jct.ac.il`) — חוסך אובייקט מיותר
+- אין צורך ב-Distribution Group נוסף (`ethic-net-svc@jct.ac.il`) — חוסך אובייקט מיותר
 - audit trail טוב יותר ב-Exchange admin center
 - ניתן להוסיף תפקידים נוספים (כגון `Application Mail.Read`) בלי לשנות את ה-App registration
 - עתידי — Microsoft לא מתכננת deprecation של RBAC
@@ -154,12 +154,12 @@ Test-ServicePrincipalAuthorization -Identity $mailApp.Id `
 ```text
 Tenant ID of jct.ac.il:  <tenant-id>
 
-EthicFlow Mail
+Ethic-Net Mail
   Application (client) ID:  <appId>
   Client Secret Value:       <secret value>
   Secret expires:            <date>
 
-EthicFlow Calendar
+Ethic-Net Calendar
   Application (client) ID:  <appId>
   Client Secret Value:       <secret value>
   Secret expires:            <date>
@@ -189,8 +189,8 @@ EthicFlow Calendar
 | # | פעולה | מתי | משך |
 |---|---|---|---|
 | 1 | וידוא תיבה `ethicscommittee@jct.ac.il` (סעיף א צעד 1) | אחרי Phase 2 deploy | 2 דק' |
-| 2 | יצירת `EthicFlow Mail` + Grant admin consent + secret (סעיף א צעד 2) | מיד אחרי #1 | 5 דק' |
-| 3 | יצירת `EthicFlow Calendar` + Grant admin consent + secret (סעיף א צעד 3) | מיד אחרי #2 | 5 דק' |
+| 2 | יצירת `Ethic-Net Mail` + Grant admin consent + secret (סעיף א צעד 2) | מיד אחרי #1 | 5 דק' |
+| 3 | יצירת `Ethic-Net Calendar` + Grant admin consent + secret (סעיף א צעד 3) | מיד אחרי #2 | 5 דק' |
 | 4 | RBAC for Applications ב-Exchange Online (סעיף א צעד 4) | מיד אחרי #3 | 5 דק' |
 | 5 | העברת credentials אליי בערוץ מאובטח (סעיף א צעד 5) | מיד אחרי #4 | 2 דק' |
 | 6 | DNS records (סעיף ב) | אחרי Phase 3 (~יומיים אחר כך) | 10 דק' |
@@ -201,7 +201,7 @@ EthicFlow Calendar
 
 ## למה זה דרוש (תזכיר עסקי קצר)
 
-EthicFlow שולחת אוטומטית מ-`ethicscommittee@jct.ac.il`:
+Ethic-Net שולחת אוטומטית מ-`ethicscommittee@jct.ac.il`:
 - אישורי הגשת בקשות לחוקרים ומזכירת הוועדה
 - מינוי סוקר לחבר ועדה
 - החלטות (אישור / דחייה / שינויים) לחוקרים

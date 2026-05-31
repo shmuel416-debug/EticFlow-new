@@ -1,5 +1,5 @@
 /**
- * EthicFlow — AI Controller
+ * Ethic-Net — AI Controller
  * Handles AI analysis requests for submissions.
  *
  * Endpoints:

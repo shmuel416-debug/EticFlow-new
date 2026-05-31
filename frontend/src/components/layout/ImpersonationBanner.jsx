@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Impersonation Banner
+ * Ethic-Net — Impersonation Banner
  * Displayed at the top of the screen when an admin is impersonating another user.
  * Amber background, non-dismissable, shows impersonated user details + stop button.
  * IS 5568 / WCAG 2.2 AA: min-height 44px, role="alert", aria-live="polite".

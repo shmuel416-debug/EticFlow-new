@@ -34,7 +34,7 @@
 | # | WCAG | Issue | File | Recommendation |
 |---|------|-------|------|----------------|
 | M1 | 3.1.1 | RTL back arrow `→` in ForgotPassword points visually wrong in Hebrew — fixed to `←` for RTL | `ForgotPasswordPage.jsx:127` | Fixed ✅ |
-| M2 | 2.4.2 | Missing per-page `<title>` updates — all protected pages share "EthicFlow — ועדת האתיקה" | `App.jsx` (all routes) | Add `<Helmet>` or `useEffect(() => { document.title = … })` per page in Sprint 2 |
+| M2 | 2.4.2 | Missing per-page `<title>` updates — all protected pages share "Ethic-Net — ועדת האתיקה" | `App.jsx` (all routes) | Add `<Helmet>` or `useEffect(() => { document.title = … })` per page in Sprint 2 |
 | M3 | 4.1.3 | `ProtectedRoute` returns `null` during loading — no announcement to screen readers | `ProtectedRoute.jsx:16` | Add `<div role="status" aria-live="polite" className="sr-only">{t('common.loading')}</div>` in Sprint 2 |
 
 ---

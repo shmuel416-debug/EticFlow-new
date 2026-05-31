@@ -1,5 +1,5 @@
 /**
- * EthicFlow E2E — UI workflow: triage, assign, review, and chairman decision.
+ * Ethic-Net E2E — UI workflow: triage, assign, review, and chairman decision.
  */
 
 import { test, expect } from '../support/fixtures'

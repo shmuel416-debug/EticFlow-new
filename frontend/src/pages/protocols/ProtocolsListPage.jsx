@@ -1,8 +1,8 @@
 /**
- * EthicFlow — Protocols List Page
+ * Ethic-Net — Protocols List Page
  * Displays all meeting protocols with status filter tabs.
  * Roles: SECRETARY, CHAIRMAN, ADMIN
- * Rebuilt on the EthicFlow design system (PageHeader, Card, Badge, Tabs,
+ * Rebuilt on the Ethic-Net design system (PageHeader, Card, Badge, Tabs,
  * Button, Modal, Select, EmptyState) with the Lev palette and lucide-react
  * icons. IS 5568 / WCAG 2.2 AA.
  */

@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Checkbox primitive
+ * Ethic-Net — Checkbox primitive
  * Native input with Lev accent and minimum touch target on mobile.
  */
 

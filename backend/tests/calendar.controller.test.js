@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Personal calendar controller tests
+ * Ethic-Net — Personal calendar controller tests
  * Covers connect/callback/preferences/disconnect core flows.
  */
 

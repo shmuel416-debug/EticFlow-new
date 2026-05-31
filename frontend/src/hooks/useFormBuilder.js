@@ -1,5 +1,5 @@
 /**
- * EthicFlow — useFormBuilder hook
+ * Ethic-Net — useFormBuilder hook
  * Manages all Form Builder state: fields list, selection, dirty flag, active tab.
  * Designed for use in FormBuilderPage only.
  * @module hooks/useFormBuilder

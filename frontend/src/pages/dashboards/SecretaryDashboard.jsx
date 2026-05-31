@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Secretary Dashboard (brand refresh)
+ * Ethic-Net — Secretary Dashboard (brand refresh)
  * Lev Academic Center palette + design-system primitives: PageHeader, StatCard,
  * Card, EmptyState, Button, Badge. Shows live KPI summary cards + recent
  * submissions table.

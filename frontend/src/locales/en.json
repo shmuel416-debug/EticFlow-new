@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "EthicFlow",
+    "appName": "Ethic-Net",
     "institution": "Lev Academic Center",
     "loading": "Loading...",
     "save": "Save",
@@ -1012,7 +1012,7 @@
     "saveError": "Failed to save protocol",
     "sign": {
       "title": "Protocol Signature",
-      "brand": "EthicFlow — Ethics Committee",
+      "brand": "Ethic-Net — Ethics Committee",
       "protocolLabel": "Protocol",
       "dateLabel": "Meeting Date",
       "signerLabel": "Hello,",

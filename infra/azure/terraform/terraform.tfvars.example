@@ -1,5 +1,5 @@
 location             = "westeurope"
-project_name         = "ethicflow"
+project_name         = "ethic-net"
 environment          = "prod"
 admin_username       = "azureuser"
 admin_ssh_public_key = "ssh-ed25519 AAAA... replace_me"

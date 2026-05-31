@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Backend Entry Point
+ * Ethic-Net — Backend Entry Point
  * Bootstraps the Express app: middleware, routes, DB connection, server start.
  * Port: process.env.API_PORT (default 5000)
  */
@@ -133,7 +133,7 @@ async function start() {
   }
 
   app.listen(PORT, () => {
-    console.log(`🚀 EthicFlow API running on http://localhost:${PORT}`)
+    console.log(`🚀 Ethic-Net API running on http://localhost:${PORT}`)
     console.log(`   Environment: ${process.env.NODE_ENV ?? 'development'}`)
     logActiveProviders()
     initializeObservability()

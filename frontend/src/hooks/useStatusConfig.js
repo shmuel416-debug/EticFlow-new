@@ -1,5 +1,5 @@
 /**
- * EthicFlow — useStatusConfig Hook
+ * Ethic-Net — useStatusConfig Hook
  * Loads dynamic status config from backend and exposes mapped helpers.
  */
 

@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Users Routes
+ * Ethic-Net — Users Routes
  *
  * Public to staff:
  *   GET  /api/users/reviewers          — reviewer list (SECRETARY, CHAIRMAN, ADMIN)

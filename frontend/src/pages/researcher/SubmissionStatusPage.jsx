@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Submission Status Page (Researcher)
+ * Ethic-Net — Submission Status Page (Researcher)
  * Full timeline view for a single submission.
  * Tabs: answers | timeline | comments | documents.
  * Refreshed to Lev design system (PageHeader + Card primitives + Tabs).

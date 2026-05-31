@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Health Check Route
+ * Ethic-Net — Health Check Route
  * GET /api/health — returns server + DB status.
  * Used by load balancers, Docker healthchecks, and monitoring.
  */

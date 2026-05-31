@@ -1,5 +1,5 @@
 /**
- * EthicFlow — AI Service Factory
+ * Ethic-Net — AI Service Factory
  * Dispatches analysis requests to the active provider based on AI_PROVIDER env var.
  *
  * Providers: mock (dev/test) | gemini (prod)

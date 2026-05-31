@@ -1,5 +1,5 @@
 /**
- * EthicFlow — submissions COI candidates tests
+ * Ethic-Net — submissions COI candidates tests
  */
 
 import { jest } from '@jest/globals'

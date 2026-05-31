@@ -1,5 +1,5 @@
 /**
- * EthicFlow — COI Badge
+ * Ethic-Net — COI Badge
  * Displays recused attendees for an agenda item.
  */
 

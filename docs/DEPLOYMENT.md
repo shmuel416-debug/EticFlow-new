@@ -1,11 +1,11 @@
-# EthicFlow — Deployment Guide
+# Ethic-Net — Deployment Guide
 
 ## Quick Start (Development)
 
 ```bash
 # 1. Clone & setup
-git clone https://github.com/shmuel416-debug/EthicFlow.git
-cd EthicFlow
+git clone https://github.com/shmuel416-debug/Ethic-Net.git
+cd Ethic-Net
 chmod +x setup.sh
 ./setup.sh            # Interactive wizard — creates .env + starts DB
 
@@ -28,8 +28,8 @@ cd frontend && npm run dev      # App at localhost:5173
 
 ### Step 1: Clone & Configure
 ```bash
-git clone https://github.com/shmuel416-debug/EthicFlow.git
-cd EthicFlow
+git clone https://github.com/shmuel416-debug/Ethic-Net.git
+cd Ethic-Net
 chmod +x setup.sh
 ./setup.sh            # Choose "Production" when asked
 ```
@@ -63,8 +63,8 @@ docker compose logs -f backend
 
 This is the recommended production topology for stability:
 
-- `app-ethicflow-web` (frontend container, Linux App Service)
-- `app-ethicflow-api` (backend container, Linux App Service)
+- `app-ethic-net-web` (frontend container, Linux App Service)
+- `app-ethic-net-api` (backend container, Linux App Service)
 - PostgreSQL Flexible Server (private networking)
 - Key Vault + Managed Identity
 - App Insights + Log Analytics
@@ -92,9 +92,9 @@ cp parameters.example.json parameters.prod.json
 # Edit parameters.prod.json
 az login
 az account set --subscription "<SUBSCRIPTION_ID>"
-az group create --name "rg-ethicflow-prod" --location "westeurope"
+az group create --name "rg-ethic-net-prod" --location "westeurope"
 az deployment group create \
-  --resource-group "rg-ethicflow-prod" \
+  --resource-group "rg-ethic-net-prod" \
   --template-file "main.bicep" \
   --parameters "@parameters.prod.json"
 ```
@@ -104,7 +104,7 @@ Or use the helper script:
 ```powershell
 pwsh ./ops/scripts/deploy-azure-baseline.ps1 `
   -SubscriptionId "<SUBSCRIPTION_ID>" `
-  -ResourceGroupName "rg-ethicflow-prod" `
+  -ResourceGroupName "rg-ethic-net-prod" `
   -TemplateFile "infra/azure/appservice/main.bicep" `
   -ParametersFile "infra/azure/appservice/parameters.prod.json"
 ```
@@ -122,14 +122,14 @@ The template provisions:
 ### Step 2: Build and push container images
 
 ```bash
-ACR_NAME="acrethicflowprod"
+ACR_NAME="acrethic-netprod"
 TAG="$(git rev-parse --short HEAD)"
 
 az acr login --name "$ACR_NAME"
-docker build -t "$ACR_NAME.azurecr.io/ethicflow-api:$TAG" ./backend
-docker build -t "$ACR_NAME.azurecr.io/ethicflow-web:$TAG" ./frontend
-docker push "$ACR_NAME.azurecr.io/ethicflow-api:$TAG"
-docker push "$ACR_NAME.azurecr.io/ethicflow-web:$TAG"
+docker build -t "$ACR_NAME.azurecr.io/ethic-net-api:$TAG" ./backend
+docker build -t "$ACR_NAME.azurecr.io/ethic-net-web:$TAG" ./frontend
+docker push "$ACR_NAME.azurecr.io/ethic-net-api:$TAG"
+docker push "$ACR_NAME.azurecr.io/ethic-net-web:$TAG"
 ```
 
 ### Step 3: Configure Microsoft integrations (single-tenant)
@@ -142,15 +142,15 @@ pwsh ./ops/scripts/setup-microsoft-integrations.ps1 \
   -BaseUrl "https://api.ethics.<institution>.ac.il" \
   -OrganizerEmail "ethics@<institution>.ac.il" \
   -FrontendLogoutUrl "https://ethics.<institution>.ac.il/login" \
-  -KeyVaultName "kv-ethicflow-prod" \
-  -SecretPrefix "ethicflow-prod"
+  -KeyVaultName "kv-ethic-net-prod" \
+  -SecretPrefix "ethic-net-prod"
 ```
 
 The script creates three app registrations:
 
-- `EthicFlow SSO` (Delegated: `openid profile email User.Read`)
-- `EthicFlow Mail` (Application: `Mail.Send`)
-- `EthicFlow Calendar` (Application: `Calendars.ReadWrite`)
+- `Ethic-Net SSO` (Delegated: `openid profile email User.Read`)
+- `Ethic-Net Mail` (Application: `Mail.Send`)
+- `Ethic-Net Calendar` (Application: `Calendars.ReadWrite`)
 
 All are created as **single-tenant** (`AzureADMyOrg`).
 
@@ -193,13 +193,13 @@ You can apply the API app settings + Key Vault references with:
 
 ```powershell
 pwsh ./ops/scripts/set-azure-api-keyvault-settings.ps1 `
-  -ResourceGroupName "rg-ethicflow-prod" `
-  -ApiAppName "app-ethicflow-api-prod" `
-  -KeyVaultName "kv-ethicflow-prod" `
+  -ResourceGroupName "rg-ethic-net-prod" `
+  -ApiAppName "app-ethic-net-api-prod" `
+  -KeyVaultName "kv-ethic-net-prod" `
   -FrontendUrl "https://ethics.<institution>.ac.il" `
   -ApiBaseUrl "https://api.ethics.<institution>.ac.il" `
   -OrganizerEmail "ethics@<institution>.ac.il" `
-  -SecretPrefix "ethicflow-prod"
+  -SecretPrefix "ethic-net-prod"
 ```
 
 ### Step 5: Domain and TLS
@@ -257,10 +257,10 @@ Manual verification:
 
 ```bash
 # Backup database
-docker compose exec db pg_dump -U ethicflow ethicflow > backup_$(date +%Y%m%d).sql
+docker compose exec db pg_dump -U ethic-net ethic-net > backup_$(date +%Y%m%d).sql
 
 # Restore database
-cat backup_20260101.sql | docker compose exec -T db psql -U ethicflow ethicflow
+cat backup_20260101.sql | docker compose exec -T db psql -U ethic-net ethic-net
 
 # Backup uploads
 tar czf uploads_$(date +%Y%m%d).tar.gz uploads/
@@ -283,7 +283,7 @@ Suggested restore drill cadence:
 
 ```bash
 # 1) Restore DB to a staging clone
-cat backup_YYYYMMDD.sql | docker compose exec -T db psql -U ethicflow ethicflow
+cat backup_YYYYMMDD.sql | docker compose exec -T db psql -U ethic-net ethic-net
 
 # 2) Restore uploads archive
 tar xzf uploads_YYYYMMDD.tar.gz
@@ -361,7 +361,7 @@ All Microsoft features are **opt-in** via `.env`. The system works fully without
 
 | Setting | Value |
 |---------|-------|
-| Name | EthicFlow Mail |
+| Name | Ethic-Net Mail |
 | Supported account types | Single tenant |
 | Redirect URI | (leave empty) |
 
@@ -404,7 +404,7 @@ MICROSOFT_CALENDAR_TENANT_ID=<Directory (tenant) ID>
 MICROSOFT_CALENDAR_ORGANIZER_EMAIL=ethics@yourinstitution.ac.il
 ```
 
-> When a meeting is created in EthicFlow, it will appear in the organizer's Outlook calendar and send invites to all attendees.
+> When a meeting is created in Ethic-Net, it will appear in the organizer's Outlook calendar and send invites to all attendees.
 > If the Graph API call fails, meeting creation still succeeds (graceful degradation).
 
 ---
@@ -415,7 +415,7 @@ MICROSOFT_CALENDAR_ORGANIZER_EMAIL=ethics@yourinstitution.ac.il
 
 | Setting | Value |
 |---------|-------|
-| Name | EthicFlow SSO |
+| Name | Ethic-Net SSO |
 | Supported account types | Single tenant (organization only) |
 | Redirect URI | `https://yourdomain.com/api/auth/microsoft/callback` |
 
@@ -458,14 +458,14 @@ All three Google integrations are **opt-in** and independent. The system works w
 
 ### Prerequisites: Google Cloud Project
 1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project (e.g. "EthicFlow")
+2. Create a new project (e.g. "Ethic-Net")
 3. Enable the APIs you need (Calendar API, Gmail API, Google+ API)
 
 ---
 
 ### Google Calendar Sync
 
-**When to use:** Create meetings in EthicFlow → they automatically appear in Google Calendar with attendee invites.
+**When to use:** Create meetings in Ethic-Net → they automatically appear in Google Calendar with attendee invites.
 
 **Setup:**
 1. Google Cloud Console → IAM & Admin → Service Accounts → Create Service Account

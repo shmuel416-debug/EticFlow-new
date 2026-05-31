@@ -1,5 +1,5 @@
 /**
- * EthicFlow — users controller multi-role tests
+ * Ethic-Net — users controller multi-role tests
  */
 
 import { jest } from '@jest/globals'

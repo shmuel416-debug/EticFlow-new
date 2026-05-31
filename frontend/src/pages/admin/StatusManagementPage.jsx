@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Status Management Page
+ * Ethic-Net — Status Management Page
  * Admin UI for statuses, transitions, and role-action permissions.
  * Refactored to use design-system primitives. DnD reorder preserved via up/down.
  */

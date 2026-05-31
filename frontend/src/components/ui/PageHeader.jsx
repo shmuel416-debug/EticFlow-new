@@ -1,5 +1,5 @@
 /**
- * EthicFlow — PageHeader primitive
+ * Ethic-Net — PageHeader primitive
  * Standard page title block for protected pages.
  *   - Right-aligned title + subtitle (RTL start)
  *   - Left-aligned action slot (CTAs, filters)

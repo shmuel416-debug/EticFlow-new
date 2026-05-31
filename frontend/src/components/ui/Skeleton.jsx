@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Skeleton placeholder
+ * Ethic-Net — Skeleton placeholder
  * Loading shimmer bar. Use `width/height` or pass as a child container.
  */
 

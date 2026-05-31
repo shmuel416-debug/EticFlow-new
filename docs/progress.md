@@ -1,4 +1,4 @@
-# EthicFlow — Progress Tracker
+# Ethic-Net — Progress Tracker
 
 ## Latest Update: Sprint 13 — System Templates (Questionnaire Preface)
 **Status:** ✅ Complete | **Date:** 2026-04-28 | **Tag:** v0.13.0 | **Reports:** `docs/qa-report-sprint-13.md`, `docs/accessibility-report-sprint-13.md`, `docs/security-report-sprint-13.md`, `docs/sprint-13-report.md`
@@ -315,7 +315,7 @@
 🔍 **Preview targets:**
 - Calendar: `CALENDAR_PROVIDER=google` → create meeting → event in Google Calendar with attendees
 - Email: `EMAIL_PROVIDER=gmail` → trigger password reset → email arrives via Gmail
-- SSO: click "כניסה עם Google" → Google OAuth → return to EthicFlow dashboard
+- SSO: click "כניסה עם Google" → Google OAuth → return to Ethic-Net dashboard
 - Conflict: Google SSO with LOCAL/Microsoft-account email → Hebrew error on LoginPage
 
 ---
@@ -355,5 +355,5 @@
 🔍 **Preview targets:**
 - Email: set `EMAIL_PROVIDER=microsoft` → trigger password reset → email arrives in Outlook inbox
 - Calendar: set `CALENDAR_PROVIDER=microsoft` → create meeting → event in Outlook with attendee invites
-- SSO: click "כניסה עם Microsoft" → Microsoft login → return to EthicFlow dashboard
+- SSO: click "כניסה עם Microsoft" → Microsoft login → return to Ethic-Net dashboard
 - Conflict: SSO with LOCAL-account email → Hebrew error message on LoginPage

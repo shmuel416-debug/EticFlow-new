@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Protocol Detail Page (brand refresh)
+ * Ethic-Net — Protocol Detail Page (brand refresh)
  * Edit protocol content (sections), finalize, request signatures, download PDF.
  * Also handles creation when navigated with ?meetingId=xxx
  * Roles: SECRETARY (edit/finalize/request), CHAIRMAN/ADMIN (view/download)

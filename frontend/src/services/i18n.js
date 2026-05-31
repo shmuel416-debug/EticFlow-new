@@ -1,5 +1,5 @@
 /**
- * EthicFlow — i18n Configuration
+ * Ethic-Net — i18n Configuration
  * Hebrew (RTL) is the default language. English (LTR) is secondary.
  * Direction is applied to <html> element by AuthContext on language change.
  */

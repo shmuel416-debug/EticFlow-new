@@ -1,8 +1,8 @@
 /**
- * EthicFlow — Secretary Submissions List Page
+ * Ethic-Net — Secretary Submissions List Page
  * Displays all submissions with search, status filter, and pagination.
  * Accessible to SECRETARY and ADMIN roles.
- * Uses the EthicFlow design system primitives (PageHeader, Card, Table,
+ * Uses the Ethic-Net design system primitives (PageHeader, Card, Table,
  * Button, Input, Select) with the Lev palette and lucide-react icons.
  * IS 5568 / WCAG 2.2 AA.
  */

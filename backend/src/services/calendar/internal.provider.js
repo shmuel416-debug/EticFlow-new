@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Internal Calendar Provider (default)
+ * Ethic-Net — Internal Calendar Provider (default)
  * No external calendar integration — meetings are stored in the DB only.
  * This is the default provider when CALENDAR_PROVIDER=internal or is not set.
  *

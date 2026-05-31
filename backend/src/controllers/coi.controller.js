@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Conflict of Interest Controller
+ * Ethic-Net — Conflict of Interest Controller
  * CRUD and checking endpoints for user COI declarations.
  */
 

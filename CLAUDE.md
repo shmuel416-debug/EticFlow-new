@@ -1,4 +1,4 @@
-# EthicFlow — Ethics Committee Management System
+# Ethic-Net — Ethics Committee Management System
 
 ## Project Overview
 Standalone SaaS system for managing ethics approval requests in academic research. Supports 5 roles: Researcher, Secretary, Reviewer, Chairman, Admin. Zero institutional dependency — sellable to any academic institution.

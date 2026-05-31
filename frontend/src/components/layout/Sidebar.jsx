@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Sidebar Navigation (brand refresh)
+ * Ethic-Net — Sidebar Navigation (brand refresh)
  * Desktop: fixed 240px side panel. Mobile: slide-in drawer controlled by isOpen.
  * Nav items filtered by user role. Monochrome lucide icons (no emojis).
  * Brand identity: navy header, gold-accent on active pill, subtle gradient strip.
@@ -190,7 +190,7 @@ export default function Sidebar({ isOpen, onClose }) {
               <img src={levLogo} alt="" aria-hidden="true" className="h-8 w-auto" />
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-bold leading-tight">EthicFlow</p>
+              <p className="text-sm font-bold leading-tight">Ethic-Net</p>
               <p className="text-[11px] opacity-85 leading-tight truncate">
                 {t('common.institution')}
               </p>

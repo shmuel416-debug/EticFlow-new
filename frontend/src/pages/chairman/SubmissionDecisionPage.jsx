@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Chairman Submission Decision Page
+ * Ethic-Net — Chairman Submission Decision Page
  * Full submission view with form answers, reviewer comments, and decision buttons.
  * Refreshed to Lev design system (PageHeader + Card primitives + Modal confirmations).
  * IS 5568 / WCAG 2.2 AA.

@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Forms Routes
+ * Ethic-Net — Forms Routes
  * GET    /api/forms            — list all forms          (SECRETARY, ADMIN)
  * GET    /api/forms/active     — get active form         (all authenticated)
  * GET    /api/forms/available  — list published+active   (all authenticated, metadata)

@@ -1,5 +1,5 @@
 /**
- * EthicFlow — AccessibleIcon
+ * Ethic-Net — AccessibleIcon
  * Wrapper that enforces IS 5568 accessibility rules:
  *   - If the icon is decorative, it must be marked aria-hidden.
  *   - If the icon has standalone meaning, it must carry an aria-label.

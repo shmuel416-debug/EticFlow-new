@@ -1,4 +1,4 @@
-# EthicFlow — Sprint Log
+# Ethic-Net — Sprint Log
 
 ## Sprint 14 — Reviewer Checklist (Dynamic)
 

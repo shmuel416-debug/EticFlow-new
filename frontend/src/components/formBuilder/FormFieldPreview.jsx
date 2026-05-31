@@ -1,5 +1,5 @@
 /**
- * EthicFlow — FormFieldPreview
+ * Ethic-Net — FormFieldPreview
  * Renders a single form field in read-only preview mode.
  * Supports all 12 field types. Lev color palette only. IS 5568 / WCAG 2.1 AA.
  * @module components/formBuilder/FormFieldPreview

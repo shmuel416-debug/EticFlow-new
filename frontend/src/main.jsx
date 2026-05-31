@@ -1,5 +1,5 @@
 /**
- * EthicFlow — App Entry Point
+ * Ethic-Net — App Entry Point
  * Bootstraps i18n before rendering. Sets initial HTML dir from stored language.
  * Mounts a single AnnounceRegion at the app root for SR live announcements.
  */

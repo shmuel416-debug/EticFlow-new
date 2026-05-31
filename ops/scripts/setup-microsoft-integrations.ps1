@@ -10,7 +10,7 @@ param(
   [Parameter(Mandatory = $false)]
   [string]$KeyVaultName,
   [Parameter(Mandatory = $false)]
-  [string]$SecretPrefix = "ethicflow",
+  [string]$SecretPrefix = "ethic-net",
   [switch]$DryRun
 )
 
@@ -18,7 +18,7 @@ $ErrorActionPreference = "Stop"
 
 function Write-Action {
   param([string]$Message)
-  Write-Host "[EthicFlow/Azure] $Message" -ForegroundColor Cyan
+  Write-Host "[Ethic-Net/Azure] $Message" -ForegroundColor Cyan
 }
 
 function New-AppWithSecret {
@@ -47,7 +47,7 @@ function New-AppWithSecret {
     az ad app update --id $app.appId --web-logout-url $LogoutUrl | Out-Null
   }
 
-  $secret = az ad app credential reset --id $app.appId --append --display-name "ethicflow-secret" | ConvertFrom-Json
+  $secret = az ad app credential reset --id $app.appId --append --display-name "ethic-net-secret" | ConvertFrom-Json
   return @{
     appId = $app.appId
     secret = $secret.password
@@ -100,7 +100,7 @@ $resolvedLogoutUrl = if ([string]::IsNullOrWhiteSpace($FrontendLogoutUrl)) {
 Write-Action "Using callback: $msCallback"
 Write-Action "Using front-channel logout URL: $resolvedLogoutUrl"
 Write-Action "Creating Microsoft SSO app (delegated permissions)."
-$sso = New-AppWithSecret -DisplayName "EthicFlow SSO" -RedirectUris @($msCallback) -LogoutUrl $resolvedLogoutUrl
+$sso = New-AppWithSecret -DisplayName "Ethic-Net SSO" -RedirectUris @($msCallback) -LogoutUrl $resolvedLogoutUrl
 Set-ApiPermissions -AppId $sso.appId -PermissionIds @(
   "e1fe6dd8-ba31-4d61-89e7-88639da4683d=Scope", # User.Read
   "14dad69e-099b-42c9-810b-d002981feec1=Scope", # profile
@@ -109,13 +109,13 @@ Set-ApiPermissions -AppId $sso.appId -PermissionIds @(
 )
 
 Write-Action "Creating Microsoft Calendar app (application permission)."
-$calendar = New-AppWithSecret -DisplayName "EthicFlow Calendar" -RedirectUris @() -LogoutUrl ""
+$calendar = New-AppWithSecret -DisplayName "Ethic-Net Calendar" -RedirectUris @() -LogoutUrl ""
 Set-ApiPermissions -AppId $calendar.appId -PermissionIds @(
   "ef54d2bf-783f-4e0f-bca1-3210c0444d99=Role" # Calendars.ReadWrite (Application)
 )
 
 Write-Action "Creating Microsoft Mail app (application permission)."
-$mail = New-AppWithSecret -DisplayName "EthicFlow Mail" -RedirectUris @() -LogoutUrl ""
+$mail = New-AppWithSecret -DisplayName "Ethic-Net Mail" -RedirectUris @() -LogoutUrl ""
 Set-ApiPermissions -AppId $mail.appId -PermissionIds @(
   "b633e1c5-b582-4048-a93e-9f11b44c7e96=Role" # Mail.Send (Application)
 )

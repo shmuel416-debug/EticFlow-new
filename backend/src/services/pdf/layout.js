@@ -1,5 +1,5 @@
 /**
- * EthicFlow — shared PDF HTML layout utilities.
+ * Ethic-Net — shared PDF HTML layout utilities.
  */
 
 import path from 'path'

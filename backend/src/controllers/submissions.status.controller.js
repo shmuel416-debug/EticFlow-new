@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Submission Status Controller
+ * Ethic-Net — Submission Status Controller
  * Handles all status-transition actions for submissions:
  *   transitionStatus, assignReviewer, submitReview, recordDecision, addComment.
  *

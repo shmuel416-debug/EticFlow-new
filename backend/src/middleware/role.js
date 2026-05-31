@@ -1,5 +1,5 @@
 /**
- * EthicFlow — RBAC Role Authorization Middleware
+ * Ethic-Net — RBAC Role Authorization Middleware
  * Works after authenticate middleware (which sets req.user).
  *
  * Usage:

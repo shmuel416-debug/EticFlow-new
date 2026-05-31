@@ -4,10 +4,10 @@ Date: 2026-04-21T14:15:22
 Environment: local staging clone (prod compose profile)
 
 ## Sequence
-1. Insert verification marker into source DB (ethicflow).
+1. Insert verification marker into source DB (ethic-net).
 2. Execute full DB backup (pg_dump).
 3. Delete marker in source DB to simulate data loss.
-4. Restore backup into clean clone DB (ethicflow_restore_drill).
+4. Restore backup into clean clone DB (ethic-net_restore_drill).
 5. Validate marker exists in restored clone.
 
 ## Validation

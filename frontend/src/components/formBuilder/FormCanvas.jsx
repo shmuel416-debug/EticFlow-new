@@ -1,5 +1,5 @@
 /**
- * EthicFlow — FormCanvas
+ * Ethic-Net — FormCanvas
  * Sortable list of canvas fields + drop zone hint.
  * Wrapped in SortableContext for within-canvas drag-to-reorder.
  * @module components/formBuilder/FormCanvas

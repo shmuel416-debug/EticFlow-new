@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Documents Routes
+ * Ethic-Net — Documents Routes
  * POST   /api/documents/submissions/:subId        — upload file(s)    (RESEARCHER, SECRETARY, ADMIN)
  * GET    /api/documents/submissions/:subId        — list documents     (all authenticated)
  * GET    /api/documents/:id/download              — download file      (all authenticated)

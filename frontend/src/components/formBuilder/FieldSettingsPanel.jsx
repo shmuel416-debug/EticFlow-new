@@ -1,5 +1,5 @@
 /**
- * EthicFlow — FieldSettingsPanel
+ * Ethic-Net — FieldSettingsPanel
  * Edit panel for the currently selected canvas field.
  * Bilingual labels (he + en), required toggle (role="switch"), validation ranges.
  * @module components/formBuilder/FieldSettingsPanel

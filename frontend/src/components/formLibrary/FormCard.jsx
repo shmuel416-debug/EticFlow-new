@@ -1,5 +1,5 @@
 /**
- * EthicFlow — FormCard
+ * Ethic-Net — FormCard
  * Single form card for the Form Library grid (Option B design).
  * Colored top border by status. IS 5568 / WCAG 2.1 AA. Lev palette only.
  * @module components/formLibrary/FormCard

@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Admin Users Page
+ * Ethic-Net — Admin Users Page
  * Full CRUD for system users. Admin-only.
  * Features: search, role filter, status filter, impersonation, edit, deactivate, add user.
  * IS 5568 / WCAG 2.2 AA: 44px targets, aria-labels, keyboard navigation.

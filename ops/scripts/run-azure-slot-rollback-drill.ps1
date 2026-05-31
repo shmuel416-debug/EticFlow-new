@@ -1,5 +1,5 @@
 <#
-  EthicFlow Azure runtime rollback drill.
+  Ethic-Net Azure runtime rollback drill.
   Swaps staging->production, validates health, then swaps back.
 #>
 param(
@@ -21,7 +21,7 @@ $start = Get-Date
 
 function Write-Step {
   param([string]$Message)
-  Write-Host "[EthicFlow/Drill] $Message" -ForegroundColor Green
+  Write-Host "[Ethic-Net/Drill] $Message" -ForegroundColor Green
 }
 
 function Invoke-Swap {

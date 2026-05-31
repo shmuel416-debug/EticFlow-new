@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Protocols Controller
+ * Ethic-Net — Protocols Controller
  * Manages meeting protocol lifecycle: create, edit, finalize, request signatures, sign/decline.
  *
  * Endpoints:

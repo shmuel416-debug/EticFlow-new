@@ -1,5 +1,5 @@
 /**
- * EthicFlow — AiPanel Component
+ * Ethic-Net — AiPanel Component
  * Advisory AI analysis panel for a submission.
  * Shows: risk level, score, flags, suggestions, summary, disclaimer.
  * Allows triggering a new analysis via the API.

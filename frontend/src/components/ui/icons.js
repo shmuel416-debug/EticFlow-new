@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Icon registry
+ * Ethic-Net — Icon registry
  * Central re-export of lucide-react icons used across the app.
  * All icons rendered monochrome; color/size controlled by consumers.
  * Default stroke is 1.75 and color inherits from currentColor.

@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Personal calendar smoke runner.
+ * Ethic-Net — Personal calendar smoke runner.
  * Validates protected status endpoint and OAuth connect redirects.
  */
 

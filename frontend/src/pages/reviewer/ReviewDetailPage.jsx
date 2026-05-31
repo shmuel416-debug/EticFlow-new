@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Reviewer Review Detail Page
+ * Ethic-Net — Reviewer Review Detail Page
  * Shows form answers + comments for the reviewer, with checklist renderer.
  * Refreshed to Lev design system (PageHeader + Card primitives + Button).
  * IS 5568 / WCAG 2.2 AA.

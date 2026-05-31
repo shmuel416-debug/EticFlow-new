@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Drawer primitive
+ * Ethic-Net — Drawer primitive
  * Overlay panel from logical start/end (RTL-aware). Escape closes.
  * Use for mobile navigation or filters; z-index uses --z-drawer.
  */

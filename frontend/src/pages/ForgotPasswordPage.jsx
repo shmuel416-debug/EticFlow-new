@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Forgot Password Page (brand refresh)
+ * Ethic-Net — Forgot Password Page (brand refresh)
  * Always returns success to avoid user enumeration (mirrors backend behavior).
  * IS 5568 / WCAG 2.2 AA compliant.
  */

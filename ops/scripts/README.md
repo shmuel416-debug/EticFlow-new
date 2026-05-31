@@ -1,4 +1,4 @@
-# EthicFlow Ops Scripts
+# Ethic-Net Ops Scripts
 
 Operational scripts to execute go-live tasks quickly and consistently.
 

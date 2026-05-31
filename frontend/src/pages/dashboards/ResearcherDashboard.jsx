@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Researcher Dashboard (brand refresh)
+ * Ethic-Net — Researcher Dashboard (brand refresh)
  * Lev Academic Center palette + design-system primitives (PageHeader,
  * StatCard, Card, EmptyState, Button, Badge). Split-screen: submissions list
  * (right) + timeline detail (left). Real data via GET /api/submissions.

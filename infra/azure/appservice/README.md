@@ -1,6 +1,6 @@
-# EthicFlow Azure App Service Baseline
+# Ethic-Net Azure App Service Baseline
 
-This baseline deploys a stable production foundation for EthicFlow on Azure:
+This baseline deploys a stable production foundation for Ethic-Net on Azure:
 
 - Linux App Service Plan (PremiumV3)
 - Backend App Service (container)
@@ -30,9 +30,9 @@ az account set --subscription "<SUBSCRIPTION_ID>"
 cd infra/azure/appservice
 cp parameters.example.json parameters.prod.json
 # edit parameters.prod.json values
-az group create --name "rg-ethicflow-prod" --location "westeurope"
+az group create --name "rg-ethic-net-prod" --location "westeurope"
 az deployment group create \
-  --resource-group "rg-ethicflow-prod" \
+  --resource-group "rg-ethic-net-prod" \
   --template-file "main.bicep" \
   --parameters "@parameters.prod.json"
 ```
@@ -40,14 +40,14 @@ az deployment group create \
 ## 3) Build and push images to ACR
 
 ```bash
-ACR_NAME="acrethicflowprod"
+ACR_NAME="acrethic-netprod"
 TAG="$(git rev-parse --short HEAD)"
 
 az acr login --name "$ACR_NAME"
-docker build -t "$ACR_NAME.azurecr.io/ethicflow-api:$TAG" ./backend
-docker build -t "$ACR_NAME.azurecr.io/ethicflow-web:$TAG" ./frontend
-docker push "$ACR_NAME.azurecr.io/ethicflow-api:$TAG"
-docker push "$ACR_NAME.azurecr.io/ethicflow-web:$TAG"
+docker build -t "$ACR_NAME.azurecr.io/ethic-net-api:$TAG" ./backend
+docker build -t "$ACR_NAME.azurecr.io/ethic-net-web:$TAG" ./frontend
+docker push "$ACR_NAME.azurecr.io/ethic-net-api:$TAG"
+docker push "$ACR_NAME.azurecr.io/ethic-net-web:$TAG"
 ```
 
 Then update app settings:
@@ -65,15 +65,15 @@ pwsh ./ops/scripts/setup-microsoft-integrations.ps1 \
   -BaseUrl "https://api.ethics.<institution>.ac.il" \
   -OrganizerEmail "ethics@<institution>.ac.il" \
   -FrontendLogoutUrl "https://ethics.<institution>.ac.il/login" \
-  -KeyVaultName "kv-ethicflow-prod" \
-  -SecretPrefix "ethicflow-prod"
+  -KeyVaultName "kv-ethic-net-prod" \
+  -SecretPrefix "ethic-net-prod"
 ```
 
 The script creates:
 
-- `EthicFlow SSO` (delegated: openid/profile/email/User.Read)
-- `EthicFlow Mail` (application: Mail.Send)
-- `EthicFlow Calendar` (application: Calendars.ReadWrite)
+- `Ethic-Net SSO` (delegated: openid/profile/email/User.Read)
+- `Ethic-Net Mail` (application: Mail.Send)
+- `Ethic-Net Calendar` (application: Calendars.ReadWrite)
 
 All apps are created as **single-tenant** (`AzureADMyOrg`).
 

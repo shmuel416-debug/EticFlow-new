@@ -1,4 +1,4 @@
-# EthicFlow Privacy Baseline (ROPA + Registry)
+# Ethic-Net Privacy Baseline (ROPA + Registry)
 
 ## Purpose
 

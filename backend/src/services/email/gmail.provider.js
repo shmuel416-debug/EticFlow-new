@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Gmail Email Provider
+ * Ethic-Net — Gmail Email Provider
  * Sends emails via the Gmail API using OAuth2 (refresh token flow).
  * Emails are sent from the authorized Gmail account (typically the institution's
  * organizational Gmail address, e.g. ethics@institution.ac.il).

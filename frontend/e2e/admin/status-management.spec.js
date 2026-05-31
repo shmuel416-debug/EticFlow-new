@@ -1,5 +1,5 @@
 /**
- * EthicFlow E2E — admin status management smoke test.
+ * Ethic-Net E2E — admin status management smoke test.
  */
 
 import { test, expect } from '../support/fixtures'

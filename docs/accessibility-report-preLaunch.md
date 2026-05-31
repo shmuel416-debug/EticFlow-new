@@ -1,4 +1,4 @@
-# EthicFlow — Accessibility report (pre-launch)
+# Ethic-Net — Accessibility report (pre-launch)
 
 **Standard:** IS 5568 (WCAG 2.1 AA baseline) + WCAG 2.2 AA targets  
 **Last updated:** 2026-04-23  

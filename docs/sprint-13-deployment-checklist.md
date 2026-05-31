@@ -9,7 +9,7 @@
 ### Database
 - [ ] **Backup production database** (if applicable)
   ```bash
-  pg_dump ethicflow_prod > backup_2026-04-28.sql
+  pg_dump ethic-net_prod > backup_2026-04-28.sql
   ```
 - [ ] **Test migration on staging DB** (in isolation worktree if needed)
   ```bash
@@ -118,7 +118,7 @@
 ### Option B: Database Rollback (if migration issue)
 1. Restore from backup:
    ```bash
-   psql ethicflow_prod < backup_2026-04-28.sql
+   psql ethic-net_prod < backup_2026-04-28.sql
    ```
 2. Revert backend code
 3. Redeploy

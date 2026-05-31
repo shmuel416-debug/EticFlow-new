@@ -1,5 +1,5 @@
 /**
- * EthicFlow — VisuallyHidden
+ * Ethic-Net — VisuallyHidden
  * Renders content that is not visible but announced by screen readers.
  * IS 5568 / WCAG — use for labels that would be redundant visually but
  * are required for SR users (e.g. "פתח תפריט" on a hamburger).

@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Status Configuration Service
+ * Ethic-Net — Status Configuration Service
  * Provides cached status metadata, transitions, and permission checks.
  */
 

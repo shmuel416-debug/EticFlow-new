@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Microsoft Email Provider
+ * Ethic-Net — Microsoft Email Provider
  * Sends emails via Microsoft Graph API using Client Credentials (app-level auth).
  * Requires an Azure AD App Registration with Mail.Send permission.
  *

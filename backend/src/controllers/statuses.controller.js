@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Status Management Controller
+ * Ethic-Net — Status Management Controller
  * Provides admin CRUD for submission statuses, transitions, and permissions.
  */
 

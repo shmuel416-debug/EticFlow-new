@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Calendar Service Factory
+ * Ethic-Net — Calendar Service Factory
  * Dispatches calendar operations to the active provider based on CALENDAR_PROVIDER env var.
  * All providers implement: createEvent, updateEvent, deleteEvent.
  *

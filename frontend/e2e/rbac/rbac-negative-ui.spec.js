@@ -1,5 +1,5 @@
 /**
- * EthicFlow E2E — RBAC negative route checks via UI navigation.
+ * Ethic-Net E2E — RBAC negative route checks via UI navigation.
  */
 
 import { test, expect } from '../support/fixtures'

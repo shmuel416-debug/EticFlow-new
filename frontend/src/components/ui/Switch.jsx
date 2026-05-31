@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Switch primitive
+ * Ethic-Net — Switch primitive
  * role="switch" toggle (WCAG pattern). Min 44×44 touch target.
  */
 

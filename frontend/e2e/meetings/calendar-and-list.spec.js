@@ -1,5 +1,5 @@
 /**
- * EthicFlow E2E — meetings list and calendar V2 UI checks.
+ * Ethic-Net E2E — meetings list and calendar V2 UI checks.
  */
 
 import { test, expect } from '../support/fixtures'

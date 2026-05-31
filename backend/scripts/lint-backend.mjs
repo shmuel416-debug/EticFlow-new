@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Backend lint script
+ * Ethic-Net — Backend lint script
  * Runs JavaScript syntax checks on backend source files.
  */
 import { readdir } from 'node:fs/promises'

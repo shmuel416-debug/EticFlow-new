@@ -1,9 +1,9 @@
 /**
- * EthicFlow — Meetings List Page
+ * Ethic-Net — Meetings List Page
  * Shows all committee meetings with filter tabs (upcoming/past/all).
  * Secretary/Admin can create meetings and invite attendees.
  * Displays calendar sync status (Microsoft / Google).
- * Rebuilt on the EthicFlow design system (PageHeader, Card, Badge, Tabs,
+ * Rebuilt on the Ethic-Net design system (PageHeader, Card, Badge, Tabs,
  * Button, Modal, FormField, Input) with the Lev palette and lucide-react icons.
  * IS 5568 / WCAG 2.2 AA.
  */

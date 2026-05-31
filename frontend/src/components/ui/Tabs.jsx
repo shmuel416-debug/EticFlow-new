@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Tabs primitive (uncontrolled or controlled).
+ * Ethic-Net — Tabs primitive (uncontrolled or controlled).
  * Accessible: role="tablist" + role="tab" + aria-selected + arrow-key nav.
  * Two visual styles:
  *   - 'pills' (default): rounded pill buttons, great for filter tabs on list pages

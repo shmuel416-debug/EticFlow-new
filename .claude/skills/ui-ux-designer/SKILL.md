@@ -134,7 +134,7 @@ Which option do you prefer? (A/B/C, or mix elements from multiple)
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EthicFlow — {PageName} Design Options</title>
+  <title>Ethic-Net — {PageName} Design Options</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
@@ -203,7 +203,7 @@ Which option do you prefer? (A/B/C, or mix elements from multiple)
 </html>
 ```
 
-## Design Principles for EthicFlow
+## Design Principles for Ethic-Net
 
 ### Colors
 - Primary: Blue (#1e40af) — trust, academia

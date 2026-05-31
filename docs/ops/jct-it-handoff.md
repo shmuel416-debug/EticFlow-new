@@ -8,7 +8,7 @@
 
 ## רקע
 
-אני פורס מערכת EthicFlow ב-Subscription "Azure plan" של JCT. תודה על רישום Postgres provider אתמול — זה עבד.
+אני פורס מערכת Ethic-Net ב-Subscription "Azure plan" של JCT. תודה על רישום Postgres provider אתמול — זה עבד.
 
 אני נתקל ב-`Insufficient privileges to complete the operation` כשאני מנסה ליצור Service Principal עבור CI/CD:
 
@@ -69,10 +69,10 @@ az rest --method POST `
 
 ## פעולה עתידית (בעוד ~3-5 ימים, אבקש בנפרד)
 
-לאחר שאצור 3 App Registrations עבור EthicFlow:
-- `EthicFlow SSO` — Delegated: openid, profile, email, User.Read
-- `EthicFlow Mail` — Application: Mail.Send (scope: רק `ethicscommittee@jct.ac.il`)
-- `EthicFlow Calendar` — Application: Calendars.ReadWrite (scope: רק `ethicscommittee@jct.ac.il`)
+לאחר שאצור 3 App Registrations עבור Ethic-Net:
+- `Ethic-Net SSO` — Delegated: openid, profile, email, User.Read
+- `Ethic-Net Mail` — Application: Mail.Send (scope: רק `ethicscommittee@jct.ac.il`)
+- `Ethic-Net Calendar` — Application: Calendars.ReadWrite (scope: רק `ethicscommittee@jct.ac.il`)
 
 אבקש בנפרד אז את **Admin Consent** לכל אחת מהן (זה מצריך Global Admin של JCT).
 

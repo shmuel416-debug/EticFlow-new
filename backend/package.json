@@ -1,7 +1,7 @@
 {
-  "name": "ethicflow-backend",
+  "name": "ethic-net-backend",
   "version": "1.0.0",
-  "description": "EthicFlow backend API — Ethics Committee Management System",
+  "description": "Ethic-Net backend API — Ethics Committee Management System",
   "type": "module",
   "main": "src/index.js",
   "scripts": {

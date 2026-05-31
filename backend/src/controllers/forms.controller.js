@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Forms Controller
+ * Ethic-Net — Forms Controller
  * Manages FormConfig CRUD: create draft, update schema, publish, archive.
  * Status is derived from isPublished + isActive fields.
  *   Draft:     isPublished=false, isActive=true

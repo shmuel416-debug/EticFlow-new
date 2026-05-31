@@ -1,5 +1,5 @@
 /**
- * EthicFlow — AI Mock Provider
+ * Ethic-Net — AI Mock Provider
  * Returns deterministic, rule-based analysis without any external API call.
  * Used in development and testing. The result shape is identical to the
  * Gemini provider so the consumer never needs to know which is active.

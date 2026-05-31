@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Textarea primitive
+ * Ethic-Net — Textarea primitive
  */
 
 import React from 'react'

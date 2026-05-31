@@ -1,5 +1,5 @@
 /**
- * EthicFlow — UI primitives barrel
+ * Ethic-Net — UI primitives barrel
  * Single import point for all design-system components.
  *   import { Button, Card, PageHeader } from '@/components/ui'
  */

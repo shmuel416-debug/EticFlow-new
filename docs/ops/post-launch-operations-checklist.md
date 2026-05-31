@@ -1,4 +1,4 @@
-# EthicFlow Post-Launch Operations Checklist
+# Ethic-Net Post-Launch Operations Checklist
 
 ## Monitoring
 

@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Microsoft Calendar Provider
+ * Ethic-Net — Microsoft Calendar Provider
  * Creates, updates, and deletes Outlook calendar events via Microsoft Graph API.
  * Attendees automatically receive Outlook meeting invitations.
  *
@@ -63,7 +63,7 @@ function getOrganizerEmail() {
 }
 
 /**
- * Converts EthicFlow attendees array to Graph API format.
+ * Converts Ethic-Net attendees array to Graph API format.
  * @param {Array<{email: string, name: string}>} attendees
  * @returns {Array<object>}
  */
@@ -75,7 +75,7 @@ function toGraphAttendees(attendees = []) {
 }
 
 /**
- * Builds a Graph API event body from EthicFlow event data.
+ * Builds a Graph API event body from Ethic-Net event data.
  * @param {{ title: string, description: string, startTime: Date, endTime: Date, location?: string, attendees: Array<{email: string, name: string}> }} eventData
  * @returns {object}
  */

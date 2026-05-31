@@ -1,5 +1,5 @@
 /**
- * EthicFlow — AppError Class
+ * Ethic-Net — AppError Class
  * Custom error class for all application errors.
  * Use static factory methods for common error types.
  * Error format: { error: string, code: string, details?: object }

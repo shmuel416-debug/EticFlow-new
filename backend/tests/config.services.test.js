@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Service config tests
+ * Ethic-Net — Service config tests
  * Verifies default and env-driven provider resolution.
  */
 

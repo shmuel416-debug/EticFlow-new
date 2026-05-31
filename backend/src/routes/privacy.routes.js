@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Privacy Routes
+ * Ethic-Net — Privacy Routes
  * Consent capture + data subject rights endpoints.
  */
 

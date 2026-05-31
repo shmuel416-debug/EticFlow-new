@@ -1,4 +1,4 @@
-# EthicFlow @ JCT — Runbook פריסה לפרודקשן
+# Ethic-Net @ JCT — Runbook פריסה לפרודקשן
 
 > מסמך עבודה ייעודי ל-Jerusalem College of Technology. אם אתה ממכון אחר — ראה `docs/ops/azure-appservice-checklist-he.md` (מודל סלוטים) או `docs/ops/azure-two-environments-setup-he.md` (מודל 2 סביבות).
 
@@ -58,9 +58,9 @@ Azure plan subscription / acad.jct.ac.il tenant
     └── law-ethics-net          Log Analytics Workspace
 
 Microsoft Entra (לבירור — acad.jct.ac.il או jct.ac.il)
-├── EthicFlow SSO             Delegated (openid, profile, email, User.Read)
-├── EthicFlow Mail            Application (Mail.Send)
-└── EthicFlow Calendar        Application (Calendars.ReadWrite)
+├── Ethic-Net SSO             Delegated (openid, profile, email, User.Read)
+├── Ethic-Net Mail            Application (Mail.Send)
+└── Ethic-Net Calendar        Application (Calendars.ReadWrite)
 ```
 
 ---
@@ -228,9 +228,9 @@ pwsh ./ops/scripts/setup-microsoft-integrations.ps1 `
 ```
 
 הסקריפט יוצר 3 Apps:
-- `EthicFlow SSO` — Delegated (openid, profile, email, User.Read)
-- `EthicFlow Mail` — Application (Mail.Send)
-- `EthicFlow Calendar` — Application (Calendars.ReadWrite)
+- `Ethic-Net SSO` — Delegated (openid, profile, email, User.Read)
+- `Ethic-Net Mail` — Application (Mail.Send)
+- `Ethic-Net Calendar` — Application (Calendars.ReadWrite)
 
 **אישור Admin Consent (חובה):** היכנס לפורטל Entra → App Registrations → לכל אפליקציה → API Permissions → "Grant admin consent for JCT".
 
@@ -406,8 +406,8 @@ pwsh ./ops/scripts/run-azure-slot-rollback-drill.ps1 `
 
 > הסקריפט בנוי לסלוטים. ב-B1 ללא slots, ה-rollback הוא דרך תיוג חזרה ל-image ישן:
 > ```powershell
-> az acr repository show-tags --name "acrethicsnet" --repository "ethicflow-api" --orderby time_desc --top 5
-> az webapp config container set --resource-group "RG-ethics-net" --name "app-ethics-net-api" --container-image-name "acrethicsnet.azurecr.io/ethicflow-api:<PREVIOUS_GOOD_TAG>"
+> az acr repository show-tags --name "acrethicsnet" --repository "ethic-net-api" --orderby time_desc --top 5
+> az webapp config container set --resource-group "RG-ethics-net" --name "app-ethics-net-api" --container-image-name "acrethicsnet.azurecr.io/ethic-net-api:<PREVIOUS_GOOD_TAG>"
 > az webapp restart --resource-group "RG-ethics-net" --name "app-ethics-net-api"
 > ```
 
@@ -444,7 +444,7 @@ pwsh ./ops/scripts/run-azure-slot-rollback-drill.ps1 `
 
 1. https://dev.azure.com → Create new organization.
 2. שם מוצע: `jct-ethics-net` (URL: `https://dev.azure.com/jct-ethics-net`).
-3. צור פרויקט: `EthicFlow` (Private, Git).
+3. צור פרויקט: `Ethic-Net` (Private, Git).
 
 ### 10.2 מעבר ה-Repo
 
@@ -453,7 +453,7 @@ pwsh ./ops/scripts/run-azure-slot-rollback-drill.ps1 `
 git clone --mirror https://github.com/<owner>/EticFlow.git
 
 cd EticFlow.git
-git remote set-url --push origin https://dev.azure.com/jct-ethics-net/EthicFlow/_git/EthicFlow
+git remote set-url --push origin https://dev.azure.com/jct-ethics-net/Ethic-Net/_git/Ethic-Net
 git push --mirror
 ```
 
@@ -552,7 +552,7 @@ API:          app-ethics-net-api               → api.ethics.jct.ac.il
 Web:          app-ethics-net-web               → ethics.jct.ac.il
 ACR:          acrethicsnet.azurecr.io
 Postgres:     pg-ethics-net (B1ms, 32GB, private)
-DB name:      ethicflow
+DB name:      ethic-net
 DB user:      ethicsnetadmin
 KV:           kv-ethics-net
 Storage:      stethicsnet01 (files/uploads, files/generated)

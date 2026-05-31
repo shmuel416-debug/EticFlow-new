@@ -36,7 +36,7 @@
 | Field | Value |
 |-------|-------|
 | **File** | `frontend/index.html:7` + all pages |
-| **Issue** | `<title>EthicFlow — ועדת האתיקה</title>` is always the same. Screen reader users and keyboard-only users rely on page titles to orient themselves. Dashboard, Form Builder, Submit — all have identical browser tab titles. |
+| **Issue** | `<title>Ethic-Net — ועדת האתיקה</title>` is always the same. Screen reader users and keyboard-only users rely on page titles to orient themselves. Dashboard, Form Builder, Submit — all have identical browser tab titles. |
 | **Impact** | Disorienting for screen reader users navigating multiple tabs. |
 | **Fix** | Add `document.title = t('pageTitles.dashboard')` in each page component's useEffect (or use react-helmet-async) |
 

@@ -1,4 +1,4 @@
-# EthicFlow Azure Baseline (Terraform)
+# Ethic-Net Azure Baseline (Terraform)
 
 This Terraform baseline provisions a minimal production host on Azure for running the existing Docker Compose production stack.
 
@@ -32,11 +32,11 @@ terraform plan
 terraform apply
 ```
 
-After `terraform apply`, SSH to the created host and deploy EthicFlow with:
+After `terraform apply`, SSH to the created host and deploy Ethic-Net with:
 
 ```bash
 git clone <your-repo-url>
-cd EthicFlow
+cd Ethic-Net
 docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 ```
 

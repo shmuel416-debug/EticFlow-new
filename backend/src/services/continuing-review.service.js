@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Continuing Review Service
+ * Ethic-Net — Continuing Review Service
  * Sends annual continuing-review reminders for approved submissions.
  */
 

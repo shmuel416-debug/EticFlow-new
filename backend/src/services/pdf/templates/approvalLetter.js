@@ -1,5 +1,5 @@
 /**
- * EthicFlow — approval letter HTML templates.
+ * Ethic-Net — approval letter HTML templates.
  */
 
 import { escapeHtml, pageShell } from '../layout.js'
@@ -91,7 +91,7 @@ function buildEnSection(submission, template, ctx, signatureDataUrl) {
   <div class="header">
     <div class="brand-row">
       <div>
-        <div class="brand-name">EthicFlow</div>
+        <div class="brand-name">Ethic-Net</div>
         <div class="header-sub">Ethics Committee Management System — ${escapeHtml(ctx.institutionName)}</div>
       </div>
       <div class="header-date">Generated: ${escapeHtml(ctx.issueDate)}</div>
@@ -142,7 +142,7 @@ function buildEnSection(submission, template, ctx, signatureDataUrl) {
     </div>
     <div class="footer">
       ${template.legalFooter ? `<div class="footer-legal">${escapeHtml(template.legalFooter)}</div>` : ''}
-      This document was generated automatically by EthicFlow • ${escapeHtml(ctx.institutionName)} • ${escapeHtml(ctx.issueDate)} • Ref: ${escapeHtml(ctx.applicationId)}
+      This document was generated automatically by Ethic-Net • ${escapeHtml(ctx.institutionName)} • ${escapeHtml(ctx.issueDate)} • Ref: ${escapeHtml(ctx.applicationId)}
     </div>
   </div>
 </div>`

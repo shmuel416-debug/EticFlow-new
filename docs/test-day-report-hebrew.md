@@ -1,4 +1,4 @@
-# דוח יום בדיקות מורחב — EthicFlow Production
+# דוח יום בדיקות מורחב — Ethic-Net Production
 
 ## פרטי הרצה
 - תאריך: 21 באפריל 2026

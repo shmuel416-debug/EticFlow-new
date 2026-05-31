@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Rate Limiting Middleware
+ * Ethic-Net — Rate Limiting Middleware
  * Two limiters: general API and strict login limiter.
  * Values loaded from environment variables (see .env.example).
  *

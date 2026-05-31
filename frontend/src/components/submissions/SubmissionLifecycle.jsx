@@ -1,5 +1,5 @@
 /**
- * EthicFlow — SubmissionLifecycle Component
+ * Ethic-Net — SubmissionLifecycle Component
  * Shared lifecycle timeline for researcher and staff views.
  */
 import { Check } from 'lucide-react'

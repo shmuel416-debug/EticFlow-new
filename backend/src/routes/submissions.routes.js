@@ -1,5 +1,5 @@
 /**
- * EthicFlow — Submissions Routes
+ * Ethic-Net — Submissions Routes
  * GET    /api/submissions           — list (role-filtered)       (all authenticated)
  * GET    /api/submissions/coi-candidates — COI selector options  (committee)
  * GET    /api/submissions/:id       — single + versions + comments (all authenticated)

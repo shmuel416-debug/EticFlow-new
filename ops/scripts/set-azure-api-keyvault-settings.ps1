@@ -1,5 +1,5 @@
 <#
-  EthicFlow production API app settings bootstrap.
+  Ethic-Net production API app settings bootstrap.
   Applies non-secret settings and Key Vault references to API App Service.
 #>
 param(
@@ -16,14 +16,14 @@ param(
   [Parameter(Mandatory = $true)]
   [string]$OrganizerEmail,
   [Parameter(Mandatory = $false)]
-  [string]$SecretPrefix = "ethicflow-prod"
+  [string]$SecretPrefix = "ethic-net-prod"
 )
 
 $ErrorActionPreference = "Stop"
 
 function Write-Step {
   param([string]$Message)
-  Write-Host "[EthicFlow/Azure] $Message" -ForegroundColor Cyan
+  Write-Host "[Ethic-Net/Azure] $Message" -ForegroundColor Cyan
 }
 
 function New-KvReference {

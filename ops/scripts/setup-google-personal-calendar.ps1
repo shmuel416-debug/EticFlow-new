@@ -10,7 +10,7 @@ $ErrorActionPreference = "Stop"
 
 function Write-Action {
   param([string]$Message)
-  Write-Host "[EthicFlow/Google] $Message" -ForegroundColor Yellow
+  Write-Host "[Ethic-Net/Google] $Message" -ForegroundColor Yellow
 }
 
 $normalizedBase = $BaseUrl.TrimEnd("/")

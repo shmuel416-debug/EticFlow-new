@@ -1,5 +1,5 @@
 /**
- * EthicFlow — User Microsoft Calendar Provider
+ * Ethic-Net — User Microsoft Calendar Provider
  * OAuth + per-user event operations for personal Outlook calendars.
  */
 

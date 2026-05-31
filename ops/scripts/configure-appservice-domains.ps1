@@ -1,5 +1,5 @@
 <#
-  EthicFlow App Service domain + managed certificate helper.
+  Ethic-Net App Service domain + managed certificate helper.
   Prints asuid verification values and can bind hostnames/certificates after DNS is ready.
 #>
 param(
@@ -20,7 +20,7 @@ $ErrorActionPreference = "Stop"
 
 function Write-Step {
   param([string]$Message)
-  Write-Host "[EthicFlow/Azure] $Message" -ForegroundColor Cyan
+  Write-Host "[Ethic-Net/Azure] $Message" -ForegroundColor Cyan
 }
 
 function Get-VerificationId {
