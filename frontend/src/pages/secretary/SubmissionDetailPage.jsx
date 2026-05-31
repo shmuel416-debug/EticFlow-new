@@ -37,7 +37,7 @@ export default function SubmissionDetailPage() {
   const { t, i18n }      = useTranslation()
   const { id }           = useParams()
   const location         = useLocation()
-  const { user }         = useAuth()
+  const { user, setActiveRole } = useAuth()
   const [submission,     setSubmission]     = useState(null)
   const [loading,        setLoading]        = useState(true)
   const [error,          setError]          = useState('')
@@ -46,6 +46,14 @@ export default function SubmissionDetailPage() {
   const [successMsg,     setSuccessMsg]     = useState('')
   const [pdfLoading,     setPdfLoading]     = useState(null)
   const { statusMap }    = useStatusConfig({ submissionId: id })
+
+  useEffect(() => {
+    if (!Array.isArray(user?.roles) || user.roles.length === 0) return
+    const preferredRole = ['SECRETARY', 'CHAIRMAN', 'ADMIN'].find((role) => user.roles.includes(role))
+    if (!preferredRole) return
+    if (user.role === preferredRole) return
+    setActiveRole(preferredRole)
+  }, [user?.roles, user?.role, setActiveRole])
 
   /**
    * Resolves status label by locale with i18n fallback.
