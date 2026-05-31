@@ -286,24 +286,18 @@ export default function SubmissionStatusPage() {
             )}
 
             {submission.status === 'APPROVED' && user?.role !== 'REVIEWER' && (
-              <div className="flex gap-2">
-                <Button
-                  variant="secondary"
-                  fullWidth
+              <div className="flex gap-2 flex-wrap items-center">
+                <button
+                  type="button"
                   onClick={() => handlePreviewPdf('he')}
                   disabled={pdfLoading !== null}
-                  loading={pdfLoading === 'preview-he'}
-                  leftIcon={
-                    <Eye
-                      size={16}
-                      strokeWidth={1.75}
-                      aria-hidden="true"
-                      focusable="false"
-                    />
-                  }
+                  aria-label={t('statusPage.viewPdf')}
+                  title={t('statusPage.viewPdf')}
+                  className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg transition disabled:opacity-60 disabled:cursor-not-allowed hover:bg-[var(--lev-teal-50)]"
+                  style={{ color: 'var(--lev-navy)' }}
                 >
-                  {t('statusPage.viewPdf')}
-                </Button>
+                  <Eye size={20} strokeWidth={1.75} aria-hidden="true" focusable="false" />
+                </button>
                 <Button
                   variant="primary"
                   fullWidth
@@ -321,23 +315,17 @@ export default function SubmissionStatusPage() {
                 >
                   {t('statusPage.downloadPdf')}
                 </Button>
-                <Button
-                  variant="secondary"
-                  fullWidth
+                <button
+                  type="button"
                   onClick={() => handlePreviewPdf('en')}
                   disabled={pdfLoading !== null}
-                  loading={pdfLoading === 'preview-en'}
-                  leftIcon={
-                    <Eye
-                      size={16}
-                      strokeWidth={1.75}
-                      aria-hidden="true"
-                      focusable="false"
-                    />
-                  }
+                  aria-label={t('statusPage.viewPdfEn')}
+                  title={t('statusPage.viewPdfEn')}
+                  className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg transition disabled:opacity-60 disabled:cursor-not-allowed hover:bg-[var(--lev-teal-50)]"
+                  style={{ color: 'var(--lev-navy)' }}
                 >
-                  {t('statusPage.viewPdfEn')}
-                </Button>
+                  <Eye size={20} strokeWidth={1.75} aria-hidden="true" focusable="false" />
+                </button>
                 <Button
                   variant="secondary"
                   fullWidth
