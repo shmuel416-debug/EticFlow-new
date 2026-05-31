@@ -440,13 +440,14 @@ export default function SubmitPage() {
   const [submissionId, setSubmissionId] = useState(editId ?? null)
   const [successId,    setSuccessId]    = useState('')
   const [previewLang,  setPreviewLang]  = useState(lang)
+  const userRoles = Array.isArray(user?.roles) ? user.roles : []
+  const hasResearcherRole = userRoles.includes('RESEARCHER')
+  const shouldSwitchToResearcher = hasResearcherRole && user?.role !== 'RESEARCHER'
 
   useEffect(() => {
-    if (!Array.isArray(user?.roles) || user.roles.length === 0) return
-    if (!user.roles.includes('RESEARCHER')) return
-    if (user.role === 'RESEARCHER') return
+    if (!shouldSwitchToResearcher) return
     setActiveRole('RESEARCHER')
-  }, [user?.roles, user?.role, setActiveRole])
+  }, [shouldSwitchToResearcher, setActiveRole])
 
   const fields = useMemo(() => {
     const schema = formMeta?.schemaJson
@@ -475,6 +476,19 @@ export default function SubmitPage() {
     const leftEditRoute = Boolean(wasEdit) && !editId
 
     async function run() {
+      if (!hasResearcherRole) {
+        if (!cancelled) {
+          setLoadError(t('errors.FORBIDDEN'))
+          setLoading(false)
+        }
+        return
+      }
+
+      if (shouldSwitchToResearcher) {
+        if (!cancelled) setLoading(true)
+        return
+      }
+
       if (leftEditRoute) {
         setFormMeta(null)
         setValues({})
@@ -573,7 +587,7 @@ export default function SubmitPage() {
 
     run()
     return () => { cancelled = true }
-  }, [t, editId, formIdFromQuery, formMeta, availableList])
+  }, [t, editId, formIdFromQuery, formMeta, availableList, hasResearcherRole, shouldSwitchToResearcher])
 
   const handleConfirmFormChoice = useCallback(() => {
     if (!selectedFormId) return
