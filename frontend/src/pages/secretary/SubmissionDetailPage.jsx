@@ -29,6 +29,8 @@ import {
   Spinner,
 } from '../../components/ui'
 
+const APPROVAL_PDF_TIMEOUT_MS = 60000
+
 /**
  * Shared submission detail page for staff roles.
  * @returns {JSX.Element}
@@ -141,7 +143,7 @@ export default function SubmissionDetailPage() {
       const response = await api.post(
         `/submissions/${id}/approval-letter?lang=${lang}`,
         {},
-        { responseType: 'blob' }
+        { responseType: 'blob', timeout: APPROVAL_PDF_TIMEOUT_MS }
       )
       const url  = URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }))
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)

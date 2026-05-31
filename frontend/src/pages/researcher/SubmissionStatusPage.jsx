@@ -37,6 +37,8 @@ import {
   FormField,
 } from '../../components/ui'
 
+const APPROVAL_PDF_TIMEOUT_MS = 60000
+
 /**
  * Renders SLA indicator for a submission.
  * @param {{ sla: object|null, nowMs: number }} props
@@ -117,7 +119,7 @@ export default function SubmissionStatusPage() {
       const response = await api.post(
         `/submissions/${id}/approval-letter?lang=${lang}`,
         {},
-        { responseType: 'blob' }
+        { responseType: 'blob', timeout: APPROVAL_PDF_TIMEOUT_MS }
       )
       const url  = URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }))
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
