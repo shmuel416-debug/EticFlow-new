@@ -235,23 +235,26 @@ function parseAbsoluteOrigin(value) {
 }
 
 /**
- * Returns true when two hosts share the same root domain (last 2 labels).
- * @param {string} hostA
- * @param {string} hostB
- * @returns {boolean}
+ * Returns explicitly configured production SSO frontend origins.
+ * @param {string} fallback
+ * @returns {Set<string>}
  */
-function sharesRootDomain(hostA, hostB) {
-  const partsA = hostA.split('.').filter(Boolean)
-  const partsB = hostB.split('.').filter(Boolean)
-  if (partsA.length < 2 || partsB.length < 2) return false
-  const rootA = partsA.slice(-2).join('.')
-  const rootB = partsB.slice(-2).join('.')
-  return rootA === rootB
+function getAllowedSsoFrontendOrigins(fallback) {
+  const origins = new Set()
+  const fallbackOrigin = parseAbsoluteOrigin(fallback)
+  if (fallbackOrigin) origins.add(fallbackOrigin)
+
+  const extraOrigins = String(process.env.SSO_ALLOWED_FRONTEND_ORIGINS || '').split(',')
+  for (const origin of extraOrigins) {
+    const parsedOrigin = parseAbsoluteOrigin(origin)
+    if (parsedOrigin) origins.add(parsedOrigin)
+  }
+  return origins
 }
 
 /**
  * Resolves a safe frontend URL from explicit candidate or standard resolution.
- * In production, candidate is accepted only if it shares root domain with FRONTEND_URL.
+ * In production, candidate is accepted only if explicitly configured.
  * @param {import('express').Request} req
  * @param {string|undefined|null} candidate
  * @returns {string}
@@ -264,12 +267,8 @@ function resolveFrontendUrlForSso(req, candidate) {
   const isProd = process.env.NODE_ENV === 'production'
   if (!isProd) return parsedCandidate
 
-  const parsedFallback = parseAbsoluteOrigin(fallback)
-  if (!parsedFallback) return fallback
-
-  const sameHost = parsedCandidate === parsedFallback
-  const sameRootDomain = sharesRootDomain(new URL(parsedCandidate).hostname, new URL(parsedFallback).hostname)
-  return (sameHost || sameRootDomain) ? parsedCandidate : fallback
+  const allowedOrigins = getAllowedSsoFrontendOrigins(fallback)
+  return allowedOrigins.has(parsedCandidate) ? parsedCandidate : fallback
 }
 
 /**
