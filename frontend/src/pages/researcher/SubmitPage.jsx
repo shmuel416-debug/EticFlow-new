@@ -34,6 +34,7 @@ import {
   EmptyState,
   MobileStickyBar,
 } from '../../components/ui'
+import { useAuth } from '../../context/AuthContext'
 
 /* ── Summary sidebar ─────────────────────── */
 /**
@@ -416,6 +417,7 @@ function getLoadErrorMessage(err, t) {
  */
 export default function SubmitPage() {
   const { t, i18n } = useTranslation()
+  const { user, setActiveRole } = useAuth()
   const navigate    = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const { id: editId } = useParams()          // present on /submissions/:id/edit
@@ -438,6 +440,13 @@ export default function SubmitPage() {
   const [submissionId, setSubmissionId] = useState(editId ?? null)
   const [successId,    setSuccessId]    = useState('')
   const [previewLang,  setPreviewLang]  = useState(lang)
+
+  useEffect(() => {
+    if (!Array.isArray(user?.roles) || user.roles.length === 0) return
+    if (!user.roles.includes('RESEARCHER')) return
+    if (user.role === 'RESEARCHER') return
+    setActiveRole('RESEARCHER')
+  }, [user?.roles, user?.role, setActiveRole])
 
   const fields = useMemo(() => {
     const schema = formMeta?.schemaJson
