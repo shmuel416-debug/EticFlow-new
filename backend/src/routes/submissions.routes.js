@@ -27,6 +27,7 @@ import prisma from '../config/database.js'
 import fs from 'fs'
 
 const router = Router()
+const APPROVAL_COMMITTEE_ROLES = new Set(['CHAIRMAN', 'SECRETARY', 'ADMIN'])
 
 // ─────────────────────────────────────────────
 // ZOD SCHEMAS
@@ -238,17 +239,15 @@ router.post(
   authenticate,
   async (req, res, next) => {
     try {
-      const { id }   = req.params
+      const { id } = req.params
       const role = getRequestRole(req)
-
-      // REVIEWER is never allowed
-      if (role === 'REVIEWER') {
-        throw new AppError('Forbidden', 'FORBIDDEN', 403)
-      }
-
-      // RESEARCHER may only download their own submission's letter
-      if (role === 'RESEARCHER') {
-        const sub = await prisma.submission.findUnique({ where: { id }, select: { authorId: true } })
+      const isCommitteeRole = APPROVAL_COMMITTEE_ROLES.has(role)
+      // Non-committee roles (RESEARCHER/REVIEWER) may download only their own submission letter.
+      if (!isCommitteeRole) {
+        const sub = await prisma.submission.findUnique({
+          where: { id },
+          select: { authorId: true },
+        })
         if (!sub || sub.authorId !== req.user.id) {
           throw new AppError('Forbidden', 'FORBIDDEN', 403)
         }
