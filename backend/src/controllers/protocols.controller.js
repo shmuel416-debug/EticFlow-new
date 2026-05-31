@@ -38,6 +38,76 @@ function hashToken(rawToken) {
 }
 
 /**
+ * Builds protocol signing email HTML with explicit approve/decline buttons.
+ * @param {{
+ *  signerName: string,
+ *  protocolTitle: string,
+ *  reviewUrl: string,
+ *  approveUrl: string,
+ *  declineUrl: string
+ * }} params
+ * @returns {string}
+ */
+function buildSignatureEmailHtml({ signerName, protocolTitle, reviewUrl, approveUrl, declineUrl }) {
+  return `
+    <div dir="rtl" style="font-family:sans-serif">
+      <h2>בקשה לחתימה על פרוטוקול ועדת אתיקה</h2>
+      <p>שלום ${signerName},</p>
+      <p>הינך מוזמן לחתום על פרוטוקול פגישת ועדת האתיקה: <strong>${protocolTitle}</strong></p>
+      <p>אפשר לבחור ישירות מתוך המייל:</p>
+      <div style="margin:16px 0;display:flex;gap:12px;flex-wrap:wrap">
+        <a href="${approveUrl}" style="background:#166534;color:#fff;padding:10px 18px;text-decoration:none;border-radius:4px;display:inline-block">
+          מאשר
+        </a>
+        <a href="${declineUrl}" style="background:#b91c1c;color:#fff;padding:10px 18px;text-decoration:none;border-radius:4px;display:inline-block">
+          לא מאשר
+        </a>
+      </div>
+      <p>או להיכנס לעמוד החתימה המלא:</p>
+      <a href="${reviewUrl}" style="background:#1e3a5f;color:#fff;padding:10px 20px;text-decoration:none;border-radius:4px;display:inline-block;margin:8px 0 16px">
+        לצפייה וחתימה על הפרוטוקול
+      </a>
+      <p style="color:#64748b;font-size:12px">הקישור בתוקף ל-${TOKEN_TTL_HOURS} שעות.</p>
+      <p style="color:#64748b;font-size:12px">אם לא ביקשת זאת, ניתן להתעלם ממייל זה.</p>
+    </div>
+  `
+}
+
+/**
+ * Creates a new signature row or refreshes token on existing row.
+ * @param {{
+ *  protocolId: string,
+ *  signerId: string,
+ *  existingSignature: { id: string, status: string }|undefined
+ * }} params
+ * @returns {Promise<{ rawToken: string, created: boolean }>}
+ */
+async function createOrRefreshSignatureToken({ protocolId, signerId, existingSignature }) {
+  const rawToken = crypto.randomBytes(32).toString('hex')
+  const tokenExpiry = new Date(Date.now() + TOKEN_TTL_HOURS * 60 * 60 * 1000)
+
+  if (!existingSignature) {
+    await prisma.protocolSignature.create({
+      data: { protocolId, userId: signerId, token: hashToken(rawToken), tokenExpiry, status: 'PENDING' },
+    })
+    return { rawToken, created: true }
+  }
+
+  await prisma.protocolSignature.update({
+    where: { id: existingSignature.id },
+    data: {
+      token: hashToken(rawToken),
+      tokenExpiry,
+      status: 'PENDING',
+      signedAt: null,
+      ipAddress: null,
+      isActive: true,
+    },
+  })
+  return { rawToken, created: false }
+}
+
+/**
  * Records an audit row for blocked signer role validation.
  * @param {import('express').Request} req
  * @param {import('express').Response} res
@@ -346,45 +416,65 @@ export async function requestSignatures(req, res, next) {
     // Fetch all existing signature records in one query — avoids N+1
     const existingSigs = await prisma.protocolSignature.findMany({
       where:  { protocolId: id, userId: { in: signers.map(s => s.id) } },
-      select: { userId: true },
+      select: { id: true, userId: true, status: true },
     })
-    const alreadySigned = new Set(existingSigs.map(s => s.userId))
-
-    const created = []
+    const existingByUserId = new Map(existingSigs.map((signature) => [signature.userId, signature]))
+    const delivery = {
+      created: 0,
+      resent: 0,
+      skippedSigned: 0,
+      failedRecipients: [],
+    }
 
     for (const signer of signers) {
-      if (alreadySigned.has(signer.id)) continue
+      const existing = existingByUserId.get(signer.id)
+      if (existing?.status === 'SIGNED') {
+        delivery.skippedSigned += 1
+        continue
+      }
 
-      const rawToken    = crypto.randomBytes(32).toString('hex')
-      const tokenExpiry = new Date(Date.now() + TOKEN_TTL_HOURS * 60 * 60 * 1000)
-
-      const sig = await prisma.protocolSignature.create({
-        data: { protocolId: id, userId: signer.id, token: hashToken(rawToken), tokenExpiry, status: 'PENDING' },
+      const { rawToken, created } = await createOrRefreshSignatureToken({
+        protocolId: id,
+        signerId: signer.id,
+        existingSignature: existing,
       })
 
-      const signUrl = `${frontendUrl}/protocol/sign/${rawToken}`
-      await sendEmail({
-        to:      signer.email,
-        subject: `בקשה לחתימה על פרוטוקול: ${protocol.title}`,
-        html: `
-          <div dir="rtl" style="font-family:sans-serif">
-            <h2>בקשה לחתימה על פרוטוקול ועדת אתיקה</h2>
-            <p>שלום ${signer.fullName},</p>
-            <p>הינך מוזמן לחתום על פרוטוקול פגישת ועדת האתיקה: <strong>${protocol.title}</strong></p>
-            <p>הקישור בתוקף ל-${TOKEN_TTL_HOURS} שעות.</p>
-            <a href="${signUrl}" style="background:#1e3a5f;color:#fff;padding:10px 20px;text-decoration:none;border-radius:4px;display:inline-block;margin:16px 0">
-              לצפייה וחתימה על הפרוטוקול
-            </a>
-            <p style="color:#64748b;font-size:12px">אם לא ביקשת זאת, ניתן להתעלם ממייל זה.</p>
-          </div>
-        `,
-      }).catch(err => console.error('[Protocol] Email failed for', signer.email, err.message))
+      const reviewUrl = `${frontendUrl}/protocol/sign/${rawToken}`
+      const approveUrl = `${reviewUrl}?action=sign`
+      const declineUrl = `${reviewUrl}?action=decline`
 
-      created.push(sig.id)
+      try {
+        await sendEmail({
+          to: signer.email,
+          subject: `בקשה לחתימה על פרוטוקול: ${protocol.title}`,
+          html: buildSignatureEmailHtml({
+            signerName: signer.fullName,
+            protocolTitle: protocol.title,
+            reviewUrl,
+            approveUrl,
+            declineUrl,
+          }),
+        })
+        if (created) delivery.created += 1
+        else delivery.resent += 1
+      } catch (err) {
+        delivery.failedRecipients.push({ email: signer.email, message: err.message })
+        console.error('[Protocol] Email failed for', signer.email, err.message)
+      }
     }
 
     res.locals.entityId = id
-    res.json({ data: { created: created.length, total: signers.length } })
+    res.json({
+      data: {
+        created: delivery.created,
+        resent: delivery.resent,
+        sent: delivery.created + delivery.resent,
+        failed: delivery.failedRecipients.length,
+        failedRecipients: delivery.failedRecipients,
+        skippedSigned: delivery.skippedSigned,
+        total: signers.length,
+      },
+    })
   } catch (err) {
     next(err)
   }

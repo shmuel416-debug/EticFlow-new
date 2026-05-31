@@ -1006,6 +1006,7 @@
     "savedSuccess": "Protocol saved",
     "finalizedSuccess": "Protocol finalized and sent for signing",
     "signaturesRequested": "Signature request sent to {{count}} signers",
+    "signaturesPartialFailure": "Email delivery failed for {{failed}} signers",
     "loadError": "Failed to load protocol",
     "loadSignersError": "Failed to load signers list",
     "noSignersAvailable": "No available signers were found",

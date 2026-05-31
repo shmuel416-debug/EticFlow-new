@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "sefaria": {
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/Sivan22/mcp-sefaria-server",
+        "sefaria_jewish_library"
+      ]
+    }
+  }
+}

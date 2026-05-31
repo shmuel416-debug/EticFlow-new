@@ -195,7 +195,12 @@ export default function ProtocolDetailPage() {
     setRequestingSign(true)
     try {
       const res = await api.post(`/protocols/${id}/request-signatures`, { signerIds: selectedSigners })
-      showToast(t('protocols.signaturesRequested', { count: res.data.data.created }), 'success')
+      const sentCount = Number(res.data?.data?.sent ?? res.data?.data?.created ?? 0)
+      const failedCount = Number(res.data?.data?.failed ?? 0)
+      showToast(t('protocols.signaturesRequested', { count: sentCount }), 'success')
+      if (failedCount > 0) {
+        showToast(t('protocols.signaturesPartialFailure', { failed: failedCount }), 'error')
+      }
       setShowSignModal(false)
       fetchProtocol()
     } catch {

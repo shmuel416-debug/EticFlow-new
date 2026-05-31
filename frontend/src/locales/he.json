@@ -1006,6 +1006,7 @@
     "savedSuccess": "הפרוטוקול נשמר",
     "finalizedSuccess": "הפרוטוקול הוגמר ונשלח לחתימה",
     "signaturesRequested": "בקשת חתימה נשלחה ל-{{count}} חותמים",
+    "signaturesPartialFailure": "שליחת המייל נכשלה עבור {{failed}} חותמים",
     "loadError": "שגיאה בטעינת הפרוטוקול",
     "loadSignersError": "שגיאה בטעינת רשימת חותמים",
     "noSignersAvailable": "לא נמצאו חותמים זמינים",

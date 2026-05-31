@@ -15,6 +15,7 @@ const prismaMock = {
   protocolSignature: {
     findMany: jest.fn(),
     create: jest.fn(),
+    update: jest.fn(),
   },
 }
 
@@ -116,7 +117,17 @@ describe('protocols.controller requestSignatures role guards', () => {
     expect(prismaMock.protocolSignature.create).toHaveBeenCalledTimes(1)
     expect(sendEmailMock).toHaveBeenCalledTimes(1)
     expect(recordAuditEntryMock).not.toHaveBeenCalled()
-    expect(res.json).toHaveBeenCalledWith({ data: { created: 1, total: 1 } })
+    expect(res.json).toHaveBeenCalledWith({
+      data: {
+        created: 1,
+        resent: 0,
+        sent: 1,
+        failed: 0,
+        failedRecipients: [],
+        skippedSigned: 0,
+        total: 1,
+      },
+    })
     expect(next).not.toHaveBeenCalled()
   })
 })

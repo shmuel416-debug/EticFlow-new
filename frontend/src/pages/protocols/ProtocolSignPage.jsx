@@ -10,7 +10,7 @@
  */
 
 import { useState, useEffect } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
   Signature,
@@ -53,12 +53,15 @@ const STATE = {
 export default function ProtocolSignPage() {
   const { t }     = useTranslation()
   const { token } = useParams()
+  const [searchParams] = useSearchParams()
+  const requestedAction = searchParams.get('action')
 
   const [state,      setState]       = useState(STATE.LOADING)
   const [info,       setInfo]        = useState(null)
   const [action,     setAction]      = useState(null)   // 'sign' | 'decline'
   const [submitting, setSubmitting]  = useState(false)
   const [errorMsg,   setErrorMsg]    = useState(null)
+  const [didAutoSubmit, setDidAutoSubmit] = useState(false)
 
   // ── Fetch token info ─────────────────────────
 
@@ -95,10 +98,10 @@ export default function ProtocolSignPage() {
   // ── Submit sign / decline ────────────────────
 
   async function handleAction(chosen) {
+    setAction(chosen)
     setSubmitting(true)
     try {
       await api.post(`/protocol/sign/${token}`, { action: chosen })
-      setAction(chosen)
       setState(STATE.CONFIRMED)
     } catch (err) {
       if (err.code === 'ALREADY_SIGNED') {
@@ -113,6 +116,14 @@ export default function ProtocolSignPage() {
       setSubmitting(false)
     }
   }
+
+  useEffect(() => {
+    if (state !== STATE.READY) return
+    if (didAutoSubmit) return
+    if (requestedAction !== 'sign' && requestedAction !== 'decline') return
+    setDidAutoSubmit(true)
+    void handleAction(requestedAction)
+  }, [didAutoSubmit, requestedAction, state])
 
   return (
     <>
