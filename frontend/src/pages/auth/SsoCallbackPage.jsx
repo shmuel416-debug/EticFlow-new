@@ -14,7 +14,7 @@
  * IS 5568 / WCAG 2.2 AA compliant.
  */
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ArrowRight, ArrowLeft } from 'lucide-react'
@@ -53,6 +53,7 @@ export default function SsoCallbackPage() {
   const navigate           = useNavigate()
   const [searchParams]     = useSearchParams()
   const { loginWithToken } = useAuth()
+  const handledRef         = useRef('')
   const isRtl              = i18n.dir() === 'rtl'
   const BackIcon           = isRtl ? ArrowRight : ArrowLeft
 
@@ -61,6 +62,9 @@ export default function SsoCallbackPage() {
     const error = searchParams.get('error')
 
     if (code) {
+      const eventKey = `code:${code}`
+      if (handledRef.current === eventKey) return
+      handledRef.current = eventKey
       /**
        * Exchanges one-time SSO code for JWT.
        * Keeps tokens out of redirect URLs and browser history.
@@ -81,6 +85,9 @@ export default function SsoCallbackPage() {
     }
 
     if (error) {
+      const eventKey = `error:${error}`
+      if (handledRef.current === eventKey) return
+      handledRef.current = eventKey
       const key = errorToKey(error)
       navigate(`/login?ssoError=${encodeURIComponent(t(key))}`, { replace: true })
       return
@@ -117,7 +124,7 @@ export default function SsoCallbackPage() {
             <img src={levLogo} alt={t('common.institution')} className="h-9 w-auto" />
             <div className="text-start">
               <p className="text-sm font-bold" style={{ color: 'var(--lev-navy)' }}>
-                {t('common.appName')}
+                {t('auth.login.systemTitle')}
               </p>
               <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
                 {t('common.institution')}

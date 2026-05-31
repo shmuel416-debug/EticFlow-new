@@ -89,7 +89,9 @@ export default function ResetPasswordPage() {
           <div className="flex items-center gap-3 mb-8 mt-2">
             <img src={levLogo} alt={t('common.institution')} className="h-9 w-auto" />
             <div>
-              <p className="text-sm font-bold" style={{ color: 'var(--lev-navy)' }}>EthicFlow</p>
+              <p className="text-sm font-bold" style={{ color: 'var(--lev-navy)' }}>
+                {t('auth.login.systemTitle')}
+              </p>
               <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
                 {t('common.institution')}
               </p>

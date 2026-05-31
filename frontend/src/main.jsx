@@ -6,14 +6,40 @@
 
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import './services/i18n'
+import i18n from './services/i18n'
 import './index.css'
 import App from './App.jsx'
 import AnnounceRegion from './components/ui/AnnounceRegion'
+import levLogo from './assets/LOGO.jpg'
 
 const lang = localStorage.getItem('lang') || 'he'
 document.documentElement.lang = lang
 document.documentElement.dir  = lang === 'he' ? 'rtl' : 'ltr'
+
+/**
+ * Updates tab title and favicon from i18n/brand assets.
+ * @returns {void}
+ */
+function updateBrowserBranding() {
+  document.title = i18n.t('common.browserTitle')
+}
+
+updateBrowserBranding()
+i18n.on('languageChanged', (nextLang) => {
+  document.documentElement.lang = nextLang
+  document.documentElement.dir = nextLang === 'he' ? 'rtl' : 'ltr'
+  updateBrowserBranding()
+})
+
+const faviconElement = document.querySelector("link[rel~='icon']")
+if (faviconElement) {
+  faviconElement.href = levLogo
+} else {
+  const newFavicon = document.createElement('link')
+  newFavicon.rel = 'icon'
+  newFavicon.href = levLogo
+  document.head.appendChild(newFavicon)
+}
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
