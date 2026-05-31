@@ -322,6 +322,8 @@
     "withdraw": "Withdraw Submission",
     "confirmWithdraw": "Withdraw this submission? The review process will stop.",
     "withdrawReasonPrompt": "You can add a withdrawal reason (optional):",
+    "viewPdf": "View (Hebrew)",
+    "viewPdfEn": "View (English)",
     "downloadPdf": "Download (Hebrew)",
     "downloadPdfEn": "Download (English)",
     "steps": {

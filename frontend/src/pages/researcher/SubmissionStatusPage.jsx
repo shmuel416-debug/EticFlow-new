@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next'
 import { useParams, useLocation, useNavigate } from 'react-router-dom'
 import {
   Download,
+  Eye,
   AlertTriangle,
   AlertCircle,
   Pencil,
@@ -88,7 +89,9 @@ export default function SubmissionStatusPage() {
   const [loading,    setLoading]    = useState(true)
   const [error,      setError]      = useState('')
   const [activeTab,  setActiveTab]  = useState('answers')
-  const [pdfLoading, setPdfLoading] = useState(null) // 'he' | 'en' | null
+  const [pdfLoading, setPdfLoading] = useState(null) // 'download-he' | 'download-en' | 'preview-he' | 'preview-en' | null
+  const [previewPdfUrl, setPreviewPdfUrl] = useState('')
+  const [previewOpen, setPreviewOpen] = useState(false)
   const [withdrawing, setWithdrawing] = useState(false)
   const [nowMs]      = useState(() => Date.now())
   const [confirmOpen, setConfirmOpen] = useState(false)
@@ -109,19 +112,35 @@ export default function SubmissionStatusPage() {
 
   useEffect(() => { load() }, [load])
 
+  useEffect(() => {
+    return () => {
+      if (previewPdfUrl) URL.revokeObjectURL(previewPdfUrl)
+    }
+  }, [previewPdfUrl])
+
+  /**
+   * Requests approval-letter PDF bytes from API.
+   * @param {'he'|'en'} lang
+   * @returns {Promise<Blob>}
+   */
+  async function requestApprovalPdfBlob(lang) {
+    const response = await api.post(
+      `/submissions/${id}/approval-letter?lang=${lang}`,
+      {},
+      { responseType: 'blob', timeout: APPROVAL_PDF_TIMEOUT_MS }
+    )
+    return new Blob([response.data], { type: 'application/pdf' })
+  }
+
   /**
    * Requests the approval letter PDF in the given language and triggers browser download.
    * @param {'he'|'en'} lang
    */
   async function handleDownloadPdf(lang) {
-    setPdfLoading(lang)
+    setPdfLoading(`download-${lang}`)
     try {
-      const response = await api.post(
-        `/submissions/${id}/approval-letter?lang=${lang}`,
-        {},
-        { responseType: 'blob', timeout: APPROVAL_PDF_TIMEOUT_MS }
-      )
-      const url  = URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }))
+      const blob = await requestApprovalPdfBlob(lang)
+      const url  = URL.createObjectURL(blob)
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
       if (isIOS) {
         window.open(url, '_blank')
@@ -135,6 +154,26 @@ export default function SubmissionStatusPage() {
         link.remove()
         URL.revokeObjectURL(url)
       }
+    } catch {
+      setError(t('statusPage.pdfError'))
+    } finally {
+      setPdfLoading(null)
+    }
+  }
+
+  /**
+   * Opens approval-letter PDF in preview modal without downloading.
+   * @param {'he'|'en'} lang
+   * @returns {Promise<void>}
+   */
+  async function handlePreviewPdf(lang) {
+    setPdfLoading(`preview-${lang}`)
+    try {
+      const blob = await requestApprovalPdfBlob(lang)
+      if (previewPdfUrl) URL.revokeObjectURL(previewPdfUrl)
+      const nextUrl = URL.createObjectURL(blob)
+      setPreviewPdfUrl(nextUrl)
+      setPreviewOpen(true)
     } catch {
       setError(t('statusPage.pdfError'))
     } finally {
@@ -249,11 +288,28 @@ export default function SubmissionStatusPage() {
             {submission.status === 'APPROVED' && user?.role !== 'REVIEWER' && (
               <div className="flex gap-2">
                 <Button
+                  variant="secondary"
+                  fullWidth
+                  onClick={() => handlePreviewPdf('he')}
+                  disabled={pdfLoading !== null}
+                  loading={pdfLoading === 'preview-he'}
+                  leftIcon={
+                    <Eye
+                      size={16}
+                      strokeWidth={1.75}
+                      aria-hidden="true"
+                      focusable="false"
+                    />
+                  }
+                >
+                  {t('statusPage.viewPdf')}
+                </Button>
+                <Button
                   variant="primary"
                   fullWidth
                   onClick={() => handleDownloadPdf('he')}
                   disabled={pdfLoading !== null}
-                  loading={pdfLoading === 'he'}
+                  loading={pdfLoading === 'download-he'}
                   leftIcon={
                     <Download
                       size={16}
@@ -268,9 +324,26 @@ export default function SubmissionStatusPage() {
                 <Button
                   variant="secondary"
                   fullWidth
+                  onClick={() => handlePreviewPdf('en')}
+                  disabled={pdfLoading !== null}
+                  loading={pdfLoading === 'preview-en'}
+                  leftIcon={
+                    <Eye
+                      size={16}
+                      strokeWidth={1.75}
+                      aria-hidden="true"
+                      focusable="false"
+                    />
+                  }
+                >
+                  {t('statusPage.viewPdfEn')}
+                </Button>
+                <Button
+                  variant="secondary"
+                  fullWidth
                   onClick={() => handleDownloadPdf('en')}
                   disabled={pdfLoading !== null}
-                  loading={pdfLoading === 'en'}
+                  loading={pdfLoading === 'download-en'}
                   leftIcon={
                     <Download
                       size={16}
@@ -343,6 +416,25 @@ export default function SubmissionStatusPage() {
           </div>
         </CardBody>
       </Card>
+
+      <Modal
+        open={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        title={t('documents.previewTitle')}
+        description={submission?.applicationId || ''}
+        size="lg"
+        closeLabel={t('documents.closePreviewLabel')}
+      >
+        {previewPdfUrl && (
+          <div className="rounded-lg border border-gray-200 overflow-hidden bg-white">
+            <iframe
+              title={t('documents.previewFrameLabel', { name: submission?.applicationId || '' })}
+              src={previewPdfUrl}
+              className="w-full h-[70vh]"
+            />
+          </div>
+        )}
+      </Modal>
 
       <Modal
         open={confirmOpen}
