@@ -432,6 +432,13 @@ export async function requestSignatures(req, res, next) {
         delivery.skippedSigned += 1
         continue
       }
+      if (!signer.email) {
+        delivery.failedRecipients.push({
+          email: '(missing)',
+          message: 'Signer has no email configured',
+        })
+        continue
+      }
 
       const { rawToken, created } = await createOrRefreshSignatureToken({
         protocolId: id,
@@ -575,7 +582,7 @@ export async function getSignInfo(req, res, next) {
     const sig = await prisma.protocolSignature.findUnique({
       where:   { token: hashToken(rawToken) },
       include: {
-        protocol: { select: { id: true, title: true, status: true, finalizedAt: true } },
+        protocol: { select: { id: true, title: true, status: true, finalizedAt: true, contentJson: true } },
         user:     { select: { id: true, fullName: true } },
       },
     })
@@ -585,6 +592,7 @@ export async function getSignInfo(req, res, next) {
     }
 
     const expired = sig.tokenExpiry && new Date() > sig.tokenExpiry
+    const decisionSections = extractDecisionSections(sig.protocol.contentJson)
 
     res.json({
       data: {
@@ -595,6 +603,7 @@ export async function getSignInfo(req, res, next) {
         signerName:    sig.user.fullName,
         signatureStatus: sig.status,
         expired,
+        decisionSections,
       },
     })
   } catch (err) {
@@ -737,4 +746,22 @@ function buildDefaultContent(meeting) {
       },
     ],
   }
+}
+
+/**
+ * Extracts committee decision sections from protocol content JSON.
+ * @param {unknown} contentJson
+ * @returns {Array<{ heading: string, content: string }>}
+ */
+function extractDecisionSections(contentJson) {
+  const sections = Array.isArray(contentJson?.sections) ? contentJson.sections : []
+  const decisionPattern = /(החלט|decision)/i
+
+  return sections
+    .map((section) => ({
+      heading: typeof section?.heading === 'string' ? section.heading.trim() : '',
+      content: typeof section?.content === 'string' ? section.content.trim() : '',
+    }))
+    .filter((section) => section.heading || section.content)
+    .filter((section) => decisionPattern.test(section.heading) || decisionPattern.test(section.content))
 }

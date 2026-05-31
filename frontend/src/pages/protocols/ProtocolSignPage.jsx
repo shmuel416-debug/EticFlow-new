@@ -19,6 +19,8 @@ import {
   AlertTriangle,
   ClipboardList,
   FileText,
+  Eye,
+  EyeOff,
 } from 'lucide-react'
 import api from '../../services/api'
 import {
@@ -62,6 +64,7 @@ export default function ProtocolSignPage() {
   const [submitting, setSubmitting]  = useState(false)
   const [errorMsg,   setErrorMsg]    = useState(null)
   const [didAutoSubmit, setDidAutoSubmit] = useState(false)
+  const [showDecisions, setShowDecisions] = useState(false)
 
   // ── Fetch token info ─────────────────────────
 
@@ -251,6 +254,77 @@ export default function ProtocolSignPage() {
                   </p>
                 </div>
               </section>
+
+              <Button
+                variant="secondary"
+                size="sm"
+                fullWidth
+                onClick={() => setShowDecisions((prev) => !prev)}
+                leftIcon={
+                  <AccessibleIcon
+                    icon={showDecisions ? EyeOff : Eye}
+                    size={16}
+                    decorative
+                  />
+                }
+                aria-label={
+                  showDecisions
+                    ? t('protocols.sign.hideDecisionsBtn')
+                    : t('protocols.sign.showDecisionsBtn')
+                }
+              >
+                {showDecisions
+                  ? t('protocols.sign.hideDecisionsBtn')
+                  : t('protocols.sign.showDecisionsBtn')}
+              </Button>
+
+              {showDecisions && (
+                <section
+                  className="mt-3 mb-6 p-4 space-y-3"
+                  style={{
+                    background: 'var(--surface-sunken)',
+                    border: '1px solid var(--border-subtle)',
+                    borderRadius: 'var(--radius-xl)',
+                  }}
+                  aria-label={t('protocols.sign.decisionsTitle')}
+                >
+                  <p className="text-sm font-semibold" style={{ color: 'var(--lev-navy)' }}>
+                    {t('protocols.sign.decisionsTitle')}
+                  </p>
+
+                  {Array.isArray(info.decisionSections) && info.decisionSections.length > 0 ? (
+                    <ul className="space-y-3" role="list">
+                      {info.decisionSections.map((section, index) => (
+                        <li
+                          key={`${section.heading}-${index}`}
+                          className="p-3"
+                          style={{
+                            borderRadius: 'var(--radius-lg)',
+                            border: '1px solid var(--border-default)',
+                            background: 'var(--surface-base)',
+                          }}
+                        >
+                          {section.heading && (
+                            <p className="text-xs font-semibold mb-1" style={{ color: 'var(--lev-navy)' }}>
+                              {section.heading}
+                            </p>
+                          )}
+                          <p
+                            className="text-sm whitespace-pre-line"
+                            style={{ color: 'var(--text-primary)' }}
+                          >
+                            {section.content}
+                          </p>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+                      {t('protocols.sign.noDecisions')}
+                    </p>
+                  )}
+                </section>
+              )}
 
               {/* Action buttons */}
               <div className="space-y-3">

@@ -10,8 +10,9 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { FileText, Image, FileSpreadsheet, Folder, Download, X, Paperclip } from 'lucide-react'
+import { FileText, Image, FileSpreadsheet, Folder, Download, X, Paperclip, Eye } from 'lucide-react'
 import api from '../../services/api'
+import Modal from '../ui/Modal'
 
 /** Allowed extensions for the file picker (informational only — server enforces). */
 const ACCEPT = '.pdf,.doc,.docx,.jpg,.jpeg,.png,.xlsx'
@@ -47,6 +48,20 @@ function MimeGlyph({ mime }) {
 }
 
 /**
+ * Returns whether a MIME type is natively previewable in-browser.
+ * @param {string} mime
+ * @returns {boolean}
+ */
+function canInlinePreview(mime) {
+  if (!mime) return false
+  return (
+    mime === 'application/pdf' ||
+    mime.startsWith('image/') ||
+    mime.startsWith('text/')
+  )
+}
+
+/**
  * DocumentList — upload area + file list for a submission.
  */
 export default function DocumentList({ submissionId, canUpload = false }) {
@@ -57,6 +72,7 @@ export default function DocumentList({ submissionId, canUpload = false }) {
   const [uploading,setUploading]= useState(false)
   const [error,    setError]    = useState('')
   const [drag,     setDrag]     = useState(false)
+  const [previewDoc, setPreviewDoc] = useState(null)
 
   const inputRef = useRef(null)
 
@@ -114,6 +130,28 @@ export default function DocumentList({ submissionId, canUpload = false }) {
   /** Opens the download URL in a new tab. @param {string} docId */
   function handleDownload(docId) {
     window.open(`/api/documents/${docId}/download`, '_blank', 'noopener,noreferrer')
+  }
+
+  /**
+   * Opens an inline preview modal for a selected document.
+   * @param {object} doc
+   */
+  function handlePreview(doc) {
+    setPreviewDoc(doc)
+  }
+
+  /** Closes document preview modal. */
+  function closePreview() {
+    setPreviewDoc(null)
+  }
+
+  /**
+   * Builds preview URL for iframe/image embedding.
+   * @param {string} docId
+   * @returns {string}
+   */
+  function getPreviewUrl(docId) {
+    return `/api/documents/${docId}/preview`
   }
 
   // ─── Drag-and-drop handlers ───────────────────
@@ -218,6 +256,16 @@ export default function DocumentList({ submissionId, canUpload = false }) {
               <div className="flex gap-1 flex-shrink-0">
                 <button
                   type="button"
+                  onClick={() => handlePreview(doc)}
+                  aria-label={t('documents.previewLabel', { name: doc.originalName })}
+                  className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg transition
+                    hover:bg-[var(--lev-teal-50)]"
+                  style={{ color: 'var(--lev-navy)' }}
+                >
+                  <Eye size={20} strokeWidth={1.75} aria-hidden="true" focusable="false" />
+                </button>
+                <button
+                  type="button"
                   onClick={() => handleDownload(doc.id)}
                   aria-label={t('documents.downloadLabel', { name: doc.originalName })}
                   className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg transition
@@ -243,6 +291,55 @@ export default function DocumentList({ submissionId, canUpload = false }) {
           ))}
         </ul>
       )}
+
+      <Modal
+        open={Boolean(previewDoc)}
+        onClose={closePreview}
+        title={t('documents.previewTitle')}
+        description={previewDoc?.originalName || ''}
+        size="lg"
+        closeLabel={t('documents.closePreviewLabel')}
+      >
+        {previewDoc && (
+          <div className="space-y-3">
+            {canInlinePreview(previewDoc.mimeType) ? (
+              <div className="rounded-lg border border-gray-200 overflow-hidden bg-white">
+                <iframe
+                  title={t('documents.previewFrameLabel', { name: previewDoc.originalName })}
+                  src={getPreviewUrl(previewDoc.id)}
+                  className="w-full h-[65vh]"
+                />
+              </div>
+            ) : (
+              <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-3">
+                <p className="text-sm text-gray-700">
+                  {t('documents.previewUnsupported')}
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => window.open(getPreviewUrl(previewDoc.id), '_blank', 'noopener,noreferrer')}
+                    className="min-h-[44px] px-4 rounded-lg border border-gray-300 text-sm font-medium hover:bg-gray-100"
+                  >
+                    {t('documents.openInNewTab')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDownload(previewDoc.id)}
+                    className="min-h-[44px] px-4 rounded-lg text-sm font-medium text-white"
+                    style={{ backgroundColor: 'var(--lev-teal)' }}
+                  >
+                    {t('documents.downloadFallback')}
+                  </button>
+                </div>
+              </div>
+            )}
+            <p className="text-xs text-gray-500">
+              {t('documents.previewHint')}
+            </p>
+          </div>
+        )}
+      </Modal>
     </section>
   )
 }

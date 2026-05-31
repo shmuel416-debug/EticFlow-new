@@ -2,6 +2,7 @@
  * Ethic-Net — Documents Routes
  * POST   /api/documents/submissions/:subId        — upload file(s)    (RESEARCHER, SECRETARY, ADMIN)
  * GET    /api/documents/submissions/:subId        — list documents     (all authenticated)
+ * GET    /api/documents/:id/preview               — inline preview     (all authenticated)
  * GET    /api/documents/:id/download              — download file      (all authenticated)
  * DELETE /api/documents/:id                       — soft-delete        (RESEARCHER, SECRETARY, ADMIN)
  */
@@ -38,6 +39,12 @@ router.get(
   '/submissions/:subId',
   authenticate,
   controller.list
+)
+
+router.get(
+  '/:id/preview',
+  authenticate,
+  controller.preview
 )
 
 router.get(

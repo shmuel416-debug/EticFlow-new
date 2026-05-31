@@ -5,7 +5,7 @@
 
 import * as systemTemplateService from '../services/systemTemplate.service.js';
 import { storage } from '../services/storage.service.js';
-import { AppError } from '../middleware/error.js';
+import fs from 'fs/promises';
 import z from 'zod';
 
 const ALLOWED_KEYS = ['questionnaire_preface'];
@@ -37,7 +37,7 @@ export async function getActive(req, res, next) {
       filename: template.filename,
       mimeType: template.mimeType,
       size: template.size,
-      uploadedBy: template.uploader.fullName,
+      uploadedBy: template.uploader?.fullName ?? null,
       createdAt: template.createdAt,
     });
   } catch (error) {
@@ -64,7 +64,9 @@ export async function download(req, res, next) {
       });
     }
 
-    const buffer = await storage.retrieve(template.storagePath);
+    const buffer = template.localPath
+      ? await fs.readFile(template.localPath)
+      : await storage.retrieve(template.storagePath);
     const ext = template.mimeType === 'application/pdf' ? 'pdf' : 'docx';
     const filename = `${key}-${lang}-v${template.version}.${ext}`;
 

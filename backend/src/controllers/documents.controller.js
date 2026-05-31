@@ -5,6 +5,7 @@
  * Endpoints:
  *   POST   /api/documents/submissions/:subId        — upload file(s)
  *   GET    /api/documents/submissions/:subId        — list documents for submission
+ *   GET    /api/documents/:id/preview               — stream file inline to client
  *   GET    /api/documents/:id/download              — stream file to client
  *   DELETE /api/documents/:id                       — soft-delete document
  */
@@ -60,6 +61,33 @@ async function canWrite(user, submission) {
 function sanitizeName(originalName) {
   const base = path.basename(originalName)
   return base.replace(/[^a-zA-Z0-9א-תёА-я._\- ]/g, '_').slice(0, 200)
+}
+
+/**
+ * Resolves and validates document access for current user.
+ * @param {import('express').Request} req
+ * @param {string} id
+ * @returns {Promise<{doc: object, absPath: string}>}
+ */
+async function resolveDocumentForRead(req, id) {
+  const doc = await prisma.document.findUnique({
+    where:   { id },
+    include: { submission: true },
+  })
+
+  if (!doc || !doc.isActive) {
+    throw new AppError('Document not found', 'NOT_FOUND', 404)
+  }
+  if (doc.submission && !canAccess(req.user, doc.submission)) {
+    throw new AppError('Forbidden', 'FORBIDDEN', 403)
+  }
+
+  const absPath = resolvePath(doc.storagePath)
+  if (!fs.existsSync(absPath)) {
+    throw new AppError('File not found on storage', 'FILE_MISSING', 404)
+  }
+
+  return { doc, absPath }
 }
 
 // ─────────────────────────────────────────────
@@ -166,6 +194,30 @@ export async function list(req, res, next) {
 // ─────────────────────────────────────────────
 
 /**
+ * Streams a file inline for browser preview.
+ * @param {import('express').Request}  req
+ * @param {import('express').Response} res
+ * @param {Function} next
+ */
+export async function preview(req, res, next) {
+  try {
+    req.user.activeRole = getRequestRole(req)
+    const { id } = req.params
+    const { doc, absPath } = await resolveDocumentForRead(req, id)
+
+    res.setHeader('Content-Type', doc.mimeType)
+    res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(doc.originalName)}"`)
+    res.setHeader('Content-Length', doc.sizeBytes)
+    res.setHeader('X-Content-Type-Options', 'nosniff')
+
+    const stream = fs.createReadStream(absPath)
+    stream.pipe(res)
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
  * Streams a file to the client for download.
  * @param {import('express').Request}  req
  * @param {import('express').Response} res
@@ -175,23 +227,7 @@ export async function download(req, res, next) {
   try {
     req.user.activeRole = getRequestRole(req)
     const { id } = req.params
-
-    const doc = await prisma.document.findUnique({
-      where:   { id },
-      include: { submission: true },
-    })
-
-    if (!doc || !doc.isActive) {
-      throw new AppError('Document not found', 'NOT_FOUND', 404)
-    }
-    if (doc.submission && !canAccess(req.user, doc.submission)) {
-      throw new AppError('Forbidden', 'FORBIDDEN', 403)
-    }
-
-    const absPath = resolvePath(doc.storagePath)
-    if (!fs.existsSync(absPath)) {
-      throw new AppError('File not found on storage', 'FILE_MISSING', 404)
-    }
+    const { doc, absPath } = await resolveDocumentForRead(req, id)
 
     res.setHeader('Content-Type',        doc.mimeType)
     res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(doc.originalName)}"`)

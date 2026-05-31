@@ -7,6 +7,8 @@
 import { prisma } from '../db/index.js';
 import { storage } from './storage.service.js';
 import { AppError } from '../middleware/error.js';
+import fs from 'fs/promises';
+import path from 'path';
 
 const ALLOWED_KEYS = ['questionnaire_preface'];
 const ALLOWED_MIMES = [
@@ -14,6 +16,69 @@ const ALLOWED_MIMES = [
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 ];
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+const DEFAULT_QUESTIONNAIRE_PREFACE_PATH = 'C:/Users/shmue/Downloads/בלאנק לוגו חדש.docx';
+
+/**
+ * Resolves an optional filesystem fallback path for a template key+lang.
+ * @param {string} key
+ * @param {string} lang
+ * @returns {string|null}
+ */
+function resolveFallbackPath(key, lang) {
+  if (key !== 'questionnaire_preface') return null;
+  const upperKey = key.toUpperCase();
+  const upperLang = String(lang || 'he').toUpperCase();
+  const langSpecific = process.env[`SYSTEM_TEMPLATE_${upperKey}_${upperLang}_PATH`];
+  const keySpecific = process.env[`SYSTEM_TEMPLATE_${upperKey}_PATH`];
+  const generic = process.env.SYSTEM_TEMPLATE_FALLBACK_DOCX_PATH;
+  const defaultPath = DEFAULT_QUESTIONNAIRE_PREFACE_PATH;
+  const resolved = langSpecific || keySpecific || generic || defaultPath;
+  return resolved ? String(resolved).trim() : null;
+}
+
+/**
+ * Infers MIME type from a fallback file path.
+ * @param {string} filePath
+ * @returns {string}
+ */
+function inferMimeType(filePath) {
+  const ext = path.extname(filePath).toLowerCase();
+  if (ext === '.pdf') return 'application/pdf';
+  return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+}
+
+/**
+ * Loads a filesystem fallback template when DB does not contain an active row.
+ * @param {string} key
+ * @param {string} lang
+ * @returns {Promise<object|null>}
+ */
+async function getFilesystemFallbackTemplate(key, lang) {
+  const localPath = resolveFallbackPath(key, lang);
+  if (!localPath) return null;
+  try {
+    const stat = await fs.stat(localPath);
+    if (!stat.isFile()) return null;
+    return {
+      id: `fallback-${key}-${lang}`,
+      key,
+      lang,
+      version: 0,
+      filename: path.basename(localPath),
+      storagePath: null,
+      mimeType: inferMimeType(localPath),
+      size: stat.size,
+      isActive: true,
+      createdAt: stat.mtime,
+      updatedAt: stat.mtime,
+      uploader: { fullName: 'System fallback' },
+      localPath,
+      isFallback: true,
+    };
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Get active template for a key+lang combination
@@ -26,13 +91,19 @@ export async function getActive(key, lang) {
     throw new AppError('Template key not found', 'INVALID_TEMPLATE_KEY', 404);
   }
 
-  const template = await prisma.systemTemplate.findFirst({
-    where: { key, lang, isActive: true },
-    orderBy: { version: 'desc' },
-    include: { uploader: { select: { fullName: true } } },
-  });
+  let template = null;
+  try {
+    template = await prisma.systemTemplate.findFirst({
+      where: { key, lang, isActive: true },
+      orderBy: { version: 'desc' },
+      include: { uploader: { select: { fullName: true } } },
+    });
+  } catch {
+    // Ignore DB connectivity/auth failures and continue with filesystem fallback.
+  }
 
-  return template;
+  if (template) return template;
+  return getFilesystemFallbackTemplate(key, lang);
 }
 
 /**

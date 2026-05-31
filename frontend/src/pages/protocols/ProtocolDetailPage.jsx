@@ -179,14 +179,18 @@ export default function ProtocolDetailPage() {
   async function openSignModal() {
     try {
       const res = await api.get('/users/signers')
-      setAllUsers(res.data.data ?? [])
+      const availableSigners = res.data.data ?? []
+      setAllUsers(availableSigners)
+      const allowedSignerIds = new Set(availableSigners.map((signer) => signer.id))
+      setSelectedSigners(
+        (protocol?.meeting?.attendees?.map((attendee) => attendee.userId) ?? [])
+          .filter((userId) => allowedSignerIds.has(userId))
+      )
     } catch {
       setAllUsers([])
       showToast(t('protocols.loadSignersError'), 'error')
+      setSelectedSigners([])
     }
-    setSelectedSigners(
-      protocol?.meeting?.attendees?.map(a => a.userId) ?? []
-    )
     setShowSignModal(true)
   }
 
@@ -197,9 +201,21 @@ export default function ProtocolDetailPage() {
       const res = await api.post(`/protocols/${id}/request-signatures`, { signerIds: selectedSigners })
       const sentCount = Number(res.data?.data?.sent ?? res.data?.data?.created ?? 0)
       const failedCount = Number(res.data?.data?.failed ?? 0)
-      showToast(t('protocols.signaturesRequested', { count: sentCount }), 'success')
+      if (sentCount > 0) {
+        showToast(t('protocols.signaturesRequested', { count: sentCount }), 'success')
+      }
       if (failedCount > 0) {
         showToast(t('protocols.signaturesPartialFailure', { failed: failedCount }), 'error')
+        const firstFailure = res.data?.data?.failedRecipients?.[0]
+        if (firstFailure?.email) {
+          showToast(
+            t('protocols.signaturesFailureReason', {
+              email: firstFailure.email,
+              reason: firstFailure.message || t('common.error'),
+            }),
+            'error'
+          )
+        }
       }
       setShowSignModal(false)
       fetchProtocol()
