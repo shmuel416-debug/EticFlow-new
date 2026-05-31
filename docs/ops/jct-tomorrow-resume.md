@@ -226,7 +226,7 @@ az deployment group show `
 
 | נושא | החלטה | tenant יעד | מי מטפל |
 |---|---|---|---|
-| SSO (login משתמשים) | רוב המשתמשים `@acad.jct.ac.il` | `acad.jct.ac.il` | **אני** — `Application Developer` ב-PIM מספיק |
+| SSO (login משתמשים) | המשתמשים מתחברים עם `@acad.jct.ac.il`, אך נשמרים במערכת כ-`@jct.ac.il` לצורך דיוור | `acad.jct.ac.il` | **אני** — `Application Developer` ב-PIM מספיק |
 | Mail (השולח) | חייב `ethicscommittee@jct.ac.il` (branding מקצועי) | `jct.ac.il` (CSP) | **IT** — אין לי הרשאות שם |
 | Calendar (יומן ועדה) | יומן של `ethicscommittee@jct.ac.il` | `jct.ac.il` (CSP) | **IT** — אותה סיבה |
 

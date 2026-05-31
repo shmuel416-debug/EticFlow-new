@@ -179,6 +179,18 @@ function safeUser(user) {
 }
 
 /**
+ * Normalizes Microsoft login email for institution delivery rules.
+ * Example: user@acad.jct.ac.il -> user@jct.ac.il
+ * @param {string} email
+ * @returns {string}
+ */
+function normalizeMicrosoftLoginEmail(email) {
+  const normalized = String(email || '').trim().toLowerCase()
+  if (!normalized) return ''
+  return normalized.replace(/@acad\.jct\.ac\.il$/i, '@jct.ac.il')
+}
+
+/**
  * Resolves frontend base URL for auth redirects.
  * Production: FRONTEND_URL is mandatory (strict allowlist target).
  * Development: FRONTEND_URL env → Origin header → localhost fallback.
@@ -648,22 +660,38 @@ export async function resetPassword(req, res, next) {
  * @returns {Promise<{ user: object|null, conflict: boolean }>}
  */
 async function findOrCreateMicrosoftUser({ externalId, email, fullName }) {
+  const normalizedEmail = normalizeMicrosoftLoginEmail(email)
+  const candidateEmails = [...new Set([email, normalizedEmail].filter(Boolean))]
   const existing = await prisma.user.findFirst({
-    where: { OR: [{ externalId }, { email }] },
+    where: { OR: [{ externalId }, { email: { in: candidateEmails } }] },
   })
 
   if (existing) {
     if (existing.authProvider === 'LOCAL') return { user: null, conflict: true }
-    // Update display name if it changed
-    const user = existing.fullName !== fullName
-      ? await prisma.user.update({ where: { id: existing.id }, data: { fullName, externalId } })
+
+    // Prevent unique-email conflict when normalizing acad -> non-acad mailbox.
+    if (existing.email !== normalizedEmail) {
+      const emailTaken = await prisma.user.findUnique({ where: { email: normalizedEmail } })
+      if (emailTaken && emailTaken.id !== existing.id) return { user: null, conflict: true }
+    }
+
+    const needsUpdate = (
+      existing.fullName !== fullName ||
+      existing.externalId !== externalId ||
+      existing.email !== normalizedEmail
+    )
+    const user = needsUpdate
+      ? await prisma.user.update({
+        where: { id: existing.id },
+        data: { fullName, externalId, email: normalizedEmail },
+      })
       : existing
     return { user, conflict: false }
   }
 
   // First-time SSO — create as RESEARCHER
   const user = await prisma.user.create({
-    data: { email, fullName, externalId, authProvider: 'MICROSOFT', roles: ['RESEARCHER'], isActive: true, passwordHash: null },
+    data: { email: normalizedEmail, fullName, externalId, authProvider: 'MICROSOFT', roles: ['RESEARCHER'], isActive: true, passwordHash: null },
   })
   return { user, conflict: false }
 }

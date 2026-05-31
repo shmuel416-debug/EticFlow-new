@@ -26,8 +26,8 @@ Ethic-Net = מערכת ועדת אתיקה אקדמית של JCT (`ethics.jct.ac
 |---|---|---|
 | השולח של מיילי המערכת | `ethicscommittee@jct.ac.il` (branding מקצועי) | Mail App חייבת להיווצר ב-`jct.ac.il` (אני בלי הרשאות שם) |
 | יומן פגישות ועדה | יומן של `ethicscommittee@jct.ac.il` | Calendar App חייבת להיווצר ב-`jct.ac.il` |
-| SSO (login של חוקרים/סוקרים) | רוב המשתמשים `@acad.jct.ac.il` → SSO ב-`acad.jct.ac.il` | **כלום ל-IT** — אני יוצר לבד עם PIM `Application Developer` שכבר ניתן לי |
-| משתמשי מיעוט `@jct.ac.il` (אם יש) | לא נתמכים בשלב זה | **כלום ל-IT** — אם בעתיד יידרשו, ניצור בקשה נפרדת |
+| SSO (login של חוקרים/סוקרים) | המשתמשים מתחברים עם `@acad.jct.ac.il`, אך נשמרים במערכת כ-`@jct.ac.il` לצורך דיוור | **כלום ל-IT כרגע** — אני מטפל בצד ה-SSO |
+| משתמשי `@jct.ac.il` | כתובת היעד לדיוור וההתראות מהמערכת | **כלום ל-IT** — נשלט בלוגיקת האפליקציה |
 | Domain `ethics.jct.ac.il` ו-`api.ethics.jct.ac.il` | זה zone שלכם | DNS records (סעיף ב' למטה) |
 
 ---
