@@ -50,6 +50,7 @@ const DEFAULT_TRANSITIONS = [
 
 const STATUS_ACTIONS = ['VIEW', 'EDIT', 'COMMENT', 'UPLOAD_DOC', 'DELETE_DOC', 'VIEW_INTERNAL', 'TRANSITION', 'ASSIGN', 'SUBMIT_REVIEW', 'RECORD_DECISION']
 const ROLES = ['RESEARCHER', 'SECRETARY', 'REVIEWER', 'CHAIRMAN', 'ADMIN']
+const PRODUCTION_SEED_ERROR = 'Refusing to run development seed while NODE_ENV=production. Use npm run bootstrap:prod for production admin setup.'
 
 /**
  * Returns a primary display role for role arrays.
@@ -58,6 +59,15 @@ const ROLES = ['RESEARCHER', 'SECRETARY', 'REVIEWER', 'CHAIRMAN', 'ADMIN']
  */
 function getPrimaryRole(roles) {
   return roles.find((role) => role !== 'RESEARCHER') ?? 'RESEARCHER'
+}
+
+/**
+ * Prevents development fixtures from being inserted into production.
+ * @returns {void}
+ */
+function assertSeedAllowed() {
+  if (process.env.NODE_ENV !== 'production') return
+  throw new Error(PRODUCTION_SEED_ERROR)
 }
 
 // ─────────────────────────────────────────────
@@ -471,6 +481,7 @@ async function seedSubmissions(users, form) {
  * @returns {Promise<void>}
  */
 async function main() {
+  assertSeedAllowed()
   console.log('🌱 Starting Ethic-Net seed...')
 
   const users = await seedUsers()
