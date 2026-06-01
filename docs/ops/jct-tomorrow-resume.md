@@ -198,7 +198,7 @@ az deployment group show `
 | `AZURE_ACR_NAME` | `acrethicsnet` |
 | `AZURE_API_APP_NAME` | `app-ethics-net-api` |
 | `AZURE_WEB_APP_NAME` | `app-ethics-net-web` |
-| `AZURE_API_BASE_URL` | `https://app-ethics-net-api.azurewebsites.net` (יעודכן ל-`https://api.ethics-net.jct.ac.il` אחרי Phase 4) |
+| `AZURE_API_BASE_URL` | `https://app-ethics-net-api.azurewebsites.net` (יעודכן ל-`https://ethics-net-api.jct.ac.il` אחרי Phase 4) |
 
 ---
 

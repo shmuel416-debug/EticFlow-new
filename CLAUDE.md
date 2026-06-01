@@ -103,6 +103,7 @@ chmod +x setup.sh && ./setup.sh          # Interactive setup wizard
 - AI = advisory only — never blocks or decides
 - Calendar = internal by default. Optional: Microsoft/Google Calendar sync
 - Documents stored via STORAGE_PROVIDER: local (dev) / S3 / Azure Blob (prod)
+- Canonical JCT production API hostname: `ethics-net-api.jct.ac.il` (not `api.ethics-net.jct.ac.il`)
 
 ## Document Storage — IMPORTANT
 Two categories of documents in the system:
