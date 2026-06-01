@@ -8,6 +8,7 @@ import prisma from '../config/database.js';
 import { AppError } from '../utils/errors.js';
 import { notifyStatusChange } from './notification.service.js';
 import { setDueDates } from './sla.service.js';
+import { flattenSchemaFields } from '../utils/formSchema.js';
 
 // ─── Template queries ────────────────────────────────────────────────────────
 
@@ -331,83 +332,123 @@ export async function reorderItems(items) {
 // ─── Review lifecycle ────────────────────────────────────────────────────────
 
 /**
- * Return existing DRAFT review for this reviewer+submission, or create one.
- * Loads the active template based on the submission's track.
+ * Returns one submission with reviewer access checks and dynamic schema fields.
  * @param {string} submissionId
  * @param {string} reviewerId
- * @returns {Promise<{ review: object, template: object, responses: object[] }>}
+ * @returns {Promise<{ submission: object, fields: object[], dataJson: object }>}
  */
-export async function getOrCreateReview(submissionId, reviewerId) {
-  const submission = await prisma.submission.findUnique({ where: { id: submissionId } });
-  if (!submission) throw new AppError('Submission not found', 'SUBMISSION_NOT_FOUND', 404);
-  if (submission.reviewerId !== reviewerId) {
-    throw new AppError('Forbidden', 'FORBIDDEN', 403);
-  }
-
-  const template = await getActiveTemplate(submission.track);
-  if (!template) throw new AppError('No active checklist template found', 'NO_ACTIVE_TEMPLATE', 404);
-
-  let review = await prisma.reviewerChecklistReview.findUnique({
-    where: { submissionId_reviewerId: { submissionId, reviewerId } },
+async function getReviewSubmissionContext(submissionId, reviewerId) {
+  const submission = await prisma.submission.findUnique({
+    where: { id: submissionId },
+    include: {
+      formConfig: { select: { schemaJson: true } },
+      versions: { orderBy: { versionNum: 'desc' }, take: 1, select: { dataJson: true } },
+    },
   });
-
-  if (!review) {
-    review = await prisma.reviewerChecklistReview.create({
-      data: { submissionId, reviewerId, templateId: template.id, status: 'DRAFT' },
-    });
-  }
-
-  const [fullTemplate, responses] = await Promise.all([
-    getTemplateWithSections(review.templateId),
-    prisma.reviewerChecklistResponse.findMany({ where: { reviewId: review.id } }),
-  ]);
-
-  return { review, template: fullTemplate, responses };
+  if (!submission) throw new AppError('Submission not found', 'SUBMISSION_NOT_FOUND', 404);
+  if (submission.reviewerId !== reviewerId) throw new AppError('Forbidden', 'FORBIDDEN', 403);
+  const fields = flattenSchemaFields(submission.formConfig?.schemaJson);
+  return { submission, fields, dataJson: submission.versions?.[0]?.dataJson ?? {} };
 }
 
 /**
- * Upsert draft responses for a review. Validates requiresDetails constraint.
+ * Validates that each response refers to an existing form field key.
+ * @param {object[]} responses
+ * @param {Set<string>} allowedKeys
+ * @returns {void}
+ */
+function validateResponseFieldKeys(responses, allowedKeys) {
+  const unknown = responses
+    .map((row) => row.fieldKey)
+    .filter((fieldKey) => !allowedKeys.has(fieldKey));
+  if (unknown.length > 0) {
+    throw new AppError(
+      `${unknown.length} response(s) reference unknown form fields`,
+      'UNKNOWN_FIELD_KEY',
+      422,
+      { fieldKeys: unknown }
+    );
+  }
+}
+
+/**
+ * Builds a map keyed by fieldKey from response rows.
+ * @param {Array<{ fieldKey: string, status: string, comment?: string|null }>} rows
+ * @returns {Record<string, { status: string, comment?: string|null }>}
+ */
+function createFieldResponseMap(rows) {
+  return rows.reduce((acc, row) => {
+    acc[row.fieldKey] = { status: row.status, comment: row.comment ?? null };
+    return acc;
+  }, {});
+}
+
+/**
+ * Return existing DRAFT review for this reviewer+submission, or create one.
+ * Uses dynamic form fields and no template dependency.
+ * @param {string} submissionId
+ * @param {string} reviewerId
+ * @returns {Promise<{ review: object, fields: object[], dataJson: object, responses: object[] }>}
+ */
+export async function getOrCreateReview(submissionId, reviewerId) {
+  const { fields, dataJson } = await getReviewSubmissionContext(submissionId, reviewerId);
+  let review = await prisma.reviewerChecklistReview.findUnique({
+    where: { submissionId_reviewerId: { submissionId, reviewerId } },
+  });
+  if (!review) {
+    review = await prisma.reviewerChecklistReview.create({
+      data: { submissionId, reviewerId, templateId: null, status: 'DRAFT' },
+    });
+  }
+  const responses = await prisma.reviewerFieldResponse.findMany({ where: { reviewId: review.id } });
+  return { review, fields, dataJson, responses };
+}
+
+/**
+ * Upserts draft field-level responses for a review.
  * @param {string} reviewId
- * @param {string} reviewerId - Must match review.reviewerId
- * @param {object} payload
+ * @param {string} reviewerId
+ * @param {{ responses?: object[], generalNote?: string, impression?: string }} payload
+ * @returns {Promise<object>}
  */
 export async function saveDraft(reviewId, reviewerId, payload) {
   const review = await prisma.reviewerChecklistReview.findUnique({ where: { id: reviewId } });
   if (!review) throw new AppError('Review not found', 'REVIEW_NOT_FOUND', 404);
   if (review.reviewerId !== reviewerId) throw new AppError('Forbidden', 'FORBIDDEN', 403);
   if (review.status === 'SUBMITTED') throw new AppError('Review already submitted', 'ALREADY_SUBMITTED', 409);
-
-  const { responses = [], ...summaryFields } = payload;
-
-  await validateDetailsConstraints(responses, review.templateId);
-
+  const { fields } = await getReviewSubmissionContext(review.submissionId, reviewerId);
+  const responses = Array.isArray(payload.responses) ? payload.responses : [];
+  const allowedKeys = new Set(fields.map((field) => field.id || field.key).filter(Boolean));
+  validateResponseFieldKeys(responses, allowedKeys);
   return prisma.$transaction(async (tx) => {
-    for (const r of responses) {
-      await tx.reviewerChecklistResponse.upsert({
-        where: { reviewId_itemId: { reviewId, itemId: r.itemId } },
-        create: { reviewId, itemId: r.itemId, itemCode: r.itemCode, answer: r.answer, details: r.details ?? null },
-        update: { answer: r.answer, details: r.details ?? null },
+    for (const row of responses) {
+      await tx.reviewerFieldResponse.upsert({
+        where: { reviewId_fieldKey: { reviewId, fieldKey: row.fieldKey } },
+        create: {
+          reviewId,
+          fieldKey: row.fieldKey,
+          status: row.status,
+          comment: row.comment?.trim() || null,
+        },
+        update: { status: row.status, comment: row.comment?.trim() || null },
       });
     }
-
     return tx.reviewerChecklistReview.update({
       where: { id: reviewId },
       data: {
-        generalNote: summaryFields.generalNote ?? undefined,
-        exemptConsentRequested: summaryFields.exemptConsentRequested ?? undefined,
-        exemptConsentReviewerView: summaryFields.exemptConsentReviewerView ?? undefined,
-        minorsBothParentsExempt: summaryFields.minorsBothParentsExempt ?? undefined,
-        minorsExemptReviewerView: summaryFields.minorsExemptReviewerView ?? undefined,
+        generalNote: payload.generalNote ?? undefined,
+        impression: payload.impression ?? undefined,
       },
     });
   });
 }
 
 /**
- * Submit a completed review. Validates all required items answered.
+ * Submit a completed review. Validates all dynamic form fields are reviewed.
  * @param {string} reviewId
  * @param {string} reviewerId
- * @param {object} payload - Must include recommendation
+ * @param {{ recommendation: string, generalNote?: string, impression?: string }} payload
+ * @returns {Promise<object>}
  */
 export async function submitReview(reviewId, reviewerId, payload) {
   const review = await prisma.reviewerChecklistReview.findUnique({ where: { id: reviewId } });
@@ -416,30 +457,43 @@ export async function submitReview(reviewId, reviewerId, payload) {
   if (review.status === 'SUBMITTED') throw new AppError('Review already submitted', 'ALREADY_SUBMITTED', 409);
   const submission = await prisma.submission.findUnique({
     where: { id: review.submissionId },
-    select: { status: true },
+    select: { id: true, status: true, formConfig: { select: { schemaJson: true } } },
   });
   if (!submission) throw new AppError('Submission not found', 'SUBMISSION_NOT_FOUND', 404);
-  if (submission.status !== 'ASSIGNED') {
-    throw new AppError('Submission must be ASSIGNED', 'INVALID_TRANSITION', 409);
+  if (submission.status !== 'ASSIGNED') throw new AppError('Submission must be ASSIGNED', 'INVALID_TRANSITION', 409);
+  const fields = flattenSchemaFields(submission.formConfig?.schemaJson);
+  const allowedKeys = new Set(fields.map((field) => field.id || field.key).filter(Boolean));
+  const incomingResponses = Array.isArray(payload.responses) ? payload.responses : [];
+  validateResponseFieldKeys(incomingResponses, allowedKeys);
+  const existingResponses = await prisma.reviewerFieldResponse.findMany({ where: { reviewId } });
+  const mergedByKey = createFieldResponseMap(existingResponses);
+  for (const row of incomingResponses) {
+    mergedByKey[row.fieldKey] = { status: row.status, comment: row.comment ?? null };
   }
-
-  await validateSubmitCompleteness(reviewId, review.templateId);
-
+  validateFieldReviewCompletenessFromMap(fields, mergedByKey);
   const submitted = await prisma.$transaction(async (tx) => {
-    const submitted = await tx.reviewerChecklistReview.update({
+    for (const row of incomingResponses) {
+      await tx.reviewerFieldResponse.upsert({
+        where: { reviewId_fieldKey: { reviewId, fieldKey: row.fieldKey } },
+        create: {
+          reviewId,
+          fieldKey: row.fieldKey,
+          status: row.status,
+          comment: row.comment?.trim() || null,
+        },
+        update: { status: row.status, comment: row.comment?.trim() || null },
+      });
+    }
+    const result = await tx.reviewerChecklistReview.update({
       where: { id: reviewId },
       data: {
         status: 'SUBMITTED',
         recommendation: payload.recommendation,
         generalNote: payload.generalNote ?? null,
-        exemptConsentRequested: payload.exemptConsentRequested ?? null,
-        exemptConsentReviewerView: payload.exemptConsentReviewerView ?? null,
-        minorsBothParentsExempt: payload.minorsBothParentsExempt ?? null,
-        minorsExemptReviewerView: payload.minorsExemptReviewerView ?? null,
+        impression: payload.impression ?? null,
         submittedAt: new Date(),
       },
     });
-
     await tx.auditLog.create({
       data: {
         userId: reviewerId,
@@ -449,15 +503,9 @@ export async function submitReview(reviewId, reviewerId, payload) {
         metaJson: { submissionId: review.submissionId, recommendation: payload.recommendation },
       },
     });
-
-    await tx.submission.update({
-      where: { id: review.submissionId },
-      data: { status: 'IN_REVIEW' },
-    });
-
-    return submitted;
+    await tx.submission.update({ where: { id: review.submissionId }, data: { status: 'IN_REVIEW' } });
+    return result;
   });
-
   const updatedSubmission = await prisma.submission.findFirst({
     where: { id: review.submissionId, isActive: true },
     include: {
@@ -469,92 +517,38 @@ export async function submitReview(reviewId, reviewerId, payload) {
     setDueDates(review.submissionId, 'IN_REVIEW').catch(() => {});
     notifyStatusChange(updatedSubmission, 'IN_REVIEW').catch(() => {});
   }
-
   return submitted;
 }
 
 // ─── Internal validation helpers ─────────────────────────────────────────────
 
 /**
- * Throw if any response violates the requiresDetails constraint.
- * @param {object[]} responses
- * @param {string} templateId
+ * Validates all form fields have review status and INVALID fields have comments.
+ * @param {object[]} fields
+ * @param {Record<string, { status: string, comment?: string|null }>} responsesByKey
+ * @returns {void}
  */
-async function validateDetailsConstraints(responses, templateId) {
-  if (!responses.length) return;
-
-  const itemIds = responses.map((r) => r.itemId);
-  const items = await prisma.reviewerChecklistItem.findMany({
-    where: { id: { in: itemIds } },
-    select: { id: true, requiresDetails: true },
-  });
-
-  const requiresMap = Object.fromEntries(items.map((i) => [i.id, i.requiresDetails]));
-  const negativeAnswers = new Set(['INADEQUATE', 'YES']);
-
-  for (const r of responses) {
-    if (requiresMap[r.itemId] && negativeAnswers.has(r.answer)) {
-      if (!r.details || r.details.trim().length < 3) {
-        throw new AppError(
-          `Details required for item ${r.itemCode} when answer is ${r.answer}`,
-          'DETAILS_REQUIRED',
-          422
-        );
-      }
-    }
-  }
-}
-
-/**
- * Throw if any required+active item has no saved response.
- * @param {string} reviewId
- * @param {string} templateId
- */
-async function validateSubmitCompleteness(reviewId, templateId) {
-  const requiredItems = await prisma.reviewerChecklistItem.findMany({
-    where: {
-      isRequired: true,
-      isActive: true,
-      section: { templateId },
-    },
-    select: { id: true, code: true, conditional: true },
-  });
-
-  const responses = await prisma.reviewerChecklistResponse.findMany({
-    where: { reviewId },
-    select: { itemId: true, itemCode: true, answer: true },
-  });
-
-  const answeredIds = new Set(responses.map((r) => r.itemId));
-  const answersByCode = responses.reduce((acc, row) => {
-    if (row.itemCode && row.answer) acc[row.itemCode] = row.answer;
-    return acc;
-  }, {});
-
-  const missing = requiredItems.filter((item) => {
-    const rule = item.conditional;
-    if (rule && typeof rule === 'object' && !Array.isArray(rule)) {
-      const dependsOn = rule.dependsOn;
-      const showWhen = rule.showWhen;
-      if (dependsOn && showWhen) {
-        const current = answersByCode[dependsOn];
-        if (!current) return false;
-        if (Array.isArray(showWhen)) {
-          if (!showWhen.includes(current)) return false;
-        } else if (current !== showWhen) {
-          return false;
-        }
-      }
-    }
-    return !answeredIds.has(item.id);
-  });
-
+function validateFieldReviewCompletenessFromMap(fields, responsesByKey) {
+  const expectedKeys = fields.map((field) => field.id || field.key).filter(Boolean);
+  const missing = expectedKeys.filter((key) => !responsesByKey[key]);
   if (missing.length > 0) {
     throw new AppError(
-      `${missing.length} required item(s) have no answer`,
-      'INCOMPLETE_CHECKLIST',
+      `${missing.length} field review(s) are missing`,
+      'INCOMPLETE_FIELD_REVIEW',
       422,
-      { missingCodes: missing.map((i) => i.code) }
+      { missingFieldKeys: missing }
+    );
+  }
+  const invalidWithoutComment = expectedKeys.filter((key) => {
+    const row = responsesByKey[key];
+    return row?.status === 'INVALID' && (!row.comment || row.comment.trim().length < 3);
+  });
+  if (invalidWithoutComment.length > 0) {
+    throw new AppError(
+      'Comment is required for INVALID field reviews',
+      'INVALID_COMMENT_REQUIRED',
+      422,
+      { fieldKeys: invalidWithoutComment }
     );
   }
 }

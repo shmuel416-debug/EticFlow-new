@@ -53,13 +53,22 @@ export default function SubmissionLifecycle({
     submissionId: submissionId || undefined,
   })
 
-  const baseTimeline = (statuses || [])
-    .filter((status) => status.code !== 'DRAFT')
-    .sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0))
+  const sortedStatuses = [...(statuses || [])].sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0))
+  const nonTerminalCodes = sortedStatuses
+    .filter((status) => !status.isTerminal)
     .map((status) => status.code)
-  const timelineStatuses = currentStatus && !baseTimeline.includes(currentStatus)
-    ? [...baseTimeline, currentStatus]
-    : baseTimeline
+  const terminalCodes = new Set(
+    sortedStatuses
+      .filter((status) => status.isTerminal)
+      .map((status) => status.code)
+  )
+  const isCurrentTerminal = terminalCodes.has(currentStatus)
+  const baseTimeline = [...nonTerminalCodes]
+  if (currentStatus && !isCurrentTerminal && !baseTimeline.includes(currentStatus)) {
+    baseTimeline.push(currentStatus)
+  }
+  const decisionStatus = isCurrentTerminal ? currentStatus : 'DECISION'
+  const timelineStatuses = [...baseTimeline, decisionStatus]
   if (!currentStatus || timelineStatuses.length === 0) return null
 
   const statusMap = Object.fromEntries((statuses || []).map((status) => [status.code, status]))

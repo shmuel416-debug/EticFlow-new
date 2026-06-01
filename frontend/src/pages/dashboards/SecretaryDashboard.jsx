@@ -19,6 +19,8 @@ import StatusBadge from '../../components/submissions/StatusBadge'
 import {
   Button, Card, CardHeader, PageHeader, StatCard, EmptyState, Spinner,
 } from '../../components/ui'
+import useDocumentTitle from '../../hooks/useDocumentTitle'
+import { buildSubmissionDetailPath } from '../../utils/submissionRoutes'
 
 /**
  * SLA indicator — small colored dot with accessible label. Brand-var colors.
@@ -59,6 +61,7 @@ function SlaDot({ slaTracking, labels }) {
  */
 export default function SecretaryDashboard() {
   const { t, i18n } = useTranslation()
+  useDocumentTitle(t('dashboard.secretary.title'))
   const isRtl = i18n.dir() === 'rtl'
   const NextIcon = isRtl ? ArrowLeft : ArrowRight
   const slaLabels = {
@@ -248,7 +251,7 @@ export default function SecretaryDashboard() {
                         >
                           <td className="px-4 py-2.5 font-mono text-xs">
                             <Link
-                              to={`/secretary/submissions/${sub.id}`}
+                              to={buildSubmissionDetailPath('/secretary/submissions', sub)}
                               state={{ from: returnPath }}
                               className="hover:underline font-semibold"
                               style={{ color: 'var(--lev-teal-text)' }}
@@ -279,7 +282,7 @@ export default function SecretaryDashboard() {
                   {stats.recentSubmissions.map(sub => (
                     <Link
                       key={sub.id}
-                      to={`/secretary/submissions/${sub.id}`}
+                      to={buildSubmissionDetailPath('/secretary/submissions', sub)}
                       state={{ from: returnPath }}
                       className="block p-4 hover:bg-gray-50 transition-colors"
                       style={{ borderBottom: '1px solid var(--border-subtle)' }}

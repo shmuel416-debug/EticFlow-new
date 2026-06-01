@@ -31,6 +31,7 @@ const ADMIN_ONLY_KEYS = new Set([
   'institution_name_he',
   'institution_name_en',
   'institution_logo_url',
+  'system_letterhead_pdf_path',
   'primary_color',
   'sla_triage_days',
   'sla_review_days',
@@ -130,6 +131,18 @@ export async function list(req, res, next) {
       })
       map.set(templateKey, created)
     }
+    if (permissions.readKeys.has('system_letterhead_pdf_path') && !map.has('system_letterhead_pdf_path')) {
+      const created = await prisma.institutionSetting.upsert({
+        where: { key: 'system_letterhead_pdf_path' },
+        update: {},
+        create: {
+          key: 'system_letterhead_pdf_path',
+          value: '',
+          valueType: 'string',
+        },
+      })
+      map.set('system_letterhead_pdf_path', created)
+    }
     for (const historyKey of APPROVAL_TEMPLATE_HISTORY_KEYS) {
       if (!permissions.readKeys.has(historyKey) || map.has(historyKey)) continue
       const created = await prisma.institutionSetting.upsert({
@@ -190,6 +203,15 @@ export async function update(req, res, next) {
     }
 
     let setting = await prisma.institutionSetting.findUnique({ where: { key } })
+    if (!setting && key === 'system_letterhead_pdf_path') {
+      setting = await prisma.institutionSetting.create({
+        data: {
+          key: 'system_letterhead_pdf_path',
+          value: '',
+          valueType: 'string',
+        },
+      })
+    }
     if (!setting && key === ACCESSIBILITY_STATEMENT_KEY) {
       setting = await prisma.institutionSetting.create({
         data: {

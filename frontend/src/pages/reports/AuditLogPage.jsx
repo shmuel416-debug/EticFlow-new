@@ -14,6 +14,7 @@ import api from '../../services/api'
 import {
   Button, Card, PageHeader, Input, Select, FormField, Table, Badge,
 } from '../../components/ui'
+import useDocumentTitle from '../../hooks/useDocumentTitle'
 
 /** Action badge tone keyed by action verb prefix */
 const ACTION_TONES = {
@@ -52,6 +53,7 @@ const ENTITY_TYPES = ['SUBMISSION', 'USER', 'FORM', 'MEETING', 'PROTOCOL', 'DOCU
 
 export default function AuditLogPage() {
   const { t, i18n } = useTranslation()
+  useDocumentTitle(t('auditLog.title'))
   const location    = useLocation()
   const isRtl       = i18n.dir() === 'rtl'
 

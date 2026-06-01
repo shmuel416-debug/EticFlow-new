@@ -39,7 +39,7 @@ SKU: B1 (Basic)
 | **Quota name** | `B1 VMs` (App Service Basic tier) |
 | **Current limit** | `0` |
 | **New limit** | `3` (מינימום נדרש = 1; 3 = רוחב נשימה לסקייל; לא משלמים על quota, רק על שימוש בפועל) |
-| **Reason** | Production deployment of academic ethics review system (`ethics.jct.ac.il`) — single B1 App Service Plan hosting API + Web frontend |
+| **Reason** | Production deployment of academic ethics review system (`ethics-net.jct.ac.il`) — single B1 App Service Plan hosting API + Web frontend |
 
 ### דרך פורטל (מומלץ)
 
@@ -57,7 +57,7 @@ az account set --subscription "7a64b307-d38c-495e-b065-73618a1bdecf"
 
 az support tickets create `
   --ticket-name "ethic-net-b1-vms-quota-eastus2" `
-  --description "Production deployment of academic ethics review system (ethics.jct.ac.il). Need B1 VMs quota raised from 0 to 3 in East US 2. RG=RG-ethics-net. Single App Service Plan hosts API + Web frontend." `
+  --description "Production deployment of academic ethics review system (ethics-net.jct.ac.il). Need B1 VMs quota raised from 0 to 3 in East US 2. RG=RG-ethics-net. Single App Service Plan hosts API + Web frontend." `
   --severity "minimal" `
   --issue-type "quota" `
   --quota-ticket-details quotaChangeRequests="[{region:eastus2,payload:'{\"SKU\":\"B1\",\"NewLimit\":3}'}]" `

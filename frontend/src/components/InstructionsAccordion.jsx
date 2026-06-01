@@ -27,9 +27,12 @@ export default function InstructionsAccordion({
 }) {
   const { t } = useTranslation()
   const [isOpen, setIsOpen] = useState(false)
+  const safeAttachments = Array.isArray(attachmentsList)
+    ? attachmentsList.filter(Boolean)
+    : []
 
   const instructions = lang === 'he' ? instructionsHe : instructionsEn
-  if (!instructions && attachmentsList.length === 0) return null
+  if (!instructions && safeAttachments.length === 0) return null
 
   const toggleOpen = () => setIsOpen(!isOpen)
 
@@ -77,7 +80,7 @@ export default function InstructionsAccordion({
             </div>
           )}
 
-          {attachmentsList.length > 0 && (
+          {safeAttachments.length > 0 && (
             <div
               dir={lang === 'he' ? 'rtl' : 'ltr'}
               data-testid="attachments-list"
@@ -86,7 +89,7 @@ export default function InstructionsAccordion({
                 {t('forms.attachments.required')}
               </h4>
               <ul className="space-y-2">
-                {attachmentsList.map(att => {
+                {safeAttachments.map(att => {
                   const name = lang === 'he' ? att.name : att.nameEn
                   return (
                     <li

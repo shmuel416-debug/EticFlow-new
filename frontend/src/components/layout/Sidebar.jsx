@@ -14,7 +14,7 @@ import levLogo from '../../assets/LOGO.jpg'
 import {
   Home, FileText, FilePlus2, ClipboardList, Search, Scale, FolderOpen,
   Calendar, CalendarDays, Bell, Shield, AlertTriangle, Users, BarChart3,
-  Compass, Settings, LogOut, X, UserCircle2, Accessibility, ListChecks,
+  Compass, Settings, LogOut, X, UserCircle2, Accessibility,
 } from 'lucide-react'
 
 /** Navigation items (monochrome lucide icons, role-gated) */
@@ -39,7 +39,6 @@ const NAV_ITEMS = [
   { key: 'auditLog',             icon: Search,        path: '/reports/audit-log',      roles: ['ADMIN'], indent: true },
   { key: 'statusManagement',     icon: Compass,       path: '/admin/statuses',         roles: ['ADMIN'], indent: true },
   { key: 'systemTemplates',      labelKey: 'systemTemplates.title', icon: FileText,      path: '/admin/system-templates', roles: ['ADMIN'], indent: true },
-  { key: 'checklistTemplates',   icon: ListChecks,    path: '/admin/checklist-templates', roles: ['ADMIN'], indent: true },
   { key: 'accessibilityStatementAdmin', icon: Accessibility, path: '/admin/accessibility-statement', roles: ['ADMIN'], indent: true },
   { key: 'settings',             icon: Settings,      path: '/settings',               roles: ['SECRETARY','CHAIRMAN','REVIEWER','ADMIN'] },
 ]

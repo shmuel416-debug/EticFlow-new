@@ -5,16 +5,15 @@
  * IS 5568 / WCAG 2.2 AA.
  */
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom'
 import { Eye, ArrowRight, ArrowLeft, MessageSquare } from 'lucide-react'
 import api from '../../services/api'
 import StatusBadge from '../../components/submissions/StatusBadge'
 import SubmissionLifecycle from '../../components/submissions/SubmissionLifecycle'
-import FormAnswersViewer from '../../components/submissions/FormAnswersViewer'
 import CommentThread from '../../components/submissions/CommentThread'
-import ChecklistRenderer from '../../components/submissions/ChecklistRenderer'
+import FieldReviewGrid from '../../components/submissions/FieldReviewGrid'
 import AiPanel from '../../components/submissions/AiPanel'
 import {
   PageHeader,
@@ -23,14 +22,21 @@ import {
   CardBody,
   Spinner,
 } from '../../components/ui'
+import useDocumentTitle from '../../hooks/useDocumentTitle'
+import { buildEntityDocumentTitle } from '../../utils/documentTitle'
+import {
+  buildSubmissionDetailPath,
+  getSubmissionPublicRef,
+  slugifySubmissionTitle,
+} from '../../utils/submissionRoutes'
 
 /**
- * Reviewer's detail page — read-only form answers + checklist renderer.
+ * Reviewer's detail page — dynamic per-question review grid.
  * @returns {JSX.Element}
  */
 export default function ReviewDetailPage() {
   const { t, i18n }  = useTranslation()
-  const { id }       = useParams()
+  const { id: submissionRef } = useParams()
   const navigate     = useNavigate()
   const location     = useLocation()
   const isRtl        = i18n.dir() === 'rtl'
@@ -43,19 +49,36 @@ export default function ReviewDetailPage() {
       ? location.state.from
       : '/reviewer/assignments'
 
+  const documentTitle = useMemo(
+    () => buildEntityDocumentTitle(
+      submission?.applicationId,
+      submission?.title,
+      t('reviewer.assignments.pageTitle')
+    ),
+    [submission?.applicationId, submission?.title, t]
+  )
+  useDocumentTitle(documentTitle)
+
   /**
    * Loads submission data.
    */
   const fetchSubmission = useCallback(async () => {
     try {
-      const { data } = await api.get(`/submissions/${id}`)
+      const { data } = await api.get(`/submissions/${submissionRef}`)
       setSubmission(data.submission)
     } catch {
       setError(t('submission.detail.loadError'))
     } finally {
       setLoading(false)
     }
-  }, [id, t])
+  }, [submissionRef, t])
+
+  useEffect(() => {
+    if (!submission) return
+    const canonicalPath = buildSubmissionDetailPath('/reviewer/assignments', submission)
+    if (!canonicalPath || location.pathname === canonicalPath) return
+    navigate(canonicalPath, { replace: true, state: location.state })
+  }, [location.pathname, location.state, navigate, submission])
 
   useEffect(() => { fetchSubmission() }, [fetchSubmission])
 
@@ -91,12 +114,17 @@ export default function ReviewDetailPage() {
     )
   }
 
-  const latestVersion   = submission?.versions?.slice(-1)[0]
-  const alreadyReviewed = submission?.status !== 'ASSIGNED'
+  const diffPath = (() => {
+    const ref = encodeURIComponent(getSubmissionPublicRef(submission))
+    const slug = slugifySubmissionTitle(submission?.title)
+    return slug
+      ? `/reviewer/assignments/${ref}/diff/${encodeURIComponent(slug)}`
+      : `/reviewer/assignments/${ref}/diff`
+  })()
 
   const diffLink = (
     <Link
-      to={`/reviewer/assignments/${id}/diff`}
+      to={diffPath}
       state={{ from: `${location.pathname}${location.search}` }}
       data-testid="open-review-diff"
       className="inline-flex items-center gap-2 text-sm font-semibold hover:underline"
@@ -159,39 +187,14 @@ export default function ReviewDetailPage() {
         </CardBody>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card as="section" className="lg:col-span-2">
-          <CardHeader title={t('submission.detail.sectionAnswers')} />
-          <CardBody>
-            <FormAnswersViewer
-              formConfig={submission?.formConfig}
-              dataJson={latestVersion?.dataJson ?? {}}
-            />
-          </CardBody>
-        </Card>
+      <Card as="section">
+        <CardHeader title={t('reviewer.fieldReview.panelTitle')} />
+        <CardBody>
+          <AiPanel submissionId={submission?.id} canRun={submission?.status === 'ASSIGNED'} />
+        </CardBody>
+      </Card>
 
-        <aside className="space-y-5">
-          <AiPanel submissionId={id} canRun={!alreadyReviewed} />
-
-          <Card as="section">
-            <CardHeader title={t('reviewer.checklist.panelTitle')} />
-            <CardBody>
-              {alreadyReviewed ? (
-                <p
-                  role="status"
-                  aria-live="polite"
-                  className="text-sm"
-                  style={{ color: 'var(--text-muted)' }}
-                >
-                  {t('reviewer.checklist.alreadySubmitted')}
-                </p>
-              ) : (
-                <ChecklistRenderer submissionId={id} onSuccess={handleReviewSuccess} />
-              )}
-            </CardBody>
-          </Card>
-        </aside>
-      </div>
+      <FieldReviewGrid submissionId={submission?.id} onSuccess={handleReviewSuccess} />
 
       <Card as="section">
         <CardHeader

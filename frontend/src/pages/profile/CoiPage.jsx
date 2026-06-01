@@ -33,6 +33,7 @@ import {
   EmptyState,
   AccessibleIcon,
 } from '../../components/ui'
+import useDocumentTitle from '../../hooks/useDocumentTitle'
 
 const SCOPES = ['SUBMISSION', 'USER', 'DEPARTMENT', 'GLOBAL']
 
@@ -54,6 +55,7 @@ function scopeTone(scope) {
  */
 export default function CoiPage() {
   const { t } = useTranslation()
+  useDocumentTitle(t('coi.page.title'))
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')

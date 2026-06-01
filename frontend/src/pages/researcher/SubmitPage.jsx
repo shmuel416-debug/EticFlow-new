@@ -6,7 +6,7 @@
  */
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import { useNavigate, useParams, useSearchParams }  from 'react-router-dom'
+import { useLocation, useNavigate, useParams, useSearchParams }  from 'react-router-dom'
 import { useTranslation }                            from 'react-i18next'
 import {
   CheckCircle2,
@@ -34,7 +34,10 @@ import {
   EmptyState,
   MobileStickyBar,
 } from '../../components/ui'
+import useDocumentTitle from '../../hooks/useDocumentTitle'
 import { useAuth } from '../../context/AuthContext'
+import { buildSubmissionEditPath } from '../../utils/submissionRoutes'
+import { flattenSchemaFields } from '../../utils/formSchema'
 
 /* ── Summary sidebar ─────────────────────── */
 /**
@@ -417,7 +420,9 @@ function getLoadErrorMessage(err, t) {
  */
 export default function SubmitPage() {
   const { t, i18n } = useTranslation()
+  useDocumentTitle(t('submission.submit.pageTitle'))
   const { user, setActiveRole } = useAuth()
+  const location    = useLocation()
   const navigate    = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const { id: editId } = useParams()          // present on /submissions/:id/edit
@@ -450,20 +455,7 @@ export default function SubmitPage() {
   }, [shouldSwitchToResearcher, setActiveRole])
 
   const fields = useMemo(() => {
-    const schema = formMeta?.schemaJson
-    if (!schema || typeof schema !== 'object') return []
-
-    if (Array.isArray(schema.fields)) {
-      return schema.fields.filter(Boolean)
-    }
-
-    if (Array.isArray(schema.sections)) {
-      return schema.sections.flatMap((section) =>
-        Array.isArray(section?.fields) ? section.fields.filter(Boolean) : []
-      )
-    }
-
-    return []
+    return flattenSchemaFields(formMeta?.schemaJson)
   }, [formMeta])
 
   const lastEditIdRef = useRef(editId)
@@ -517,7 +509,11 @@ export default function SubmitPage() {
           const vers   = existing.versions ?? []
           const latest = (vers[vers.length - 1] ?? vers[0])?.dataJson ?? {}
           setValues(latest)
-          setSubmissionId(editId)
+          setSubmissionId(existing.id)
+          const canonicalPath = buildSubmissionEditPath('/submissions', existing)
+          if (canonicalPath && location.pathname !== canonicalPath) {
+            navigate(canonicalPath, { replace: true })
+          }
         } catch (err) {
           if (!cancelled) setLoadError(getLoadErrorMessage(err, t))
         } finally {
@@ -587,7 +583,7 @@ export default function SubmitPage() {
 
     run()
     return () => { cancelled = true }
-  }, [t, editId, formIdFromQuery, formMeta, availableList, hasResearcherRole, shouldSwitchToResearcher])
+  }, [t, editId, formIdFromQuery, formMeta, availableList, hasResearcherRole, location.pathname, navigate, shouldSwitchToResearcher])
 
   const handleConfirmFormChoice = useCallback(() => {
     if (!selectedFormId) return

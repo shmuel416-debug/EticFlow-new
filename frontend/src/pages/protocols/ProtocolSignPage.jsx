@@ -9,7 +9,7 @@
  * IS 5568 / WCAG 2.2 AA compliant.
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
@@ -29,6 +29,8 @@ import {
   AccessibleIcon,
 } from '../../components/ui'
 import levLogo from '../../assets/LOGO.jpg'
+import useDocumentTitle from '../../hooks/useDocumentTitle'
+import { buildEntityDocumentTitle } from '../../utils/documentTitle'
 
 /**
  * Formats an ISO date as dd/MM/yyyy (he-IL).
@@ -66,6 +68,14 @@ export default function ProtocolSignPage() {
   const [didAutoSubmit, setDidAutoSubmit] = useState(false)
   const [showDecisions, setShowDecisions] = useState(false)
 
+  const documentTitle = useMemo(() => {
+    if (info?.protocolTitle) {
+      return buildEntityDocumentTitle(info.protocolTitle, t('protocols.sign.title'))
+    }
+    return t('protocols.sign.title')
+  }, [info?.protocolTitle, t])
+  useDocumentTitle(documentTitle)
+
   // ── Fetch token info ─────────────────────────
 
   useEffect(() => {
@@ -100,7 +110,7 @@ export default function ProtocolSignPage() {
 
   // ── Submit sign / decline ────────────────────
 
-  async function handleAction(chosen) {
+  const handleAction = useCallback(async (chosen) => {
     setAction(chosen)
     setSubmitting(true)
     try {
@@ -118,7 +128,7 @@ export default function ProtocolSignPage() {
     } finally {
       setSubmitting(false)
     }
-  }
+  }, [t, token])
 
   useEffect(() => {
     if (state !== STATE.READY) return
@@ -126,7 +136,7 @@ export default function ProtocolSignPage() {
     if (requestedAction !== 'sign' && requestedAction !== 'decline') return
     setDidAutoSubmit(true)
     void handleAction(requestedAction)
-  }, [didAutoSubmit, requestedAction, state])
+  }, [didAutoSubmit, handleAction, requestedAction, state])
 
   return (
     <>
@@ -257,8 +267,9 @@ export default function ProtocolSignPage() {
 
               <Button
                 variant="secondary"
-                size="sm"
+                size="md"
                 fullWidth
+                className="my-3"
                 onClick={() => setShowDecisions((prev) => !prev)}
                 leftIcon={
                   <AccessibleIcon
@@ -272,6 +283,8 @@ export default function ProtocolSignPage() {
                     ? t('protocols.sign.hideDecisionsBtn')
                     : t('protocols.sign.showDecisionsBtn')
                 }
+                aria-expanded={showDecisions}
+                aria-controls="committee-decisions-panel"
               >
                 {showDecisions
                   ? t('protocols.sign.hideDecisionsBtn')
@@ -280,6 +293,7 @@ export default function ProtocolSignPage() {
 
               {showDecisions && (
                 <section
+                  id="committee-decisions-panel"
                   className="mt-3 mb-6 p-4 space-y-3"
                   style={{
                     background: 'var(--surface-sunken)',

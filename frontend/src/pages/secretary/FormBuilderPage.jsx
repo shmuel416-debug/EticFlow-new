@@ -29,6 +29,7 @@ import PublishDialog        from '../../components/formBuilder/PublishDialog'
 import {
   Button, IconButton, PageHeader, Badge, Input,
 } from '../../components/ui'
+import useDocumentTitle from '../../hooks/useDocumentTitle'
 
 /**
  * Maps raw form status to design-system badge tone.
@@ -235,6 +236,8 @@ export default function FormBuilderPage() {
     addField,    removeField,   duplicateField,
     selectField, updateField,   reorderFields, moveField,
   } = useFormBuilder()
+
+  useDocumentTitle(formName || t('secretary.formBuilder.title'))
 
   const [formId,           setFormId]           = useState(routeId ?? null)
   const [status,           setStatus]           = useState('draft')

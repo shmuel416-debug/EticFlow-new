@@ -193,7 +193,7 @@
     "status": {
       "DRAFT": "טיוטה",
       "SUBMITTED": "הוגש",
-      "IN_TRIAGE": "בבדיקה ראשונית",
+      "IN_TRIAGE": "בדיקה ראשונית",
       "ASSIGNED": "הוקצה לסוקר",
       "IN_REVIEW": "בביקורת",
       "PENDING_REVISION": "ממתין לתיקון",
@@ -329,14 +329,15 @@
     "steps": {
       "DRAFT": "טיוטה נשמרה",
       "SUBMITTED": "הוגש בהצלחה",
-      "IN_TRIAGE": "טיוב ראשוני",
+      "IN_TRIAGE": "בדיקה ראשונית",
       "ASSIGNED": "הוקצה לסוקר",
       "IN_REVIEW": "בביקורת",
       "PENDING_REVISION": "נדרש תיקון",
       "APPROVED": "אושר סופית",
       "REJECTED": "נדחה",
       "WITHDRAWN": "בוטל",
-      "CONTINUED": "המשך"
+      "CONTINUED": "המשך",
+      "DECISION": "קבלת החלטה"
     },
     "currentStep": "← כאן עכשיו",
     "slaLabel": "SLA",
@@ -369,11 +370,12 @@
       "APPROVED": "הבקשה אושרה סופית על ידי הוועדה.",
       "REJECTED": "הבקשה נדחתה וההליך נסגר ללא אישור.",
       "WITHDRAWN": "הבקשה בוטלה על ידי החוקר/ת או המזכירות.",
-      "CONTINUED": "הבקשה הועברה להמשך טיפול בתהליך נפרד."
+      "CONTINUED": "הבקשה הועברה להמשך טיפול בתהליך נפרד.",
+      "DECISION": "הבקשה ממתינה להחלטה סופית של הוועדה."
     },
     "actionHints": {
       "SECRETARY": {
-        "SUBMITTED": "פתח/י את הבקשה והעבר/י אותה לטיוב ראשוני.",
+        "SUBMITTED": "פתח/י את הבקשה והעבר/י אותה לבדיקה ראשונית.",
         "IN_TRIAGE": "וודא/י שלמות מסמכים והקצה/י סוקר מתאים.",
         "PENDING_REVISION": "המתן/י לעדכון מהחוקר/ת ואז החזר/י למסלול."
       },
@@ -574,6 +576,40 @@
         "NO": "לא",
         "NA": "לא רלוונטי"
       },
+      "recommendation": {
+        "EXEMPT": "פטור",
+        "APPROVED": "אישור",
+        "APPROVED_CONDITIONAL": "אישור מותנה",
+        "REVISION_REQUIRED": "נדרש תיקון",
+        "REJECTED": "דחייה"
+      }
+    },
+    "fieldReview": {
+      "panelTitle": "סקירה פר-שאלה",
+      "loadError": "שגיאה בטעינת סקירת הטופס",
+      "saveError": "שגיאה בשמירת טיוטה",
+      "submitError": "שגיאה בהגשת הביקורת",
+      "saved": "טיוטה נשמרה",
+      "submitted": "הביקורת הוגשה בהצלחה",
+      "alreadySubmitted": "הביקורת כבר הוגשה",
+      "summaryTitle": "סיכום כללי והתרשמות",
+      "summaryPlaceholder": "סיכום כללי (אופציונלי)",
+      "impressionPlaceholder": "התרשמות הבודק (אופציונלי)",
+      "requiredProgress": "שאלות שנסקרו: {{answered}} מתוך {{total}}",
+      "selectStatus": "בחר סטטוס",
+      "statusLabel": "סטטוס בדיקת שדה",
+      "status": {
+        "VALID": "תקין",
+        "INVALID": "לא תקין",
+        "NA": "לא רלוונטי"
+      },
+      "commentPlaceholder": "הערת בודק (אופציונלי אלא אם לא תקין)",
+      "commentRequired": "כאשר הסטטוס לא תקין חובה להוסיף הערה",
+      "selectRecommendation": "בחר המלצה",
+      "recommendationLabel": "המלצה",
+      "recommendationRequired": "יש לבחור המלצה לפני הגשה",
+      "saveDraft": "שמור טיוטה",
+      "submit": "הגש ביקורת",
       "recommendation": {
         "EXEMPT": "פטור",
         "APPROVED": "אישור",
@@ -1018,6 +1054,11 @@
     "signaturesRequested": "בקשת חתימה נשלחה ל-{{count}} חותמים",
     "signaturesPartialFailure": "שליחת המייל נכשלה עבור {{failed}} חותמים",
     "signaturesFailureReason": "שליחה נכשלה עבור {{email}}: {{reason}}",
+    "removeSigner": "מחק חותם",
+    "removeSignerConfirm": "למחוק את החותם {{name}} מהפרוטוקול?",
+    "signerRemovedSuccess": "החותם הוסר מהפרוטוקול",
+    "removeSignerError": "שגיאה במחיקת החותם",
+    "removeSignerSignedError": "לא ניתן למחוק חותם שכבר חתם",
     "loadError": "שגיאה בטעינת הפרוטוקול",
     "loadSignersError": "שגיאה בטעינת רשימת חותמים",
     "noSignersAvailable": "לא נמצאו חותמים זמינים",
@@ -1104,6 +1145,7 @@
     "institution_name_he": "שם המוסד (עברית)",
     "institution_name_en": "שם המוסד (אנגלית)",
     "institution_logo_url": "כתובת URL של הלוגו",
+    "system_letterhead_pdf_path": "נתיב קובץ בלאנק (PDF)",
     "primary_color": "צבע ראשי",
     "sla_triage_days": "ימי Triage (SLA)",
     "sla_review_days": "ימי סקירה (SLA)",

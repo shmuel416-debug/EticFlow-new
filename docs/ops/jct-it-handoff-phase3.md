@@ -9,7 +9,7 @@
 
 ## רקע מהיר
 
-Ethic-Net = מערכת ועדת אתיקה אקדמית של JCT (`ethics.jct.ac.il`). בסיום Phase 2 ה-baseline של Azure פרוס ב-tenant האקדמי (`acad.jct.ac.il`, `7b410031-...`).
+Ethic-Net = מערכת ועדת אתיקה אקדמית של JCT (`ethics-net.jct.ac.il`). בסיום Phase 2 ה-baseline של Azure פרוס ב-tenant האקדמי (`acad.jct.ac.il`, `7b410031-...`).
 
 עכשיו אני זקוק לשתי פעולות מוגדרות מצדכם:
 
@@ -28,7 +28,7 @@ Ethic-Net = מערכת ועדת אתיקה אקדמית של JCT (`ethics.jct.ac
 | יומן פגישות ועדה | יומן של `ethicscommittee@jct.ac.il` | Calendar App חייבת להיווצר ב-`jct.ac.il` |
 | SSO (login של חוקרים/סוקרים) | המשתמשים מתחברים עם `@acad.jct.ac.il`, אך נשמרים במערכת כ-`@jct.ac.il` לצורך דיוור | **כלום ל-IT כרגע** — אני מטפל בצד ה-SSO |
 | משתמשי `@jct.ac.il` | כתובת היעד לדיוור וההתראות מהמערכת | **כלום ל-IT** — נשלט בלוגיקת האפליקציה |
-| Domain `ethics.jct.ac.il` ו-`api.ethics.jct.ac.il` | זה zone שלכם | DNS records (סעיף ב' למטה) |
+| Domain `ethics-net.jct.ac.il` ו-`api.ethics-net.jct.ac.il` | זה zone שלכם | DNS records (סעיף ב' למטה) |
 
 ---
 
@@ -175,10 +175,10 @@ Ethic-Net Calendar
 
 | Record | Type | Name | Value | TTL |
 |---|---|---|---|---|
-| Validation web | TXT | `asuid.ethics.jct.ac.il` | (אשלח) | 300 |
-| Validation api | TXT | `asuid.api.ethics.jct.ac.il` | (אשלח) | 300 |
-| Web | CNAME | `ethics.jct.ac.il` | `app-ethics-net-web.azurewebsites.net` | 3600 |
-| API | CNAME | `api.ethics.jct.ac.il` | `app-ethics-net-api.azurewebsites.net` | 3600 |
+| Validation web | TXT | `asuid.ethics-net.jct.ac.il` | (אשלח) | 300 |
+| Validation api | TXT | `asuid.api.ethics-net.jct.ac.il` | (אשלח) | 300 |
+| Web | CNAME | `ethics-net.jct.ac.il` | `app-ethics-net-web.azurewebsites.net` | 3600 |
+| API | CNAME | `api.ethics-net.jct.ac.il` | `app-ethics-net-api.azurewebsites.net` | 3600 |
 
 ה-TXT records דרושים רק לוולידציה חד-פעמית של Azure — ניתן למחוק אחרי שה-binding מאושר.
 

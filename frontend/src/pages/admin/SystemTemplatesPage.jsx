@@ -7,6 +7,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import * as systemTemplatesApi from '../../services/systemTemplates.api.js';
 import { formatBytes, formatDatetime } from '../../utils/format.js';
+import useDocumentTitle from '../../hooks/useDocumentTitle';
 
 const TEMPLATE_KEYS = ['questionnaire_preface'];
 const MAX_TEMPLATE_SIZE_BYTES = 5 * 1024 * 1024;
@@ -14,6 +15,7 @@ const ALLOWED_TEMPLATE_EXTENSIONS = ['.pdf', '.docx'];
 
 export default function SystemTemplatesPage() {
   const { t } = useTranslation();
+  useDocumentTitle(t('systemTemplates.title'));
   const [templates, setTemplates] = useState({});
   const [loading, setLoading] = useState(true);
   const [uploadingKey, setUploadingKey] = useState(null);

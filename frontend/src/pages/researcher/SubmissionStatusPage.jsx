@@ -6,7 +6,7 @@
  * IS 5568 / WCAG 2.2 AA. Lev palette only.
  */
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams, useLocation, useNavigate } from 'react-router-dom'
 import {
@@ -37,6 +37,12 @@ import {
   Textarea,
   FormField,
 } from '../../components/ui'
+import useDocumentTitle from '../../hooks/useDocumentTitle'
+import { buildEntityDocumentTitle } from '../../utils/documentTitle'
+import {
+  buildSubmissionDetailPath,
+  buildSubmissionEditPath,
+} from '../../utils/submissionRoutes'
 
 const APPROVAL_PDF_TIMEOUT_MS = 60000
 
@@ -79,7 +85,7 @@ function SlaIndicator({ sla, nowMs }) {
  */
 export default function SubmissionStatusPage() {
   const { t, i18n } = useTranslation()
-  const { id }       = useParams()
+  const { id: submissionRef } = useParams()
   const location     = useLocation()
   const navigate     = useNavigate()
   const { user }     = useAuth()
@@ -96,19 +102,37 @@ export default function SubmissionStatusPage() {
   const [nowMs]      = useState(() => Date.now())
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [withdrawNote, setWithdrawNote] = useState('')
+  const resolvedSubmissionId = submission?.id || submissionRef
   const backTo = typeof location.state?.from === 'string' ? location.state.from : '/dashboard'
+
+  const documentTitle = useMemo(
+    () => buildEntityDocumentTitle(
+      submission?.applicationId,
+      submission?.title,
+      t('submission.detail.pageTitle')
+    ),
+    [submission?.applicationId, submission?.title, t]
+  )
+  useDocumentTitle(documentTitle)
 
   /** Loads submission from API. */
   const load = useCallback(async () => {
     try {
-      const { data } = await api.get(`/submissions/${id}`)
+      const { data } = await api.get(`/submissions/${submissionRef}`)
       setSubmission(data.submission)
     } catch {
       setError(t('statusPage.loadError'))
     } finally {
       setLoading(false)
     }
-  }, [id, t])
+  }, [submissionRef, t])
+
+  useEffect(() => {
+    if (!submission) return
+    const canonicalPath = buildSubmissionDetailPath('/submissions', submission)
+    if (!canonicalPath || location.pathname === canonicalPath) return
+    navigate(canonicalPath, { replace: true, state: location.state })
+  }, [location.pathname, location.state, navigate, submission])
 
   useEffect(() => { load() }, [load])
 
@@ -125,7 +149,7 @@ export default function SubmissionStatusPage() {
    */
   async function requestApprovalPdfBlob(lang) {
     const response = await api.post(
-      `/submissions/${id}/approval-letter?lang=${lang}`,
+      `/submissions/${resolvedSubmissionId}/approval-letter?lang=${lang}`,
       {},
       { responseType: 'blob', timeout: APPROVAL_PDF_TIMEOUT_MS }
     )
@@ -188,7 +212,7 @@ export default function SubmissionStatusPage() {
   async function handleConfirmWithdraw() {
     setWithdrawing(true)
     try {
-      await api.post(`/submissions/${id}/withdraw`, {
+      await api.post(`/submissions/${resolvedSubmissionId}/withdraw`, {
         note: withdrawNote.trim() || undefined,
       })
       setConfirmOpen(false)
@@ -266,7 +290,7 @@ export default function SubmissionStatusPage() {
                     focusable="false"
                   />
                 }
-                onClick={() => navigate(`/submissions/${id}/edit`)}
+                onClick={() => navigate(buildSubmissionEditPath('/submissions', submission))}
               >
                 {t('statusPage.fixAndResubmit')}
               </Button>

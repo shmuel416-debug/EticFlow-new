@@ -12,6 +12,7 @@ import { Lock, ArrowRight, ArrowLeft, CheckCircle2 } from 'lucide-react'
 import api from '../services/api'
 import { Button, Input, FormField, LanguageSwitcher } from '../components/ui'
 import levLogo from '../assets/LOGO.jpg'
+import useDocumentTitle from '../hooks/useDocumentTitle'
 
 /**
  * Reset password page — POST /api/auth/reset-password.
@@ -20,6 +21,7 @@ import levLogo from '../assets/LOGO.jpg'
  */
 export default function ResetPasswordPage() {
   const { t, i18n }  = useTranslation()
+  useDocumentTitle(t('auth.resetPassword.title'))
   const isRtl        = i18n.dir() === 'rtl'
   const BackIcon     = isRtl ? ArrowLeft : ArrowRight
   const navigate     = useNavigate()

@@ -198,7 +198,7 @@ az deployment group show `
 | `AZURE_ACR_NAME` | `acrethicsnet` |
 | `AZURE_API_APP_NAME` | `app-ethics-net-api` |
 | `AZURE_WEB_APP_NAME` | `app-ethics-net-web` |
-| `AZURE_API_BASE_URL` | `https://app-ethics-net-api.azurewebsites.net` (יעודכן ל-`https://api.ethics.jct.ac.il` אחרי Phase 4) |
+| `AZURE_API_BASE_URL` | `https://app-ethics-net-api.azurewebsites.net` (יעודכן ל-`https://api.ethics-net.jct.ac.il` אחרי Phase 4) |
 
 ---
 
@@ -207,7 +207,7 @@ az deployment group show `
 | Phase | מטרה | משך | תלות |
 | --- | --- | --- | --- |
 | 3 | Entra Apps (SSO + Mail + Calendar) + Key Vault + App Settings | ~30 דק + המתנה ל-Admin Consent מ-IT | אחרי Phase 2 |
-| 4 | דומיינים מותאמים (`ethics.jct.ac.il`) + Managed SSL | ~60 דק (כולל DNS propagation) | אחרי Phase 3 |
+| 4 | דומיינים מותאמים (`ethics-net.jct.ac.il`) + Managed SSL | ~60 דק (כולל DNS propagation) | אחרי Phase 3 |
 | 5 | Build + Push images דרך GitHub Actions | ~10 דק | אחרי Phase 1.3 + 2 |
 | 6 | Bootstrap DB + admin user | ~5 דק | אחרי Phase 5 |
 | 7 | Smoke SSO + Go/No-Go | ~30 דק | אחרי Phase 6 |

@@ -16,6 +16,7 @@ import {
   getDefaultAccessibilityStatement,
   getPublicStatement,
 } from '../services/accessibilityStatement.api'
+import useDocumentTitle from '../hooks/useDocumentTitle'
 
 /**
  * Accessibility statement public page.
@@ -23,6 +24,7 @@ import {
  */
 export default function AccessibilityStatementPage() {
   const { t, i18n } = useTranslation()
+  useDocumentTitle(t('nav.accessibilityStatement'))
   const { user } = useAuth()
   const location = useLocation()
   const [statement, setStatement] = useState(getDefaultAccessibilityStatement())

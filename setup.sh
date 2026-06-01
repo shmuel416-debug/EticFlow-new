@@ -27,7 +27,7 @@ echo "📋 Institution Details"
 echo "──────────────────────"
 read -p "Institution name (Hebrew): " INST_NAME_HE
 read -p "Institution name (English): " INST_NAME_EN
-read -p "Domain (e.g., ethics.jct.ac.il): " INST_DOMAIN
+read -p "Domain (e.g., ethics-net.jct.ac.il): " INST_DOMAIN
 read -p "Primary color hex (default: #1e40af): " INST_COLOR
 INST_COLOR=${INST_COLOR:-#1e40af}
 read -p "Default language (he/en, default: he): " INST_LANG

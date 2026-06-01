@@ -46,22 +46,16 @@ const templateUpdateSchema = templateSchema.partial().extend({
   sections: z.array(sectionWithItemsSchema).optional(),
 })
 
-const VALID_ANSWERS = ['ADEQUATE', 'INADEQUATE', 'YES', 'NO', 'NA'];
-
 const responseSchema = z.object({
-  itemId:   z.string().uuid(),
-  itemCode: z.string().min(1),
-  answer:   z.enum(['ADEQUATE', 'INADEQUATE', 'YES', 'NO', 'NA']),
-  details:  z.string().max(2000).optional(),
+  fieldKey: z.string().min(1).max(200),
+  status: z.enum(['VALID', 'INVALID', 'NA']),
+  comment: z.string().max(2000).optional(),
 });
 
 const saveDraftSchema = z.object({
-  responses:                  z.array(responseSchema).optional(),
-  generalNote:                z.string().max(2000).optional(),
-  exemptConsentRequested:     z.boolean().optional(),
-  exemptConsentReviewerView:  z.enum(['APPROVE', 'REJECT']).optional(),
-  minorsBothParentsExempt:    z.boolean().optional(),
-  minorsExemptReviewerView:   z.enum(['APPROVE', 'REJECT']).optional(),
+  responses: z.array(responseSchema).optional(),
+  generalNote: z.string().max(2000).optional(),
+  impression: z.string().max(2000).optional(),
 });
 
 const submitSchema = saveDraftSchema.extend({
@@ -247,7 +241,7 @@ export async function reorderItems(req, res, next) {
 
 /**
  * GET /api/submissions/:id/checklist
- * Returns active template + reviewer's current review + saved responses.
+ * Returns dynamic field list + reviewer's current review + saved responses.
  */
 export async function getChecklist(req, res, next) {
   try {
@@ -260,7 +254,7 @@ export async function getChecklist(req, res, next) {
 
 /**
  * PUT /api/submissions/:id/checklist
- * Auto-save draft responses. Validates requiresDetails constraint.
+ * Auto-save draft per-field review responses.
  */
 export async function saveDraft(req, res, next) {
   try {
@@ -280,14 +274,6 @@ export async function saveDraft(req, res, next) {
 export async function submitReview(req, res, next) {
   try {
     const payload = submitSchema.parse(req.body);
-
-    if (payload.exemptConsentRequested && !payload.exemptConsentReviewerView) {
-      return res.status(422).json({
-        error: 'exemptConsentReviewerView is required when exemptConsentRequested is true',
-        code: 'EXEMPT_VIEW_REQUIRED',
-      });
-    }
-
     const { review } = await service.getOrCreateReview(req.params.id, req.user.id);
     const submitted = await service.submitReview(review.id, req.user.id, payload);
     res.json({ data: submitted });

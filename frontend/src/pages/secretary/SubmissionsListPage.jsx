@@ -20,6 +20,8 @@ import {
   Button, Card, CardHeader, CardBody, Input, Select, PageHeader, Table,
   AccessibleIcon,
 } from '../../components/ui'
+import useDocumentTitle from '../../hooks/useDocumentTitle'
+import { buildSubmissionDetailPath } from '../../utils/submissionRoutes'
 
 /**
  * Formats ISO date to locale short date.
@@ -37,6 +39,7 @@ function formatDate(iso) {
  */
 export default function SubmissionsListPage() {
   const { t, i18n }   = useTranslation()
+  useDocumentTitle(t('submission.list.pageTitle'))
   const isRtl         = i18n.dir() === 'rtl'
   const location      = useLocation()
   const navigate      = useNavigate()
@@ -210,7 +213,7 @@ export default function SubmissionsListPage() {
             caption={t('submission.list.pageTitle')}
             loading={loading}
             emptyTitle={t('submission.list.noResults')}
-            onRowClick={(row) => navigate(`/secretary/submissions/${row.id}`, { state: { from: returnPath } })}
+            onRowClick={(row) => navigate(buildSubmissionDetailPath('/secretary/submissions', row), { state: { from: returnPath } })}
             rowAriaLabel={(row) => `${row.title} — ${row.applicationId}`}
           />
         </CardBody>

@@ -34,9 +34,9 @@
 ## 3) דומיין ו-SSL
 
 - [ ] הוסף Custom Domain ל-Frontend App Service:
-  - `ethics.<institution>.ac.il`
+  - `ethics-net.<institution>.ac.il`
 - [ ] הוסף Custom Domain ל-Backend App Service:
-  - `api.ethics.<institution>.ac.il`
+  - `api.ethics-net.<institution>.ac.il`
 - [ ] בצע DNS verification לפי ערכי `asuid`.
 - [ ] הפעל Managed Certificate לשני הדומיינים.
 - [ ] אפשר להוציא ערכי `asuid` ולהגדיר binding/cert עם:
@@ -45,7 +45,7 @@
 ## 4) Microsoft Apps (Single-tenant בלבד)
 
 - [ ] הרץ:
-  - `pwsh ./ops/scripts/setup-microsoft-integrations.ps1 -TenantId "<tenant-guid>" -BaseUrl "https://api.ethics.<institution>.ac.il" -OrganizerEmail "ethics@<institution>.ac.il" -FrontendLogoutUrl "https://ethics.<institution>.ac.il/login" -KeyVaultName "kv-ethic-net-prod"`
+  - `pwsh ./ops/scripts/setup-microsoft-integrations.ps1 -TenantId "<tenant-guid>" -BaseUrl "https://api.ethics-net.<institution>.ac.il" -OrganizerEmail "ethics@<institution>.ac.il" -FrontendLogoutUrl "https://ethics-net.<institution>.ac.il/login" -KeyVaultName "kv-ethic-net-prod"`
 - [ ] ודא ש-`Ethic-Net SSO` מוגדר `Single tenant` (AzureADMyOrg).
 - [ ] ודא שניתן `Admin consent` לכל ההרשאות:
   - SSO: `openid`, `profile`, `email`, `User.Read` (Delegated)
@@ -65,8 +65,8 @@
   - `AUTH_PROVIDER=microsoft`
   - `EMAIL_PROVIDER=microsoft`
   - `CALENDAR_PROVIDER=microsoft`
-  - `FRONTEND_URL=https://ethics.<institution>.ac.il`
-  - `MICROSOFT_AUTH_REDIRECT_URI=https://api.ethics.<institution>.ac.il/api/auth/microsoft/callback`
+  - `FRONTEND_URL=https://ethics-net.<institution>.ac.il`
+  - `MICROSOFT_AUTH_REDIRECT_URI=https://api.ethics-net.<institution>.ac.il/api/auth/microsoft/callback`
 - [ ] אופציונלי: עדכון App Settings אוטומטי עם Key Vault references:
   - `pwsh ./ops/scripts/set-azure-api-keyvault-settings.ps1 ...`
 
@@ -77,7 +77,7 @@
   - `ethic-net-web:<tag>`
 - [ ] פרוס ל-`staging` slots של web+api (ללא swap אוטומטי בשחרור ראשון).
 - [ ] הרץ smoke:
-  - `SMOKE_BASE_URL=https://api.ethics.<institution>.ac.il SMOKE_ASSERT=1 npm run smoke:sso`
+  - `SMOKE_BASE_URL=https://api.ethics-net.<institution>.ac.il SMOKE_ASSERT=1 npm run smoke:sso`
 - [ ] בצע slot swap ל-production.
 
 ## מדיניות DEV בענן

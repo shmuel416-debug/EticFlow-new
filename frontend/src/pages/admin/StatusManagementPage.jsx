@@ -15,6 +15,7 @@ import {
   Button, IconButton, Card, CardHeader, CardBody,
   Badge, PageHeader, Input, Tabs, Select, Textarea,
 } from '../../components/ui'
+import useDocumentTitle from '../../hooks/useDocumentTitle'
 
 const ROLES = ['RESEARCHER', 'SECRETARY', 'REVIEWER', 'CHAIRMAN', 'ADMIN']
 const ACTIONS = ['VIEW', 'EDIT', 'COMMENT', 'UPLOAD_DOC', 'DELETE_DOC', 'VIEW_INTERNAL', 'TRANSITION', 'ASSIGN', 'SUBMIT_REVIEW', 'RECORD_DECISION']
@@ -93,6 +94,7 @@ function swapStatusRows(list, fromIndex, toIndex) {
 
 export default function StatusManagementPage() {
   const { t, i18n } = useTranslation()
+  useDocumentTitle(t('statusManagement.title'))
   const isHeUI = isHebrewUILanguage(i18n.language)
   const statusConfig = useStatusConfig()
   const [activeTab, setActiveTab] = useState('statuses')

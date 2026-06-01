@@ -68,7 +68,7 @@ Subscription
 עקרונות מפתח:
 
 - **אין שיתוף משאבים** בין הסביבות (לא DB, לא ACR, לא Key Vault, לא App Insights).
-- **DNS שונה**: `dev.ethics.<institution>.ac.il` ו-`api.dev.ethics.<institution>.ac.il` ל-Dev, `ethics.<institution>.ac.il` ו-`api.ethics.<institution>.ac.il` ל-Prod.
+- **DNS שונה**: `dev.ethics-net.<institution>.ac.il` ו-`api.dev.ethics-net.<institution>.ac.il` ל-Dev, `ethics-net.<institution>.ac.il` ו-`api.ethics-net.<institution>.ac.il` ל-Prod.
 - **Microsoft App Registrations נפרדים** עם redirect URIs שונים, כדי שהתחברויות SSO לא יתנגשו.
 - **GitHub Environments נפרדים** (`dev`, `production`) עם סודות שונים ואישורי deploy שונים.
 - אותו `main.bicep` משרת את שתי הסביבות — רק קובץ ה-parameters משתנה.
@@ -90,8 +90,8 @@ Subscription
 | App Insights | `appi-ethic-net-dev` | `appi-ethic-net-prod` |
 | Log Analytics | `law-ethic-net-dev` | `law-ethic-net-prod` |
 | VNet | `vnet-ethic-net-dev` | `vnet-ethic-net-prod` |
-| Frontend domain | `dev.ethics.<institution>.ac.il` | `ethics.<institution>.ac.il` |
-| API domain | `api.dev.ethics.<institution>.ac.il` | `api.ethics.<institution>.ac.il` |
+| Frontend domain | `dev.ethics-net.<institution>.ac.il` | `ethics-net.<institution>.ac.il` |
+| API domain | `api.dev.ethics-net.<institution>.ac.il` | `api.ethics-net.<institution>.ac.il` |
 
 > שמות של ACR, Storage Account, Postgres ו-Key Vault חייבים להיות **ייחודיים בכל ה-Azure**. אם השמות תפוסים — הוסף סיומת מספרית (`acrethic-netdev01` וכו').
 
@@ -256,9 +256,9 @@ pwsh ./ops/scripts/deploy-azure-baseline.ps1 `
 ```powershell
 pwsh ./ops/scripts/setup-microsoft-integrations.ps1 `
   -TenantId "<TENANT_GUID>" `
-  -BaseUrl "https://api.dev.ethics.<institution>.ac.il" `
+  -BaseUrl "https://api.dev.ethics-net.<institution>.ac.il" `
   -OrganizerEmail "ethics-dev@<institution>.ac.il" `
-  -FrontendLogoutUrl "https://dev.ethics.<institution>.ac.il/login" `
+  -FrontendLogoutUrl "https://dev.ethics-net.<institution>.ac.il/login" `
   -KeyVaultName "kv-ethic-net-dev" `
   -SecretPrefix "ethic-net-dev"
 ```
@@ -268,9 +268,9 @@ pwsh ./ops/scripts/setup-microsoft-integrations.ps1 `
 ```powershell
 pwsh ./ops/scripts/setup-microsoft-integrations.ps1 `
   -TenantId "<TENANT_GUID>" `
-  -BaseUrl "https://api.ethics.<institution>.ac.il" `
+  -BaseUrl "https://api.ethics-net.<institution>.ac.il" `
   -OrganizerEmail "ethics@<institution>.ac.il" `
-  -FrontendLogoutUrl "https://ethics.<institution>.ac.il/login" `
+  -FrontendLogoutUrl "https://ethics-net.<institution>.ac.il/login" `
   -KeyVaultName "kv-ethic-net-prod" `
   -SecretPrefix "ethic-net-prod"
 ```
@@ -291,7 +291,7 @@ pwsh ./ops/scripts/setup-microsoft-integrations.ps1 `
 
 ```powershell
 pwsh ./ops/scripts/generate-prod-secrets.ps1 `
-  -FrontendUrl "https://dev.ethics.<institution>.ac.il" `
+  -FrontendUrl "https://dev.ethics-net.<institution>.ac.il" `
   -KeyVaultName "kv-ethic-net-dev"
 ```
 
@@ -299,7 +299,7 @@ pwsh ./ops/scripts/generate-prod-secrets.ps1 `
 
 ```powershell
 pwsh ./ops/scripts/generate-prod-secrets.ps1 `
-  -FrontendUrl "https://ethics.<institution>.ac.il" `
+  -FrontendUrl "https://ethics-net.<institution>.ac.il" `
   -KeyVaultName "kv-ethic-net-prod"
 ```
 
@@ -316,8 +316,8 @@ pwsh ./ops/scripts/set-azure-api-keyvault-settings.ps1 `
   -ResourceGroupName "rg-ethic-net-dev" `
   -ApiAppName "app-ethic-net-api-dev" `
   -KeyVaultName "kv-ethic-net-dev" `
-  -FrontendUrl "https://dev.ethics.<institution>.ac.il" `
-  -ApiBaseUrl "https://api.dev.ethics.<institution>.ac.il" `
+  -FrontendUrl "https://dev.ethics-net.<institution>.ac.il" `
+  -ApiBaseUrl "https://api.dev.ethics-net.<institution>.ac.il" `
   -OrganizerEmail "ethics-dev@<institution>.ac.il" `
   -SecretPrefix "ethic-net-dev"
 ```
@@ -329,8 +329,8 @@ pwsh ./ops/scripts/set-azure-api-keyvault-settings.ps1 `
   -ResourceGroupName "rg-ethic-net-prod" `
   -ApiAppName "app-ethic-net-api-prod" `
   -KeyVaultName "kv-ethic-net-prod" `
-  -FrontendUrl "https://ethics.<institution>.ac.il" `
-  -ApiBaseUrl "https://api.ethics.<institution>.ac.il" `
+  -FrontendUrl "https://ethics-net.<institution>.ac.il" `
+  -ApiBaseUrl "https://api.ethics-net.<institution>.ac.il" `
   -OrganizerEmail "ethics@<institution>.ac.il" `
   -SecretPrefix "ethic-net-prod"
 ```
@@ -346,8 +346,8 @@ pwsh ./ops/scripts/configure-appservice-domains.ps1 `
   -ResourceGroupName "rg-ethic-net-dev" `
   -WebAppName "app-ethic-net-web-dev" `
   -ApiAppName "app-ethic-net-api-dev" `
-  -WebHostname "dev.ethics.<institution>.ac.il" `
-  -ApiHostname "api.dev.ethics.<institution>.ac.il"
+  -WebHostname "dev.ethics-net.<institution>.ac.il" `
+  -ApiHostname "api.dev.ethics-net.<institution>.ac.il"
 ```
 
 הסקריפט מדפיס את ערכי ה-`asuid` ואת רשומות ה-CNAME. הוסף אותן ב-DNS שלך והמתן ל-propagation (5-30 דקות בדרך כלל).
@@ -359,8 +359,8 @@ pwsh ./ops/scripts/configure-appservice-domains.ps1 `
   -ResourceGroupName "rg-ethic-net-dev" `
   -WebAppName "app-ethic-net-web-dev" `
   -ApiAppName "app-ethic-net-api-dev" `
-  -WebHostname "dev.ethics.<institution>.ac.il" `
-  -ApiHostname "api.dev.ethics.<institution>.ac.il" `
+  -WebHostname "dev.ethics-net.<institution>.ac.il" `
+  -ApiHostname "api.dev.ethics-net.<institution>.ac.il" `
   -ApplyBindings
 ```
 
@@ -372,16 +372,16 @@ pwsh ./ops/scripts/configure-appservice-domains.ps1 `
   -ResourceGroupName "rg-ethic-net-prod" `
   -WebAppName "app-ethic-net-web-prod" `
   -ApiAppName "app-ethic-net-api-prod" `
-  -WebHostname "ethics.<institution>.ac.il" `
-  -ApiHostname "api.ethics.<institution>.ac.il"
+  -WebHostname "ethics-net.<institution>.ac.il" `
+  -ApiHostname "api.ethics-net.<institution>.ac.il"
 
 # שלב 2 — Bind
 pwsh ./ops/scripts/configure-appservice-domains.ps1 `
   -ResourceGroupName "rg-ethic-net-prod" `
   -WebAppName "app-ethic-net-web-prod" `
   -ApiAppName "app-ethic-net-api-prod" `
-  -WebHostname "ethics.<institution>.ac.il" `
-  -ApiHostname "api.ethics.<institution>.ac.il" `
+  -WebHostname "ethics-net.<institution>.ac.il" `
+  -ApiHostname "api.ethics-net.<institution>.ac.il" `
   -ApplyBindings
 ```
 
@@ -463,7 +463,7 @@ az role assignment create `
 | `AZURE_ACR_NAME` | `acrethic-netdev` | `acrethic-netprod` |
 | `AZURE_API_APP_NAME` | `app-ethic-net-api-dev` | `app-ethic-net-api-prod` |
 | `AZURE_WEB_APP_NAME` | `app-ethic-net-web-dev` | `app-ethic-net-web-prod` |
-| `AZURE_STAGING_API_BASE_URL` | `https://api.dev.ethics.<institution>.ac.il` | `https://api.ethics.<institution>.ac.il` (או slot URL) |
+| `AZURE_STAGING_API_BASE_URL` | `https://api.dev.ethics-net.<institution>.ac.il` | `https://api.ethics-net.<institution>.ac.il` (או slot URL) |
 
 ### 7.5 התאמת ה-Workflow לשתי הסביבות
 
@@ -562,7 +562,7 @@ node prisma/seed.js
 ### Dev
 
 ```powershell
-$env:SMOKE_BASE_URL = "https://api.dev.ethics.<institution>.ac.il"
+$env:SMOKE_BASE_URL = "https://api.dev.ethics-net.<institution>.ac.il"
 $env:SMOKE_ASSERT = "1"
 cd backend
 npm run smoke:sso
@@ -570,10 +570,10 @@ npm run smoke:sso
 
 בדוק ידנית בדפדפן:
 
-- `https://dev.ethics.<institution>.ac.il` → טעינה תקינה.
+- `https://dev.ethics-net.<institution>.ac.il` → טעינה תקינה.
 - התחבר עם משתמש Microsoft מהטננט.
 - צור פגישת בדיקה → ודא שנוצרה ב-Outlook של המארגן.
-- בדוק `https://api.dev.ethics.<institution>.ac.il/api/health` → `200 OK`.
+- בדוק `https://api.dev.ethics-net.<institution>.ac.il/api/health` → `200 OK`.
 
 ### Production — אחרי שכל הבדיקות ב-Dev עברו
 
@@ -660,7 +660,7 @@ pwsh ./ops/scripts/run-azure-slot-rollback-drill.ps1 `
   -ResourceGroupName "rg-ethic-net-dev" `
   -ApiAppName "app-ethic-net-api-dev" `
   -WebAppName "app-ethic-net-web-dev" `
-  -ApiHealthUrl "https://api.dev.ethics.<institution>.ac.il/api/health"
+  -ApiHealthUrl "https://api.dev.ethics-net.<institution>.ac.il/api/health"
 ```
 
 ---
@@ -791,7 +791,7 @@ az webapp log download --resource-group "rg-ethic-net-dev" --name "app-ethic-net
 ודא שב-App Registration של אותה סביבה, תחת `Authentication → Redirect URIs`, מופיע במדויק:
 
 ```text
-https://api.dev.ethics.<institution>.ac.il/api/auth/microsoft/callback
+https://api.dev.ethics-net.<institution>.ac.il/api/auth/microsoft/callback
 ```
 
 ושב-`MICROSOFT_AUTH_REDIRECT_URI` של ה-App Service יש בדיוק את אותו ערך (כולל `https://`, ללא slash בסוף).

@@ -9,7 +9,7 @@
  * IS 5568 / WCAG 2.2 AA: 44px targets, aria, keyboard navigation.
  */
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import {
@@ -45,6 +45,7 @@ import {
   EmptyState,
   AccessibleIcon,
 } from '../../components/ui'
+import useDocumentTitle from '../../hooks/useDocumentTitle'
 
 /**
  * Picks the first canonical role from a user record.
@@ -169,6 +170,12 @@ export default function MeetingDetailPage() {
   const [duration, setDuration]         = useState('')
   const [addingItem, setAddingItem]     = useState(false)
   const [addError, setAddError]         = useState(null)
+
+  const documentTitle = useMemo(
+    () => meeting?.title || t('meetings.title'),
+    [meeting?.title, t]
+  )
+  useDocumentTitle(documentTitle)
 
   // ── Attendees management ─────────────────────
   const [allUsers, setAllUsers]             = useState([])

@@ -18,6 +18,7 @@ import {
   Button, IconButton, Card, Badge, PageHeader, Input, Select, FormField,
   Table, Modal,
 } from '../../components/ui'
+import useDocumentTitle from '../../hooks/useDocumentTitle'
 
 const ROLES = ['RESEARCHER', 'SECRETARY', 'REVIEWER', 'CHAIRMAN', 'ADMIN']
 
@@ -47,6 +48,7 @@ function normalizeRoles(roles) {
  */
 export default function UsersPage() {
   const { t, i18n }                              = useTranslation()
+  useDocumentTitle(t('admin.usersPage'))
   const { startImpersonation, isImpersonating }  = useAuth()
   const navigate                                 = useNavigate()
   const isRtl = i18n.dir() === 'rtl'

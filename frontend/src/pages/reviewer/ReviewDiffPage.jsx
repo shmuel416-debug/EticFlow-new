@@ -7,7 +7,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useLocation, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { Search, AlertCircle } from 'lucide-react'
 import api from '../../services/api'
 import {
@@ -22,6 +22,8 @@ import {
   Select,
   EmptyState,
 } from '../../components/ui'
+import useDocumentTitle from '../../hooks/useDocumentTitle'
+import { getSubmissionPublicRef, slugifySubmissionTitle } from '../../utils/submissionRoutes'
 
 /**
  * Flattens nested object/array into key-path map.
@@ -161,8 +163,10 @@ function renderValueCell(value, other, side) {
  */
 export default function ReviewDiffPage() {
   const { t } = useTranslation()
-  const { id } = useParams()
+  useDocumentTitle(t('reviewer.diff.title'))
+  const { id: submissionRef } = useParams()
   const location = useLocation()
+  const navigate = useNavigate()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [submission, setSubmission] = useState(null)
@@ -175,7 +179,7 @@ export default function ReviewDiffPage() {
   const backTo =
     typeof location.state?.from === 'string'
       ? location.state.from
-      : `/reviewer/assignments/${id}`
+      : `/reviewer/assignments/${submissionRef}`
 
   useEffect(() => {
     /**
@@ -186,7 +190,7 @@ export default function ReviewDiffPage() {
       setLoading(true)
       setError('')
       try {
-        const { data } = await api.get(`/submissions/${id}`)
+        const { data } = await api.get(`/submissions/${submissionRef}`)
         const sub = data.submission
         setSubmission(sub)
         const versions = sub?.versions || []
@@ -204,7 +208,18 @@ export default function ReviewDiffPage() {
       }
     }
     loadSubmission()
-  }, [id, t])
+  }, [submissionRef, t])
+
+  useEffect(() => {
+    if (!submission) return
+    const ref = encodeURIComponent(getSubmissionPublicRef(submission))
+    const slug = slugifySubmissionTitle(submission?.title)
+    const canonicalPath = slug
+      ? `/reviewer/assignments/${ref}/diff/${encodeURIComponent(slug)}`
+      : `/reviewer/assignments/${ref}/diff`
+    if (!canonicalPath || location.pathname === canonicalPath) return
+    navigate(canonicalPath, { replace: true, state: location.state })
+  }, [location.pathname, location.state, navigate, submission])
 
   const versions = useMemo(() => submission?.versions || [], [submission])
   const fromData = useMemo(() => {

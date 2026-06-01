@@ -19,6 +19,7 @@ import {
   EmptyState,
   IconButton,
 } from '../components/ui'
+import useDocumentTitle from '../hooks/useDocumentTitle'
 
 /**
  * Formats ISO date to relative or locale time.
@@ -38,6 +39,7 @@ function formatDate(iso) {
  */
 export default function NotificationsPage() {
   const { t }               = useTranslation()
+  useDocumentTitle(t('notifications.pageTitle'))
   const [notifications,     setNotifications]     = useState([])
   const [loading,           setLoading]           = useState(true)
   const [error,             setError]             = useState('')

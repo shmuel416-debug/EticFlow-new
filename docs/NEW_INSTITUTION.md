@@ -10,7 +10,7 @@ Ethic-Net is a standalone product. Each institution gets its own deployment with
 | Name (he+en) | .env | "מכון לב" / "JCT" |
 | Logo | /public/logos/ | jct.png |
 | Brand color | .env | #1e3a8a |
-| Domain | .env | ethics.jct.ac.il |
+| Domain | .env | ethics-net.jct.ac.il |
 | Language default | .env | he |
 | Academic year start | .env | 10 (October) |
 | Email templates | Admin UI | Custom text per institution |

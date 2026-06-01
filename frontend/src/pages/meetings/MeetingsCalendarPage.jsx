@@ -14,6 +14,7 @@ import {
   Badge, Card, CardBody, CardHeader, FormField,
   IconButton, PageHeader, Select,
 } from '../../components/ui'
+import useDocumentTitle from '../../hooks/useDocumentTitle'
 
 /**
  * Returns YYYY-MM-DD from date-like input.
@@ -101,6 +102,7 @@ function densityTone(count) {
  */
 export default function MeetingsCalendarPage() {
   const { t, i18n } = useTranslation()
+  useDocumentTitle(t('meetings.calendarTitle'))
   const location    = useLocation()
   const isRtl       = i18n.dir() === 'rtl'
   const PrevMonthIcon = isRtl ? ChevronRight : ChevronLeft

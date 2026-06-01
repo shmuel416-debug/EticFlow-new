@@ -18,6 +18,8 @@ import api from '../../services/api'
 import {
   Badge, Button, Card, PageHeader, StatCard, EmptyState, Spinner,
 } from '../../components/ui'
+import useDocumentTitle from '../../hooks/useDocumentTitle'
+import { buildSubmissionDetailPath } from '../../utils/submissionRoutes'
 
 /**
  * SLA indicator — small colored dot with accessible label. Brand-var colors.
@@ -60,7 +62,7 @@ function SlaDot({ slaTracking, labels }) {
 function KanbanCard({ submission, linkPrefix, slaLabels, statusLabel }) {
   return (
     <Link
-      to={`${linkPrefix}/${submission.id}`}
+      to={buildSubmissionDetailPath(linkPrefix, submission)}
       className="block p-3 transition-shadow hover:shadow"
       style={{
         background: 'var(--surface-raised)',
@@ -95,6 +97,7 @@ function KanbanCard({ submission, linkPrefix, slaLabels, statusLabel }) {
  */
 export default function ChairmanDashboard() {
   const { t, i18n } = useTranslation()
+  useDocumentTitle(t('dashboard.chairman.title'))
   const isRtl = i18n.dir() === 'rtl'
   const NextIcon = isRtl ? ArrowLeft : ArrowRight
   const slaLabels = {

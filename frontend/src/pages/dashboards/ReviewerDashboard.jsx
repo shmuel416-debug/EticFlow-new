@@ -11,6 +11,7 @@ import { Link } from 'react-router-dom'
 import { ClipboardList, CheckCircle2, ArrowRight, ListTodo } from 'lucide-react'
 import api from '../../services/api'
 import { Card, CardBody, CardHeader, PageHeader, StatCard } from '../../components/ui'
+import useDocumentTitle from '../../hooks/useDocumentTitle'
 
 /** Secondary outline style matching design-system Button (for router Links). */
 const LINK_STYLE = {
@@ -31,6 +32,7 @@ const LINK_STYLE = {
  */
 export default function ReviewerDashboard() {
   const { t } = useTranslation()
+  useDocumentTitle(t('dashboard.reviewer.title'))
   const [loading, setLoading] = useState(true)
   const [assignedTotal, setAssignedTotal] = useState(null)
   const [completedTotal, setCompletedTotal] = useState(null)

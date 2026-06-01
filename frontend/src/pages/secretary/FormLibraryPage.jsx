@@ -20,6 +20,7 @@ import {
   Button, StatCard, Tabs, Input, EmptyState, Skeleton, IconButton,
   PageHeader,
 } from '../../components/ui'
+import useDocumentTitle from '../../hooks/useDocumentTitle'
 
 /** Status filter keys. */
 const FILTERS = ['all', 'draft', 'published', 'archived']
@@ -69,6 +70,7 @@ function StatsRow({ forms }) {
  */
 export default function FormLibraryPage() {
   const { t }    = useTranslation()
+  useDocumentTitle(t('secretary.formLibrary.title'))
   const navigate = useNavigate()
 
   const [forms,              setForms]              = useState([])

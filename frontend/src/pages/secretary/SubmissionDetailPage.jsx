@@ -5,13 +5,16 @@
  * Refreshed to Lev design system (PageHeader + Card primitives + Button).
  */
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useParams, useLocation } from 'react-router-dom'
+import { useParams, useLocation, useNavigate } from 'react-router-dom'
 import { Download, Eye, CheckCircle2, AlertCircle, MessageSquare } from 'lucide-react'
 import api from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
 import useStatusConfig from '../../hooks/useStatusConfig'
+import useDocumentTitle from '../../hooks/useDocumentTitle'
+import { buildEntityDocumentTitle } from '../../utils/documentTitle'
+import { buildSubmissionDetailPath } from '../../utils/submissionRoutes'
 import StatusBadge from '../../components/submissions/StatusBadge'
 import CommentThread from '../../components/submissions/CommentThread'
 import StatusTransitionPanel from '../../components/submissions/StatusTransitionPanel'
@@ -38,8 +41,9 @@ const APPROVAL_PDF_TIMEOUT_MS = 60000
  */
 export default function SubmissionDetailPage() {
   const { t, i18n }      = useTranslation()
-  const { id }           = useParams()
+  const { id: submissionRef } = useParams()
   const location         = useLocation()
+  const navigate         = useNavigate()
   const { user, setActiveRole } = useAuth()
   const [submission,     setSubmission]     = useState(null)
   const [loading,        setLoading]        = useState(true)
@@ -50,7 +54,18 @@ export default function SubmissionDetailPage() {
   const [pdfLoading,     setPdfLoading]     = useState(null) // 'download-he' | 'download-en' | 'preview-he' | 'preview-en' | null
   const [previewPdfUrl,  setPreviewPdfUrl]  = useState('')
   const [previewOpen,    setPreviewOpen]    = useState(false)
-  const { statusMap }    = useStatusConfig({ submissionId: id })
+  const resolvedSubmissionId = submission?.id || submissionRef
+  const { statusMap }    = useStatusConfig({ submissionId: resolvedSubmissionId })
+
+  const documentTitle = useMemo(
+    () => buildEntityDocumentTitle(
+      submission?.applicationId,
+      submission?.title,
+      t('submission.detail.pageTitle')
+    ),
+    [submission?.applicationId, submission?.title, t]
+  )
+  useDocumentTitle(documentTitle)
 
   useEffect(() => {
     if (!Array.isArray(user?.roles) || user.roles.length === 0) return
@@ -78,7 +93,7 @@ export default function SubmissionDetailPage() {
     setLoading(true)
     setError('')
     try {
-      const { data } = await api.get(`/submissions/${id}`)
+      const { data } = await api.get(`/submissions/${submissionRef}`)
       setSubmission(data.submission)
       setAssigningId(data.submission.reviewerId ?? '')
     } catch {
@@ -86,9 +101,16 @@ export default function SubmissionDetailPage() {
     } finally {
       setLoading(false)
     }
-  }, [id, t])
+  }, [submissionRef, t])
 
   useEffect(() => { fetchSubmission() }, [fetchSubmission])
+
+  useEffect(() => {
+    if (!submission) return
+    const canonicalPath = buildSubmissionDetailPath('/secretary/submissions', submission)
+    if (!canonicalPath || location.pathname === canonicalPath) return
+    navigate(canonicalPath, { replace: true, state: location.state })
+  }, [location.pathname, location.state, navigate, submission])
 
   useEffect(() => {
     return () => {
@@ -103,7 +125,7 @@ export default function SubmissionDetailPage() {
    */
   async function requestApprovalPdfBlob(lang) {
     const response = await api.post(
-      `/submissions/${id}/approval-letter?lang=${lang}`,
+      `/submissions/${resolvedSubmissionId}/approval-letter?lang=${lang}`,
       {},
       { responseType: 'blob', timeout: APPROVAL_PDF_TIMEOUT_MS }
     )
@@ -118,7 +140,7 @@ export default function SubmissionDetailPage() {
     setTransitioning(true)
     setSuccessMsg('')
     try {
-      await api.patch(`/submissions/${id}/status`, { status: newStatus })
+      await api.patch(`/submissions/${resolvedSubmissionId}/status`, { status: newStatus })
       setSuccessMsg(t('submission.detail.statusUpdatedTo', { status: getStatusLabel(newStatus) }))
       await fetchSubmission()
     } catch (err) {
@@ -136,7 +158,7 @@ export default function SubmissionDetailPage() {
     setTransitioning(true)
     setSuccessMsg('')
     try {
-      await api.patch(`/submissions/${id}/assign`, { reviewerId: assigningId })
+      await api.patch(`/submissions/${resolvedSubmissionId}/assign`, { reviewerId: assigningId })
       setSuccessMsg(t('submission.detail.reviewerAssigned'))
       await fetchSubmission()
     } catch (err) {
@@ -152,7 +174,7 @@ export default function SubmissionDetailPage() {
    * @param {boolean} isInternal
    */
   async function handleAddComment(content, isInternal) {
-    await api.post(`/submissions/${id}/comments`, { content, isInternal })
+    await api.post(`/submissions/${resolvedSubmissionId}/comments`, { content, isInternal })
     await fetchSubmission()
   }
 

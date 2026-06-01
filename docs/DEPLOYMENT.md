@@ -79,8 +79,8 @@ For a concise Hebrew operator checklist, see:
 - Entra tenant with admin consent ability.
 - Azure CLI + Bicep installed.
 - Production DNS control for:
-  - `ethics.<institution>.ac.il` (frontend)
-  - `api.ethics.<institution>.ac.il` (backend)
+  - `ethics-net.<institution>.ac.il` (frontend)
+  - `api.ethics-net.<institution>.ac.il` (backend)
 - Chromium available in the backend container image (required for Puppeteer PDF rendering).
 - Hebrew-capable fonts available in backend runtime (at least Noto Hebrew or embedded Heebo/David Libre).
 
@@ -139,9 +139,9 @@ Run the provisioning script:
 ```bash
 pwsh ./ops/scripts/setup-microsoft-integrations.ps1 \
   -TenantId "<TENANT_GUID>" \
-  -BaseUrl "https://api.ethics.<institution>.ac.il" \
+  -BaseUrl "https://api.ethics-net.<institution>.ac.il" \
   -OrganizerEmail "ethics@<institution>.ac.il" \
-  -FrontendLogoutUrl "https://ethics.<institution>.ac.il/login" \
+  -FrontendLogoutUrl "https://ethics-net.<institution>.ac.il/login" \
   -KeyVaultName "kv-ethic-net-prod" \
   -SecretPrefix "ethic-net-prod"
 ```
@@ -164,12 +164,12 @@ PORT=3000
 WEBSITES_PORT=3000
 PUPPETEER_SKIP_DOWNLOAD=true
 PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
-FRONTEND_URL=https://ethics.<institution>.ac.il
+FRONTEND_URL=https://ethics-net.<institution>.ac.il
 AUTH_PROVIDER=microsoft
 EMAIL_PROVIDER=microsoft
 CALENDAR_PROVIDER=microsoft
 STORAGE_PROVIDER=local
-MICROSOFT_AUTH_REDIRECT_URI=https://api.ethics.<institution>.ac.il/api/auth/microsoft/callback
+MICROSOFT_AUTH_REDIRECT_URI=https://api.ethics-net.<institution>.ac.il/api/auth/microsoft/callback
 MICROSOFT_CALENDAR_ORGANIZER_EMAIL=ethics@<institution>.ac.il
 ```
 
@@ -183,7 +183,7 @@ Set these on frontend App Service:
 
 ```env
 WEBSITES_PORT=80
-BACKEND_URL=https://api.ethics.<institution>.ac.il
+BACKEND_URL=https://api.ethics-net.<institution>.ac.il
 ```
 
 Store sensitive values (`DATABASE_URL`, JWT secrets, Microsoft client secrets) in Key Vault and map via Key Vault references.
@@ -196,8 +196,8 @@ pwsh ./ops/scripts/set-azure-api-keyvault-settings.ps1 `
   -ResourceGroupName "rg-ethic-net-prod" `
   -ApiAppName "app-ethic-net-api-prod" `
   -KeyVaultName "kv-ethic-net-prod" `
-  -FrontendUrl "https://ethics.<institution>.ac.il" `
-  -ApiBaseUrl "https://api.ethics.<institution>.ac.il" `
+  -FrontendUrl "https://ethics-net.<institution>.ac.il" `
+  -ApiBaseUrl "https://api.ethics-net.<institution>.ac.il" `
   -OrganizerEmail "ethics@<institution>.ac.il" `
   -SecretPrefix "ethic-net-prod"
 ```
@@ -205,8 +205,8 @@ pwsh ./ops/scripts/set-azure-api-keyvault-settings.ps1 `
 ### Step 5: Domain and TLS
 
 - Add custom domains to each app:
-  - Web app: `ethics.<institution>.ac.il`
-  - API app: `api.ethics.<institution>.ac.il`
+  - Web app: `ethics-net.<institution>.ac.il`
+  - API app: `api.ethics-net.<institution>.ac.il`
 - Complete DNS validation (`asuid` TXT/CNAME as requested by App Service).
 - Enable Managed Certificates on both domains.
 
@@ -220,7 +220,7 @@ ADMIN_EMAIL=admin@<institution>.ac.il ADMIN_PASSWORD="<strong-password>" npm run
 ### Step 7: Smoke and go-live
 
 ```bash
-SMOKE_BASE_URL=https://api.ethics.<institution>.ac.il SMOKE_ASSERT=1 npm run smoke:sso
+SMOKE_BASE_URL=https://api.ethics-net.<institution>.ac.il SMOKE_ASSERT=1 npm run smoke:sso
 ```
 
 Manual verification:

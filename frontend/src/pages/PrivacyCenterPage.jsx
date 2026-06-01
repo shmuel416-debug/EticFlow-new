@@ -32,6 +32,7 @@ import {
   EmptyState,
   AccessibleIcon,
 } from '../components/ui'
+import useDocumentTitle from '../hooks/useDocumentTitle'
 
 /**
  * Picks a Badge tone for a privacy-request type.
@@ -50,6 +51,7 @@ function requestTypeTone(type) {
  */
 export default function PrivacyCenterPage() {
   const { t } = useTranslation()
+  useDocumentTitle(t('privacy.title'))
   const [requests, setRequests] = useState([])
   const [loading, setLoading]   = useState(true)
   const [busy, setBusy]         = useState(false)

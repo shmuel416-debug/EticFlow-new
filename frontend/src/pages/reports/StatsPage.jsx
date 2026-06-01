@@ -14,6 +14,7 @@ import api from '../../services/api'
 import {
   Button, Card, CardHeader, CardBody, PageHeader, StatCard, Badge,
 } from '../../components/ui'
+import useDocumentTitle from '../../hooks/useDocumentTitle'
 
 /** Submission status colours for the bar chart — CSS-var driven */
 const STATUS_BARS = [
@@ -243,6 +244,7 @@ function ChecklistRecommendationChart({ byRecommendation, total }) {
 
 export default function StatsPage() {
   const { t, i18n } = useTranslation()
+  useDocumentTitle(t('stats.title'))
   const navigate = useNavigate()
   const location = useLocation()
 

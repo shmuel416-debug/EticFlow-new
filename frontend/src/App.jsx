@@ -45,7 +45,6 @@ import AuditLogPage               from './pages/reports/AuditLogPage'
 import SettingsPage               from './pages/admin/SettingsPage'
 import StatusManagementPage       from './pages/admin/StatusManagementPage'
 import SystemTemplatesPage        from './pages/admin/SystemTemplatesPage'
-import ReviewerChecklistAdminPage from './pages/admin/ReviewerChecklistAdminPage'
 import AccessibilityStatementAdminPage from './pages/admin/AccessibilityStatementAdminPage'
 import CoiPage                    from './pages/profile/CoiPage'
 import AccessibilityStatementPage from './pages/AccessibilityStatementPage'
@@ -68,8 +67,10 @@ export default function App() {
             <Route element={<AppLayout />}>
               <Route path="/dashboard"       element={<DashboardPage />} />
               <Route path="/submissions/new"      element={<SubmitPage />} />
-              <Route path="/submissions/:id/edit" element={<SubmitPage />} />
-              <Route path="/submissions/:id"      element={<SubmissionStatusPage />} />
+              <Route path="/submissions/:id/edit/:slug" element={<SubmitPage />} />
+              <Route path="/submissions/:id/edit"       element={<SubmitPage />} />
+              <Route path="/submissions/:id/:slug"      element={<SubmissionStatusPage />} />
+              <Route path="/submissions/:id"            element={<SubmissionStatusPage />} />
               <Route path="/submissions"     element={<SubmissionsListPage />} />
               <Route element={<ProtectedRoute roles={['SECRETARY', 'CHAIRMAN', 'REVIEWER', 'ADMIN']} />}>
                 <Route path="/settings"      element={<SettingsPage />} />
@@ -101,20 +102,24 @@ export default function App() {
                 <Route path="/secretary/forms/:id"            element={<FormBuilderPage />} />
                 <Route path="/secretary/forms/:id/preview"    element={<FormPreviewPage />} />
                 <Route path="/secretary/submissions"          element={<SecretarySubmissionsListPage />} />
-                <Route path="/secretary/submissions/:id"      element={<SubmissionDetailPage />} />
+                <Route path="/secretary/submissions/:id/:slug" element={<SubmissionDetailPage />} />
+                <Route path="/secretary/submissions/:id"       element={<SubmissionDetailPage />} />
               </Route>
 
               {/* Reviewer */}
               <Route element={<ProtectedRoute roles={['REVIEWER', 'CHAIRMAN']} />}>
                 <Route path="/reviewer/assignments"      element={<AssignmentsPage />} />
-                <Route path="/reviewer/assignments/:id"  element={<ReviewDetailPage />} />
-                <Route path="/reviewer/assignments/:id/diff" element={<ReviewDiffPage />} />
+                <Route path="/reviewer/assignments/:id/diff/:slug" element={<ReviewDiffPage />} />
+                <Route path="/reviewer/assignments/:id/diff"       element={<ReviewDiffPage />} />
+                <Route path="/reviewer/assignments/:id/:slug"      element={<ReviewDetailPage />} />
+                <Route path="/reviewer/assignments/:id"            element={<ReviewDetailPage />} />
               </Route>
 
               {/* Secretary + Chairman + Admin */}
               <Route element={<ProtectedRoute roles={['SECRETARY', 'CHAIRMAN', 'ADMIN']} />}>
                 <Route path="/chairman/queue"      element={<ChairmanQueuePage />} />
-                <Route path="/chairman/queue/:id"  element={<ChairmanDecisionPage />} />
+                <Route path="/chairman/queue/:id/:slug" element={<ChairmanDecisionPage />} />
+                <Route path="/chairman/queue/:id"       element={<ChairmanDecisionPage />} />
                 <Route path="/reports"             element={<StatsPage />} />
               </Route>
 
@@ -128,7 +133,6 @@ export default function App() {
                 <Route path="/users" element={<UsersPage />} />
                 <Route path="/admin/statuses" element={<StatusManagementPage />} />
                 <Route path="/admin/system-templates" element={<SystemTemplatesPage />} />
-                <Route path="/admin/checklist-templates" element={<ReviewerChecklistAdminPage />} />
                 <Route path="/admin/accessibility-statement" element={<AccessibilityStatementAdminPage />} />
               </Route>
             </Route>

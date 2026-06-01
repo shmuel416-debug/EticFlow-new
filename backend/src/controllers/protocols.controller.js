@@ -55,14 +55,20 @@ function buildSignatureEmailHtml({ signerName, protocolTitle, reviewUrl, approve
       <p>שלום ${signerName},</p>
       <p>הינך מוזמן לחתום על פרוטוקול פגישת ועדת האתיקה: <strong>${protocolTitle}</strong></p>
       <p>אפשר לבחור ישירות מתוך המייל:</p>
-      <div style="margin:16px 0;display:flex;gap:12px;flex-wrap:wrap">
-        <a href="${approveUrl}" style="background:#166534;color:#fff;padding:10px 18px;text-decoration:none;border-radius:4px;display:inline-block">
-          מאשר
-        </a>
-        <a href="${declineUrl}" style="background:#b91c1c;color:#fff;padding:10px 18px;text-decoration:none;border-radius:4px;display:inline-block">
-          לא מאשר
-        </a>
-      </div>
+      <table role="presentation" cellpadding="0" cellspacing="0" style="margin:16px 0 20px;border-collapse:separate;border-spacing:0;">
+        <tr>
+          <td style="padding:0 0 8px 12px;">
+            <a href="${approveUrl}" style="background:#166534;color:#fff;padding:12px 22px;text-decoration:none;border-radius:6px;display:inline-block;font-weight:700;line-height:20px;">
+              מאשר
+            </a>
+          </td>
+          <td style="padding:0 12px 8px 0;">
+            <a href="${declineUrl}" style="background:#b91c1c;color:#fff;padding:12px 22px;text-decoration:none;border-radius:6px;display:inline-block;font-weight:700;line-height:20px;">
+              לא מאשר
+            </a>
+          </td>
+        </tr>
+      </table>
       <p>או להיכנס לעמוד החתימה המלא:</p>
       <a href="${reviewUrl}" style="background:#1e3a5f;color:#fff;padding:10px 20px;text-decoration:none;border-radius:4px;display:inline-block;margin:8px 0 16px">
         לצפייה וחתימה על הפרוטוקול
@@ -413,16 +419,33 @@ export async function requestSignatures(req, res, next) {
 
     const frontendUrl = process.env.FRONTEND_URL ?? 'http://localhost:5173'
 
-    // Fetch all existing signature records in one query — avoids N+1
-    const existingSigs = await prisma.protocolSignature.findMany({
-      where:  { protocolId: id, userId: { in: signers.map(s => s.id) } },
+    // Fetch all active signature rows once.
+    const existingActiveSigs = await prisma.protocolSignature.findMany({
+      where:  { protocolId: id, isActive: true },
       select: { id: true, userId: true, status: true },
     })
-    const existingByUserId = new Map(existingSigs.map((signature) => [signature.userId, signature]))
+    const existingByUserId = new Map(existingActiveSigs.map((signature) => [signature.userId, signature]))
+    const requestedSignerIds = new Set(signers.map((signer) => signer.id))
+    const signaturesToDeactivate = existingActiveSigs.filter(
+      (signature) => !requestedSignerIds.has(signature.userId) && signature.status !== 'SIGNED'
+    )
+
+    if (signaturesToDeactivate.length > 0) {
+      await prisma.protocolSignature.updateMany({
+        where: { id: { in: signaturesToDeactivate.map((signature) => signature.id) } },
+        data: {
+          isActive: false,
+          token: null,
+          tokenExpiry: null,
+        },
+      })
+    }
+
     const delivery = {
       created: 0,
       resent: 0,
       skippedSigned: 0,
+      replaced: signaturesToDeactivate.length,
       failedRecipients: [],
     }
 
@@ -479,7 +502,66 @@ export async function requestSignatures(req, res, next) {
         failed: delivery.failedRecipients.length,
         failedRecipients: delivery.failedRecipients,
         skippedSigned: delivery.skippedSigned,
+        replaced: delivery.replaced,
         total: signers.length,
+      },
+    })
+  } catch (err) {
+    next(err)
+  }
+}
+
+// ─────────────────────────────────────────────
+// REMOVE SIGNER
+// ─────────────────────────────────────────────
+
+/**
+ * DELETE /api/protocols/:id/signatures/:signatureId
+ * Removes an active signer assignment from a protocol.
+ * Signed signatures cannot be removed to preserve signed audit history.
+ * @param {import('express').Request} req - params: { id, signatureId }
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
+export async function removeSignature(req, res, next) {
+  try {
+    const { id, signatureId } = req.params
+
+    const protocol = await prisma.protocol.findUnique({ where: { id } })
+    if (!protocol || !protocol.isActive) {
+      throw new AppError('Protocol not found', 'NOT_FOUND', 404)
+    }
+
+    const signature = await prisma.protocolSignature.findFirst({
+      where: { id: signatureId, protocolId: id, isActive: true },
+      include: { user: { select: { id: true, fullName: true } } },
+    })
+    if (!signature) {
+      throw new AppError('Signer assignment not found', 'NOT_FOUND', 404)
+    }
+    if (signature.status === 'SIGNED') {
+      throw new AppError(
+        'Signed signer cannot be removed from protocol',
+        'SIGNER_ALREADY_SIGNED',
+        400
+      )
+    }
+
+    await prisma.protocolSignature.update({
+      where: { id: signatureId },
+      data: {
+        isActive: false,
+        token: null,
+        tokenExpiry: null,
+      },
+    })
+
+    res.locals.entityId = id
+    res.json({
+      data: {
+        removedSignatureId: signatureId,
+        removedUserId: signature.user.id,
+        removedSignerName: signature.user.fullName,
       },
     })
   } catch (err) {

@@ -4,6 +4,7 @@
  */
 
 import puppeteer from 'puppeteer'
+import { applySystemLetterhead } from './letterhead.js'
 
 /** @type {boolean} */
 let availabilityChecked = false
@@ -86,4 +87,5 @@ export async function renderHtmlToPdf(html, outputPath) {
   } finally {
     await browser.close()
   }
+  await applySystemLetterhead(outputPath)
 }

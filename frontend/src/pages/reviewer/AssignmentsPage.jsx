@@ -13,6 +13,8 @@ import StatusBadge from '../../components/submissions/StatusBadge'
 import {
   Card, CardBody, PageHeader, Table,
 } from '../../components/ui'
+import useDocumentTitle from '../../hooks/useDocumentTitle'
+import { buildSubmissionDetailPath } from '../../utils/submissionRoutes'
 
 /**
  * Formats ISO date string to locale date.
@@ -30,6 +32,7 @@ function formatDate(iso) {
  */
 export default function AssignmentsPage() {
   const { t }         = useTranslation()
+  useDocumentTitle(t('reviewer.assignments.pageTitle'))
   const location      = useLocation()
   const navigate      = useNavigate()
   const [submissions, setSubmissions] = useState([])
@@ -112,7 +115,7 @@ export default function AssignmentsPage() {
             caption={t('reviewer.assignments.pageTitle')}
             loading={loading}
             emptyTitle={t('reviewer.assignments.noAssignments')}
-            onRowClick={(row) => navigate(`/reviewer/assignments/${row.id}`, { state: { from: returnPath } })}
+            onRowClick={(row) => navigate(buildSubmissionDetailPath('/reviewer/assignments', row), { state: { from: returnPath } })}
             rowAriaLabel={(row) => `${row.title} — ${row.applicationId}`}
           />
         </CardBody>

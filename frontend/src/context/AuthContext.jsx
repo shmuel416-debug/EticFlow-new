@@ -12,6 +12,7 @@ import api, { setToken, getToken, setActiveRole as persistActiveRole } from '../
 
 const ROLE_PRIORITY = ['ADMIN', 'CHAIRMAN', 'SECRETARY', 'REVIEWER', 'RESEARCHER']
 const ACTIVE_ROLE_STORAGE_KEY = 'ef_active_role_ui'
+const IMPERSONATION_STORAGE_KEY = 'ef_impersonation_state'
 
 /**
  * Decodes JWT payload without verifying signature.
@@ -56,6 +57,24 @@ function getInitialUserFromToken() {
 }
 
 /**
+ * Restores impersonation metadata from sessionStorage.
+ * Returns null when metadata is missing or malformed.
+ * @returns {{ originalUser: object, originalToken: string }|null}
+ */
+function getInitialImpersonation() {
+  const raw = sessionStorage.getItem(IMPERSONATION_STORAGE_KEY)
+  if (!raw) return null
+  try {
+    const parsed = JSON.parse(raw)
+    if (!parsed?.originalUser || !parsed?.originalToken) return null
+    return parsed
+  } catch {
+    sessionStorage.removeItem(IMPERSONATION_STORAGE_KEY)
+    return null
+  }
+}
+
+/**
  * Provides authentication state and actions to the component tree.
  * @param {{ children: React.ReactNode }} props
  */
@@ -76,10 +95,16 @@ export function AuthProvider({ children }) {
     persistActiveRole(role)
   }, [])
 
-  const [impersonation, setImpersonation] = useState(null) // { originalUser, originalToken }
+  const [impersonation, setImpersonation] = useState(() => getInitialImpersonation()) // { originalUser, originalToken }
 
   /** Holds the original token during impersonation so we can restore it. */
   const originalTokenRef = useRef(null)
+
+  useEffect(() => {
+    if (impersonation?.originalToken && !originalTokenRef.current) {
+      originalTokenRef.current = impersonation.originalToken
+    }
+  }, [impersonation?.originalToken])
 
   /** Apply direction + lang to <html> element */
   const applyDirection = useCallback((lang) => {
@@ -106,6 +131,7 @@ export function AuthProvider({ children }) {
       setToken(null)
       setUser(null)
       setImpersonation(null)
+      sessionStorage.removeItem(IMPERSONATION_STORAGE_KEY)
       originalTokenRef.current = null
     }
     window.addEventListener('ef:session-expired', onSessionExpired)
@@ -191,7 +217,9 @@ export function AuthProvider({ children }) {
 
     // Save original state for restoration
     originalTokenRef.current = savedToken
-    setImpersonation({ originalUser: savedUser, originalToken: savedToken })
+    const nextImpersonation = { originalUser: savedUser, originalToken: savedToken }
+    setImpersonation(nextImpersonation)
+    sessionStorage.setItem(IMPERSONATION_STORAGE_KEY, JSON.stringify(nextImpersonation))
 
     // Swap to impersonation token + user
     setToken(data.token)
@@ -209,10 +237,12 @@ export function AuthProvider({ children }) {
     if (!impersonation) return
 
     // Restore original token + user
-    setToken(originalTokenRef.current)
+    const originalToken = originalTokenRef.current || impersonation.originalToken
+    setToken(originalToken)
     persistActiveRole(impersonation.originalUser?.activeRole || impersonation.originalUser?.role || null)
     setUser(impersonation.originalUser)
     setImpersonation(null)
+    sessionStorage.removeItem(IMPERSONATION_STORAGE_KEY)
     originalTokenRef.current = null
   }
 

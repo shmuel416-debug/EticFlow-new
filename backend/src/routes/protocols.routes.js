@@ -7,6 +7,7 @@
  * PUT    /api/protocols/:id                      — update protocol (SECRETARY, ADMIN)
  * POST   /api/protocols/:id/finalize             — finalize protocol (SECRETARY, ADMIN)
  * POST   /api/protocols/:id/request-signatures   — request signatures (SECRETARY, ADMIN)
+ * DELETE /api/protocols/:id/signatures/:signatureId — remove signer from protocol (SECRETARY, CHAIRMAN, ADMIN)
  * GET    /api/protocols/:id/pdf                  — generate PDF (SECRETARY, CHAIRMAN, ADMIN)
  *
  * PUBLIC (no auth):
@@ -106,6 +107,14 @@ router.post(
   validate(requestSignaturesSchema),
   auditLog('protocol.signatures_requested', 'Protocol'),
   controller.requestSignatures
+)
+
+router.delete(
+  '/:id/signatures/:signatureId',
+  authenticate,
+  authorize('SECRETARY', 'CHAIRMAN', 'ADMIN'),
+  auditLog('protocol.signature_removed', 'Protocol'),
+  controller.removeSignature
 )
 
 router.get(

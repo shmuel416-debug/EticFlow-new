@@ -31,8 +31,8 @@
 | SCM היום | GitHub | repo קיים אצל המפתח |
 | CI/CD היום | GitHub Actions (`deploy-azure.yml`) | OIDC, ללא סודות בקוד |
 | **SCM/CI עתידי (Phase 10)** | Azure DevOps Repos + Pipelines | מעבר אחרי יציבות בפרוד |
-| Frontend domain | `ethics.jct.ac.il` | תעודה מנוהלת ע"י Azure |
-| API domain | `api.ethics.jct.ac.il` | תעודה מנוהלת ע"י Azure |
+| Frontend domain | `ethics-net.jct.ac.il` | תעודה מנוהלת ע"י Azure |
+| API domain | `api.ethics-net.jct.ac.il` | תעודה מנוהלת ע"י Azure |
 | SSO | Microsoft Entra | לבירור איפה (acad או jct proper) |
 | Email | Microsoft Graph (`Mail.Send`) | מתיבת `ethicscommittee@jct.ac.il` |
 | Calendar | Microsoft Graph (`Calendars.ReadWrite`) | יומן `ethicscommittee@jct.ac.il` |
@@ -100,7 +100,7 @@ foreach ($p in $providers) { az provider register --namespace $p }
 יצירת סודות (ללא Key Vault — עוד לא קיים):
 
 ```powershell
-pwsh ./ops/scripts/generate-prod-secrets.ps1 -FrontendUrl "https://ethics.jct.ac.il"
+pwsh ./ops/scripts/generate-prod-secrets.ps1 -FrontendUrl "https://ethics-net.jct.ac.il"
 ```
 
 מתוך הפלט: שמור את `DB_PASSWORD` ב-KeePass/1Password. החלף את ה-placeholder ב-`infra/azure/appservice/parameters.prod.json` בערך האמיתי. שמור גם את `JWT_SECRET_CURRENT` ו-`CALENDAR_TOKEN_ENCRYPTION_KEY` — נכניס אותם ל-Key Vault ב-Phase 3.
@@ -176,7 +176,7 @@ Remove-Item fedcred.json
 | `AZURE_ACR_NAME` | `acrethicsnet` |
 | `AZURE_API_APP_NAME` | `app-ethics-net-api` |
 | `AZURE_WEB_APP_NAME` | `app-ethics-net-web` |
-| `AZURE_API_BASE_URL` | `https://api.ethics.jct.ac.il` (אחרי Phase 4) |
+| `AZURE_API_BASE_URL` | `https://api.ethics-net.jct.ac.il` (אחרי Phase 4) |
 
 > בינתיים שים את ה-`AZURE_API_BASE_URL` ל-`https://app-ethics-net-api.azurewebsites.net` עד שיהיה דומיין מותאם. נחליף אחרי Phase 4.
 
@@ -220,9 +220,9 @@ az deployment group show `
 ```powershell
 pwsh ./ops/scripts/setup-microsoft-integrations.ps1 `
   -TenantId "<TENANT_ID>" `
-  -BaseUrl "https://api.ethics.jct.ac.il" `
+  -BaseUrl "https://api.ethics-net.jct.ac.il" `
   -OrganizerEmail "ethicscommittee@jct.ac.il" `
-  -FrontendLogoutUrl "https://ethics.jct.ac.il/login" `
+  -FrontendLogoutUrl "https://ethics-net.jct.ac.il/login" `
   -KeyVaultName "kv-ethics-net" `
   -SecretPrefix "ethics-net"
 ```
@@ -240,7 +240,7 @@ pwsh ./ops/scripts/setup-microsoft-integrations.ps1 `
 
 ```powershell
 pwsh ./ops/scripts/generate-prod-secrets.ps1 `
-  -FrontendUrl "https://ethics.jct.ac.il" `
+  -FrontendUrl "https://ethics-net.jct.ac.il" `
   -KeyVaultName "kv-ethics-net"
 ```
 
@@ -256,8 +256,8 @@ pwsh ./ops/scripts/set-azure-api-keyvault-settings.ps1 `
   -ResourceGroupName "RG-ethics-net" `
   -ApiAppName "app-ethics-net-api" `
   -KeyVaultName "kv-ethics-net" `
-  -FrontendUrl "https://ethics.jct.ac.il" `
-  -ApiBaseUrl "https://api.ethics.jct.ac.il" `
+  -FrontendUrl "https://ethics-net.jct.ac.il" `
+  -ApiBaseUrl "https://api.ethics-net.jct.ac.il" `
   -OrganizerEmail "ethicscommittee@jct.ac.il" `
   -SecretPrefix "ethics-net"
 ```
@@ -291,8 +291,8 @@ pwsh ./ops/scripts/configure-appservice-domains.ps1 `
   -ResourceGroupName "RG-ethics-net" `
   -WebAppName "app-ethics-net-web" `
   -ApiAppName "app-ethics-net-api" `
-  -WebHostname "ethics.jct.ac.il" `
-  -ApiHostname "api.ethics.jct.ac.il"
+  -WebHostname "ethics-net.jct.ac.il" `
+  -ApiHostname "api.ethics-net.jct.ac.il"
 ```
 
 הסקריפט ידפיס ערכי `asuid` ו-CNAME. הוסף ב-DNS של JCT:
@@ -307,8 +307,8 @@ pwsh ./ops/scripts/configure-appservice-domains.ps1 `
 המתן ~5-30 דקות ל-propagation. אמת:
 
 ```powershell
-nslookup ethics.jct.ac.il
-nslookup asuid.ethics.jct.ac.il
+nslookup ethics-net.jct.ac.il
+nslookup asuid.ethics-net.jct.ac.il
 ```
 
 ### 4.2 הוספת Custom Domain + Managed Certificate
@@ -318,12 +318,12 @@ pwsh ./ops/scripts/configure-appservice-domains.ps1 `
   -ResourceGroupName "RG-ethics-net" `
   -WebAppName "app-ethics-net-web" `
   -ApiAppName "app-ethics-net-api" `
-  -WebHostname "ethics.jct.ac.il" `
-  -ApiHostname "api.ethics.jct.ac.il" `
+  -WebHostname "ethics-net.jct.ac.il" `
+  -ApiHostname "api.ethics-net.jct.ac.il" `
   -ApplyBindings
 ```
 
-אחרי שהבינדינג עבר — עדכן ב-GitHub Environment את `AZURE_API_BASE_URL` ל-`https://api.ethics.jct.ac.il`.
+אחרי שהבינדינג עבר — עדכן ב-GitHub Environment את `AZURE_API_BASE_URL` ל-`https://api.ethics-net.jct.ac.il`.
 
 ---
 
@@ -379,7 +379,7 @@ npm run bootstrap:prod
 ### בדיקות אוטומטיות
 
 ```powershell
-$env:SMOKE_BASE_URL = "https://api.ethics.jct.ac.il"
+$env:SMOKE_BASE_URL = "https://api.ethics-net.jct.ac.il"
 $env:SMOKE_ASSERT = "1"
 cd backend
 npm run smoke:sso
@@ -387,12 +387,12 @@ npm run smoke:sso
 
 ### בדיקות ידניות
 
-- [ ] `https://ethics.jct.ac.il` נטען עם תעודת SSL תקפה.
+- [ ] `https://ethics-net.jct.ac.il` נטען עם תעודת SSL תקפה.
 - [ ] התחברות עם משתמש Microsoft של JCT עובדת.
 - [ ] משתמש מ-tenant אחר נחסם.
 - [ ] שליחת פגישת בדיקה יוצרת event ב-Outlook של `ethicscommittee@jct.ac.il`.
 - [ ] שליחת מייל בדיקה מגיעה מ-`ethicscommittee@jct.ac.il`.
-- [ ] `https://api.ethics.jct.ac.il/api/health` מחזיר 200 בתוך 5 דקות רצופות.
+- [ ] `https://api.ethics-net.jct.ac.il/api/health` מחזיר 200 בתוך 5 דקות רצופות.
 
 ### תרגיל Rollback
 
@@ -401,7 +401,7 @@ pwsh ./ops/scripts/run-azure-slot-rollback-drill.ps1 `
   -ResourceGroupName "RG-ethics-net" `
   -ApiAppName "app-ethics-net-api" `
   -WebAppName "app-ethics-net-web" `
-  -ApiHealthUrl "https://api.ethics.jct.ac.il/api/health"
+  -ApiHealthUrl "https://api.ethics-net.jct.ac.il/api/health"
 ```
 
 > הסקריפט בנוי לסלוטים. ב-B1 ללא slots, ה-rollback הוא דרך תיוג חזרה ל-image ישן:
@@ -548,8 +548,8 @@ Owner user:   goldb@acad.jct.ac.il
 
 RG:           RG-ethics-net                    (eastus2, existing)
 ASP:          asp-ethics-net                   (B1 Basic Linux)
-API:          app-ethics-net-api               → api.ethics.jct.ac.il
-Web:          app-ethics-net-web               → ethics.jct.ac.il
+API:          app-ethics-net-api               → api.ethics-net.jct.ac.il
+Web:          app-ethics-net-web               → ethics-net.jct.ac.il
 ACR:          acrethicsnet.azurecr.io
 Postgres:     pg-ethics-net (B1ms, 32GB, private)
 DB name:      ethic-net

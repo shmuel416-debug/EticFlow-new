@@ -22,6 +22,7 @@ import { useAuth } from '../../context/AuthContext'
 import api from '../../services/api'
 import { Spinner } from '../../components/ui'
 import levLogo from '../../assets/LOGO.jpg'
+import useDocumentTitle from '../../hooks/useDocumentTitle'
 
 /**
  * Maps backend error codes to i18n translation keys.
@@ -50,6 +51,7 @@ function errorToKey(code) {
  */
 export default function SsoCallbackPage() {
   const { t, i18n }        = useTranslation()
+  useDocumentTitle(t('auth.ssoLoading'))
   const navigate           = useNavigate()
   const [searchParams]     = useSearchParams()
   const { loginWithToken } = useAuth()

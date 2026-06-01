@@ -194,7 +194,10 @@ export async function listCoiCandidates(req, res, next) {
 export async function getById(req, res, next) {
   try {
     const activeRole = getRequestRole(req)
-    const where = roleFilter(req.user, activeRole, { id: req.params.id })
+    const ref = String(req.params.id || '').trim()
+    const where = roleFilter(req.user, activeRole, {
+      OR: [{ id: ref }, { applicationId: ref }],
+    })
 
     const submission = await prisma.submission.findFirst({
       where,

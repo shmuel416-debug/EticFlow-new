@@ -62,9 +62,9 @@ Run:
 ```bash
 pwsh ./ops/scripts/setup-microsoft-integrations.ps1 \
   -TenantId "<TENANT_GUID>" \
-  -BaseUrl "https://api.ethics.<institution>.ac.il" \
+  -BaseUrl "https://api.ethics-net.<institution>.ac.il" \
   -OrganizerEmail "ethics@<institution>.ac.il" \
-  -FrontendLogoutUrl "https://ethics.<institution>.ac.il/login" \
+  -FrontendLogoutUrl "https://ethics-net.<institution>.ac.il/login" \
   -KeyVaultName "kv-ethic-net-prod" \
   -SecretPrefix "ethic-net-prod"
 ```
@@ -80,8 +80,8 @@ All apps are created as **single-tenant** (`AzureADMyOrg`).
 ## 5) Post-deploy checklist
 
 - Configure custom domains:
-  - `ethics.<institution>.ac.il` -> web app
-  - `api.ethics.<institution>.ac.il` -> api app
+  - `ethics-net.<institution>.ac.il` -> web app
+  - `api.ethics-net.<institution>.ac.il` -> api app
 - Enable Managed Certificates for both domains
 - Set deployment slot `staging` for both app services
 - Set health check path on API: `/api/health`

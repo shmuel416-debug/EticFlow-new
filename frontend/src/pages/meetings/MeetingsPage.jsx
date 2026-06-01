@@ -21,6 +21,7 @@ import {
   Button, Badge, Tabs, Modal, FormField, Input, EmptyState, Spinner,
   PageHeader, AccessibleIcon,
 } from '../../components/ui'
+import useDocumentTitle from '../../hooks/useDocumentTitle'
 
 /**
  * Resolves the primary role name for a user object.
@@ -380,6 +381,7 @@ function CreateMeetingModal({ open, onClose, onCreated, t }) {
  */
 export default function MeetingsPage() {
   const { t }    = useTranslation()
+  useDocumentTitle(t('meetings.title'))
   const { user } = useAuth()
   const location = useLocation()
 

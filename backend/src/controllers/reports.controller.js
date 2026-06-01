@@ -18,7 +18,7 @@ const MAX_EXPORT_RANGE_DAYS = parseInt(process.env.REPORTS_EXPORT_MAX_RANGE_DAYS
 
 const STATUS_LABELS = {
   SUBMITTED:        { he: 'הוגש',            en: 'Submitted' },
-  IN_TRIAGE:        { he: 'בבדיקה ראשונית', en: 'In Triage' },
+  IN_TRIAGE:        { he: 'בדיקה ראשונית', en: 'In Triage' },
   ASSIGNED:         { he: 'הוקצה',           en: 'Assigned' },
   IN_REVIEW:        { he: 'בביקורת',         en: 'In Review' },
   PENDING_REVISION: { he: 'ממתין לתיקון',    en: 'Pending Revision' },

@@ -14,6 +14,7 @@ import {
   PageHeader, Card, CardHeader, CardBody, CardFooter, FormField, Input,
   Textarea, Select, Tabs, Button,
 } from '../../components/ui'
+import useDocumentTitle from '../../hooks/useDocumentTitle'
 import {
   getAdminStatement,
   getDefaultAccessibilityStatement,
@@ -77,6 +78,7 @@ function validateStatement(statement) {
  */
 export default function AccessibilityStatementAdminPage() {
   const { t, i18n } = useTranslation()
+  useDocumentTitle(t('admin.accessibilityStatement.title'))
   const [lang, setLang] = useState('he')
   const [statement, setStatement] = useState(getDefaultAccessibilityStatement())
   const [savedSnapshot, setSavedSnapshot] = useState(getDefaultAccessibilityStatement())

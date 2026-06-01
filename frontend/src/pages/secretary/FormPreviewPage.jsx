@@ -7,13 +7,14 @@
  * @module pages/secretary/FormPreviewPage
  */
 
-import { useState, useEffect }      from 'react'
+import { useState, useEffect, useMemo }      from 'react'
 import { useParams, useNavigate }   from 'react-router-dom'
 import { useTranslation }           from 'react-i18next'
 import { AlertTriangle }            from 'lucide-react'
 import api          from '../../services/api'
 import FormPreview  from '../../components/formBuilder/FormPreview'
 import { Button, PageHeader } from '../../components/ui'
+import useDocumentTitle from '../../hooks/useDocumentTitle'
 
 /**
  * Loads a published (or draft) form from the API and renders it in preview mode.
@@ -26,6 +27,12 @@ export default function FormPreviewPage() {
   const [form,    setForm]    = useState(null)
   const [loading, setLoading] = useState(true)
   const [error,   setError]   = useState('')
+
+  const documentTitle = useMemo(
+    () => form?.name || t('secretary.formPreview.openPreview', 'תצוגה מקדימה של טופס'),
+    [form?.name, t]
+  )
+  useDocumentTitle(documentTitle)
 
   useEffect(() => {
     if (!id) return

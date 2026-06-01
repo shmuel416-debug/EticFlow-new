@@ -17,6 +17,7 @@ import {
   Button, Card, CardHeader, CardBody, CardFooter,
   PageHeader, FormField, Input, Textarea, Select, Tabs, Badge,
 } from '../../components/ui'
+import useDocumentTitle from '../../hooks/useDocumentTitle'
 
 /**
  * Setting groups — controls display order and grouping.
@@ -30,6 +31,7 @@ const GROUPS = [
       { key: 'institution_name_he',  type: 'text' },
       { key: 'institution_name_en',  type: 'text' },
       { key: 'institution_logo_url', type: 'url',   hint: 'https://...' },
+      { key: 'system_letterhead_pdf_path', type: 'text', hint: 'C:/path/to/letterhead.pdf' },
       { key: 'primary_color',        type: 'color'  },
     ],
   },
@@ -870,6 +872,7 @@ function ApprovalTemplateEditor({
 
 export default function SettingsPage() {
   const { t }    = useTranslation()
+  useDocumentTitle(t('settings.title'))
   const { user } = useAuth()
 
   const [values,  setValues]  = useState({})

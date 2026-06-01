@@ -19,6 +19,7 @@ import {
   Button, Badge, Tabs, Modal, Select, FormField, EmptyState, Spinner,
   PageHeader, AccessibleIcon,
 } from '../../components/ui'
+import useDocumentTitle from '../../hooks/useDocumentTitle'
 
 /**
  * Maps a protocol status to a Badge tone.
@@ -76,6 +77,7 @@ function sigProgress(sigs = []) {
  */
 export default function ProtocolsListPage() {
   const { t }    = useTranslation()
+  useDocumentTitle(t('protocols.title'))
   const navigate = useNavigate()
   const location = useLocation()
   const { user } = useAuth()

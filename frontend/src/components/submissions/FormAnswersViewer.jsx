@@ -6,12 +6,13 @@
 
 import { useTranslation } from 'react-i18next'
 import { Check, X } from 'lucide-react'
+import { flattenSchemaFields } from '../../utils/formSchema'
 
 /**
  * Renders a single answer value based on field type.
  * @param {{ field: object, value: any }} props
  */
-function FieldAnswer({ field, value }) {
+export function FieldAnswer({ field, value }) {
   const { i18n, t } = useTranslation()
   const lang  = i18n.language === 'he' ? 'He' : 'En'
   const fieldId = field.id || field.key
@@ -54,14 +55,15 @@ function FieldAnswer({ field, value }) {
  */
 export default function FormAnswersViewer({ formConfig, dataJson = {} }) {
   const { t } = useTranslation()
+  const fields = flattenSchemaFields(formConfig?.schemaJson)
 
-  if (!formConfig?.schemaJson?.fields?.length) {
+  if (!fields.length) {
     return <p className="text-sm text-gray-500">{t('submission.detail.noAnswer')}</p>
   }
 
   return (
     <dl className="divide-y divide-gray-100">
-      {formConfig.schemaJson.fields.map((field) => {
+      {fields.map((field) => {
         const keyById = field.id
         const keyByLegacy = field.key
         const value = keyById && Object.prototype.hasOwnProperty.call(dataJson, keyById)

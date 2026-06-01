@@ -13,6 +13,8 @@ import StatusBadge from '../../components/submissions/StatusBadge'
 import {
   Card, CardBody, PageHeader, Table,
 } from '../../components/ui'
+import useDocumentTitle from '../../hooks/useDocumentTitle'
+import { buildSubmissionDetailPath } from '../../utils/submissionRoutes'
 
 /**
  * Formats ISO date to locale short date.
@@ -30,6 +32,7 @@ function formatDate(iso) {
  */
 export default function ChairmanQueuePage() {
   const { t }         = useTranslation()
+  useDocumentTitle(t('chairman.queue.pageTitle'))
   const location      = useLocation()
   const navigate      = useNavigate()
   const [searchParams] = useSearchParams()
@@ -166,7 +169,7 @@ export default function ChairmanQueuePage() {
             caption={t('chairman.queue.pageTitle')}
             loading={loading}
             emptyTitle={t('chairman.queue.noItems')}
-            onRowClick={(row) => navigate(`/chairman/queue/${row.id}`, { state: { from: returnPath } })}
+            onRowClick={(row) => navigate(buildSubmissionDetailPath('/chairman/queue', row), { state: { from: returnPath } })}
             rowAriaLabel={(row) => `${row.applicationId} — ${row.title} — ${t(`submission.status.${row.status}`)}`}
           />
         </CardBody>

@@ -5,7 +5,7 @@
  * IS 5568 / WCAG 2.2 AA.
  */
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams, useNavigate, useLocation } from 'react-router-dom'
 import {
@@ -30,6 +30,9 @@ import {
   FormField,
   Textarea,
 } from '../../components/ui'
+import useDocumentTitle from '../../hooks/useDocumentTitle'
+import { buildEntityDocumentTitle } from '../../utils/documentTitle'
+import { buildSubmissionDetailPath } from '../../utils/submissionRoutes'
 
 const DECISIONS = [
   {
@@ -64,7 +67,7 @@ const DECISIONS = [
  */
 export default function SubmissionDecisionPage() {
   const { t }        = useTranslation()
-  const { id }       = useParams()
+  const { id: submissionRef } = useParams()
   const navigate     = useNavigate()
   const location     = useLocation()
   const [submission, setSubmission] = useState(null)
@@ -81,19 +84,36 @@ export default function SubmissionDecisionPage() {
   const backTo       =
     typeof location.state?.from === 'string' ? location.state.from : '/chairman/queue'
 
+  const documentTitle = useMemo(
+    () => buildEntityDocumentTitle(
+      submission?.applicationId,
+      submission?.title,
+      t('chairman.decision.pageTitle')
+    ),
+    [submission?.applicationId, submission?.title, t]
+  )
+  useDocumentTitle(documentTitle)
+
   /**
    * Fetches submission from API.
    */
   const fetchSubmission = useCallback(async () => {
     try {
-      const { data } = await api.get(`/submissions/${id}`)
+      const { data } = await api.get(`/submissions/${submissionRef}`)
       setSubmission(data.submission)
     } catch {
       setError(t('submission.detail.loadError'))
     } finally {
       setLoading(false)
     }
-  }, [id, t])
+  }, [submissionRef, t])
+
+  useEffect(() => {
+    if (!submission) return
+    const canonicalPath = buildSubmissionDetailPath('/chairman/queue', submission)
+    if (!canonicalPath || location.pathname === canonicalPath) return
+    navigate(canonicalPath, { replace: true, state: location.state })
+  }, [location.pathname, location.state, navigate, submission])
 
   useEffect(() => { fetchSubmission() }, [fetchSubmission])
 
@@ -105,7 +125,7 @@ export default function SubmissionDecisionPage() {
     setDeciding(true)
     setError('')
     try {
-      await api.patch(`/submissions/${id}/decision`, {
+      await api.patch(`/submissions/${submission?.id || submissionRef}/decision`, {
         decision: pendingDecision.key,
         note: note.trim() || undefined,
       })

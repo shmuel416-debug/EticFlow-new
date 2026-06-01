@@ -9,6 +9,7 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Mail, ArrowRight, ArrowLeft, CheckCircle2 } from 'lucide-react'
 import api from '../services/api'
+import useDocumentTitle from '../hooks/useDocumentTitle'
 import { Button, Input, FormField, LanguageSwitcher } from '../components/ui'
 import levLogo from '../assets/LOGO.jpg'
 
@@ -18,6 +19,7 @@ import levLogo from '../assets/LOGO.jpg'
  */
 export default function ForgotPasswordPage() {
   const { t, i18n } = useTranslation()
+  useDocumentTitle(t('auth.forgotPassword.title'))
   const isRtl       = i18n.dir() === 'rtl'
   const BackIcon    = isRtl ? ArrowLeft : ArrowRight
   const [email,   setEmail]   = useState('')

@@ -336,7 +336,8 @@
       "APPROVED": "Approved",
       "REJECTED": "Rejected",
       "WITHDRAWN": "Withdrawn",
-      "CONTINUED": "Continued"
+      "CONTINUED": "Continued",
+      "DECISION": "Decision"
     },
     "currentStep": "← current",
     "slaLabel": "SLA",
@@ -369,7 +370,8 @@
       "APPROVED": "The submission has been formally approved by the committee.",
       "REJECTED": "The submission was rejected and the review workflow is closed.",
       "WITHDRAWN": "The submission was withdrawn by the researcher or secretary.",
-      "CONTINUED": "The submission was marked for continuation in a separate process."
+      "CONTINUED": "The submission was marked for continuation in a separate process.",
+      "DECISION": "Awaiting the committee's final decision."
     },
     "actionHints": {
       "SECRETARY": {
@@ -574,6 +576,40 @@
         "NO": "No",
         "NA": "N/A"
       },
+      "recommendation": {
+        "EXEMPT": "Exempt",
+        "APPROVED": "Approve",
+        "APPROVED_CONDITIONAL": "Approve with conditions",
+        "REVISION_REQUIRED": "Revision required",
+        "REJECTED": "Reject"
+      }
+    },
+    "fieldReview": {
+      "panelTitle": "Per-question review",
+      "loadError": "Failed to load reviewer form review",
+      "saveError": "Failed to save draft",
+      "submitError": "Failed to submit review",
+      "saved": "Draft saved",
+      "submitted": "Review submitted successfully",
+      "alreadySubmitted": "This review is already submitted",
+      "summaryTitle": "General summary and impression",
+      "summaryPlaceholder": "General summary (optional)",
+      "impressionPlaceholder": "Reviewer impression (optional)",
+      "requiredProgress": "Questions reviewed: {{answered}} / {{total}}",
+      "selectStatus": "Select status",
+      "statusLabel": "Field review status",
+      "status": {
+        "VALID": "Valid",
+        "INVALID": "Invalid",
+        "NA": "Not relevant"
+      },
+      "commentPlaceholder": "Reviewer note (optional unless invalid)",
+      "commentRequired": "A note is required when status is invalid",
+      "selectRecommendation": "Select recommendation",
+      "recommendationLabel": "Recommendation",
+      "recommendationRequired": "Please select a recommendation before submitting",
+      "saveDraft": "Save draft",
+      "submit": "Submit review",
       "recommendation": {
         "EXEMPT": "Exempt",
         "APPROVED": "Approve",
@@ -1018,6 +1054,11 @@
     "signaturesRequested": "Signature request sent to {{count}} signers",
     "signaturesPartialFailure": "Email delivery failed for {{failed}} signers",
     "signaturesFailureReason": "Delivery failed for {{email}}: {{reason}}",
+    "removeSigner": "Remove signer",
+    "removeSignerConfirm": "Remove signer {{name}} from this protocol?",
+    "signerRemovedSuccess": "Signer removed from protocol",
+    "removeSignerError": "Failed to remove signer",
+    "removeSignerSignedError": "Signed signer cannot be removed",
     "loadError": "Failed to load protocol",
     "loadSignersError": "Failed to load signers list",
     "noSignersAvailable": "No available signers were found",
@@ -1104,6 +1145,7 @@
     "institution_name_he": "Institution Name (Hebrew)",
     "institution_name_en": "Institution Name (English)",
     "institution_logo_url": "Logo URL",
+    "system_letterhead_pdf_path": "Letterhead PDF File Path",
     "primary_color": "Primary Color",
     "sla_triage_days": "Triage Days (SLA)",
     "sla_review_days": "Review Days (SLA)",

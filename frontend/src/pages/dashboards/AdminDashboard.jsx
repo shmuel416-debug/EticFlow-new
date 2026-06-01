@@ -8,9 +8,10 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { Users, ShieldCheck, FileText, Workflow, FolderOpen, ArrowRight, ListChecks } from 'lucide-react'
+import { Users, ShieldCheck, FileText, Workflow, FolderOpen, ArrowRight } from 'lucide-react'
 import api from '../../services/api'
 import { Card, CardBody, CardHeader, PageHeader, StatCard } from '../../components/ui'
+import useDocumentTitle from '../../hooks/useDocumentTitle'
 
 /** Secondary outline style matching design-system Button (for router Links). */
 const QUICK_LINK_STYLE = {
@@ -31,6 +32,7 @@ const QUICK_LINK_STYLE = {
  */
 export default function AdminDashboard() {
   const { t } = useTranslation()
+  useDocumentTitle(t('dashboard.admin.title'))
   const [loading, setLoading] = useState(true)
   const [userTotal, setUserTotal] = useState(null)
   const [formCount, setFormCount] = useState(null)
@@ -162,17 +164,6 @@ export default function AdminDashboard() {
               >
                 <FolderOpen className="w-4 h-4 shrink-0" aria-hidden />
                 {t('dashboard.admin.linkForms')}
-                <ArrowRight className="w-4 h-4 shrink-0 rtl:rotate-180" aria-hidden />
-              </Link>
-            </li>
-            <li>
-              <Link
-                to="/admin/checklist-templates"
-                className="inline-flex items-center justify-center gap-2 transition-opacity hover:opacity-90"
-                style={QUICK_LINK_STYLE}
-              >
-                <ListChecks className="w-4 h-4 shrink-0" aria-hidden />
-                {t('dashboard.admin.linkChecklistTemplates')}
                 <ArrowRight className="w-4 h-4 shrink-0 rtl:rotate-180" aria-hidden />
               </Link>
             </li>

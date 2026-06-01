@@ -12,6 +12,7 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Mail, Lock, ArrowRight, ArrowLeft, FileCheck2, Timer, Signature } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import useDocumentTitle from '../hooks/useDocumentTitle'
 import {
   Button, Input, FormField, LanguageSwitcher,
 } from '../components/ui'
@@ -74,6 +75,7 @@ function ssoErrorKey(code) {
  */
 export default function LoginPage() {
   const { t, i18n }  = useTranslation()
+  useDocumentTitle(t('auth.login.title'))
   const { login }    = useAuth()
   const navigate     = useNavigate()
   const [searchParams] = useSearchParams()

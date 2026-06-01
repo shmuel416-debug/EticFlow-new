@@ -28,8 +28,8 @@ pwsh ./ops/scripts/configure-appservice-domains.ps1 `
   -ResourceGroupName "rg-ethic-net-prod" `
   -WebAppName "app-ethic-net-web-prod" `
   -ApiAppName "app-ethic-net-api-prod" `
-  -WebHostname "ethics.<institution>.ac.il" `
-  -ApiHostname "api.ethics.<institution>.ac.il"
+  -WebHostname "ethics-net.<institution>.ac.il" `
+  -ApiHostname "api.ethics-net.<institution>.ac.il"
 ```
 
 2. אחרי propagation, הרץ שוב עם `-ApplyBindings` כדי להוסיף hostname + Managed Certificate.
@@ -39,9 +39,9 @@ pwsh ./ops/scripts/configure-appservice-domains.ps1 `
 ```powershell
 pwsh ./ops/scripts/setup-microsoft-integrations.ps1 `
   -TenantId "<tenant-guid>" `
-  -BaseUrl "https://api.ethics.<institution>.ac.il" `
+  -BaseUrl "https://api.ethics-net.<institution>.ac.il" `
   -OrganizerEmail "ethics@<institution>.ac.il" `
-  -FrontendLogoutUrl "https://ethics.<institution>.ac.il/login" `
+  -FrontendLogoutUrl "https://ethics-net.<institution>.ac.il/login" `
   -KeyVaultName "kv-ethic-net-prod" `
   -SecretPrefix "ethic-net-prod"
 ```
@@ -51,8 +51,8 @@ pwsh ./ops/scripts/set-azure-api-keyvault-settings.ps1 `
   -ResourceGroupName "rg-ethic-net-prod" `
   -ApiAppName "app-ethic-net-api-prod" `
   -KeyVaultName "kv-ethic-net-prod" `
-  -FrontendUrl "https://ethics.<institution>.ac.il" `
-  -ApiBaseUrl "https://api.ethics.<institution>.ac.il" `
+  -FrontendUrl "https://ethics-net.<institution>.ac.il" `
+  -ApiBaseUrl "https://api.ethics-net.<institution>.ac.il" `
   -OrganizerEmail "ethics@<institution>.ac.il" `
   -SecretPrefix "ethic-net-prod"
 ```
@@ -95,7 +95,7 @@ pwsh ./ops/scripts/run-azure-slot-rollback-drill.ps1 `
   -ResourceGroupName "rg-ethic-net-prod" `
   -ApiAppName "app-ethic-net-api-prod" `
   -WebAppName "app-ethic-net-web-prod" `
-  -ApiHealthUrl "https://api.ethics.<institution>.ac.il/api/health"
+  -ApiHealthUrl "https://api.ethics-net.<institution>.ac.il/api/health"
 ```
 
 ## נוהל DEV קבוע אחרי העלייה

@@ -7,6 +7,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import i18n from './services/i18n'
+import { applyDefaultDocumentTitle } from './utils/documentTitle'
 import './index.css'
 import App from './App.jsx'
 import AnnounceRegion from './components/ui/AnnounceRegion'
@@ -21,7 +22,7 @@ document.documentElement.dir  = lang === 'he' ? 'rtl' : 'ltr'
  * @returns {void}
  */
 function updateBrowserBranding() {
-  document.title = i18n.t('common.browserTitle')
+  applyDefaultDocumentTitle()
 }
 
 updateBrowserBranding()

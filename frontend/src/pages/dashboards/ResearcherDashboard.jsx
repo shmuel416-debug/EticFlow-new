@@ -21,14 +21,11 @@ import TemplateDownloadCard from '../../components/templates/TemplateDownloadCar
 import {
   Button, Card, CardHeader, PageHeader, StatCard, EmptyState, Spinner,
 } from '../../components/ui'
-
-/** Returns the correct route for a submission based on its status */
-function submissionRoute(sub) {
-  if (sub.status === 'DRAFT' || sub.status === 'PENDING_REVISION') {
-    return `/submissions/${sub.id}/edit`
-  }
-  return `/submissions/${sub.id}`
-}
+import useDocumentTitle from '../../hooks/useDocumentTitle'
+import {
+  buildResearcherSubmissionPath,
+  buildSubmissionDetailPath,
+} from '../../utils/submissionRoutes'
 
 /**
  * SLA status info (color via CSS vars, days-remaining label).
@@ -58,7 +55,7 @@ function SubCard({ sub, selected, onClick, returnPath }) {
 
   return (
     <Link
-      to={submissionRoute(sub)}
+      to={buildResearcherSubmissionPath(sub)}
       state={{ from: returnPath }}
       onClick={onClick}
       className="w-full text-right p-3 transition-all text-sm block"
@@ -152,7 +149,7 @@ function TimelinePane({ sub, returnPath }) {
           </p>
         </div>
         <Link
-          to={`/submissions/${sub.id}`}
+          to={buildSubmissionDetailPath('/submissions', sub)}
           state={{ from: returnPath }}
           className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 transition hover:opacity-90 flex-shrink-0"
           style={{
@@ -180,7 +177,7 @@ function TimelinePane({ sub, returnPath }) {
 
       {sub.status === 'PENDING_REVISION' && (
         <Link
-          to={`/submissions/${sub.id}`}
+          to={buildSubmissionDetailPath('/submissions', sub)}
           state={{ from: returnPath }}
           className="mt-4 w-full inline-flex items-center justify-center gap-2 py-2.5 text-sm font-bold text-white text-center transition hover:opacity-90"
           style={{
@@ -218,6 +215,7 @@ function TimelinePane({ sub, returnPath }) {
  */
 export default function ResearcherDashboard() {
   const { t }    = useTranslation()
+  useDocumentTitle(t('dashboard.researcher.title'))
   const location = useLocation()
   const navigate = useNavigate()
   const { user } = useAuth()

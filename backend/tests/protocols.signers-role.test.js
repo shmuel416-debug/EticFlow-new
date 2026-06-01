@@ -120,6 +120,7 @@ describe('protocols.controller requestSignatures role guards', () => {
     expect(res.json).toHaveBeenCalledWith({
       data: {
         created: 1,
+        replaced: 0,
         resent: 0,
         sent: 1,
         failed: 0,

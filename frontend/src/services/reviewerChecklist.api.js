@@ -62,9 +62,9 @@ export async function publishTemplate(id) {
 }
 
 /**
- * Load reviewer checklist payload for one submission.
+ * Load reviewer field-review payload for one submission.
  * @param {string} submissionId
- * @returns {Promise<{ review: object, template: object, responses: object[] }>}
+ * @returns {Promise<{ review: object, fields: object[], dataJson: object, responses: object[] }>}
  */
 export async function getReviewerChecklist(submissionId) {
   const res = await api.get(`/submissions/${submissionId}/checklist`);

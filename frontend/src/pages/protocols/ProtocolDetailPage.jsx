@@ -9,7 +9,7 @@
  * IS 5568 / WCAG 2.2 AA compliant.
  */
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useParams, useSearchParams, useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
@@ -42,6 +42,7 @@ import {
   Textarea,
   AccessibleIcon,
 } from '../../components/ui'
+import useDocumentTitle from '../../hooks/useDocumentTitle'
 
 /**
  * Maps a protocol status to a Badge tone.
@@ -105,6 +106,13 @@ export default function ProtocolDetailPage() {
   const [requestingSign,  setRequestingSign]  = useState(false)
   const [finalizing,      setFinalizing]      = useState(false)
   const [pdfLang,         setPdfLang]         = useState(i18n.language === 'en' ? 'en' : 'he')
+  const [removingSignatureId, setRemovingSignatureId] = useState(null)
+
+  const documentTitle = useMemo(
+    () => protocol?.title || title || (isNew ? t('protocols.new') : t('protocols.title')),
+    [protocol?.title, title, isNew, t]
+  )
+  useDocumentTitle(documentTitle)
 
   // ── Fetch or Create ──────────────────────────
 
@@ -183,7 +191,7 @@ export default function ProtocolDetailPage() {
       setAllUsers(availableSigners)
       const allowedSignerIds = new Set(availableSigners.map((signer) => signer.id))
       setSelectedSigners(
-        (protocol?.meeting?.attendees?.map((attendee) => attendee.userId) ?? [])
+        (protocol?.signatures?.map((signature) => signature.userId) ?? [])
           .filter((userId) => allowedSignerIds.has(userId))
       )
     } catch {
@@ -223,6 +231,32 @@ export default function ProtocolDetailPage() {
       showToast(t('protocols.saveError'), 'error')
     } finally {
       setRequestingSign(false)
+    }
+  }
+
+  /**
+   * Removes signer assignment from protocol.
+   * @param {{ id: string, user?: { fullName?: string }, status?: string }} signature
+   * @returns {Promise<void>}
+   */
+  async function handleRemoveSignature(signature) {
+    if (!signature?.id) return
+    const signerName = signature.user?.fullName || t('common.delete')
+    if (!window.confirm(t('protocols.removeSignerConfirm', { name: signerName }))) return
+
+    setRemovingSignatureId(signature.id)
+    try {
+      await api.delete(`/protocols/${id}/signatures/${signature.id}`)
+      showToast(t('protocols.signerRemovedSuccess'), 'success')
+      fetchProtocol()
+    } catch (err) {
+      if (err.code === 'SIGNER_ALREADY_SIGNED') {
+        showToast(t('protocols.removeSignerSignedError'), 'error')
+      } else {
+        showToast(t('protocols.removeSignerError'), 'error')
+      }
+    } finally {
+      setRemovingSignatureId(null)
     }
   }
 
@@ -277,6 +311,7 @@ export default function ProtocolDetailPage() {
 
   const isDraft   = protocol?.status === 'DRAFT'
   const isPending = protocol?.status === 'PENDING_SIGNATURES'
+  const canManageSigners = ['SECRETARY', 'CHAIRMAN', 'ADMIN'].includes(user?.role)
 
   const STATUS_LABEL = {
     DRAFT:              t('protocols.statusDraft'),
@@ -592,6 +627,14 @@ export default function ProtocolDetailPage() {
                         <Badge tone={b.tone} size="sm">{t(b.label)}</Badge>
                       </div>
                     </div>
+                    {canManageSigners && isPending && (
+                      <IconButton
+                        icon={Trash2}
+                        label={t('protocols.removeSigner')}
+                        onClick={() => handleRemoveSignature(sig)}
+                        disabled={removingSignatureId === sig.id || sig.status === 'SIGNED'}
+                      />
+                    )}
                   </li>
                 )
               })}

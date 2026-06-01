@@ -19,19 +19,8 @@ import {
   Button, Card, CardHeader, CardBody, Input, Select, PageHeader, Table,
   AccessibleIcon,
 } from '../../components/ui'
-
-/**
- * Resolves the route for a submission depending on its status.
- * Drafts and pending-revision go to the editor; everything else to the detail page.
- * @param {object} sub
- * @returns {string}
- */
-function submissionRoute(sub) {
-  if (sub.status === 'DRAFT' || sub.status === 'PENDING_REVISION') {
-    return `/submissions/${sub.id}/edit`
-  }
-  return `/submissions/${sub.id}`
-}
+import useDocumentTitle from '../../hooks/useDocumentTitle'
+import { buildResearcherSubmissionPath } from '../../utils/submissionRoutes'
 
 /**
  * Formats an ISO date to he-IL short date.
@@ -51,6 +40,7 @@ function formatDate(iso) {
  */
 export default function ResearcherSubmissionsListPage() {
   const { t, i18n } = useTranslation()
+  useDocumentTitle(t('dashboard.researcher.recentSubmissions'))
   const isRtl = i18n.dir() === 'rtl'
   const location = useLocation()
   const navigate = useNavigate()
@@ -217,7 +207,7 @@ export default function ResearcherSubmissionsListPage() {
                 {t('nav.newSubmission')}
               </Button>
             }
-            onRowClick={(row) => navigate(submissionRoute(row), { state: { from: returnPath } })}
+            onRowClick={(row) => navigate(buildResearcherSubmissionPath(row), { state: { from: returnPath } })}
             rowAriaLabel={(row) => `${row.title} — ${row.applicationId}`}
           />
         </CardBody>
