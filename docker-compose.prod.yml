@@ -57,6 +57,7 @@ services:
 
 volumes:
   uploads:
-    name: ethic-net-uploads
+    # Keep pre-rebrand volume names so upgrades retain existing documents.
+    name: ethicflow-uploads
   generated:
-    name: ethic-net-generated
+    name: ethicflow-generated

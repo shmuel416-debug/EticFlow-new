@@ -26,4 +26,5 @@ services:
 
 volumes:
   pgdata:
-    name: ethic-net-pgdata
+    # Keep the pre-rebrand volume name so upgrades retain the existing database.
+    name: ethicflow-pgdata
