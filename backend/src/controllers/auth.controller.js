@@ -235,23 +235,8 @@ function parseAbsoluteOrigin(value) {
 }
 
 /**
- * Returns true when two hosts share the same root domain (last 2 labels).
- * @param {string} hostA
- * @param {string} hostB
- * @returns {boolean}
- */
-function sharesRootDomain(hostA, hostB) {
-  const partsA = hostA.split('.').filter(Boolean)
-  const partsB = hostB.split('.').filter(Boolean)
-  if (partsA.length < 2 || partsB.length < 2) return false
-  const rootA = partsA.slice(-2).join('.')
-  const rootB = partsB.slice(-2).join('.')
-  return rootA === rootB
-}
-
-/**
  * Resolves a safe frontend URL from explicit candidate or standard resolution.
- * In production, candidate is accepted only if it shares root domain with FRONTEND_URL.
+ * In production, candidate is accepted only when it exactly matches FRONTEND_URL.
  * @param {import('express').Request} req
  * @param {string|undefined|null} candidate
  * @returns {string}
@@ -267,9 +252,7 @@ function resolveFrontendUrlForSso(req, candidate) {
   const parsedFallback = parseAbsoluteOrigin(fallback)
   if (!parsedFallback) return fallback
 
-  const sameHost = parsedCandidate === parsedFallback
-  const sameRootDomain = sharesRootDomain(new URL(parsedCandidate).hostname, new URL(parsedFallback).hostname)
-  return (sameHost || sameRootDomain) ? parsedCandidate : fallback
+  return parsedCandidate === parsedFallback ? parsedCandidate : fallback
 }
 
 /**
@@ -654,38 +637,83 @@ export async function resetPassword(req, res, next) {
 // ─────────────────────────────────────────────
 
 /**
- * Finds an existing user by Microsoft externalId or email, or creates a new one.
- * Returns null if there is an email conflict with a LOCAL account.
+ * Finds one user by Microsoft externalId and fails closed on duplicate bindings.
+ * @param {string} externalId - Microsoft account identifier
+ * @returns {Promise<{ user: object|null, conflict: boolean }>}
+ */
+async function findMicrosoftUserByExternalId(externalId) {
+  if (!externalId) return { user: null, conflict: true }
+  const matches = await prisma.user.findMany({
+    where: { externalId },
+    take: 2,
+  })
+  return matches.length > 1
+    ? { user: null, conflict: true }
+    : { user: matches[0] || null, conflict: false }
+}
+
+/**
+ * Finds one user by candidate Microsoft emails and fails closed on ambiguity.
+ * @param {string[]} candidateEmails - Raw and normalized email candidates
+ * @returns {Promise<{ user: object|null, conflict: boolean }>}
+ */
+async function findMicrosoftUserByCandidateEmail(candidateEmails) {
+  if (candidateEmails.length === 0) return { user: null, conflict: true }
+  const matches = await prisma.user.findMany({
+    where: { email: { in: candidateEmails } },
+    take: 2,
+  })
+  return matches.length > 1
+    ? { user: null, conflict: true }
+    : { user: matches[0] || null, conflict: false }
+}
+
+/**
+ * Updates a Microsoft user when profile details or normalized email changed.
+ * @param {object} existing - Existing Microsoft user record
+ * @param {{ externalId: string, fullName: string, normalizedEmail: string }} profile
+ * @returns {Promise<object|null>}
+ */
+async function updateMicrosoftUserIfNeeded(existing, { externalId, fullName, normalizedEmail }) {
+  if (existing.email !== normalizedEmail) {
+    const emailTaken = await prisma.user.findUnique({ where: { email: normalizedEmail } })
+    if (emailTaken && emailTaken.id !== existing.id) return null
+  }
+
+  const needsUpdate = (
+    existing.fullName !== fullName ||
+    existing.externalId !== externalId ||
+    existing.email !== normalizedEmail
+  )
+  if (!needsUpdate) return existing
+  return prisma.user.update({
+    where: { id: existing.id },
+    data: { fullName, externalId, email: normalizedEmail },
+  })
+}
+
+/**
+ * Finds an existing Microsoft user by externalId or email, or creates a new one.
+ * Returns null if there is an email/provider conflict.
  * @param {{ externalId: string, email: string, fullName: string }} profile - Microsoft profile
  * @returns {Promise<{ user: object|null, conflict: boolean }>}
  */
 async function findOrCreateMicrosoftUser({ externalId, email, fullName }) {
   const normalizedEmail = normalizeMicrosoftLoginEmail(email)
   const candidateEmails = [...new Set([email, normalizedEmail].filter(Boolean))]
-  const existing = await prisma.user.findFirst({
-    where: { OR: [{ externalId }, { email: { in: candidateEmails } }] },
-  })
+  const externalMatch = await findMicrosoftUserByExternalId(externalId)
+  if (externalMatch.conflict) return { user: null, conflict: true }
 
+  const emailMatch = externalMatch.user
+    ? { user: null, conflict: false }
+    : await findMicrosoftUserByCandidateEmail(candidateEmails)
+  if (emailMatch.conflict) return { user: null, conflict: true }
+
+  const existing = externalMatch.user || emailMatch.user
   if (existing) {
-    if (existing.authProvider === 'LOCAL') return { user: null, conflict: true }
-
-    // Prevent unique-email conflict when normalizing acad -> non-acad mailbox.
-    if (existing.email !== normalizedEmail) {
-      const emailTaken = await prisma.user.findUnique({ where: { email: normalizedEmail } })
-      if (emailTaken && emailTaken.id !== existing.id) return { user: null, conflict: true }
-    }
-
-    const needsUpdate = (
-      existing.fullName !== fullName ||
-      existing.externalId !== externalId ||
-      existing.email !== normalizedEmail
-    )
-    const user = needsUpdate
-      ? await prisma.user.update({
-        where: { id: existing.id },
-        data: { fullName, externalId, email: normalizedEmail },
-      })
-      : existing
+    if (existing.authProvider !== 'MICROSOFT') return { user: null, conflict: true }
+    const user = await updateMicrosoftUserIfNeeded(existing, { externalId, fullName, normalizedEmail })
+    if (!user) return { user: null, conflict: true }
     return { user, conflict: false }
   }
 
