@@ -234,6 +234,20 @@ pwsh ./ops/scripts/setup-microsoft-integrations.ps1 `
 
 **אישור Admin Consent (חובה):** היכנס לפורטל Entra → App Registrations → לכל אפליקציה → API Permissions → "Grant admin consent for JCT".
 
+**Redirect URIs של `Ethic-Net SSO` (מקור אמת):** ה-API גוזר את ה-`redirect_uri` מ-host הבקשה, לכן ב-App Registration חייבים להופיע **כל** ה-hosts שדרכם מגישים את ה-API:
+- `https://ethics-net-api.jct.ac.il/api/auth/microsoft/callback` (קנוני, חובה)
+- `https://app-ethics-net-api.azurewebsites.net/api/auth/microsoft/callback` (ברירת מחדל של App Service)
+- `https://app-ethics-net-web.azurewebsites.net/api/auth/microsoft/callback` (legacy)
+
+בכל הוספת/שינוי דומיין ל-API יש להוסיף את ה-URI החדש **לפני** המעבר (אחרת תתקבל שגיאת `AADSTS50011` — ראה Troubleshooting):
+
+```powershell
+az ad app update --id 4190c9af-661d-479a-89c4-b4909ce35203 --web-redirect-uris `
+  "https://app-ethics-net-web.azurewebsites.net/api/auth/microsoft/callback" `
+  "https://app-ethics-net-api.azurewebsites.net/api/auth/microsoft/callback" `
+  "https://ethics-net-api.jct.ac.il/api/auth/microsoft/callback"
+```
+
 ### 3.2 הכנסת סודות נוספים ל-Key Vault
 
 עכשיו ה-KV קיים, אפשר לדחוף את הסודות מ-Phase 0:
@@ -507,6 +521,19 @@ git push --mirror
 - `subject = repo:<owner>/<repo>:environment:production` (case-sensitive)
 - ב-workflow יש `permissions: id-token: write`
 - ה-job משתמש ב-`environment: production`
+
+### "AADSTS50011" ב-Microsoft SSO (redirect URI mismatch)
+
+ה-redirect URI שה-API שולח (נגזר מ-host הבקשה) לא רשום ב-App Registration `Ethic-Net SSO`. קורה אחרי שינוי/הוספת דומיין מותאם ל-API. הוסף את ה-URI הקנוני בלי למחוק את הקיימים:
+
+```powershell
+az ad app update --id 4190c9af-661d-479a-89c4-b4909ce35203 --web-redirect-uris `
+  "https://app-ethics-net-web.azurewebsites.net/api/auth/microsoft/callback" `
+  "https://app-ethics-net-api.azurewebsites.net/api/auth/microsoft/callback" `
+  "https://ethics-net-api.jct.ac.il/api/auth/microsoft/callback"
+```
+
+פירוט מלא: [incident-2026-06-02-microsoft-sso-redirect-uri-he.md](incident-2026-06-02-microsoft-sso-redirect-uri-he.md).
 
 ### "App Service shows Application Error"
 
