@@ -11,7 +11,7 @@ import useDocumentTitle from '../../hooks/useDocumentTitle';
 
 const TEMPLATE_KEYS = ['questionnaire_preface'];
 const MAX_TEMPLATE_SIZE_BYTES = 5 * 1024 * 1024;
-const ALLOWED_TEMPLATE_EXTENSIONS = ['.pdf', '.docx'];
+const ALLOWED_TEMPLATE_EXTENSIONS = ['.pdf'];
 
 export default function SystemTemplatesPage() {
   const { t } = useTranslation();
@@ -295,7 +295,7 @@ export default function SystemTemplatesPage() {
                   <input
                     type="file"
                     onChange={(e) => setSelectedFile(e.target.files?.[0])}
-                    accept=".pdf,.docx"
+                    accept=".pdf"
                     className="hidden"
                     id="file-input"
                   />

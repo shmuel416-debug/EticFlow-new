@@ -29,7 +29,6 @@ function buildHeSection(submission, template, ctx, signatureDataUrl, brandPrimar
   <div class="content">
     <div class="doc-title"><h2>${escapeHtml(template.docTitle)}</h2></div>
     <div class="issue-date">תאריך הנפקה: ${ltr(ctx.issueDate)}</div>
-    <hr>
     <div class="addressee">
       <div class="to-label">לכבוד,</div>
       <div>${escapeHtml(submission.author.fullName)}</div>
@@ -69,7 +68,7 @@ function buildHeSection(submission, template, ctx, signatureDataUrl, brandPrimar
         </tr>
       </table>
     </div>
-    <div class="footer">
+    <div class="footer approval-footer">
       ${template.legalFooter ? `<div class="footer-legal">${escapeHtml(template.legalFooter)}</div>` : ''}
       מסמך זה הופק אוטומטית על ידי מערכת ועדת אתיקה • ${escapeHtml(ctx.institutionName)} • ${ltr(ctx.issueDate)} • מס׳ בקשה: ${ltr(ctx.applicationId)}
     </div>
@@ -100,7 +99,6 @@ function buildEnSection(submission, template, ctx, signatureDataUrl) {
   <div class="content">
     <div class="doc-title"><h2>${escapeHtml(template.docTitle)}</h2></div>
     <div class="issue-date">Issue date: ${escapeHtml(ctx.issueDate)}</div>
-    <hr>
     <div class="addressee">
       <div class="to-label">Dear,</div>
       <div>${escapeHtml(submission.author.fullName)}</div>
@@ -140,7 +138,7 @@ function buildEnSection(submission, template, ctx, signatureDataUrl) {
         </tr>
       </table>
     </div>
-    <div class="footer">
+    <div class="footer approval-footer">
       ${template.legalFooter ? `<div class="footer-legal">${escapeHtml(template.legalFooter)}</div>` : ''}
       This document was generated automatically by Ethic-Net • ${escapeHtml(ctx.institutionName)} • ${escapeHtml(ctx.issueDate)} • Ref: ${escapeHtml(ctx.applicationId)}
     </div>

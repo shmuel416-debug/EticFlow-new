@@ -33,6 +33,7 @@ RUN npx prisma generate
 
 # Copy application source
 COPY src/ ./src/
+COPY assets/ ./assets/
 
 
 # Hand ownership to non-root user for image layers.

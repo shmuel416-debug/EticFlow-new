@@ -138,6 +138,28 @@ async function recordBlockedRoleAudit(req, res, protocolId, meta) {
   }
 }
 
+/**
+ * Updates protocol status based on active signatures.
+ * Marks as SIGNED only when all active signers are signed.
+ * @param {string} protocolId
+ * @returns {Promise<void>}
+ */
+async function syncProtocolStatusFromSignatures(protocolId) {
+  const activeSignatures = await prisma.protocolSignature.findMany({
+    where: { protocolId, isActive: true },
+    select: { status: true },
+  })
+  if (activeSignatures.length === 0) return
+
+  const allSigned = activeSignatures.every((signature) => signature.status === 'SIGNED')
+  if (!allSigned) return
+
+  await prisma.protocol.update({
+    where: { id: protocolId },
+    data: { status: 'SIGNED' },
+  })
+}
+
 // ─────────────────────────────────────────────
 // LIST
 // ─────────────────────────────────────────────
@@ -555,6 +577,7 @@ export async function removeSignature(req, res, next) {
         tokenExpiry: null,
       },
     })
+    await syncProtocolStatusFromSignatures(id)
 
     res.locals.entityId = id
     res.json({
@@ -620,16 +643,7 @@ export async function signByToken(req, res, next) {
       },
     })
 
-    // Check if all required signatures are now SIGNED (none remain PENDING)
-    const pendingCount = await prisma.protocolSignature.count({
-      where: { protocolId: sig.protocolId, status: 'PENDING', isActive: true },
-    })
-    if (pendingCount === 0 && newStatus === 'SIGNED') {
-      await prisma.protocol.update({
-        where: { id: sig.protocolId },
-        data:  { status: 'SIGNED' },
-      })
-    }
+    await syncProtocolStatusFromSignatures(sig.protocolId)
 
     res.locals.entityId = sig.protocolId
     res.json({

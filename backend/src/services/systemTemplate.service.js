@@ -9,14 +9,19 @@ import { storage } from './storage.service.js';
 import { AppError } from '../middleware/error.js';
 import fs from 'fs/promises';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
 const ALLOWED_KEYS = ['questionnaire_preface'];
-const ALLOWED_MIMES = [
-  'application/pdf',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-];
+// System-provided documents are PDF only — guarantees in-browser preview.
+const ALLOWED_MIMES = ['application/pdf'];
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
-const DEFAULT_QUESTIONNAIRE_PREFACE_PATH = 'C:/Users/shmue/Downloads/בלאנק לוגו חדש.docx';
+
+const MODULE_DIR = path.dirname(fileURLToPath(import.meta.url));
+// Portable, repo-bundled PDF blank-with-logo used as the default fallback.
+const DEFAULT_QUESTIONNAIRE_PREFACE_PATH = path.resolve(
+  MODULE_DIR,
+  '../../assets/letterhead/default-letterhead.pdf'
+);
 
 /**
  * Resolves an optional filesystem fallback path for a template key+lang.
@@ -169,7 +174,7 @@ export async function uploadNewVersion(key, lang, file, userId) {
 
   if (!ALLOWED_MIMES.includes(file.mimetype)) {
     throw new AppError(
-      'Invalid file type. Use PDF or DOCX only.',
+      'Invalid file type. Use PDF only.',
       'INVALID_MIME',
       400
     );
@@ -198,9 +203,8 @@ export async function uploadNewVersion(key, lang, file, userId) {
     data: { isActive: false },
   });
 
-  // Save file to storage
-  const ext = file.mimetype === 'application/pdf' ? 'pdf' : 'docx';
-  const storagePath = `templates/${key}/v${nextVersion}/${lang}.${ext}`;
+  // Save file to storage (PDF only)
+  const storagePath = `templates/${key}/v${nextVersion}/${lang}.pdf`;
 
   await storage.save(storagePath, file.buffer, file.mimetype);
 

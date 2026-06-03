@@ -223,6 +223,16 @@ hr.light { border-color: #e2e8f0; border-width: 1px; }
   line-height: 1.6;
 }
 .footer-legal { margin-bottom: 6px; }
+.approval-footer {
+  margin-top: 12px;
+  padding-top: 0;
+  border-top: none;
+}
+.protocol-footer {
+  margin-top: 12px;
+  padding-top: 0;
+  border-top: none;
+}
 .ltr-val { direction: ltr; unicode-bidi: isolate; display: inline-block; }
 .rtl-root { direction: rtl; }
 .rtl-root .brand-row,

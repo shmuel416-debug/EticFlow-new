@@ -1,19 +1,93 @@
 /**
  * Template Download Card (Researcher Dashboard)
- * Displays available system templates with download links for both languages
+ * Displays available system templates with view (inline preview) and download
+ * actions for both languages.
  */
 
 import { useEffect, useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Download, AlertCircle } from 'lucide-react'
+import { Download, AlertCircle, Eye } from 'lucide-react'
 import * as systemTemplatesApi from '../../services/systemTemplates.api.js'
 import { Card, CardHeader } from '../ui'
+import Modal from '../ui/Modal'
+
+const TEMPLATE_KEY = 'questionnaire_preface'
+
+/**
+ * Returns whether a MIME type is natively previewable in-browser.
+ * @param {string} mime
+ * @returns {boolean}
+ */
+function canInlinePreview(mime) {
+  if (!mime) return false
+  return (
+    mime === 'application/pdf' ||
+    mime.startsWith('image/') ||
+    mime.startsWith('text/')
+  )
+}
+
+/**
+ * Single template row with view + download actions.
+ * @param {object} props
+ * @param {string} props.langLabel - Human-readable language label (e.g. "עברית")
+ * @param {number} [props.version] - Template version number
+ * @param {string} props.templateName - Localized template display name
+ * @param {function} props.onPreview - View handler
+ * @param {function} props.onDownload - Download handler
+ * @returns {JSX.Element}
+ */
+function TemplateRow({ langLabel, version, templateName, onPreview, onDownload }) {
+  const { t } = useTranslation()
+  return (
+    <div
+      className="w-full px-4 py-3 flex items-center justify-between gap-3 rounded-lg"
+      style={{
+        background: 'var(--lev-navy-50)',
+        border: '1px solid var(--border-subtle)',
+      }}
+    >
+      <div className="text-right flex-1 min-w-0">
+        <p className="font-medium text-sm truncate" style={{ color: 'var(--text-primary)' }}>
+          {templateName}
+        </p>
+        <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+          {langLabel}
+          {version ? ` • v${version}` : ''}
+        </p>
+      </div>
+      <div className="flex gap-1 flex-shrink-0">
+        <button
+          type="button"
+          onClick={onPreview}
+          aria-label={t('systemTemplates.viewLabel', { lang: langLabel })}
+          title={t('systemTemplates.viewLabel', { lang: langLabel })}
+          className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg transition-colors hover:bg-[var(--lev-teal-50)]"
+          style={{ color: 'var(--lev-navy)' }}
+        >
+          <Eye size={20} strokeWidth={1.75} aria-hidden="true" focusable="false" />
+        </button>
+        <button
+          type="button"
+          onClick={onDownload}
+          aria-label={t('systemTemplates.downloadDocLabel', { lang: langLabel })}
+          title={t('systemTemplates.downloadDocLabel', { lang: langLabel })}
+          className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg transition-colors hover:bg-[var(--lev-teal-50)]"
+          style={{ color: 'var(--lev-teal-text)' }}
+        >
+          <Download size={20} strokeWidth={1.75} aria-hidden="true" focusable="false" />
+        </button>
+      </div>
+    </div>
+  )
+}
 
 export default function TemplateDownloadCard() {
   const { t } = useTranslation()
   const [templates, setTemplates] = useState({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [previewLang, setPreviewLang] = useState(null)
 
   /**
    * Returns true when an API error indicates "no active template".
@@ -29,8 +103,8 @@ export default function TemplateDownloadCard() {
       setLoading(true)
       setError(null)
       const [heRes, enRes] = await Promise.allSettled([
-        systemTemplatesApi.getActiveTemplate('questionnaire_preface', 'he'),
-        systemTemplatesApi.getActiveTemplate('questionnaire_preface', 'en'),
+        systemTemplatesApi.getActiveTemplate(TEMPLATE_KEY, 'he'),
+        systemTemplatesApi.getActiveTemplate(TEMPLATE_KEY, 'en'),
       ])
 
       const nextTemplates = { he: null, en: null }
@@ -63,13 +137,17 @@ export default function TemplateDownloadCard() {
     loadTemplates()
   }, [loadTemplates])
 
+  /**
+   * Downloads the template file for a given language.
+   * @param {string} lang
+   */
   async function handleDownload(lang) {
     try {
-      const blob = await systemTemplatesApi.downloadTemplate('questionnaire_preface', lang)
+      const blob = await systemTemplatesApi.downloadTemplate(TEMPLATE_KEY, lang)
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `questionnaire-preface-${lang}.docx`
+      a.download = `questionnaire-preface-${lang}.pdf`
       document.body.appendChild(a)
       a.click()
       window.URL.revokeObjectURL(url)
@@ -78,6 +156,11 @@ export default function TemplateDownloadCard() {
       setError(t('systemTemplates.downloadError'))
     }
   }
+
+  const previewTemplate = previewLang ? templates[previewLang] : null
+  const previewUrl = previewLang
+    ? systemTemplatesApi.getPreviewUrl(TEMPLATE_KEY, previewLang)
+    : null
 
   if (loading) {
     return null
@@ -114,51 +197,74 @@ export default function TemplateDownloadCard() {
       <CardHeader title={t('systemTemplates.usefulDocuments')} />
       <div className="p-4 space-y-3">
         {templates.he && (
-          <button
-            onClick={() => handleDownload('he')}
-            className="w-full text-right px-4 py-3 flex items-center justify-between gap-3 rounded-lg transition-colors"
-            style={{
-              background: 'var(--lev-navy-50)',
-              border: '1px solid var(--border-subtle)',
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--lev-navy)')}
-            onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--lev-navy-50)')}
-          >
-            <div className="text-right flex-1">
-              <p className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>
-                {t('systemTemplates.questionnaire_preface')}
-              </p>
-              <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
-                עברית • {templates.he.version && `v${templates.he.version}`}
-              </p>
-            </div>
-            <Download size={18} strokeWidth={2} className="flex-shrink-0" aria-hidden="true" />
-          </button>
+          <TemplateRow
+            langLabel="עברית"
+            version={templates.he.version}
+            templateName={t('systemTemplates.questionnaire_preface')}
+            onPreview={() => setPreviewLang('he')}
+            onDownload={() => handleDownload('he')}
+          />
         )}
 
         {templates.en && (
-          <button
-            onClick={() => handleDownload('en')}
-            className="w-full text-right px-4 py-3 flex items-center justify-between gap-3 rounded-lg transition-colors"
-            style={{
-              background: 'var(--lev-navy-50)',
-              border: '1px solid var(--border-subtle)',
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--lev-navy)')}
-            onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--lev-navy-50)')}
-          >
-            <div className="text-right flex-1">
-              <p className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>
-                {t('systemTemplates.questionnaire_preface')}
-              </p>
-              <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
-                English • {templates.en.version && `v${templates.en.version}`}
-              </p>
-            </div>
-            <Download size={18} strokeWidth={2} className="flex-shrink-0" aria-hidden="true" />
-          </button>
+          <TemplateRow
+            langLabel="English"
+            version={templates.en.version}
+            templateName={t('systemTemplates.questionnaire_preface')}
+            onPreview={() => setPreviewLang('en')}
+            onDownload={() => handleDownload('en')}
+          />
         )}
       </div>
+
+      <Modal
+        open={Boolean(previewLang)}
+        onClose={() => setPreviewLang(null)}
+        title={t('documents.previewTitle')}
+        description={t('systemTemplates.questionnaire_preface')}
+        size="lg"
+        closeLabel={t('documents.closePreviewLabel')}
+      >
+        {previewTemplate && previewUrl && (
+          <div className="space-y-3">
+            {canInlinePreview(previewTemplate.mimeType) ? (
+              <div className="rounded-lg border border-gray-200 overflow-hidden bg-white">
+                <iframe
+                  title={t('documents.previewFrameLabel', {
+                    name: t('systemTemplates.questionnaire_preface'),
+                  })}
+                  src={previewUrl}
+                  className="w-full h-[65vh]"
+                />
+              </div>
+            ) : (
+              <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-3">
+                <p className="text-sm text-gray-700">
+                  {t('documents.previewUnsupported')}
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => window.open(previewUrl, '_blank', 'noopener,noreferrer')}
+                    className="min-h-[44px] px-4 rounded-lg border border-gray-300 text-sm font-medium hover:bg-gray-100"
+                  >
+                    {t('documents.openInNewTab')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleDownload(previewLang)}
+                    className="min-h-[44px] px-4 rounded-lg text-sm font-medium text-white"
+                    style={{ backgroundColor: 'var(--lev-teal)' }}
+                  >
+                    {t('documents.downloadFallback')}
+                  </button>
+                </div>
+              </div>
+            )}
+            <p className="text-xs text-gray-500">{t('documents.previewHint')}</p>
+          </div>
+        )}
+      </Modal>
     </Card>
   )
 }

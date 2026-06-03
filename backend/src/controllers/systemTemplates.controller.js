@@ -79,6 +79,40 @@ export async function download(req, res, next) {
 }
 
 /**
+ * GET /api/system-templates/:key/preview
+ * Stream a template file inline for in-browser preview
+ * Query: ?lang=he
+ */
+export async function preview(req, res, next) {
+  try {
+    const { key } = req.params;
+    const lang = req.query.lang || 'he';
+
+    const template = await systemTemplateService.getActive(key, lang);
+
+    if (!template) {
+      return res.status(404).json({
+        error: 'Template not found',
+        code: 'TEMPLATE_NOT_FOUND',
+      });
+    }
+
+    const buffer = template.localPath
+      ? await fs.readFile(template.localPath)
+      : await storage.retrieve(template.storagePath);
+    const ext = template.mimeType === 'application/pdf' ? 'pdf' : 'docx';
+    const filename = `${key}-${lang}-v${template.version}.${ext}`;
+
+    res.setHeader('Content-Type', template.mimeType);
+    res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.send(buffer);
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
  * GET /api/admin/system-templates
  * List all templates grouped by key (ADMIN ONLY)
  */

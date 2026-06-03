@@ -252,6 +252,7 @@ export default function SubmissionStatusPage() {
     )
   }
 
+  const isPdfBusy = pdfLoading !== null
   const latest = submission.versions?.slice(-1)[0]
 
   return (
@@ -314,19 +315,21 @@ export default function SubmissionStatusPage() {
                 <button
                   type="button"
                   onClick={() => handlePreviewPdf('he')}
-                  disabled={pdfLoading !== null}
+                  disabled={isPdfBusy}
                   aria-label={t('statusPage.viewPdf')}
                   title={t('statusPage.viewPdf')}
                   className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg transition disabled:opacity-60 disabled:cursor-not-allowed hover:bg-[var(--lev-teal-50)]"
                   style={{ color: 'var(--lev-navy)' }}
                 >
-                  <Eye size={20} strokeWidth={1.75} aria-hidden="true" focusable="false" />
+                  {pdfLoading === 'preview-he'
+                    ? <Spinner size={16} label={t('statusPage.pdfInProgress')} />
+                    : <Eye size={20} strokeWidth={1.75} aria-hidden="true" focusable="false" />}
                 </button>
                 <Button
                   variant="primary"
                   fullWidth
                   onClick={() => handleDownloadPdf('he')}
-                  disabled={pdfLoading !== null}
+                  disabled={isPdfBusy}
                   loading={pdfLoading === 'download-he'}
                   leftIcon={
                     <Download
@@ -342,19 +345,21 @@ export default function SubmissionStatusPage() {
                 <button
                   type="button"
                   onClick={() => handlePreviewPdf('en')}
-                  disabled={pdfLoading !== null}
+                  disabled={isPdfBusy}
                   aria-label={t('statusPage.viewPdfEn')}
                   title={t('statusPage.viewPdfEn')}
                   className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg transition disabled:opacity-60 disabled:cursor-not-allowed hover:bg-[var(--lev-teal-50)]"
                   style={{ color: 'var(--lev-navy)' }}
                 >
-                  <Eye size={20} strokeWidth={1.75} aria-hidden="true" focusable="false" />
+                  {pdfLoading === 'preview-en'
+                    ? <Spinner size={16} label={t('statusPage.pdfInProgress')} />
+                    : <Eye size={20} strokeWidth={1.75} aria-hidden="true" focusable="false" />}
                 </button>
                 <Button
                   variant="secondary"
                   fullWidth
                   onClick={() => handleDownloadPdf('en')}
-                  disabled={pdfLoading !== null}
+                  disabled={isPdfBusy}
                   loading={pdfLoading === 'download-en'}
                   leftIcon={
                     <Download
@@ -367,6 +372,12 @@ export default function SubmissionStatusPage() {
                 >
                   {t('statusPage.downloadPdfEn')}
                 </Button>
+              </div>
+            )}
+            {isPdfBusy && (
+              <div className="mt-2 flex items-center gap-2 text-xs" style={{ color: 'var(--text-muted)' }}>
+                <Spinner size={14} label={t('statusPage.pdfInProgress')} />
+                <span>{t('statusPage.pdfInProgress')}</span>
               </div>
             )}
           </div>

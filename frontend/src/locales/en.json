@@ -326,6 +326,7 @@
     "viewPdfEn": "View (English)",
     "downloadPdf": "Download (Hebrew)",
     "downloadPdfEn": "Download (English)",
+    "pdfInProgress": "Generating approval PDF, please wait...",
     "steps": {
       "DRAFT": "Draft saved",
       "SUBMITTED": "Submitted",
@@ -1042,6 +1043,7 @@
     "requestSignatures": "Request Signatures",
     "selectSigners": "Select signers",
     "downloadLanguage": "Download language",
+    "viewPdfSelected": "View Protocol",
     "downloadPdfSelected": "Download PDF",
     "downloadPdf": "Download PDF (Hebrew)",
     "downloadPdfEn": "Download PDF (English)",
@@ -1063,6 +1065,9 @@
     "loadSignersError": "Failed to load signers list",
     "noSignersAvailable": "No available signers were found",
     "saveError": "Failed to save protocol",
+    "pdfInProgress": "Generating protocol PDF, please wait...",
+    "pdfError": "Failed to generate the protocol PDF — please try again",
+    "pdfPreviewTitle": "Protocol preview",
     "sign": {
       "title": "Protocol Signature",
       "brand": "Ethic-Net — Ethics Committee",
@@ -1276,9 +1281,9 @@
     "uploadTitle": "Upload New Version",
     "uploadSuccess": "File uploaded successfully",
     "uploadError": "Error uploading file",
-    "invalidFileType": "Unsupported file type. Please upload PDF or DOCX only",
+    "invalidFileType": "Unsupported file type. Please upload PDF only",
     "fileTooLarge": "File is too large (maximum {{maxSize}}MB)",
-    "uploadLimits": "Supported formats: PDF, DOCX. Maximum file size: {{maxSize}}MB",
+    "uploadLimits": "Supported format: PDF only. Maximum file size: {{maxSize}}MB",
     "validateUpload": "Please select a language and file",
     "language": "Language",
     "selectFile": "Select File",
@@ -1296,7 +1301,9 @@
     "loadError": "Error loading templates",
     "usefulDocuments": "Useful Documents",
     "downloadError": "Error downloading file",
-    "requiredTemplates": "Required Templates"
+    "requiredTemplates": "Required Templates",
+    "viewLabel": "View document ({{lang}})",
+    "downloadDocLabel": "Download document ({{lang}})"
   },
   "checklistTemplates": {
     "pageTitle": "Reviewer checklist templates",

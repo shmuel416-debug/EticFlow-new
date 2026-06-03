@@ -92,7 +92,7 @@ function SummarySidebar({ fields, values, errors, formConfig }) {
       const url = window.URL.createObjectURL(response.data)
       const a = document.createElement('a')
       a.href = url
-      a.download = `questionnaire-preface-${lang}.docx`
+      a.download = `questionnaire-preface-${lang}.pdf`
       document.body.appendChild(a)
       a.click()
       window.URL.revokeObjectURL(url)

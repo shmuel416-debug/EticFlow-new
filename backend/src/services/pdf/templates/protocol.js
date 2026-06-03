@@ -102,7 +102,6 @@ function buildProtocolSection(protocol, labels, lang) {
   <div class="content">
     <div class="doc-title"><h2>${escapeHtml(title)}</h2></div>
     <div class="issue-date">${escapeHtml(labels.meetingLabel)}: ${escapeHtml(labels.meetingDate)}</div>
-    <hr>
     <div class="details-box">
       <table class="details-table">
         <tr><td class="lbl">${escapeHtml(labels.statusFieldLabel)}</td><td class="val">${escapeHtml(labels.statusLabel)}</td></tr>
@@ -110,7 +109,7 @@ function buildProtocolSection(protocol, labels, lang) {
     </div>
     ${renderSections(Array.isArray(protocol.contentJson?.sections) ? protocol.contentJson.sections : [], lang)}
     ${renderSignatures(protocol.signatures, lang)}
-    <div class="footer">${escapeHtml(labels.footer)}</div>
+    <div class="footer protocol-footer">${escapeHtml(labels.footer)}</div>
   </div>
 </div>`
 }

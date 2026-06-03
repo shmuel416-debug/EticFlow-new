@@ -4,10 +4,11 @@
  */
 
 import fs from 'fs/promises'
+import path from 'path'
 import { PDFDocument } from 'pdf-lib'
 import prisma from '../../config/database.js'
 
-const DEFAULT_LETTERHEAD_PATH = 'C:/Users/shmue/Downloads/בלאנק לוגו חדש.pdf'
+const DEFAULT_LETTERHEAD_PATH = path.resolve('assets', 'letterhead', 'default-letterhead.pdf')
 const LETTERHEAD_SETTING_KEY = 'system_letterhead_pdf_path'
 
 /** @type {Uint8Array|null} */
@@ -29,34 +30,31 @@ async function resolveLetterheadPathFromSettings() {
 }
 
 /**
- * Resolves system letterhead PDF path from settings, env, or fallback.
- * @returns {Promise<string>}
- */
-async function resolveLetterheadPath() {
-  const settingPath = await resolveLetterheadPathFromSettings().catch(() => '')
-  if (settingPath) return settingPath
-  const envPath = process.env.SYSTEM_LETTERHEAD_PDF_PATH?.trim()
-  return envPath || DEFAULT_LETTERHEAD_PATH
-}
-
-/**
  * Loads letterhead PDF bytes from disk with memoization.
  * @returns {Promise<Uint8Array|null>}
  */
 async function loadLetterheadBytes() {
-  const letterheadPath = await resolveLetterheadPath()
-  if (!letterheadPath) return null
-  if (cachedLetterheadBytes && cachedLetterheadPath === letterheadPath) {
-    return cachedLetterheadBytes
-  }
-  try {
-    const bytes = await fs.readFile(letterheadPath)
-    cachedLetterheadBytes = bytes
-    cachedLetterheadPath = letterheadPath
-    return bytes
-  } catch {
+  const settingPath = await resolveLetterheadPathFromSettings().catch(() => '')
+  const envPath = process.env.SYSTEM_LETTERHEAD_PDF_PATH?.trim() || ''
+  const candidatePaths = [settingPath, envPath, DEFAULT_LETTERHEAD_PATH].filter(Boolean)
+  const uniqueCandidates = [...new Set(candidatePaths)]
+  if (uniqueCandidates.length === 0) {
     return null
   }
+  if (cachedLetterheadBytes && uniqueCandidates.includes(cachedLetterheadPath)) {
+    return cachedLetterheadBytes
+  }
+  for (const candidatePath of uniqueCandidates) {
+    try {
+      const bytes = await fs.readFile(candidatePath)
+      cachedLetterheadBytes = bytes
+      cachedLetterheadPath = candidatePath
+      return bytes
+    } catch {
+      // Try the next candidate path.
+    }
+  }
+  return null
 }
 
 /**
@@ -74,7 +72,9 @@ export async function applySystemLetterhead(pdfPath) {
       PDFDocument.load(sourceBytes),
       PDFDocument.load(letterheadBytes),
     ])
-    if (letterheadDoc.getPageCount() === 0) return
+    if (letterheadDoc.getPageCount() === 0) {
+      return
+    }
 
     const composedDoc = await PDFDocument.create()
     const letterheadPage = letterheadDoc.getPage(0)

@@ -326,6 +326,7 @@
     "viewPdfEn": "צפה באישור (אנגלית)",
     "downloadPdf": "הורד אישור (עברית)",
     "downloadPdfEn": "הורד אישור (אנגלית)",
+    "pdfInProgress": "מייצר אישור PDF, נא להמתין...",
     "steps": {
       "DRAFT": "טיוטה נשמרה",
       "SUBMITTED": "הוגש בהצלחה",
@@ -1042,6 +1043,7 @@
     "requestSignatures": "בקש חתימות",
     "selectSigners": "בחר חותמים",
     "downloadLanguage": "שפת הורדה",
+    "viewPdfSelected": "צפה בפרוטוקול",
     "downloadPdfSelected": "הורד PDF",
     "downloadPdf": "הורד PDF (עברית)",
     "downloadPdfEn": "הורד PDF (אנגלית)",
@@ -1063,6 +1065,9 @@
     "loadSignersError": "שגיאה בטעינת רשימת חותמים",
     "noSignersAvailable": "לא נמצאו חותמים זמינים",
     "saveError": "שגיאה בשמירת הפרוטוקול",
+    "pdfInProgress": "מייצר את הפרוטוקול PDF, נא להמתין...",
+    "pdfError": "שגיאה ביצירת ה-PDF של הפרוטוקול — נסה שנית",
+    "pdfPreviewTitle": "תצוגת פרוטוקול",
     "sign": {
       "title": "חתימה על פרוטוקול",
       "brand": "Ethic-Net — ועדת האתיקה",
@@ -1276,9 +1281,9 @@
     "uploadTitle": "העלאת גרסה חדשה",
     "uploadSuccess": "הקובץ הועלה בהצלחה",
     "uploadError": "שגיאה בהעלאת הקובץ",
-    "invalidFileType": "סוג קובץ לא נתמך. ניתן להעלות רק PDF או DOCX",
+    "invalidFileType": "סוג קובץ לא נתמך. ניתן להעלות PDF בלבד",
     "fileTooLarge": "הקובץ גדול מדי (מקסימום {{maxSize}}MB)",
-    "uploadLimits": "פורמטים נתמכים: PDF, DOCX. גודל מקסימלי לקובץ: {{maxSize}}MB",
+    "uploadLimits": "פורמט נתמך: PDF בלבד. גודל מקסימלי לקובץ: {{maxSize}}MB",
     "validateUpload": "בחר שפה וקובץ",
     "language": "שפה",
     "selectFile": "בחר קובץ",
@@ -1296,7 +1301,9 @@
     "loadError": "שגיאה בטעינת התבניות",
     "usefulDocuments": "מסמכים שימושיים",
     "downloadError": "שגיאה בהורדת הקובץ",
-    "requiredTemplates": "תבניות נדרשות"
+    "requiredTemplates": "תבניות נדרשות",
+    "viewLabel": "צפייה במסמך ({{lang}})",
+    "downloadDocLabel": "הורדת המסמך ({{lang}})"
   },
   "checklistTemplates": {
     "pageTitle": "ניהול צ׳קליסט סוקרים",

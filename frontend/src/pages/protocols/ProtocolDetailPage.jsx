@@ -17,6 +17,7 @@ import {
   FileCheck2,
   Signature,
   Download,
+  Eye,
   Plus,
   Trash2,
   CheckCircle2,
@@ -107,6 +108,9 @@ export default function ProtocolDetailPage() {
   const [finalizing,      setFinalizing]      = useState(false)
   const [pdfLang,         setPdfLang]         = useState(i18n.language === 'en' ? 'en' : 'he')
   const [removingSignatureId, setRemovingSignatureId] = useState(null)
+  const [pdfLoading,      setPdfLoading]      = useState(null)  // 'preview' | 'download' | null
+  const [previewPdfUrl,   setPreviewPdfUrl]   = useState('')
+  const [previewOpen,     setPreviewOpen]     = useState(false)
 
   const documentTitle = useMemo(
     () => protocol?.title || title || (isNew ? t('protocols.new') : t('protocols.title')),
@@ -148,6 +152,12 @@ export default function ProtocolDetailPage() {
   }, [backTo, id, isNew, meetingId, navigate, location.state, t])
 
   useEffect(() => { fetchProtocol() }, [fetchProtocol])
+
+  useEffect(() => {
+    return () => {
+      if (previewPdfUrl) URL.revokeObjectURL(previewPdfUrl)
+    }
+  }, [previewPdfUrl])
 
   // ── Save ──────────────────────────────────────
 
@@ -263,16 +273,32 @@ export default function ProtocolDetailPage() {
   // ── Download PDF ─────────────────────────────
 
   /**
+   * Fetches protocol PDF blob in selected language.
+   * Uses a dedicated timeout because PDF generation can take longer.
+   * @param {'he'|'en'|'both'} lang
+   * @returns {Promise<Blob>}
+   */
+  async function fetchProtocolPdfBlob(lang) {
+    const response = await api.get(
+      `/protocols/${id}/pdf?lang=${lang}`,
+      { responseType: 'blob', timeout: 120000 }
+    )
+    return new Blob([response.data], { type: 'application/pdf' })
+  }
+
+  /**
    * Downloads protocol PDF in selected language.
    * @param {'he'|'en'|'both'} lang
    */
-  async function handlePdf(lang) {
+  async function handlePdfDownload(lang) {
+    setPdfLoading('download')
     try {
-      const response = await api.get(`/protocols/${id}/pdf?lang=${lang}`, { responseType: 'blob' })
-      const url = URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }))
+      const blob = await fetchProtocolPdfBlob(lang)
+      const url = URL.createObjectURL(blob)
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
       if (isIOS) {
         window.location.assign(url)
+        setTimeout(() => URL.revokeObjectURL(url), 10000)
       } else {
         const link = document.createElement('a')
         link.href = url
@@ -280,11 +306,33 @@ export default function ProtocolDetailPage() {
         link.download = `protocol-${suffix}-${protocol?.id ?? id}.pdf`
         document.body.appendChild(link)
         link.click()
-        document.body.removeChild(link)
+        link.remove()
+        URL.revokeObjectURL(url)
       }
-      setTimeout(() => URL.revokeObjectURL(url), 2000)
     } catch {
-      showToast(t('protocols.saveError'), 'error')
+      showToast(t('protocols.pdfError'), 'error')
+    } finally {
+      setPdfLoading(null)
+    }
+  }
+
+  /**
+   * Opens protocol PDF preview in an in-app modal (avoids blocked popups).
+   * @param {'he'|'en'|'both'} lang
+   * @returns {Promise<void>}
+   */
+  async function handlePdfPreview(lang) {
+    setPdfLoading('preview')
+    try {
+      const blob = await fetchProtocolPdfBlob(lang)
+      if (previewPdfUrl) URL.revokeObjectURL(previewPdfUrl)
+      const nextUrl = URL.createObjectURL(blob)
+      setPreviewPdfUrl(nextUrl)
+      setPreviewOpen(true)
+    } catch {
+      showToast(t('protocols.pdfError'), 'error')
+    } finally {
+      setPdfLoading(null)
     }
   }
 
@@ -312,6 +360,7 @@ export default function ProtocolDetailPage() {
   const isDraft   = protocol?.status === 'DRAFT'
   const isPending = protocol?.status === 'PENDING_SIGNATURES'
   const canManageSigners = ['SECRETARY', 'CHAIRMAN', 'ADMIN'].includes(user?.role)
+  const isPdfBusy = pdfLoading !== null
 
   const STATUS_LABEL = {
     DRAFT:              t('protocols.statusDraft'),
@@ -376,7 +425,19 @@ export default function ProtocolDetailPage() {
         <Button
           className="w-full min-[600px]:w-auto"
           variant="secondary"
-          onClick={() => handlePdf(pdfLang)}
+          onClick={() => handlePdfPreview(pdfLang)}
+          disabled={isPdfBusy}
+          loading={pdfLoading === 'preview'}
+          leftIcon={<AccessibleIcon icon={Eye} size={16} decorative />}
+        >
+          {t('protocols.viewPdfSelected')}
+        </Button>
+        <Button
+          className="w-full min-[600px]:w-auto"
+          variant="secondary"
+          onClick={() => handlePdfDownload(pdfLang)}
+          disabled={isPdfBusy}
+          loading={pdfLoading === 'download'}
           leftIcon={<AccessibleIcon icon={Download} size={16} decorative />}
         >
           {t('protocols.downloadPdfSelected')}
@@ -662,11 +723,30 @@ export default function ProtocolDetailPage() {
             <Button
               variant="secondary"
               fullWidth
-              onClick={() => handlePdf(pdfLang)}
+              onClick={() => handlePdfPreview(pdfLang)}
+              disabled={isPdfBusy}
+              loading={pdfLoading === 'preview'}
+              className="mb-2"
+              leftIcon={<AccessibleIcon icon={Eye} size={16} decorative />}
+            >
+              {t('protocols.viewPdfSelected')}
+            </Button>
+            <Button
+              variant="secondary"
+              fullWidth
+              onClick={() => handlePdfDownload(pdfLang)}
+              disabled={isPdfBusy}
+              loading={pdfLoading === 'download'}
               leftIcon={<AccessibleIcon icon={Download} size={16} decorative />}
             >
               {t('protocols.downloadPdfSelected')}
             </Button>
+            {isPdfBusy && (
+              <div className="mt-2 flex items-center gap-2 text-xs" style={{ color: 'var(--text-muted)' }}>
+                <Spinner size={14} label={t('protocols.pdfInProgress')} />
+                <span>{t('protocols.pdfInProgress')}</span>
+              </div>
+            )}
           </CardBody>
         </Card>
       </div>
@@ -739,6 +819,26 @@ export default function ProtocolDetailPage() {
             </li>
           )}
         </ul>
+      </Modal>
+
+      {/* ── PDF Preview Modal ── */}
+      <Modal
+        open={previewOpen}
+        onClose={() => setPreviewOpen(false)}
+        title={t('protocols.pdfPreviewTitle')}
+        description={protocol?.title || ''}
+        size="lg"
+        closeLabel={t('documents.closePreviewLabel')}
+      >
+        {previewPdfUrl && (
+          <div className="rounded-lg border border-gray-200 overflow-hidden bg-white">
+            <iframe
+              title={t('documents.previewFrameLabel', { name: protocol?.title || '' })}
+              src={previewPdfUrl}
+              className="w-full h-[70vh]"
+            />
+          </div>
+        )}
       </Modal>
     </div>
   )

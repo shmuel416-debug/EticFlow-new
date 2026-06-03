@@ -40,6 +40,17 @@ router.get(
 );
 
 /**
+ * GET /api/system-templates/:key/preview
+ * Stream a template file inline for in-browser preview
+ * Query: ?lang=he
+ */
+router.get(
+  '/:key/preview',
+  authenticate,
+  systemTemplatesController.preview
+);
+
+/**
  * ADMIN ROUTES
  */
 
