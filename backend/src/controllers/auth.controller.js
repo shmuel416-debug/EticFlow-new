@@ -235,23 +235,8 @@ function parseAbsoluteOrigin(value) {
 }
 
 /**
- * Returns true when two hosts share the same root domain (last 2 labels).
- * @param {string} hostA
- * @param {string} hostB
- * @returns {boolean}
- */
-function sharesRootDomain(hostA, hostB) {
-  const partsA = hostA.split('.').filter(Boolean)
-  const partsB = hostB.split('.').filter(Boolean)
-  if (partsA.length < 2 || partsB.length < 2) return false
-  const rootA = partsA.slice(-2).join('.')
-  const rootB = partsB.slice(-2).join('.')
-  return rootA === rootB
-}
-
-/**
  * Resolves a safe frontend URL from explicit candidate or standard resolution.
- * In production, candidate is accepted only if it shares root domain with FRONTEND_URL.
+ * In production, candidate is accepted only when it exactly matches FRONTEND_URL.
  * @param {import('express').Request} req
  * @param {string|undefined|null} candidate
  * @returns {string}
@@ -267,9 +252,7 @@ function resolveFrontendUrlForSso(req, candidate) {
   const parsedFallback = parseAbsoluteOrigin(fallback)
   if (!parsedFallback) return fallback
 
-  const sameHost = parsedCandidate === parsedFallback
-  const sameRootDomain = sharesRootDomain(new URL(parsedCandidate).hostname, new URL(parsedFallback).hostname)
-  return (sameHost || sameRootDomain) ? parsedCandidate : fallback
+  return parsedCandidate === parsedFallback ? parsedCandidate : fallback
 }
 
 /**
