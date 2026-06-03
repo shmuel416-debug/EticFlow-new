@@ -1,0 +1,17 @@
+node_modules
+uploads
+generated
+tmp
+tmp_logs
+coverage
+test-results
+playwright-report
+.git
+.gitignore
+npm-debug.log
+*.log
+*.local
+Dockerfile*
+.dockerignore
+.env
+.env.*
