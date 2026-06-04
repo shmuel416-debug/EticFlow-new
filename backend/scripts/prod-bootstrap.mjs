@@ -1,6 +1,6 @@
 /**
  * Ethic-Net — Production DB bootstrap helper.
- * Runs migrate deploy + seed and rotates the admin password.
+ * Runs migrate deploy and upserts the configured admin without development seed data.
  */
 
 import { spawn } from 'node:child_process'
@@ -29,11 +29,12 @@ function run(command, args) {
 }
 
 /**
- * Validates required env values for password rotation.
- * @returns {{ adminEmail: string, adminPassword: string }}
+ * Validates required env values for admin bootstrap.
+ * @returns {{ adminEmail: string, adminName: string, adminPassword: string }}
  */
 function readEnv() {
   const adminEmail = process.env.ADMIN_EMAIL
+  const adminName = process.env.ADMIN_NAME || 'Production Admin'
   const adminPassword = process.env.ADMIN_PASSWORD
   if (!adminEmail || !adminPassword) {
     throw new Error('Missing required env: ADMIN_EMAIL and ADMIN_PASSWORD')
@@ -41,28 +42,38 @@ function readEnv() {
   if (adminPassword.length < 12) {
     throw new Error('ADMIN_PASSWORD must be at least 12 characters.')
   }
-  return { adminEmail, adminPassword }
+  return { adminEmail, adminName, adminPassword }
 }
 
 /**
- * Rotates admin user password hash after seeding.
+ * Creates or updates the configured production admin account.
  * @param {string} adminEmail
+ * @param {string} adminName
  * @param {string} adminPassword
  * @returns {Promise<void>}
  */
-async function rotateAdminPassword(adminEmail, adminPassword) {
+async function upsertAdmin(adminEmail, adminName, adminPassword) {
   const rounds = Number(process.env.BCRYPT_ROUNDS || 12)
   const passwordHash = await bcrypt.hash(adminPassword, rounds)
-  const admin = await prisma.user.findUnique({ where: { email: adminEmail } })
-  if (!admin) {
-    throw new Error(`Admin user not found: ${adminEmail}`)
-  }
-  await prisma.user.update({
-    where: { id: admin.id },
-    data: {
+  await prisma.user.upsert({
+    where: { email: adminEmail },
+    update: {
       passwordHash,
       authProvider: 'LOCAL',
+      externalId: null,
+      failedLoginAttempts: 0,
+      fullName: adminName,
       isActive: true,
+      lockoutUntil: null,
+      roles: ['RESEARCHER', 'ADMIN'],
+    },
+    create: {
+      email: adminEmail,
+      passwordHash,
+      authProvider: 'LOCAL',
+      fullName: adminName,
+      isActive: true,
+      roles: ['RESEARCHER', 'ADMIN'],
     },
   })
 }
@@ -72,10 +83,9 @@ async function rotateAdminPassword(adminEmail, adminPassword) {
  * @returns {Promise<void>}
  */
 async function main() {
-  const { adminEmail, adminPassword } = readEnv()
+  const { adminEmail, adminName, adminPassword } = readEnv()
   await run('npx', ['prisma', 'migrate', 'deploy'])
-  await run('npx', ['prisma', 'db', 'seed'])
-  await rotateAdminPassword(adminEmail, adminPassword)
+  await upsertAdmin(adminEmail, adminName, adminPassword)
   console.log('[Ethic-Net] Production bootstrap completed successfully.')
 }
 

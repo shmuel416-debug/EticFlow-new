@@ -18,6 +18,11 @@ import { ACCESSIBILITY_STATEMENT_KEY, getDefaultAccessibilityStatement } from '.
 import { seedResearcherQuestionnaire } from './seeds/researcher-questionnaire.seed.js'
 import seedReviewerChecklist from './seeds/reviewer-checklist.seed.js'
 
+if (process.env.NODE_ENV === 'production') {
+  console.error('[Ethic-Net] Refusing to run development seed in production.')
+  process.exit(1)
+}
+
 const prisma = new PrismaClient()
 
 const DEFAULT_SUBMISSION_STATUSES = [
