@@ -18,6 +18,18 @@ import { ACCESSIBILITY_STATEMENT_KEY, getDefaultAccessibilityStatement } from '.
 import { seedResearcherQuestionnaire } from './seeds/researcher-questionnaire.seed.js'
 import seedReviewerChecklist from './seeds/reviewer-checklist.seed.js'
 
+/**
+ * Prevents development fixture data from being loaded into production.
+ * @returns {void}
+ */
+function assertDevelopmentSeedAllowed() {
+  if (process.env.NODE_ENV !== 'production') return
+  console.error('❌ Refusing to run development seed with NODE_ENV=production.')
+  process.exit(1)
+}
+
+assertDevelopmentSeedAllowed()
+
 const prisma = new PrismaClient()
 
 const DEFAULT_SUBMISSION_STATUSES = [
