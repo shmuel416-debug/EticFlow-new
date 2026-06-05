@@ -1,6 +1,6 @@
 /**
  * Ethic-Net — Production DB bootstrap helper.
- * Runs migrate deploy + seed and rotates the admin password.
+ * Runs migrate deploy and upserts the configured production admin.
  */
 
 import { spawn } from 'node:child_process'
@@ -29,8 +29,8 @@ function run(command, args) {
 }
 
 /**
- * Validates required env values for password rotation.
- * @returns {{ adminEmail: string, adminPassword: string }}
+ * Validates required env values for production bootstrap.
+ * @returns {{ adminEmail: string, adminPassword: string, adminName: string }}
  */
 function readEnv() {
   const adminEmail = process.env.ADMIN_EMAIL
@@ -41,27 +41,50 @@ function readEnv() {
   if (adminPassword.length < 12) {
     throw new Error('ADMIN_PASSWORD must be at least 12 characters.')
   }
-  return { adminEmail, adminPassword }
+  const adminName = process.env.ADMIN_NAME || 'System Administrator'
+  return { adminEmail, adminPassword, adminName }
 }
 
 /**
- * Rotates admin user password hash after seeding.
+ * Ensures the role list contains the required production admin roles.
+ * @param {string[]|undefined|null} roles
+ * @returns {string[]}
+ */
+function mergeAdminRoles(roles) {
+  return [...new Set([...(Array.isArray(roles) ? roles : []), 'RESEARCHER', 'ADMIN'])]
+}
+
+/**
+ * Upserts the configured production admin without loading development fixtures.
  * @param {string} adminEmail
  * @param {string} adminPassword
+ * @param {string} adminName
  * @returns {Promise<void>}
  */
-async function rotateAdminPassword(adminEmail, adminPassword) {
+async function upsertProductionAdmin(adminEmail, adminPassword, adminName) {
   const rounds = Number(process.env.BCRYPT_ROUNDS || 12)
   const passwordHash = await bcrypt.hash(adminPassword, rounds)
-  const admin = await prisma.user.findUnique({ where: { email: adminEmail } })
-  if (!admin) {
-    throw new Error(`Admin user not found: ${adminEmail}`)
+  const existing = await prisma.user.findUnique({ where: { email: adminEmail } })
+  if (existing) {
+    await prisma.user.update({
+      where: { id: existing.id },
+      data: {
+        passwordHash,
+        authProvider: 'LOCAL',
+        isActive: true,
+        roles: mergeAdminRoles(existing.roles),
+      },
+    })
+    return
   }
-  await prisma.user.update({
-    where: { id: admin.id },
+
+  await prisma.user.create({
     data: {
+      email: adminEmail,
+      fullName: adminName,
       passwordHash,
       authProvider: 'LOCAL',
+      roles: ['RESEARCHER', 'ADMIN'],
       isActive: true,
     },
   })
@@ -72,10 +95,9 @@ async function rotateAdminPassword(adminEmail, adminPassword) {
  * @returns {Promise<void>}
  */
 async function main() {
-  const { adminEmail, adminPassword } = readEnv()
+  const { adminEmail, adminPassword, adminName } = readEnv()
   await run('npx', ['prisma', 'migrate', 'deploy'])
-  await run('npx', ['prisma', 'db', 'seed'])
-  await rotateAdminPassword(adminEmail, adminPassword)
+  await upsertProductionAdmin(adminEmail, adminPassword, adminName)
   console.log('[Ethic-Net] Production bootstrap completed successfully.')
 }
 

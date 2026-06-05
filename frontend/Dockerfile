@@ -37,4 +37,4 @@ EXPOSE 80
 # Template is kept in /tmp (not /etc/nginx/templates) to prevent
 # nginx's built-in entrypoint from running envsubst on ALL vars,
 # which would corrupt nginx's own $http_host, $uri, etc.
-CMD ["sh", "-c", "envsubst '$BACKEND_URL' < /tmp/nginx.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
+CMD ["sh", "-c", ": \"${BACKEND_URL:?BACKEND_URL is required}\" && envsubst '$BACKEND_URL' < /tmp/nginx.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
