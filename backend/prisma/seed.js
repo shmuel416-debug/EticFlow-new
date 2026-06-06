@@ -20,6 +20,15 @@ import seedReviewerChecklist from './seeds/reviewer-checklist.seed.js'
 
 const prisma = new PrismaClient()
 
+/**
+ * Prevents the development seed from mutating production data.
+ * @returns {void}
+ */
+function assertSeedAllowed() {
+  if (process.env.NODE_ENV !== 'production') return
+  throw new Error('Refusing to run development seed when NODE_ENV=production.')
+}
+
 const DEFAULT_SUBMISSION_STATUSES = [
   { code: 'DRAFT', labelHe: 'טיוטה', labelEn: 'Draft', descriptionHe: 'הבקשה נשמרה כטיוטה ועדיין לא נשלחה לבדיקה.', descriptionEn: 'The submission is saved as draft and has not been sent for review yet.', color: '#64748b', orderIndex: 10, isInitial: true, isTerminal: false, slaPhase: null, notificationType: null, isSystem: true },
   { code: 'SUBMITTED', labelHe: 'הוגש', labelEn: 'Submitted', descriptionHe: 'הבקשה התקבלה במערכת וממתינה לבדיקת מזכירת הוועדה.', descriptionEn: 'The submission was received and is waiting for secretary intake review.', color: '#2563eb', orderIndex: 20, isInitial: false, isTerminal: false, slaPhase: 'TRIAGE', notificationType: 'SUBMISSION_RECEIVED', isSystem: true },
@@ -471,6 +480,7 @@ async function seedSubmissions(users, form) {
  * @returns {Promise<void>}
  */
 async function main() {
+  assertSeedAllowed()
   console.log('🌱 Starting Ethic-Net seed...')
 
   const users = await seedUsers()
