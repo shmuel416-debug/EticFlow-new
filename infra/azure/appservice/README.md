@@ -40,7 +40,7 @@ az deployment group create \
 ## 3) Build and push images to ACR
 
 ```bash
-ACR_NAME="acrethic-netprod"
+ACR_NAME="acrethicnetprod"
 TAG="$(git rev-parse --short HEAD)"
 
 az acr login --name "$ACR_NAME"
