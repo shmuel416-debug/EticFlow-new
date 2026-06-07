@@ -56,9 +56,7 @@ console.log(`[Smoke] /api/auth/microsoft -> ${microsoftStart.status}`)
 console.log(`[Smoke] /api/auth/microsoft location -> ${microsoftStart.location || 'none'}`)
 assertOrLog(
   microsoftStart.status === 302 &&
-    ((microsoftStart.location || '').includes('login.microsoftonline.com') ||
-      (microsoftStart.location || '').includes('/login?error=sso_unavailable') ||
-      (microsoftStart.location || '').includes('/login?error=sso_failed')),
+    (microsoftStart.location || '').includes('login.microsoftonline.com'),
   'Microsoft redirect did not return expected redirect target.'
 )
 

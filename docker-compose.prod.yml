@@ -20,7 +20,7 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3000
-      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
+      DATABASE_URL: postgresql://${DB_USER:-ethic-net}:${DB_PASSWORD}@db:5432/${DB_NAME:-ethic-net}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-8h}
       AUTH_EXCHANGE_TTL_MS: ${AUTH_EXCHANGE_TTL_MS:-90000}
