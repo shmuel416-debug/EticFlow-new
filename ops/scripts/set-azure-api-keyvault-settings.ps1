@@ -16,6 +16,12 @@ param(
   [Parameter(Mandatory = $true)]
   [string]$OrganizerEmail,
   [Parameter(Mandatory = $false)]
+  [string]$MicrosoftAuthClientId = "",
+  [Parameter(Mandatory = $false)]
+  [string]$MicrosoftCalendarClientId = "",
+  [Parameter(Mandatory = $false)]
+  [string]$MicrosoftMailClientId = "",
+  [Parameter(Mandatory = $false)]
   [string]$SecretPrefix = "ethic-net-prod"
 )
 
@@ -32,6 +38,9 @@ function New-KvReference {
 }
 
 $normalizedApiBase = $ApiBaseUrl.TrimEnd("/")
+$authClientIdSetting = if ([string]::IsNullOrWhiteSpace($MicrosoftAuthClientId)) { New-KvReference -SecretName "$SecretPrefix-microsoft-auth-client-id" } else { $MicrosoftAuthClientId }
+$calendarClientIdSetting = if ([string]::IsNullOrWhiteSpace($MicrosoftCalendarClientId)) { New-KvReference -SecretName "$SecretPrefix-microsoft-calendar-client-id" } else { $MicrosoftCalendarClientId }
+$mailClientIdSetting = if ([string]::IsNullOrWhiteSpace($MicrosoftMailClientId)) { New-KvReference -SecretName "$SecretPrefix-microsoft-mail-client-id" } else { $MicrosoftMailClientId }
 
 $settings = @(
   "NODE_ENV=production",
@@ -47,8 +56,11 @@ $settings = @(
   "DATABASE_URL=$(New-KvReference -SecretName 'database-url')",
   "JWT_SECRET_CURRENT=$(New-KvReference -SecretName 'jwt-secret-current')",
   "CALENDAR_TOKEN_ENCRYPTION_KEY=$(New-KvReference -SecretName 'calendar-token-encryption-key')",
+  "MICROSOFT_AUTH_CLIENT_ID=$authClientIdSetting",
   "MICROSOFT_AUTH_CLIENT_SECRET=$(New-KvReference -SecretName "$SecretPrefix-microsoft-auth-client-secret")",
+  "MICROSOFT_CALENDAR_CLIENT_ID=$calendarClientIdSetting",
   "MICROSOFT_CALENDAR_CLIENT_SECRET=$(New-KvReference -SecretName "$SecretPrefix-microsoft-calendar-client-secret")",
+  "MICROSOFT_MAIL_CLIENT_ID=$mailClientIdSetting",
   "MICROSOFT_MAIL_CLIENT_SECRET=$(New-KvReference -SecretName "$SecretPrefix-microsoft-mail-client-secret")"
 )
 

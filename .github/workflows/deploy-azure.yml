@@ -60,6 +60,7 @@ env:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
     outputs:
       image_tag: ${{ steps.meta.outputs.image_tag }}
     steps:

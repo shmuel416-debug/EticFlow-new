@@ -139,8 +139,11 @@ $envValues = [ordered]@{
 
 if (-not [string]::IsNullOrWhiteSpace($KeyVaultName)) {
   Write-Action "Writing generated secrets to Key Vault '$KeyVaultName'."
+  Set-KeyVaultSecret -VaultName $KeyVaultName -SecretName "$SecretPrefix-microsoft-auth-client-id" -SecretValue $sso.appId
   Set-KeyVaultSecret -VaultName $KeyVaultName -SecretName "$SecretPrefix-microsoft-auth-client-secret" -SecretValue $sso.secret
+  Set-KeyVaultSecret -VaultName $KeyVaultName -SecretName "$SecretPrefix-microsoft-calendar-client-id" -SecretValue $calendar.appId
   Set-KeyVaultSecret -VaultName $KeyVaultName -SecretName "$SecretPrefix-microsoft-calendar-client-secret" -SecretValue $calendar.secret
+  Set-KeyVaultSecret -VaultName $KeyVaultName -SecretName "$SecretPrefix-microsoft-mail-client-id" -SecretValue $mail.appId
   Set-KeyVaultSecret -VaultName $KeyVaultName -SecretName "$SecretPrefix-microsoft-mail-client-secret" -SecretValue $mail.secret
 }
 
@@ -153,7 +156,10 @@ foreach ($entry in $envValues.GetEnumerator()) {
 if (-not [string]::IsNullOrWhiteSpace($KeyVaultName)) {
   Write-Host ""
   Write-Host "# Key Vault secret names created"
+  Write-Host "$SecretPrefix-microsoft-auth-client-id"
   Write-Host "$SecretPrefix-microsoft-auth-client-secret"
+  Write-Host "$SecretPrefix-microsoft-calendar-client-id"
   Write-Host "$SecretPrefix-microsoft-calendar-client-secret"
+  Write-Host "$SecretPrefix-microsoft-mail-client-id"
   Write-Host "$SecretPrefix-microsoft-mail-client-secret"
 }

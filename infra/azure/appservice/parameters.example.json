@@ -18,7 +18,7 @@
       "value": "app-ethic-net-web-prod"
     },
     "acrName": {
-      "value": "acrethic-netprod"
+      "value": "acrethicnetprod"
     },
     "apiImageName": {
       "value": "ethic-net-api"

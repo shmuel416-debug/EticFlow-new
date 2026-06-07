@@ -20,7 +20,7 @@ param apiAppName string = 'app-ethic-net-api-prod'
 param webAppName string = 'app-ethic-net-web-prod'
 
 @description('Container registry name (must be globally unique).')
-param acrName string = 'acrethic-netprod'
+param acrName string = 'acrethicnetprod'
 
 @description('Backend image repository name inside ACR.')
 param apiImageName string = 'ethic-net-api'

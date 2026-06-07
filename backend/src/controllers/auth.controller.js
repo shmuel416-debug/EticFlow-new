@@ -235,23 +235,8 @@ function parseAbsoluteOrigin(value) {
 }
 
 /**
- * Returns true when two hosts share the same root domain (last 2 labels).
- * @param {string} hostA
- * @param {string} hostB
- * @returns {boolean}
- */
-function sharesRootDomain(hostA, hostB) {
-  const partsA = hostA.split('.').filter(Boolean)
-  const partsB = hostB.split('.').filter(Boolean)
-  if (partsA.length < 2 || partsB.length < 2) return false
-  const rootA = partsA.slice(-2).join('.')
-  const rootB = partsB.slice(-2).join('.')
-  return rootA === rootB
-}
-
-/**
  * Resolves a safe frontend URL from explicit candidate or standard resolution.
- * In production, candidate is accepted only if it shares root domain with FRONTEND_URL.
+ * In production, candidate is accepted only if it exactly matches FRONTEND_URL.
  * @param {import('express').Request} req
  * @param {string|undefined|null} candidate
  * @returns {string}
@@ -267,9 +252,7 @@ function resolveFrontendUrlForSso(req, candidate) {
   const parsedFallback = parseAbsoluteOrigin(fallback)
   if (!parsedFallback) return fallback
 
-  const sameHost = parsedCandidate === parsedFallback
-  const sameRootDomain = sharesRootDomain(new URL(parsedCandidate).hostname, new URL(parsedFallback).hostname)
-  return (sameHost || sameRootDomain) ? parsedCandidate : fallback
+  return parsedCandidate === parsedFallback ? parsedCandidate : fallback
 }
 
 /**
@@ -290,6 +273,12 @@ function getRequestedFrontendOrigin(req) {
  * @returns {string}
  */
 function resolveMicrosoftCallbackUrl(req) {
+  const configuredUri = (process.env.MICROSOFT_AUTH_REDIRECT_URI || process.env.MICROSOFT_REDIRECT_URI)?.trim()
+  if (configuredUri) return configuredUri
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('MICROSOFT_AUTH_REDIRECT_URI must be configured in production')
+  }
+
   const forwardedProto = req.get('x-forwarded-proto')?.split(',')[0]?.trim()
   const protocol = forwardedProto || req.protocol || 'https'
   const forwardedHost = req.get('x-forwarded-host')?.split(',')[0]?.trim()
@@ -655,7 +644,7 @@ export async function resetPassword(req, res, next) {
 
 /**
  * Finds an existing user by Microsoft externalId or email, or creates a new one.
- * Returns null if there is an email conflict with a LOCAL account.
+ * Returns null if there is an email conflict with a non-Microsoft account.
  * @param {{ externalId: string, email: string, fullName: string }} profile - Microsoft profile
  * @returns {Promise<{ user: object|null, conflict: boolean }>}
  */
@@ -667,7 +656,7 @@ async function findOrCreateMicrosoftUser({ externalId, email, fullName }) {
   })
 
   if (existing) {
-    if (existing.authProvider === 'LOCAL') return { user: null, conflict: true }
+    if (existing.authProvider !== 'MICROSOFT') return { user: null, conflict: true }
 
     // Prevent unique-email conflict when normalizing acad -> non-acad mailbox.
     if (existing.email !== normalizedEmail) {
