@@ -4,21 +4,31 @@
  * Idempotent: safe to run multiple times (uses upsert).
  *
  * Users created:
- *   researcher@test.com / 123456 — RESEARCHER
- *   secretary@test.com  / 123456 — SECRETARY
- *   reviewer@test.com   / 123456 — REVIEWER
- *   chairman@test.com   / 123456 — CHAIRMAN
- *   admin@test.com      / 123456 — ADMIN
+ *   - Bootstrap admin from ADMIN_BOOTSTRAP_EMAIL / ADMIN_BOOTSTRAP_PASSWORD
+ *     (or generated strong password in production if missing password)
+ *   - Demo users with weak shared password only when SEED_DEMO_DATA=true
  */
 
 import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcryptjs'
+import { randomBytes } from 'node:crypto'
 import { getDefaultApprovalTemplate } from '../src/constants/approvalTemplate.js'
 import { ACCESSIBILITY_STATEMENT_KEY, getDefaultAccessibilityStatement } from '../src/constants/accessibilityStatement.js'
 import { seedResearcherQuestionnaire } from './seeds/researcher-questionnaire.seed.js'
 import seedReviewerChecklist from './seeds/reviewer-checklist.seed.js'
 
 const prisma = new PrismaClient()
+
+/**
+ * Controls whether demo/test data (sample users with weak passwords and demo
+ * submissions) is seeded. Demo data is useful in development but must NEVER be
+ * created in production. Defaults to ON outside production; can be forced with
+ * SEED_DEMO_DATA=true|false. Infrastructure data (statuses, settings, forms,
+ * checklists) and the admin user are always seeded regardless of this flag.
+ */
+const SEED_DEMO_DATA = process.env.SEED_DEMO_DATA
+  ? process.env.SEED_DEMO_DATA === 'true'
+  : process.env.NODE_ENV !== 'production'
 
 const DEFAULT_SUBMISSION_STATUSES = [
   { code: 'DRAFT', labelHe: 'טיוטה', labelEn: 'Draft', descriptionHe: 'הבקשה נשמרה כטיוטה ועדיין לא נשלחה לבדיקה.', descriptionEn: 'The submission is saved as draft and has not been sent for review yet.', color: '#64748b', orderIndex: 10, isInitial: true, isTerminal: false, slaPhase: null, notificationType: null, isSystem: true },
@@ -73,6 +83,46 @@ async function hashPassword(password) {
   return bcrypt.hash(password, 12)
 }
 
+/**
+ * Checks whether an email belongs to the test domain.
+ * @param {string} email
+ * @returns {boolean}
+ */
+function isTestDomainEmail(email) {
+  return email.toLowerCase().endsWith('@test.com')
+}
+
+/**
+ * Resolves bootstrap admin credentials for seed runs.
+ * In production, email is required and test-domain emails are rejected.
+ * If password is missing in production, a strong random password is generated.
+ * @returns {{ email: string, password: string, generatedPassword: boolean }}
+ */
+function getBootstrapAdminCredentials() {
+  const isProduction = process.env.NODE_ENV === 'production'
+  const configuredEmail = process.env.ADMIN_BOOTSTRAP_EMAIL?.trim()?.toLowerCase()
+  const configuredPassword = process.env.ADMIN_BOOTSTRAP_PASSWORD?.trim()
+
+  if (isProduction && !configuredEmail) {
+    throw new Error('ADMIN_BOOTSTRAP_EMAIL is required in production seed')
+  }
+
+  const email = configuredEmail || 'admin@test.com'
+  if (isProduction && isTestDomainEmail(email)) {
+    throw new Error('ADMIN_BOOTSTRAP_EMAIL must not use the @test.com domain in production')
+  }
+
+  if (configuredPassword) {
+    return { email, password: configuredPassword, generatedPassword: false }
+  }
+
+  if (isProduction) {
+    return { email, password: randomBytes(24).toString('base64url'), generatedPassword: true }
+  }
+
+  return { email, password: '123456', generatedPassword: false }
+}
+
 // ─────────────────────────────────────────────
 // SEED FUNCTIONS
 // ─────────────────────────────────────────────
@@ -84,14 +134,42 @@ async function hashPassword(password) {
 async function seedUsers() {
   console.log('  → Seeding users...')
 
-  const passwordHash = await hashPassword('123456')
+  const isProduction = process.env.NODE_ENV === 'production'
+  if (isProduction && SEED_DEMO_DATA) {
+    throw new Error('SEED_DEMO_DATA=true is forbidden in production')
+  }
 
-  const usersData = [
+  const bootstrap = getBootstrapAdminCredentials()
+  const adminPasswordHash = await hashPassword(bootstrap.password)
+  if (bootstrap.generatedPassword) {
+    console.log(`     ⚠ Generated ADMIN bootstrap password for ${bootstrap.email}: ${bootstrap.password}`)
+    console.log('     ⚠ Store this password securely and rotate it immediately after first login.')
+  }
+
+  const demoUsers = [
     { email: 'researcher@test.com', fullName: 'ד"ר דנה כהן', roles: ['RESEARCHER'], department: 'ביולוגיה' },
     { email: 'secretary@test.com',  fullName: 'מיכל לוי',    roles: ['RESEARCHER', 'SECRETARY'],  department: 'מנהל' },
     { email: 'reviewer@test.com',   fullName: 'פרופ\' אבי גולן', roles: ['RESEARCHER', 'REVIEWER'], department: 'רפואה' },
     { email: 'chairman@test.com',   fullName: 'פרופ\' שרה מזרחי', roles: ['RESEARCHER', 'CHAIRMAN'], department: 'ועדת אתיקה' },
-    { email: 'admin@test.com',      fullName: 'יוסי ברק',    roles: ['RESEARCHER', 'ADMIN'],      department: 'מערכות מידע' },
+  ]
+  const demoPasswordHash = SEED_DEMO_DATA ? await hashPassword('123456') : null
+
+  const usersData = [
+    {
+      email: bootstrap.email,
+      fullName: 'System Administrator',
+      roles: ['RESEARCHER', 'ADMIN'],
+      department: 'Security',
+      passwordHash: adminPasswordHash,
+      mustChangePassword: true,
+    },
+    ...(SEED_DEMO_DATA
+      ? demoUsers.map((user) => ({
+          ...user,
+          passwordHash: demoPasswordHash,
+          mustChangePassword: false,
+        }))
+      : []),
   ]
 
   const users = {}
@@ -100,14 +178,15 @@ async function seedUsers() {
     usersData.map((u) =>
       prisma.user.upsert({
         where:  { email: u.email },
-        update: { passwordHash, roles: u.roles },
+        update: { passwordHash: u.passwordHash, roles: u.roles, mustChangePassword: u.mustChangePassword },
         create: {
           email:        u.email,
-          passwordHash: passwordHash,
+          passwordHash: u.passwordHash,
           fullName:     u.fullName,
           roles:        u.roles,
           department:   u.department,
           authProvider: 'LOCAL',
+          mustChangePassword: u.mustChangePassword,
         },
       })
     )
@@ -122,6 +201,9 @@ async function seedUsers() {
   })
 
   console.log(`     ✓ ${usersData.length} users upserted`)
+  if (!SEED_DEMO_DATA) {
+    console.log('     ✓ Demo users skipped (production-safe)')
+  }
   return users
 }
 
@@ -284,17 +366,20 @@ async function seedInstitutionSettings() {
     },
   ]
 
+  // Non-destructive: only create missing keys. Never overwrite values an admin
+  // has configured (e.g. uploaded signature, customized templates), otherwise a
+  // re-seed on deploy/restart would wipe their settings.
   await prisma.$transaction(
     settings.map((s) =>
       prisma.institutionSetting.upsert({
         where:  { key: s.key },
-        update: { value: s.value },
+        update: {},
         create: s,
       })
     )
   )
 
-  console.log(`     ✓ ${settings.length} settings upserted`)
+  console.log(`     ✓ ${settings.length} settings ensured (existing values preserved)`)
 }
 
 /**
@@ -475,11 +560,17 @@ async function seedSubmissions(users, form) {
 async function main() {
   console.log('🌱 Starting Ethic-Net seed...')
 
+  console.log(`  ℹ Demo data seeding: ${SEED_DEMO_DATA ? 'ENABLED' : 'DISABLED (production-safe)'}`)
+
   const users = await seedUsers()
   await seedStatusManagement()
   await seedInstitutionSettings()
   const form  = await seedFormConfig()
-  await seedSubmissions(users, form)
+  if (SEED_DEMO_DATA) {
+    await seedSubmissions(users, form)
+  } else {
+    console.log('  → Skipping demo submissions (demo data disabled)')
+  }
   await seedResearcherQuestionnaire()
   await seedReviewerChecklist()
 

@@ -58,6 +58,37 @@ async function generateApplicationId() {
 }
 
 /**
+ * Returns true when Prisma error is a unique conflict on submission applicationId.
+ * @param {unknown} error
+ * @returns {boolean}
+ */
+function isApplicationIdConflict(error) {
+  const code = error?.code
+  const target = Array.isArray(error?.meta?.target) ? error.meta.target.join(',') : String(error?.meta?.target || '')
+  return code === 'P2002' && /application.?id/i.test(target)
+}
+
+/**
+ * Retries submission creation when applicationId collides under concurrency.
+ * @template T
+ * @param {(applicationId: string) => Promise<T>} factory
+ * @param {number} [maxAttempts=3]
+ * @returns {Promise<T>}
+ */
+async function createWithApplicationIdRetry(factory, maxAttempts = 3) {
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    const applicationId = await generateApplicationId()
+    try {
+      return await factory(applicationId)
+    } catch (error) {
+      if (attempt < maxAttempts && isApplicationIdConflict(error)) continue
+      throw error
+    }
+  }
+  throw new AppError('Unable to allocate application ID', 'APPLICATION_ID_CONFLICT', 409)
+}
+
+/**
  * Builds a paginated response object.
  * @param {Array}  data
  * @param {number} total
@@ -243,36 +274,36 @@ export async function create(req, res, next) {
     if (!form.isPublished) return next(new AppError('Form is not published', 'FORM_NOT_PUBLISHED', 400))
     if (!form.isActive)    return next(new AppError('Form is archived', 'FORM_ARCHIVED', 400))
 
-    const applicationId = await generateApplicationId()
+    const submission = await createWithApplicationIdRetry(async (applicationId) => (
+      prisma.$transaction(async (tx) => {
+        const sub = await tx.submission.create({
+          data: {
+            applicationId,
+            title,
+            formConfigId,
+            authorId: req.user.id,
+            track:    track ?? 'FULL',
+            status:   'DRAFT',
+          },
+        })
 
-    const submission = await prisma.$transaction(async (tx) => {
-      const sub = await tx.submission.create({
-        data: {
-          applicationId,
-          title,
-          formConfigId,
-          authorId: req.user.id,
-          track:    track ?? 'FULL',
-          status:   'DRAFT',
-        },
+        await tx.submissionVersion.create({
+          data: {
+            submissionId: sub.id,
+            versionNum:   1,
+            dataJson,
+            changedBy:    req.user.id,
+            changeNote:   'Initial draft',
+          },
+        })
+
+        await tx.sLATracking.create({
+          data: { submissionId: sub.id },
+        })
+
+        return sub
       })
-
-      await tx.submissionVersion.create({
-        data: {
-          submissionId: sub.id,
-          versionNum:   1,
-          dataJson,
-          changedBy:    req.user.id,
-          changeNote:   'Initial draft',
-        },
-      })
-
-      await tx.sLATracking.create({
-        data: { submissionId: sub.id },
-      })
-
-      return sub
-    })
+    ))
 
     res.locals.entityId = submission.id
     res.status(201).json({ submission })
@@ -362,38 +393,39 @@ export async function continueSubmission(req, res, next) {
       return next(new AppError('Only approved submissions can be continued', 'SUBMISSION_NOT_APPROVED', 400))
     }
 
-    const applicationId = await generateApplicationId()
     const sourceData    = original.versions[0]?.dataJson ?? {}
 
-    const submission = await prisma.$transaction(async (tx) => {
-      const sub = await tx.submission.create({
-        data: {
-          applicationId,
-          title:        `Continuation — ${original.title}`,
-          formConfigId: original.formConfigId,
-          authorId:     req.user.id,
-          parentId:     original.id,
-          track:        original.track,
-          status:       'DRAFT',
-        },
-      })
+    const submission = await createWithApplicationIdRetry(async (applicationId) => (
+      prisma.$transaction(async (tx) => {
+        const sub = await tx.submission.create({
+          data: {
+            applicationId,
+            title:        `Continuation — ${original.title}`,
+            formConfigId: original.formConfigId,
+            authorId:     req.user.id,
+            parentId:     original.id,
+            track:        original.track,
+            status:       'DRAFT',
+          },
+        })
 
-      await tx.submissionVersion.create({
-        data: {
-          submissionId: sub.id,
-          versionNum:   1,
-          dataJson:     sourceData,
-          changedBy:    req.user.id,
-          changeNote:   `Continued from ${original.applicationId}`,
-        },
-      })
+        await tx.submissionVersion.create({
+          data: {
+            submissionId: sub.id,
+            versionNum:   1,
+            dataJson:     sourceData,
+            changedBy:    req.user.id,
+            changeNote:   `Continued from ${original.applicationId}`,
+          },
+        })
 
-      await tx.sLATracking.create({
-        data: { submissionId: sub.id },
-      })
+        await tx.sLATracking.create({
+          data: { submissionId: sub.id },
+        })
 
-      return sub
-    })
+        return sub
+      })
+    ))
 
     res.locals.entityId = submission.id
     res.status(201).json({ submission })

@@ -15,6 +15,9 @@ import { escapeHtml, pageShell } from '../layout.js'
  */
 function buildHeSection(submission, template, ctx, signatureDataUrl, brandPrimary) {
   const ltr = (value) => `<span class="ltr-val">${escapeHtml(value)}</span>`
+  const signatureCredit = ctx.chairmanName
+    ? `${escapeHtml(ctx.chairmanName)} · ${escapeHtml(template.signatureLabel)}`
+    : escapeHtml(template.signatureLabel)
   const conditionLines = template.conditions.map((line) => `<li>${escapeHtml(line)}</li>`).join('')
   return `<div class="page">
   <div class="header">
@@ -50,15 +53,12 @@ function buildHeSection(submission, template, ctx, signatureDataUrl, brandPrimar
     <ul class="conditions-list">${conditionLines}</ul>
     <p class="body-text">חוקר/ת: ${escapeHtml(ctx.researcherName)}<br>(<span class="ltr-val">${escapeHtml(ctx.researcherEmail)}</span>)</p>
     <div class="signature-section">
-      <div class="sig-line"></div>
-      ${ctx.chairmanName ? `<div class="sig-name">${escapeHtml(ctx.chairmanName)}</div>` : ''}
-      <div class="sig-label">${escapeHtml(template.signatureLabel)}</div>
       <table class="sig-fields">
         <tr>
-          <td>
+          <td class="sig-signature-cell">
             <div class="box-label">חתימה</div>
             ${signatureDataUrl ? `<img src="${signatureDataUrl}" alt="" class="sig-img">` : ''}
-            <div class="box-line"></div>
+            <div class="sig-credit">${signatureCredit}</div>
           </td>
           <td>
             <div class="box-label">תאריך חתימה</div>
@@ -70,7 +70,7 @@ function buildHeSection(submission, template, ctx, signatureDataUrl, brandPrimar
     </div>
     <div class="footer approval-footer">
       ${template.legalFooter ? `<div class="footer-legal">${escapeHtml(template.legalFooter)}</div>` : ''}
-      מסמך זה הופק אוטומטית על ידי מערכת ועדת אתיקה • ${escapeHtml(ctx.institutionName)} • ${ltr(ctx.issueDate)} • מס׳ בקשה: ${ltr(ctx.applicationId)}
+      <span class="system-note">מסמך זה הופק אוטומטית על ידי מערכת ועדת אתיקה • ${escapeHtml(ctx.institutionName)} • ${ltr(ctx.issueDate)} • מס׳ בקשה: ${ltr(ctx.applicationId)}</span>
     </div>
   </div>
 </div>`
@@ -85,6 +85,9 @@ function buildHeSection(submission, template, ctx, signatureDataUrl, brandPrimar
  * @returns {string}
  */
 function buildEnSection(submission, template, ctx, signatureDataUrl) {
+  const signatureCredit = ctx.chairmanName
+    ? `${escapeHtml(ctx.chairmanName)} · ${escapeHtml(template.signatureLabel)}`
+    : escapeHtml(template.signatureLabel)
   const conditionLines = template.conditions.map((line) => `<li>${escapeHtml(line)}</li>`).join('')
   return `<div class="page">
   <div class="header">
@@ -120,15 +123,12 @@ function buildEnSection(submission, template, ctx, signatureDataUrl) {
     <ul class="conditions-list">${conditionLines}</ul>
     <p class="body-text">Researcher: ${escapeHtml(ctx.researcherName)}<br>(${escapeHtml(ctx.researcherEmail)})</p>
     <div class="signature-section">
-      <div class="sig-line"></div>
-      ${ctx.chairmanName ? `<div class="sig-name">${escapeHtml(ctx.chairmanName)}</div>` : ''}
-      <div class="sig-label">${escapeHtml(template.signatureLabel)}</div>
       <table class="sig-fields">
         <tr>
-          <td>
+          <td class="sig-signature-cell">
             <div class="box-label">Signature</div>
             ${signatureDataUrl ? `<img src="${signatureDataUrl}" alt="" class="sig-img">` : ''}
-            <div class="box-line"></div>
+            <div class="sig-credit">${signatureCredit}</div>
           </td>
           <td>
             <div class="box-label">Date signed</div>
@@ -140,7 +140,7 @@ function buildEnSection(submission, template, ctx, signatureDataUrl) {
     </div>
     <div class="footer approval-footer">
       ${template.legalFooter ? `<div class="footer-legal">${escapeHtml(template.legalFooter)}</div>` : ''}
-      This document was generated automatically by Ethic-Net • ${escapeHtml(ctx.institutionName)} • ${escapeHtml(ctx.issueDate)} • Ref: ${escapeHtml(ctx.applicationId)}
+      <span class="system-note">This document was generated automatically by Ethic-Net • ${escapeHtml(ctx.institutionName)} • ${escapeHtml(ctx.issueDate)} • Ref: ${escapeHtml(ctx.applicationId)}</span>
     </div>
   </div>
 </div>`
@@ -161,6 +161,7 @@ export function buildHeHtml(submission, template, ctx, signatureDataUrl = '', br
     lang: 'he-IL',
     bodyHtml: buildHeSection(submission, template, ctx, signatureDataUrl, brandPrimary),
     brandPrimary,
+    onLetterhead: true,
   })
 }
 
@@ -179,6 +180,7 @@ export function buildEnHtml(submission, template, ctx, signatureDataUrl = '', br
     lang: 'en',
     bodyHtml: buildEnSection(submission, template, ctx, signatureDataUrl),
     brandPrimary,
+    onLetterhead: true,
   })
 }
 
@@ -211,5 +213,6 @@ ${buildEnSection(submission, enTemplate, enCtx, signatureDataUrl)}`
     lang: 'he',
     bodyHtml,
     brandPrimary,
+    onLetterhead: true,
   })
 }

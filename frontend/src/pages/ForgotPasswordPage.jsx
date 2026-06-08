@@ -20,15 +20,15 @@ import levLogo from '../assets/LOGO.jpg'
 export default function ForgotPasswordPage() {
   const { t, i18n } = useTranslation()
   useDocumentTitle(t('auth.forgotPassword.title'))
-  const isRtl       = i18n.dir() === 'rtl'
-  const BackIcon    = isRtl ? ArrowLeft : ArrowRight
-  const [email,   setEmail]   = useState('')
+  const isRtl = i18n.dir() === 'rtl'
+  const BackIcon = isRtl ? ArrowLeft : ArrowRight
+  const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
-  const [sent,    setSent]    = useState(false)
-  const [error,   setError]   = useState('')
+  const [sent, setSent] = useState(false)
+  const [error, setError] = useState('')
 
-  async function handleSubmit(e) {
-    e.preventDefault()
+  async function handleSubmit(event) {
+    event.preventDefault()
     setError('')
     setLoading(true)
     try {
@@ -135,7 +135,7 @@ export default function ForgotPasswordPage() {
                         aria-describedby={describedBy}
                         invalid={invalid}
                         value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        onChange={(event) => setEmail(event.target.value)}
                         placeholder="name@lev.ac.il"
                         dir="ltr"
                         disabled={loading}

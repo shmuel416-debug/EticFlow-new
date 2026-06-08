@@ -34,6 +34,7 @@ RUN npx prisma generate
 # Copy application source
 COPY src/ ./src/
 COPY assets/ ./assets/
+COPY scripts/ ./scripts/
 
 
 # Hand ownership to non-root user for image layers.
@@ -44,4 +45,7 @@ EXPOSE 5000
 # Run migrations (idempotent) then start the server.
 # For mounted volumes (/app/uploads, /app/generated), ensure ownership at runtime
 # before dropping privileges to the non-root app user.
-CMD ["sh", "-c", "mkdir -p /app/uploads /app/generated && chown -R app:app /app/uploads /app/generated && su-exec app node_modules/.bin/prisma migrate deploy && su-exec app node_modules/.bin/prisma db seed && exec su-exec app node src/index.js"]
+# SEED_DEMO_DATA=false ensures the production container never creates demo
+# users/submissions, and cleanup-test-users removes any leftover @test.com
+# accounts from earlier deploys before the server starts.
+CMD ["sh", "-c", "mkdir -p /app/uploads /app/generated && chown -R app:app /app/uploads /app/generated && su-exec app node_modules/.bin/prisma migrate deploy && SEED_DEMO_DATA=false su-exec app node_modules/.bin/prisma db seed && su-exec app node scripts/cleanup-test-users.mjs && exec su-exec app node src/index.js"]

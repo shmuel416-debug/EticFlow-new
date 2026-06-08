@@ -54,7 +54,15 @@ if (IS_PROD && !FRONTEND_URL) {
 // ─────────────────────────────────────────────
 
 app.disable('x-powered-by')
-app.use(helmet())
+app.use(helmet({
+  hsts: IS_PROD
+    ? {
+        maxAge: 31536000,
+        includeSubDomains: true,
+        preload: true,
+      }
+    : false,
+}))
 
 app.use(cors({
   origin: IS_PROD

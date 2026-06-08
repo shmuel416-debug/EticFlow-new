@@ -96,11 +96,28 @@ export function fontFaceCss() {
 }
 
 /**
- * Returns shared CSS for both Hebrew (RTL) and English (LTR) PDFs.
- * @param {string} brandPrimary
+ * Returns CSS overrides that let the document sit on an institutional letterhead.
+ * Makes the page transparent (so the letterhead shows through), hides the app's
+ * own header band, and reserves a safe area that clears the letterhead's logo and footer.
  * @returns {string}
  */
-export function baseCss(brandPrimary) {
+function letterheadModeCss() {
+  return `
+body { background: transparent !important; }
+.page { background: transparent !important; }
+.header { display: none !important; }
+.content { padding: 46mm 20mm 32mm !important; }
+.system-note { display: none !important; }
+`
+}
+
+/**
+ * Returns shared CSS for both Hebrew (RTL) and English (LTR) PDFs.
+ * @param {string} brandPrimary
+ * @param {{ onLetterhead?: boolean }} [options]
+ * @returns {string}
+ */
+export function baseCss(brandPrimary, { onLetterhead = false } = {}) {
   return `
 ${fontFaceCss()}
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -209,7 +226,28 @@ hr.light { border-color: #e2e8f0; border-width: 1px; }
   text-align: start;
   width: 50%;
 }
-.sig-img { max-height: 52px; max-width: 100%; object-fit: contain; display: block; margin: 4px 0 8px; }
+.sig-signature-cell { position: relative; overflow: hidden; }
+.sig-img {
+  max-height: 52px;
+  max-width: 100%;
+  object-fit: contain;
+  display: block;
+  margin: 4px auto 0;
+  position: relative;
+  z-index: 2;
+}
+.sig-credit {
+  color: #1f2937;
+  font-size: 10pt;
+  font-weight: 700;
+  text-align: center;
+  line-height: 1.25;
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 18px;
+  z-index: 1;
+}
 .box-label { color: #64748b; font-size: 9pt; margin-bottom: 12px; text-align: start; }
 .box-value { color: #0f172a; font-size: 10pt; font-weight: 600; margin-bottom: 6px; text-align: start; }
 .box-line { border-top: 1px solid #94a3b8; margin-top: 8px; }
@@ -254,21 +292,22 @@ hr.light { border-color: #e2e8f0; border-width: 1px; }
 }
 .rtl-root .conditions-list li::before { left: auto; right: 0; }
 .rtl-root .details-table .val { padding-inline-start: 0; padding-inline-end: 14px; }
+${onLetterhead ? letterheadModeCss() : ''}
 `
 }
 
 /**
  * Wraps the provided body content in a complete HTML shell.
- * @param {{ dir: 'rtl'|'ltr', lang: string, bodyHtml: string, brandPrimary: string }} params
+ * @param {{ dir: 'rtl'|'ltr', lang: string, bodyHtml: string, brandPrimary: string, onLetterhead?: boolean }} params
  * @returns {string}
  */
-export function pageShell({ dir, lang, bodyHtml, brandPrimary }) {
+export function pageShell({ dir, lang, bodyHtml, brandPrimary, onLetterhead = false }) {
   return `<!DOCTYPE html>
 <html dir="${dir}" lang="${lang}">
 <head>
 <meta charset="utf-8">
 <style>
-${baseCss(brandPrimary)}
+${baseCss(brandPrimary, { onLetterhead })}
 </style>
 </head>
 <body>

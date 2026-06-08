@@ -129,6 +129,7 @@ export function buildProtocolHtml(protocol, lang, context) {
     lang: safeLang === 'he' ? 'he-IL' : 'en',
     bodyHtml,
     brandPrimary: context.brandPrimary,
+    onLetterhead: true,
   })
 }
 
@@ -147,5 +148,6 @@ ${buildProtocolSection(protocol, context.en, 'en')}`
     lang: 'he',
     bodyHtml,
     brandPrimary: context.brandPrimary,
+    onLetterhead: true,
   })
 }

@@ -195,6 +195,7 @@ model User {
   resetTokenExpiry  DateTime?    @map("reset_token_expiry")
   failedLoginAttempts Int        @default(0) @map("failed_login_attempts")
   lockoutUntil      DateTime?    @map("lockout_until")
+  mustChangePassword Boolean     @default(false) @map("must_change_password")
   isActive          Boolean      @default(true) @map("is_active")
   createdAt         DateTime     @default(now()) @map("created_at")
   updatedAt         DateTime     @updatedAt @map("updated_at")

@@ -33,7 +33,7 @@ const AuthContext = createContext(null)
 
 /**
  * Restores user payload from in-memory/session token storage if valid.
- * @returns {{ id: string, email: string, roles: string[], activeRole: string }|null}
+ * @returns {{ id: string, email: string, roles: string[], activeRole: string, mustChangePassword: boolean }|null}
  */
 function getInitialUserFromToken() {
   const stored = getToken()
@@ -53,7 +53,14 @@ function getInitialUserFromToken() {
   const activeRole = roles.includes(preferredRole)
     ? preferredRole
     : (ROLE_PRIORITY.find((role) => roles.includes(role)) || 'RESEARCHER')
-  return { id: payload.id, email: payload.email, roles, activeRole, role: activeRole }
+  return {
+    id: payload.id,
+    email: payload.email,
+    roles,
+    activeRole,
+    role: activeRole,
+    mustChangePassword: !!payload.mustChangePassword,
+  }
 }
 
 /**
@@ -146,7 +153,7 @@ export function AuthProvider({ children }) {
    * Authenticates user and stores JWT in memory.
    * @param {string} email
    * @param {string} password
-   * @returns {Promise<void>}
+ * @returns {Promise<object>}
    */
   async function login(email, password) {
     const { data } = await api.post('/auth/login', { email, password })
@@ -157,14 +164,16 @@ export function AuthProvider({ children }) {
       ? preferredRole
       : (ROLE_PRIORITY.find((role) => roles.includes(role)) || 'RESEARCHER')
     persistActiveRole(activeRole)
-    setUser({ ...data.user, roles, activeRole, role: activeRole })
+    const nextUser = { ...data.user, roles, activeRole, role: activeRole, mustChangePassword: !!data.user.mustChangePassword }
+    setUser(nextUser)
+    return nextUser
   }
 
   /**
    * Decodes the payload section of a JWT without verifying the signature.
    * Safe because the server already validated and issued this token.
    * @param {string} token - Signed JWT
-   * @returns {{ id: string, email: string, roles?: string[], role?: string }}
+ * @returns {{ id: string, email: string, roles?: string[], role?: string, mustChangePassword?: boolean }}
    */
   function decodePayload(token) {
     const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
@@ -188,7 +197,7 @@ export function AuthProvider({ children }) {
       ? preferredRole
       : (ROLE_PRIORITY.find((role) => roles.includes(role)) || 'RESEARCHER')
     persistActiveRole(activeRole)
-    setUser({ id: payload.id, email: payload.email, roles, activeRole, role: activeRole })
+    setUser({ id: payload.id, email: payload.email, roles, activeRole, role: activeRole, mustChangePassword: !!payload.mustChangePassword })
   }, [])
 
   /**

@@ -13,11 +13,16 @@ const prisma = new PrismaClient()
  * Runs a child process command and streams output.
  * @param {string} command
  * @param {string[]} args
+ * @param {Record<string, string>} [extraEnv] - Extra env vars for the child process
  * @returns {Promise<void>}
  */
-function run(command, args) {
+function run(command, args, extraEnv = {}) {
   return new Promise((resolve, reject) => {
-    const child = spawn(command, args, { stdio: 'inherit', shell: true })
+    const child = spawn(command, args, {
+      stdio: 'inherit',
+      shell: true,
+      env: { ...process.env, ...extraEnv },
+    })
     child.on('exit', (code) => {
       if (code === 0) {
         resolve()
@@ -74,7 +79,10 @@ async function rotateAdminPassword(adminEmail, adminPassword) {
 async function main() {
   const { adminEmail, adminPassword } = readEnv()
   await run('npx', ['prisma', 'migrate', 'deploy'])
-  await run('npx', ['prisma', 'db', 'seed'])
+  // Never create demo users/submissions in production.
+  await run('npx', ['prisma', 'db', 'seed'], { SEED_DEMO_DATA: 'false' })
+  // Remove any leftover @test.com demo accounts from earlier deploys.
+  await run('node', ['scripts/cleanup-test-users.mjs'])
   await rotateAdminPassword(adminEmail, adminPassword)
   console.log('[Ethic-Net] Production bootstrap completed successfully.')
 }

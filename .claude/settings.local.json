@@ -39,7 +39,8 @@
       "Bash(git push *)",
       "Bash(node -e \"const puppeteer = require\\('./backend/node_modules/puppeteer'\\); console.log\\(puppeteer.executablePath ? puppeteer.executablePath\\(\\) : 'no executablePath'\\)\")",
       "Bash(pandoc --track-changes=all \"C:/Users/shmue/Downloads/טופס לסוקר.docx\" -o /tmp/reviewer-form.md)",
-      "Bash(pandoc --track-changes=all \"C:\\\\Users\\\\shmue\\\\Downloads\\\\שאלון למגיש הבקשה מרץ 2026.docx\" -o /tmp/questionnaire.md)"
+      "Bash(pandoc --track-changes=all \"C:\\\\Users\\\\shmue\\\\Downloads\\\\שאלון למגיש הבקשה מרץ 2026.docx\" -o /tmp/questionnaire.md)",
+      "Bash(awk -F'|' '{print $3}')"
     ]
   }
 }

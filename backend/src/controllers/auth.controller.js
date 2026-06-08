@@ -26,9 +26,11 @@ import { emitAlert } from '../services/observability.service.js'
  */
 const DUMMY_BCRYPT_HASH = '$2b$12$Z8nII1EDprDhFMZYH2.BVOhjlIjGBtStf/OgyisITv/gZJaXF6Y8y'
 const DEFAULT_AUTH_EXCHANGE_TTL_MS = 90 * 1000
-const LOGIN_LOCKOUT_MAX_ATTEMPTS = Math.max(3, parseInt(process.env.LOGIN_LOCKOUT_MAX_ATTEMPTS ?? '8', 10))
+const LOGIN_LOCKOUT_MAX_ATTEMPTS = Math.max(3, parseInt(process.env.LOGIN_LOCKOUT_MAX_ATTEMPTS ?? '5', 10))
 const LOGIN_LOCKOUT_MINUTES = Math.max(5, parseInt(process.env.LOGIN_LOCKOUT_MINUTES ?? '15', 10))
 const SSO_STATE_TTL_MS = 5 * 60 * 1000
+const BREAK_GLASS_LOGIN_ENABLED = String(process.env.BREAK_GLASS_LOGIN_ENABLED ?? 'false').trim().toLowerCase() === 'true'
+const BREAK_GLASS_ADMIN_EMAIL = String(process.env.ADMIN_EMAIL ?? '').trim().toLowerCase()
 
 // ─────────────────────────────────────────────
 // HELPERS
@@ -36,7 +38,7 @@ const SSO_STATE_TTL_MS = 5 * 60 * 1000
 
 /**
  * Signs an access JWT token for a user.
- * @param {{ id: string, email: string, role?: string, roles?: string[] }} user
+ * @param {{ id: string, email: string, role?: string, roles?: string[], mustChangePassword?: boolean }} user
  * @returns {string} Signed JWT
  */
 function signAccessToken(user) {
@@ -44,7 +46,7 @@ function signAccessToken(user) {
     ? user.roles
     : [user.role || 'RESEARCHER']
   return jwt.sign(
-    { id: user.id, email: user.email, role: roles[0], roles },
+    { id: user.id, email: user.email, role: roles[0], roles, mustChangePassword: !!user.mustChangePassword },
     authConfig.jwt.secret,
     { expiresIn: authConfig.jwt.expiresIn, keyid: authConfig.jwt.secretVersion }
   )
@@ -171,7 +173,7 @@ async function issueAuthExchangeCode(userId) {
 /**
  * Strips sensitive fields from a user record.
  * @param {object} user - Prisma User record
- * @returns {{ id, email, fullName, roles, department, phone, createdAt }}
+ * @returns {{ id, email, fullName, roles, department, phone, createdAt, mustChangePassword }}
  */
 function safeUser(user) {
   const { passwordHash, resetToken, resetTokenExpiry, externalId, failedLoginAttempts, lockoutUntil, ...safe } = user
@@ -378,7 +380,9 @@ export async function register(req, res, next) {
     const { email, password, fullName, department, phone } = req.body
 
     const existing = await prisma.user.findUnique({ where: { email } })
-    if (existing) return next(AppError.conflict('email'))
+    if (existing) {
+      return res.status(200).json({ message: 'If registration is allowed, you can sign in with this email.' })
+    }
 
     const passwordHash = await bcrypt.hash(password, authConfig.bcryptRounds)
 
@@ -386,9 +390,8 @@ export async function register(req, res, next) {
       data: { email, passwordHash, fullName, department, phone, roles: ['RESEARCHER'] },
     })
 
-    const session = await issueSession(res, user)
     res.locals.entityId = user.id
-    res.status(201).json({ user: safeUser(user), token: session.accessToken })
+    res.status(200).json({ message: 'If registration is allowed, you can sign in with this email.' })
   } catch (err) {
     next(err)
   }
@@ -405,8 +408,19 @@ export async function register(req, res, next) {
 export async function login(req, res, next) {
   try {
     const { email, password } = req.body
+    const normalizedEmail = String(email ?? '').trim().toLowerCase()
 
-    const user = await prisma.user.findUnique({ where: { email } })
+    // Local password login is emergency-only. Allow it solely for the configured
+    // admin account when break-glass mode is explicitly enabled.
+    const isBreakGlassAttempt = BREAK_GLASS_LOGIN_ENABLED
+      && BREAK_GLASS_ADMIN_EMAIL
+      && normalizedEmail === BREAK_GLASS_ADMIN_EMAIL
+    if (!isBreakGlassAttempt) {
+      await bcrypt.compare(String(password ?? ''), DUMMY_BCRYPT_HASH)
+      return next(new AppError('Invalid email or password', 'INVALID_CREDENTIALS', 401))
+    }
+
+    const user = await prisma.user.findUnique({ where: { email: normalizedEmail } })
     const now = new Date()
 
     if (user?.lockoutUntil && user.lockoutUntil > now) {
@@ -416,7 +430,9 @@ export async function login(req, res, next) {
     // Always run bcrypt — prevents timing-based email enumeration (constant-time)
     const validPassword = await bcrypt.compare(password, user?.passwordHash ?? DUMMY_BCRYPT_HASH)
 
-    if (!user || !validPassword || !user.isActive) {
+    const isAdmin = Array.isArray(user?.roles) && user.roles.includes('ADMIN')
+    const isLocalUser = user?.authProvider === 'LOCAL'
+    if (!user || !validPassword || !user.isActive || !isAdmin || !isLocalUser || !user.passwordHash) {
       if (user?.isActive) {
         const nextFailedAttempts = (user.failedLoginAttempts ?? 0) + 1
         const isLocked = nextFailedAttempts >= LOGIN_LOCKOUT_MAX_ATTEMPTS
@@ -597,7 +613,7 @@ export async function forgotPassword(req, res, next) {
         data:  { resetToken: tokenHash, resetTokenExpiry: expiry },
       })
 
-      const resetUrl = `${process.env.FRONTEND_URL ?? 'http://localhost:5173'}/reset-password?token=${rawToken}`
+      const resetUrl = `${process.env.FRONTEND_URL ?? 'http://localhost:5173'}/reset-password#token=${rawToken}`
       await sendEmail({
         to:      email,
         subject: 'איפוס סיסמה — Ethic-Net',
@@ -615,13 +631,13 @@ export async function forgotPassword(req, res, next) {
 /**
  * POST /api/auth/reset-password
  * Validates the reset token and updates the password.
- * @param {import('express').Request} req - body: { token, password }
+ * @param {import('express').Request} req - body: { token, newPassword }
  * @param {import('express').Response} res
  * @param {import('express').NextFunction} next
  */
 export async function resetPassword(req, res, next) {
   try {
-    const { token, password } = req.body
+    const { token, newPassword } = req.body
     const tokenHash = hashToken(token)
 
     const user = await prisma.user.findFirst({
@@ -636,14 +652,53 @@ export async function resetPassword(req, res, next) {
       return next(new AppError('Invalid or expired reset token', 'INVALID_TOKEN', 400))
     }
 
-    const passwordHash = await bcrypt.hash(password, authConfig.bcryptRounds)
+    const passwordHash = await bcrypt.hash(newPassword, authConfig.bcryptRounds)
     await prisma.user.update({
       where: { id: user.id },
-      data:  { passwordHash, resetToken: null, resetTokenExpiry: null },
+      data:  { passwordHash, resetToken: null, resetTokenExpiry: null, mustChangePassword: false },
     })
 
     res.locals.entityId = user.id
     res.json({ message: 'Password reset successful' })
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
+ * POST /api/auth/change-password
+ * Changes the authenticated user's password and clears force-change flag.
+ * @param {import('express').Request} req - body: { currentPassword, newPassword }
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
+export async function changePassword(req, res, next) {
+  try {
+    const { currentPassword, newPassword } = req.body
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } })
+    if (!user || !user.isActive || !user.passwordHash) {
+      return next(AppError.unauthorized())
+    }
+
+    const validCurrentPassword = await bcrypt.compare(currentPassword, user.passwordHash)
+    if (!validCurrentPassword) {
+      return next(new AppError('Invalid email or password', 'INVALID_CREDENTIALS', 401))
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, authConfig.bcryptRounds)
+    const updatedUser = await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        passwordHash,
+        mustChangePassword: false,
+        failedLoginAttempts: 0,
+        lockoutUntil: null,
+      },
+    })
+
+    const session = await issueSession(res, updatedUser)
+    res.locals.entityId = user.id
+    res.status(200).json({ message: 'Password changed successfully', user: safeUser(updatedUser), token: session.accessToken })
   } catch (err) {
     next(err)
   }

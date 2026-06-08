@@ -49,7 +49,7 @@
     "login": {
       "systemTitle": "מערכת ועדת האתיקה",
       "title": "ברוכים הבאים",
-      "subtitle": "התחברות למערכת ניהול אישורי מחקר",
+      "subtitle": "התחברות למערכת ניהול אישורי מחקר באמצעות Microsoft",
       "emailLabel": "כתובת אימייל",
       "emailPlaceholder": "name@lev.ac.il",
       "passwordLabel": "סיסמה",
@@ -69,8 +69,14 @@
     "ssoCancelled": "הכניסה בוטלה.",
     "ssoFailed": "אירעה שגיאה בכניסה. נסה שוב.",
     "sessionExpired": "ההתחברות פגה. יש להתחבר מחדש.",
-    "ssoEmailConflict": "קיים חשבון עם כתובת מייל זו. התחבר עם שם משתמש וסיסמה.",
+    "ssoEmailConflict": "קיים חשבון עם כתובת מייל זו בשיטת התחברות אחרת. פנה למנהל המערכת.",
     "accountInactive": "החשבון אינו פעיל. צור קשר עם מנהל המערכת.",
+    "breakGlass": {
+      "title": "גישת חירום למנהל מערכת",
+      "subtitle": "מסך זה מיועד לשימוש זמני בלבד כאשר הזדהות Microsoft אינה זמינה.",
+      "submitButton": "כניסת חירום",
+      "backToSso": "חזרה להתחברות Microsoft"
+    },
     "forgotPassword": {
       "title": "איפוס סיסמה",
       "subtitle": "הזן את כתובת האימייל שלך ונשלח לך קישור לאיפוס",
@@ -92,6 +98,17 @@
       "errorMismatch": "הסיסמאות אינן תואמות",
       "errorNoToken": "קישור האיפוס חסר — בקש קישור חדש",
       "backToLogin": "חזרה לדף הכניסה"
+    },
+    "changePassword": {
+      "title": "החלפת סיסמה נדרשת",
+      "subtitle": "לפני המשך השימוש במערכת יש להחליף את סיסמת הכניסה.",
+      "currentPasswordLabel": "סיסמה נוכחית",
+      "newPasswordLabel": "סיסמה חדשה",
+      "confirmLabel": "אימות סיסמה חדשה",
+      "passwordHint": "לפחות 8 תווים",
+      "submitButton": "עדכן סיסמה",
+      "errorTooShort": "הסיסמה חייבת להכיל לפחות 8 תווים",
+      "errorMismatch": "הסיסמאות אינן תואמות"
     },
     "register": {
       "fullName": "שם מלא",

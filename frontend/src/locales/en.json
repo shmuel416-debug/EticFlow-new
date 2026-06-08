@@ -49,7 +49,7 @@
     "login": {
       "systemTitle": "Ethics Committee System",
       "title": "Welcome",
-      "subtitle": "Sign in to the Ethics Committee System",
+      "subtitle": "Sign in to the Ethics Committee System with Microsoft",
       "emailLabel": "Email address",
       "emailPlaceholder": "name@lev.ac.il",
       "passwordLabel": "Password",
@@ -69,8 +69,14 @@
     "ssoCancelled": "Sign-in was cancelled.",
     "ssoFailed": "An error occurred during sign-in. Please try again.",
     "sessionExpired": "Your session has expired. Please sign in again.",
-    "ssoEmailConflict": "An account with this email already exists. Please sign in with email and password.",
+    "ssoEmailConflict": "An account with this email exists under a different sign-in method. Contact your administrator.",
     "accountInactive": "This account is inactive. Please contact your administrator.",
+    "breakGlass": {
+      "title": "Emergency Administrator Access",
+      "subtitle": "Use this page only when Microsoft SSO is temporarily unavailable.",
+      "submitButton": "Emergency Sign In",
+      "backToSso": "Back to Microsoft sign-in"
+    },
     "forgotPassword": {
       "title": "Reset Password",
       "subtitle": "Enter your email address and we'll send you a reset link",
@@ -92,6 +98,17 @@
       "errorMismatch": "Passwords do not match",
       "errorNoToken": "Reset link is missing — please request a new one",
       "backToLogin": "Back to login"
+    },
+    "changePassword": {
+      "title": "Password Change Required",
+      "subtitle": "You must change your password before continuing in the system.",
+      "currentPasswordLabel": "Current password",
+      "newPasswordLabel": "New password",
+      "confirmLabel": "Confirm new password",
+      "passwordHint": "At least 8 characters",
+      "submitButton": "Update password",
+      "errorTooShort": "Password must be at least 8 characters",
+      "errorMismatch": "Passwords do not match"
     },
     "register": {
       "fullName": "Full Name",

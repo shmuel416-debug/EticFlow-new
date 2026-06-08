@@ -238,7 +238,12 @@ export async function recordDecision(req, res, next) {
     const decisionModel = settingMap.decision_model || 'IRB_FULL'
     const quorum = parseInt(settingMap.committee_quorum_min_votes || '3', 10)
 
-    if (decisionModel === 'IRB_FULL') {
+    // Requesting a revision returns the submission to the researcher for fixes;
+    // it is a procedural step, not a final committee verdict, so it is not gated
+    // by the committee quorum/majority rules that apply to APPROVED/REJECTED.
+    const requiresCommitteeVote = decisionModel === 'IRB_FULL' && req.body.decision !== 'REVISION_REQUIRED'
+
+    if (requiresCommitteeVote) {
       const votes = await prisma.submissionVote.findMany({
         where: { submissionId: sub.id },
       })

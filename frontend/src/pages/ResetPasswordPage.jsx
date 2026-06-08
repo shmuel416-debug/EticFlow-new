@@ -1,11 +1,11 @@
 /**
  * Ethic-Net — Reset Password Page (brand refresh)
- * Reads ?token= from URL, lets user set a new password.
+ * Reads token from URL fragment (#token=) or query fallback (?token=), then sets a new password.
  * Calls POST /api/auth/reset-password with { token, newPassword }.
  * IS 5568 / WCAG 2.2 AA compliant.
  */
 
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Lock, ArrowRight, ArrowLeft, CheckCircle2 } from 'lucide-react'
@@ -16,26 +16,48 @@ import useDocumentTitle from '../hooks/useDocumentTitle'
 
 /**
  * Reset password page — POST /api/auth/reset-password.
- * Token is read from ?token= query param sent in the reset email.
+ * Token is read from hash/query params sent in the reset email.
  * @returns {JSX.Element}
  */
 export default function ResetPasswordPage() {
-  const { t, i18n }  = useTranslation()
+  const { t, i18n } = useTranslation()
   useDocumentTitle(t('auth.resetPassword.title'))
-  const isRtl        = i18n.dir() === 'rtl'
-  const BackIcon     = isRtl ? ArrowLeft : ArrowRight
-  const navigate     = useNavigate()
+  const isRtl = i18n.dir() === 'rtl'
+  const BackIcon = isRtl ? ArrowLeft : ArrowRight
+  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const token        = searchParams.get('token') ?? ''
+  const token = useMemo(() => {
+    if (typeof window !== 'undefined' && window.location.hash.startsWith('#')) {
+      const hashParams = new URLSearchParams(window.location.hash.slice(1))
+      const hashToken = hashParams.get('token')
+      if (hashToken) return hashToken
+    }
+    return searchParams.get('token') ?? ''
+  }, [searchParams])
 
   const [password, setPassword] = useState('')
-  const [confirm,  setConfirm]  = useState('')
-  const [loading,  setLoading]  = useState(false)
-  const [done,     setDone]     = useState(false)
-  const [error,    setError]    = useState('')
+  const [confirm, setConfirm] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [done, setDone] = useState(false)
+  const [error, setError] = useState('')
 
-  async function handleSubmit(e) {
-    e.preventDefault()
+  useEffect(() => {
+    const existing = document.querySelector('meta[name="referrer"]')
+    if (existing) {
+      existing.setAttribute('content', 'no-referrer')
+      return undefined
+    }
+    const meta = document.createElement('meta')
+    meta.setAttribute('name', 'referrer')
+    meta.setAttribute('content', 'no-referrer')
+    document.head.appendChild(meta)
+    return () => {
+      document.head.removeChild(meta)
+    }
+  }, [])
+
+  async function handleSubmit(event) {
+    event.preventDefault()
     setError('')
 
     if (password.length < 8) {
@@ -57,8 +79,8 @@ export default function ResetPasswordPage() {
       setDone(true)
       setTimeout(() => navigate('/login'), 3000)
     } catch (err) {
-      const code = err.response?.data?.code
-      setError(t(`errors.${code}`) || t('errors.SERVER_ERROR'))
+      const code = err.code || 'SERVER_ERROR'
+      setError(t(`errors.${code}`, t('errors.SERVER_ERROR')))
     } finally {
       setLoading(false)
     }
@@ -175,7 +197,7 @@ export default function ResetPasswordPage() {
                         aria-describedby={describedBy}
                         invalid={invalid}
                         value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        onChange={(event) => setPassword(event.target.value)}
                         dir="ltr"
                         disabled={loading || !token}
                       />
@@ -195,7 +217,7 @@ export default function ResetPasswordPage() {
                         aria-describedby={describedBy}
                         invalid={invalid}
                         value={confirm}
-                        onChange={(e) => setConfirm(e.target.value)}
+                        onChange={(event) => setConfirm(event.target.value)}
                         dir="ltr"
                         disabled={loading || !token}
                       />

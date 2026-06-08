@@ -165,6 +165,8 @@ WEBSITES_PORT=3000
 PUPPETEER_SKIP_DOWNLOAD=true
 PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 FRONTEND_URL=https://ethics-net.<institution>.ac.il
+ADMIN_BOOTSTRAP_EMAIL=admin@<institution>.ac.il
+ADMIN_BOOTSTRAP_PASSWORD=<strong-random-password>
 AUTH_PROVIDER=microsoft
 EMAIL_PROVIDER=microsoft
 CALENDAR_PROVIDER=microsoft
@@ -209,12 +211,23 @@ pwsh ./ops/scripts/set-azure-api-keyvault-settings.ps1 `
   - API app: `api.ethics-net.<institution>.ac.il`
 - Complete DNS validation (`asuid` TXT/CNAME as requested by App Service).
 - Enable Managed Certificates on both domains.
+- Enforce HTTP -> HTTPS redirect at edge.
+
+#### Required security headers on frontend host
+
+Configure these headers on the static frontend host/CDN (not only API):
+
+- `Content-Security-Policy`:
+  - `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://ethics-net-api.jct.ac.il; frame-ancestors 'none'; base-uri 'self'; form-action 'self'`
+- `Referrer-Policy: strict-origin-when-cross-origin`
+- `X-Frame-Options: DENY`
+- `X-Content-Type-Options: nosniff`
 
 ### Step 6: Bootstrap database
 
 ```bash
 cd backend
-ADMIN_EMAIL=admin@<institution>.ac.il ADMIN_PASSWORD="<strong-password>" npm run bootstrap:prod
+ADMIN_BOOTSTRAP_EMAIL=admin@<institution>.ac.il ADMIN_BOOTSTRAP_PASSWORD="<strong-password>" npm run bootstrap:prod
 ```
 
 ### Step 7: Smoke and go-live

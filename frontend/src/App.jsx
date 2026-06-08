@@ -1,6 +1,6 @@
 /**
  * Ethic-Net — App Router
- * Public routes: /login, /forgot-password, /reset-password, /sso-callback
+ * Public routes: /login, /login/recovery, /sso-callback
  * Protected routes: /dashboard, /submissions, /meetings, /users, /reports, /settings
  * Role-based access enforced by ProtectedRoute.
  */
@@ -14,8 +14,8 @@ import AppLayout         from './components/layout/AppLayout'
 import ProtectedRoute    from './components/layout/ProtectedRoute'
 
 import LoginPage                  from './pages/LoginPage'
-import ForgotPasswordPage         from './pages/ForgotPasswordPage'
-import ResetPasswordPage          from './pages/ResetPasswordPage'
+import BreakGlassLoginPage        from './pages/auth/BreakGlassLoginPage'
+import ChangePasswordPage         from './pages/ChangePasswordPage'
 import SsoCallbackPage            from './pages/auth/SsoCallbackPage'
 import DashboardPage              from './pages/DashboardPage'
 import NotificationsPage          from './pages/NotificationsPage'
@@ -56,14 +56,14 @@ export default function App() {
         <Routes>
           {/* ── Public ── */}
           <Route path="/login"                 element={<LoginPage />} />
-          <Route path="/forgot-password"       element={<ForgotPasswordPage />} />
-          <Route path="/reset-password"        element={<ResetPasswordPage />} />
+          <Route path="/login/recovery"        element={<BreakGlassLoginPage />} />
           <Route path="/sso-callback"          element={<SsoCallbackPage />} />
           <Route path="/protocol/sign/:token"  element={<ProtocolSignPage />} />
           <Route path="/accessibility-statement" element={<AccessibilityStatementPage />} />
 
           {/* ── Protected (all authenticated roles) ── */}
           <Route element={<ProtectedRoute />}>
+            <Route path="/change-password" element={<ChangePasswordPage />} />
             <Route element={<AppLayout />}>
               <Route path="/dashboard"       element={<DashboardPage />} />
               <Route path="/submissions/new"      element={<SubmitPage />} />
