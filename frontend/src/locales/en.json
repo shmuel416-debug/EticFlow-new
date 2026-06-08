@@ -450,6 +450,14 @@
       "settingsRequired": "Required field",
       "settingsMinLength": "Min length",
       "settingsMaxLength": "Max length",
+      "settingsOptionsTitle": "List options",
+      "settingsOptionsHint": "Define the options shown to the user",
+      "settingsOptionHe": "Hebrew label",
+      "settingsOptionEn": "English label",
+      "settingsAddOption": "+ Add option",
+      "settingsRemoveOption": "Remove option {{index}}",
+      "settingsNoOptions": "No options yet — add at least one",
+      "settingsOptionLabel": "Option {{index}}",
       "settingsConditional": "Conditional logic",
       "settingsConditionalHint": "Show this field only if:",
       "settingsAddCondition": "+ Add condition",
@@ -1407,6 +1415,9 @@
     "ROLE_NOT_ALLOWED": "Only committee members are allowed to perform this action",
     "USER_INACTIVE": "The selected user is inactive",
     "COI_BLOCKED": "A conflict of interest blocks this action",
-    "FORM_SCHEMA_EMPTY": "Cannot publish a form without at least one field"
+    "FORM_SCHEMA_EMPTY": "Cannot publish a form without at least one field",
+    "INVALID_TRANSITION": "This action is not allowed in the submission's current status",
+    "QUORUM_NOT_MET": "The committee has not yet reached the required number of votes",
+    "VOTE_MAJORITY_MISMATCH": "There is no majority of votes supporting the requested decision"
   }
 }

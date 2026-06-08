@@ -47,6 +47,20 @@ export default function FormFieldPreview({ field, previewLang }) {
   const label = (previewLang === 'en' && field.labelEn) ? field.labelEn : (field.labelHe || field.labelEn || t(`secretary.fieldTypes.${field.type}`))
   const ph    = field.placeholderHe || ''
 
+  /**
+   * Resolves the display label for a choice option in the preview language,
+   * falling back to the Hebrew label, the value, or a generic placeholder.
+   * @param {{ value?: string, labelHe?: string, labelEn?: string }} opt
+   * @param {number} index
+   * @returns {string}
+   */
+  const optionLabel = (opt, index) => {
+    const text = (previewLang === 'en' && opt.labelEn) ? opt.labelEn : opt.labelHe
+    return text || opt.labelEn || opt.value || t('secretary.formBuilder.settingsOptionLabel', { index: index + 1 })
+  }
+
+  const choiceOptions = Array.isArray(field.options) ? field.options : []
+
   /* ── Text-like inputs ── */
   if (['text', 'email', 'phone', 'number'].includes(field.type)) {
     const typeMap = { text: 'text', email: 'email', phone: 'tel', number: 'number' }
@@ -103,8 +117,16 @@ export default function FormFieldPreview({ field, previewLang }) {
           onBlur={e  => Object.assign(e.target.style, INPUT_BLUR)}
           defaultValue="">
           <option value="" disabled>{t('secretary.formPreview.selectPlaceholder')}</option>
-          <option value="1">{t('secretary.formPreview.sampleOption1')}</option>
-          <option value="2">{t('secretary.formPreview.sampleOption2')}</option>
+          {choiceOptions.length > 0 ? (
+            choiceOptions.map((opt, i) => (
+              <option key={opt.value ?? i} value={opt.value ?? i}>{optionLabel(opt, i)}</option>
+            ))
+          ) : (
+            <>
+              <option value="1">{t('secretary.formPreview.sampleOption1')}</option>
+              <option value="2">{t('secretary.formPreview.sampleOption2')}</option>
+            </>
+          )}
         </select>
       </FieldWrapper>
     )
@@ -118,10 +140,13 @@ export default function FormFieldPreview({ field, previewLang }) {
           {label}
           {field.required && <span aria-label="שדה חובה" style={{ color: 'var(--lev-purple)' }} className="ms-1">*</span>}
         </legend>
-        {[t('secretary.formPreview.sampleOption1'), t('secretary.formPreview.sampleOption2')].map((opt, i) => (
-          <label key={i} className="flex items-center gap-2 text-sm cursor-pointer" style={{ minHeight: '44px' }}>
+        {(choiceOptions.length > 0
+          ? choiceOptions.map((opt, i) => ({ key: opt.value ?? i, text: optionLabel(opt, i) }))
+          : [t('secretary.formPreview.sampleOption1'), t('secretary.formPreview.sampleOption2')].map((text, i) => ({ key: i, text }))
+        ).map((opt, i) => (
+          <label key={opt.key} className="flex items-center gap-2 text-sm cursor-pointer" style={{ minHeight: '44px' }}>
             <input type="radio" name={id} value={i} className="accent-[var(--lev-navy)]" />
-            <span style={{ color: '#374151' }}>{opt}</span>
+            <span style={{ color: '#374151' }}>{opt.text}</span>
           </label>
         ))}
       </fieldset>
@@ -136,10 +161,13 @@ export default function FormFieldPreview({ field, previewLang }) {
           {label}
           {field.required && <span aria-label="שדה חובה" style={{ color: 'var(--lev-purple)' }} className="ms-1">*</span>}
         </legend>
-        {[t('secretary.formPreview.sampleOption1'), t('secretary.formPreview.sampleOption2')].map((opt, i) => (
-          <label key={i} className="flex items-center gap-2 text-sm cursor-pointer" style={{ minHeight: '44px' }}>
+        {(choiceOptions.length > 0
+          ? choiceOptions.map((opt, i) => ({ key: opt.value ?? i, text: optionLabel(opt, i) }))
+          : [t('secretary.formPreview.sampleOption1'), t('secretary.formPreview.sampleOption2')].map((text, i) => ({ key: i, text }))
+        ).map((opt) => (
+          <label key={opt.key} className="flex items-center gap-2 text-sm cursor-pointer" style={{ minHeight: '44px' }}>
             <input type="checkbox" className="accent-[var(--lev-navy)]" />
-            <span style={{ color: '#374151' }}>{opt}</span>
+            <span style={{ color: '#374151' }}>{opt.text}</span>
           </label>
         ))}
       </fieldset>

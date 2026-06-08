@@ -7,7 +7,8 @@
 
 import { useEffect, useState }  from 'react'
 import { useTranslation }        from 'react-i18next'
-import { FIELD_TYPE_COLOR }      from './fieldTypes'
+import { Plus, Trash2 }          from 'lucide-react'
+import { FIELD_TYPE_COLOR, CHOICE_FIELD_TYPES, createOption } from './fieldTypes'
 
 /**
  * @param {{
@@ -41,6 +42,26 @@ export default function FieldSettingsPanel({ field, onSave, onCancel }) {
   const patch = (updates) => setDraft(prev => ({ ...prev, ...updates }))
 
   const badgeColor = FIELD_TYPE_COLOR[draft.type] ?? 'var(--lev-navy)'
+  const isChoiceField = CHOICE_FIELD_TYPES.includes(draft.type)
+  const options = draft.options ?? []
+
+  /** Adds a new blank option to the draft. */
+  const addOption = () => patch({ options: [...options, createOption()] })
+
+  /** Removes the option at the given index. */
+  const removeOption = (index) =>
+    patch({ options: options.filter((_, i) => i !== index) })
+
+  /**
+   * Updates a single field on the option at the given index.
+   * @param {number} index
+   * @param {'labelHe'|'labelEn'} key
+   * @param {string} value
+   */
+  const updateOption = (index, key, value) =>
+    patch({
+      options: options.map((opt, i) => (i === index ? { ...opt, [key]: value } : opt)),
+    })
 
   const handleSave = () => onSave(draft.id, {
     labelHe:       draft.labelHe,
@@ -48,6 +69,7 @@ export default function FieldSettingsPanel({ field, onSave, onCancel }) {
     placeholderHe: draft.placeholderHe,
     required:      draft.required,
     validation:    draft.validation,
+    ...(isChoiceField ? { options } : {}),
   })
 
   return (
@@ -107,6 +129,75 @@ export default function FieldSettingsPanel({ field, onSave, onCancel }) {
             onChange={e => patch({ placeholderHe: e.target.value })}
           />
         </div>
+
+        {/* Choice options editor (select / radio / checkbox) */}
+        {isChoiceField && (
+          <div className="border-t pt-3">
+            <p className="text-xs font-semibold mb-1" style={{ color: 'var(--lev-navy)' }}>
+              {t('secretary.formBuilder.settingsOptionsTitle')}
+            </p>
+            <p className="text-xs text-gray-400 mb-2">{t('secretary.formBuilder.settingsOptionsHint')}</p>
+
+            {options.length === 0 && (
+              <p className="text-xs text-gray-400 mb-2">{t('secretary.formBuilder.settingsNoOptions')}</p>
+            )}
+
+            <div className="space-y-2">
+              {options.map((opt, index) => (
+                <div
+                  key={opt.value}
+                  className="rounded-lg border border-gray-200 p-2 space-y-2"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-gray-500">
+                      {t('secretary.formBuilder.settingsOptionLabel', { index: index + 1 })}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => removeOption(index)}
+                      aria-label={t('secretary.formBuilder.settingsRemoveOption', { index: index + 1 })}
+                      className="inline-flex items-center justify-center text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                      style={{ minWidth: 36, minHeight: 36 }}
+                    >
+                      <Trash2 size={15} strokeWidth={1.75} aria-hidden="true" focusable="false" />
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    aria-label={`${t('secretary.formBuilder.settingsOptionLabel', { index: index + 1 })} — ${t('secretary.formBuilder.settingsOptionHe')}`}
+                    placeholder={t('secretary.formBuilder.settingsOptionHe')}
+                    className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none"
+                    onFocus={e => (e.target.style.borderColor = 'var(--lev-teal)')}
+                    onBlur={e  => (e.target.style.borderColor = '')}
+                    value={opt.labelHe ?? ''}
+                    onChange={e => updateOption(index, 'labelHe', e.target.value)}
+                  />
+                  <input
+                    type="text"
+                    dir="ltr"
+                    aria-label={`${t('secretary.formBuilder.settingsOptionLabel', { index: index + 1 })} — ${t('secretary.formBuilder.settingsOptionEn')}`}
+                    placeholder={t('secretary.formBuilder.settingsOptionEn')}
+                    className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none text-left"
+                    onFocus={e => (e.target.style.borderColor = 'var(--lev-teal)')}
+                    onBlur={e  => (e.target.style.borderColor = '')}
+                    value={opt.labelEn ?? ''}
+                    onChange={e => updateOption(index, 'labelEn', e.target.value)}
+                  />
+                </div>
+              ))}
+            </div>
+
+            <button
+              type="button"
+              onClick={addOption}
+              className="mt-2 inline-flex items-center gap-1 text-xs font-semibold transition hover:opacity-80"
+              style={{ color: 'var(--lev-teal-text)', minHeight: 44 }}
+            >
+              <Plus size={14} strokeWidth={2} aria-hidden="true" focusable="false" />
+              {t('secretary.formBuilder.settingsAddOption')}
+            </button>
+          </div>
+        )}
 
         {/* Required toggle */}
         <div className="flex items-center justify-between py-1">

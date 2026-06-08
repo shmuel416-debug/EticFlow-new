@@ -450,6 +450,14 @@
       "settingsRequired": "שדה חובה",
       "settingsMinLength": "מינ׳ תווים",
       "settingsMaxLength": "מקס׳ תווים",
+      "settingsOptionsTitle": "אפשרויות הרשימה",
+      "settingsOptionsHint": "הגדר את האפשרויות שיוצגו למשתמש",
+      "settingsOptionHe": "תווית עברית",
+      "settingsOptionEn": "English label",
+      "settingsAddOption": "+ הוסף אפשרות",
+      "settingsRemoveOption": "הסר אפשרות {{index}}",
+      "settingsNoOptions": "אין אפשרויות עדיין — הוסף לפחות אחת",
+      "settingsOptionLabel": "אפשרות {{index}}",
       "settingsConditional": "לוגיקה מותנית",
       "settingsConditionalHint": "הצג שדה זה רק אם:",
       "settingsAddCondition": "+ הוסף תנאי",
@@ -1407,6 +1415,9 @@
     "ROLE_NOT_ALLOWED": "רק חברי ועדה מורשים לפעולה זו",
     "USER_INACTIVE": "המשתמש אינו פעיל",
     "COI_BLOCKED": "ניגוד עניינים מונע את הפעולה",
-    "FORM_SCHEMA_EMPTY": "לא ניתן לפרסם טופס ללא לפחות שדה אחד"
+    "FORM_SCHEMA_EMPTY": "לא ניתן לפרסם טופס ללא לפחות שדה אחד",
+    "INVALID_TRANSITION": "לא ניתן לבצע את המעבר הזה בסטטוס הנוכחי של הבקשה",
+    "QUORUM_NOT_MET": "טרם נאסף מספר הקולות הנדרש להחלטת הוועדה",
+    "VOTE_MAJORITY_MISMATCH": "אין רוב קולות התומך בהחלטה המבוקשת"
   }
 }

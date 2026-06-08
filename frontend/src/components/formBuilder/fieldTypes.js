@@ -72,13 +72,28 @@ export const FIELD_TYPE_COLOR = {
   signature:   '#dc2626',
 }
 
+/** Field types that require a user-editable list of options. */
+export const CHOICE_FIELD_TYPES = ['select', 'radio', 'checkbox']
+
+/**
+ * Builds a single blank option for a choice field.
+ * @returns {{ value: string, labelHe: string, labelEn: string }}
+ */
+export function createOption() {
+  return {
+    value:   Math.random().toString(36).slice(2, 8),
+    labelHe: '',
+    labelEn: '',
+  }
+}
+
 /**
  * Creates a blank field object for the canvas.
  * @param {string} type - field type key
  * @returns {object} new field with generated id
  */
 export function createField(type) {
-  return {
+  const field = {
     id:           Math.random().toString(36).slice(2, 10),
     type,
     labelHe:      '',
@@ -88,4 +103,8 @@ export function createField(type) {
     validation:   { minLength: null, maxLength: null },
     conditions:   [],
   }
+  if (CHOICE_FIELD_TYPES.includes(type)) {
+    field.options = [createOption(), createOption()]
+  }
+  return field
 }
