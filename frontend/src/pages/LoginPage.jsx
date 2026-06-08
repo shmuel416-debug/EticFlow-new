@@ -205,14 +205,6 @@ export default function LoginPage() {
             )}
 
             <section aria-label={t('auth.login.title')}>
-              <div className="flex items-center gap-3 my-6" aria-hidden="true">
-                <div className="flex-1 h-px" style={{ background: 'var(--border-default)' }} />
-                <span className="text-xs font-medium" style={{ color: 'var(--text-muted)' }}>
-                  {t('auth.login.orDivider')}
-                </span>
-                <div className="flex-1 h-px" style={{ background: 'var(--border-default)' }} />
-              </div>
-
               <a
                 href={microsoftSsoHref}
                 role="button"
