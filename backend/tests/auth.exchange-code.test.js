@@ -11,6 +11,17 @@ const prismaMock = {
     findUnique: jest.fn(),
     updateMany: jest.fn(),
   },
+  user: {
+    findFirst: jest.fn(),
+    findUnique: jest.fn(),
+    update: jest.fn(),
+    create: jest.fn(),
+  },
+}
+
+const microsoftProviderMock = {
+  getAuthUrl: jest.fn(),
+  exchangeCode: jest.fn(),
 }
 
 jest.unstable_mockModule('../src/config/database.js', () => ({
@@ -34,11 +45,11 @@ jest.unstable_mockModule('../src/services/auth/google.provider.js', () => ({
 }))
 
 jest.unstable_mockModule('../src/services/auth/microsoft.provider.js', () => ({
-  getAuthUrl: jest.fn(),
-  exchangeCode: jest.fn(),
+  getAuthUrl: microsoftProviderMock.getAuthUrl,
+  exchangeCode: microsoftProviderMock.exchangeCode,
 }))
 
-const { exchangeCode } = await import('../src/controllers/auth.controller.js')
+const { exchangeCode, microsoftRedirect, microsoftCallback } = await import('../src/controllers/auth.controller.js')
 const { AppError } = await import('../src/utils/errors.js')
 
 /**
@@ -54,6 +65,40 @@ function makeContext(code = 'a'.repeat(64)) {
   }
   const next = jest.fn()
   return { req, res, next }
+}
+
+/**
+ * Restores environment variables after a test mutates them.
+ * @param {string[]} keys
+ * @returns {() => void}
+ */
+function captureEnv(keys) {
+  const backup = Object.fromEntries(keys.map((key) => [key, process.env[key]]))
+  return () => {
+    keys.forEach((key) => {
+      if (backup[key] === undefined) {
+        delete process.env[key]
+      } else {
+        process.env[key] = backup[key]
+      }
+    })
+  }
+}
+
+/**
+ * Builds a minimal request object for Microsoft SSO tests.
+ * @param {object} options
+ * @returns {object}
+ */
+function makeMicrosoftReq(options = {}) {
+  const headers = options.headers || {}
+  return {
+    query: options.query || {},
+    cookies: options.cookies || {},
+    protocol: options.protocol || 'http',
+    requestId: 'req-1',
+    get: (name) => headers[name.toLowerCase()] || headers[name],
+  }
 }
 
 describe('auth.controller exchangeCode', () => {
@@ -135,5 +180,79 @@ describe('auth.controller exchangeCode', () => {
     expect(next.mock.calls[0][0]).toBeInstanceOf(AppError)
     expect(next.mock.calls[0][0].code).toBe('INVALID_EXCHANGE_CODE')
     expect(next.mock.calls[0][0].statusCode).toBe(401)
+  })
+})
+
+describe('auth.controller Microsoft SSO redirect safety', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
+  test('uses configured production callback URL instead of proxied http headers', async () => {
+    const restore = captureEnv(['NODE_ENV', 'FRONTEND_URL', 'MICROSOFT_AUTH_REDIRECT_URI', 'MICROSOFT_REDIRECT_URI'])
+    process.env.NODE_ENV = 'production'
+    process.env.FRONTEND_URL = 'https://ethics.jct.ac.il'
+    delete process.env.MICROSOFT_AUTH_REDIRECT_URI
+    delete process.env.MICROSOFT_REDIRECT_URI
+    microsoftProviderMock.getAuthUrl.mockResolvedValue('https://login.microsoftonline.test/auth')
+
+    const req = makeMicrosoftReq({
+      query: { frontend_origin: 'https://ethics.jct.ac.il' },
+      headers: {
+        'x-forwarded-proto': 'http',
+        'x-forwarded-host': 'api.internal',
+        host: 'api.internal',
+      },
+    })
+    const res = { cookie: jest.fn(), redirect: jest.fn() }
+
+    await microsoftRedirect(req, res, jest.fn())
+
+    expect(microsoftProviderMock.getAuthUrl.mock.calls[0][1]).toBe('https://ethics.jct.ac.il/api/auth/microsoft/callback')
+    expect(res.redirect).toHaveBeenCalledWith('https://login.microsoftonline.test/auth')
+    restore()
+  })
+
+  test('rejects sibling-domain frontend origins during production callback', async () => {
+    const restore = captureEnv(['NODE_ENV', 'FRONTEND_URL', 'MICROSOFT_AUTH_REDIRECT_URI', 'MICROSOFT_REDIRECT_URI'])
+    process.env.NODE_ENV = 'production'
+    process.env.FRONTEND_URL = 'https://ethics.jct.ac.il'
+    delete process.env.MICROSOFT_AUTH_REDIRECT_URI
+    delete process.env.MICROSOFT_REDIRECT_URI
+    microsoftProviderMock.getAuthUrl.mockResolvedValue('https://login.microsoftonline.test/auth')
+    microsoftProviderMock.exchangeCode.mockResolvedValue({
+      externalId: 'ms-1',
+      email: 'user@acad.jct.ac.il',
+      fullName: 'SSO User',
+    })
+    prismaMock.user.findFirst.mockResolvedValue({
+      id: 'u-ms-1',
+      email: 'user@jct.ac.il',
+      fullName: 'SSO User',
+      externalId: 'ms-1',
+      authProvider: 'MICROSOFT',
+      roles: ['RESEARCHER'],
+      isActive: true,
+    })
+    prismaMock.authExchangeCode.create.mockResolvedValue({ id: 'code-1' })
+
+    const redirectReq = makeMicrosoftReq({
+      query: { frontend_origin: 'https://evil.jct.ac.il' },
+      headers: { host: 'api.jct.ac.il' },
+    })
+    await microsoftRedirect(redirectReq, { cookie: jest.fn(), redirect: jest.fn() }, jest.fn())
+    const signedState = microsoftProviderMock.getAuthUrl.mock.calls[0][0]
+
+    const callbackReq = makeMicrosoftReq({
+      query: { code: 'ms-code', state: signedState },
+      headers: { host: 'api.jct.ac.il' },
+    })
+    const callbackRes = { locals: {}, clearCookie: jest.fn(), redirect: jest.fn() }
+
+    await microsoftCallback(callbackReq, callbackRes, jest.fn())
+
+    expect(callbackRes.redirect.mock.calls[0][0]).toMatch(/^https:\/\/ethics\.jct\.ac\.il\/sso-callback\?code=/)
+    expect(callbackRes.redirect.mock.calls[0][0]).not.toContain('evil.jct.ac.il')
+    restore()
   })
 })
