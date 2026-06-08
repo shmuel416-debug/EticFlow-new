@@ -12,6 +12,8 @@
 import prisma from '../config/database.js'
 import { AppError } from '../utils/errors.js'
 import { getRequestRole, hasAnyRole } from '../utils/roles.js'
+import { notifyStatusChange } from '../services/notification.service.js'
+import { setDueDates } from '../services/sla.service.js'
 
 // ─────────────────────────────────────────────
 // HELPERS
@@ -426,6 +428,8 @@ export async function researcherSubmit(req, res, next) {
       data:  { status: 'SUBMITTED', submittedAt: new Date() },
     })
 
+    setDueDates(updated.id, 'SUBMITTED').catch(() => {})
+    notifyStatusChange(updated, 'SUBMITTED').catch(() => {})
     res.locals.entityId = updated.id
     res.json({ submission: updated })
   } catch (err) {
