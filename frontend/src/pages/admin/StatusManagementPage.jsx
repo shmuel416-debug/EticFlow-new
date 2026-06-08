@@ -21,6 +21,62 @@ const ROLES = ['RESEARCHER', 'SECRETARY', 'REVIEWER', 'CHAIRMAN', 'ADMIN']
 const ACTIONS = ['VIEW', 'EDIT', 'COMMENT', 'UPLOAD_DOC', 'DELETE_DOC', 'VIEW_INTERNAL', 'TRANSITION', 'ASSIGN', 'SUBMIT_REVIEW', 'RECORD_DECISION']
 const TABS = ['statuses', 'transitions', 'permissions']
 
+// Must mirror the backend `statusCodeSchema` in statuses.routes.js.
+const STATUS_CODE_REGEX = /^[A-Z_]{2,40}$/
+
+// Maps known backend AppError messages to localized i18n keys.
+const SERVER_MESSAGE_KEYS = {
+  'Status code already exists': 'statusManagement.errors.codeExists',
+  'System status code cannot be changed': 'statusManagement.errors.systemCodeImmutable',
+  'At least one initial status is required': 'statusManagement.errors.initialRequired',
+  'System status cannot be deleted': 'statusManagement.errors.systemDeleteBlocked',
+  'Status is in use by active submissions': 'statusManagement.errors.statusInUse',
+}
+
+// Maps Zod field error keys to localized i18n keys (priority order).
+const FIELD_ERROR_KEYS = [
+  ['code', 'statusManagement.errors.codeFormat'],
+  ['labelHe', 'statusManagement.errors.labelHeRequired'],
+  ['labelEn', 'statusManagement.errors.labelEnRequired'],
+  ['color', 'statusManagement.errors.colorFormat'],
+]
+
+/**
+ * Validates a status form on the client to surface a precise reason before submit.
+ * @param {{ code: string, labelHe: string, labelEn: string }} form
+ * @returns {string|null} i18n key of the first problem, or null when valid
+ */
+function validateStatusForm(form) {
+  const code = form.code.trim().toUpperCase()
+  if (!code) return 'statusManagement.errors.codeRequired'
+  if (!STATUS_CODE_REGEX.test(code)) return 'statusManagement.errors.codeFormat'
+  if (!form.labelHe.trim()) return 'statusManagement.errors.labelHeRequired'
+  if (!form.labelEn.trim()) return 'statusManagement.errors.labelEnRequired'
+  return null
+}
+
+/**
+ * Resolves a localized message from a normalized API error.
+ * Prefers known messages and Zod field errors; falls back to a generic key.
+ * @param {{ message?: string, code?: string, details?: any }} err
+ * @param {(key: string) => string} t
+ * @param {string} fallbackKey
+ * @returns {string}
+ */
+function resolveServerError(err, t, fallbackKey) {
+  const mappedKey = err?.message && SERVER_MESSAGE_KEYS[err.message]
+  if (mappedKey) return t(mappedKey)
+
+  const fieldErrors = err?.details?.fieldErrors
+  if (fieldErrors) {
+    for (const [field, key] of FIELD_ERROR_KEYS) {
+      if (fieldErrors[field]?.length) return t(key)
+    }
+  }
+
+  return t(fallbackKey)
+}
+
 /**
  * @param {string} [lng]
  * @returns {boolean}
@@ -170,6 +226,11 @@ export default function StatusManagementPage() {
   }
 
   async function handleCreateStatus() {
+    const validationKey = validateStatusForm(newStatus)
+    if (validationKey) {
+      setError(t(validationKey))
+      return
+    }
     setSaving(true)
     setError('')
     try {
@@ -180,22 +241,27 @@ export default function StatusManagementPage() {
       setNewStatus(createEmptyStatusForm())
       await refreshAll()
       showToast(t('statusManagement.saved'))
-    } catch {
-      setError(t('statusManagement.saveError'))
+    } catch (err) {
+      setError(resolveServerError(err, t, 'statusManagement.saveError'))
     } finally {
       setSaving(false)
     }
   }
 
   async function handleUpdateStatus(statusId, patch) {
+    const validationKey = validateStatusForm(patch)
+    if (validationKey) {
+      setError(t(validationKey))
+      return
+    }
     setSaving(true)
     setError('')
     try {
       await api.put(`/admin/statuses/${statusId}`, patch)
       await refreshAll()
       showToast(t('statusManagement.saved'))
-    } catch {
-      setError(t('statusManagement.saveError'))
+    } catch (err) {
+      setError(resolveServerError(err, t, 'statusManagement.saveError'))
     } finally {
       setSaving(false)
     }
@@ -208,8 +274,8 @@ export default function StatusManagementPage() {
       await api.delete(`/admin/statuses/${statusId}`)
       await refreshAll()
       showToast(t('statusManagement.deleted'))
-    } catch {
-      setError(t('statusManagement.deleteError'))
+    } catch (err) {
+      setError(resolveServerError(err, t, 'statusManagement.deleteError'))
     } finally {
       setSaving(false)
     }
@@ -380,14 +446,19 @@ export default function StatusManagementPage() {
             <CardBody>
               <div className="space-y-4">
                 <div className="flex flex-col gap-2 sm:grid sm:grid-cols-2 md:grid-cols-7 md:gap-2 md:items-end">
-                  <Input
-                    data-testid="status-mgmt-add-code"
-                    dir="ltr"
-                    value={newStatus.code}
-                    onChange={(e) => setNewStatus((prev) => ({ ...prev, code: e.target.value }))}
-                    placeholder={t('statusManagement.fields.code')}
-                    aria-label={t('statusManagement.fields.code')}
-                  />
+                  <div className="flex flex-col gap-1">
+                    <Input
+                      data-testid="status-mgmt-add-code"
+                      dir="ltr"
+                      value={newStatus.code}
+                      onChange={(e) => setNewStatus((prev) => ({ ...prev, code: e.target.value }))}
+                      placeholder={t('statusManagement.fields.code')}
+                      aria-label={t('statusManagement.fields.code')}
+                    />
+                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                      {t('statusManagement.fields.codeHint')}
+                    </span>
+                  </div>
                   {isHeUI ? (
                     <>
                       <Input

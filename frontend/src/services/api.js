@@ -156,6 +156,7 @@ api.interceptors.response.use(
       message: data?.error || 'SERVER_ERROR',
       code:    data?.code  || 'SERVER_ERROR',
       status,
+      ...(data?.details && { details: data.details }),
     }
     return Promise.reject(normalized)
   }

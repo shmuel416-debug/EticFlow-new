@@ -147,7 +147,7 @@
       "title": "Researcher Dashboard",
       "activeSubmissions": "Active Submissions",
       "pendingRevision": "Pending Revision",
-      "approvedThisYear": "Approved This Year",
+      "approvedThisYear": "Approved Submissions",
       "recentSubmissions": "My Submissions",
       "viewAll": "View All",
       "newSubmission": "New Submission",
@@ -343,7 +343,12 @@
     "viewPdfEn": "View (English)",
     "downloadPdf": "Download (Hebrew)",
     "downloadPdfEn": "Download (English)",
+    "viewRejectPdf": "View Rejection (Hebrew)",
+    "viewRejectPdfEn": "View Rejection (English)",
+    "downloadRejectPdf": "Download Rejection (Hebrew)",
+    "downloadRejectPdfEn": "Download Rejection (English)",
     "pdfInProgress": "Generating approval PDF, please wait...",
+    "rejectionPdfInProgress": "Generating rejection PDF, please wait...",
     "steps": {
       "DRAFT": "Draft saved",
       "SUBMITTED": "Submitted",
@@ -1278,6 +1283,7 @@
     },
     "fields": {
       "code": "Code",
+      "codeHint": "Uppercase English letters and underscores only (2–40 chars), e.g. PENDING_REVIEW",
       "labelHe": "Hebrew label",
       "labelEn": "English label",
       "descriptionHe": "Hebrew description",
@@ -1285,6 +1291,18 @@
       "color": "Color",
       "isInitial": "Initial status",
       "isTerminal": "Terminal status"
+    },
+    "errors": {
+      "codeRequired": "Status code is required",
+      "codeFormat": "Status code must contain uppercase English letters and underscores only (2–40 chars), e.g. PENDING_REVIEW",
+      "labelHeRequired": "Hebrew label is required",
+      "labelEnRequired": "English label is required",
+      "colorFormat": "Invalid color (expected #RRGGBB)",
+      "codeExists": "Status code already exists",
+      "systemCodeImmutable": "A system status code cannot be changed",
+      "initialRequired": "At least one initial status is required",
+      "systemDeleteBlocked": "A system status cannot be deleted",
+      "statusInUse": "Cannot delete — the status is in use by active submissions"
     },
     "addStatus": "Add status",
     "loadError": "Failed to load status configuration",

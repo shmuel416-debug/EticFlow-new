@@ -147,7 +147,7 @@
       "title": "דשבורד חוקר",
       "activeSubmissions": "בקשות פעילות",
       "pendingRevision": "ממתינות לתיקון",
-      "approvedThisYear": "אושרו השנה",
+      "approvedThisYear": "הגשות שאושרו",
       "recentSubmissions": "הגשות שלי",
       "viewAll": "הצג הכל",
       "newSubmission": "הגשה חדשה",
@@ -343,7 +343,12 @@
     "viewPdfEn": "צפה באישור (אנגלית)",
     "downloadPdf": "הורד אישור (עברית)",
     "downloadPdfEn": "הורד אישור (אנגלית)",
+    "viewRejectPdf": "צפה בדחייה (עברית)",
+    "viewRejectPdfEn": "צפה בדחייה (אנגלית)",
+    "downloadRejectPdf": "הורד דחייה (עברית)",
+    "downloadRejectPdfEn": "הורד דחייה (אנגלית)",
     "pdfInProgress": "מייצר אישור PDF, נא להמתין...",
+    "rejectionPdfInProgress": "מייצר דחייה PDF, נא להמתין...",
     "steps": {
       "DRAFT": "טיוטה נשמרה",
       "SUBMITTED": "הוגש בהצלחה",
@@ -1278,6 +1283,7 @@
     },
     "fields": {
       "code": "קוד",
+      "codeHint": "אותיות אנגליות גדולות וקו תחתון בלבד (2–40 תווים), לדוגמה: PENDING_REVIEW",
       "labelHe": "שם עברי",
       "labelEn": "שם אנגלי",
       "descriptionHe": "תיאור בעברית",
@@ -1285,6 +1291,18 @@
       "color": "צבע",
       "isInitial": "סטטוס התחלתי",
       "isTerminal": "סטטוס סופי"
+    },
+    "errors": {
+      "codeRequired": "יש להזין קוד סטטוס",
+      "codeFormat": "קוד הסטטוס חייב להכיל אותיות אנגליות גדולות וקו תחתון בלבד (2–40 תווים), לדוגמה: PENDING_REVIEW",
+      "labelHeRequired": "יש להזין שם בעברית",
+      "labelEnRequired": "יש להזין שם באנגלית",
+      "colorFormat": "צבע לא תקין (נדרש פורמט #RRGGBB)",
+      "codeExists": "קוד הסטטוס כבר קיים במערכת",
+      "systemCodeImmutable": "לא ניתן לשנות קוד של סטטוס מערכת",
+      "initialRequired": "נדרש לפחות סטטוס התחלתי אחד",
+      "systemDeleteBlocked": "לא ניתן למחוק סטטוס מערכת",
+      "statusInUse": "לא ניתן למחוק — הסטטוס בשימוש בבקשות פעילות"
     },
     "addStatus": "הוסף סטטוס",
     "loadError": "שגיאה בטעינת תצורת הסטטוסים",
