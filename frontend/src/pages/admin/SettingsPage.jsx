@@ -53,6 +53,21 @@ const GROUPS = [
     ],
   },
   {
+    groupKey: 'aiSettings',
+    icon: FileCheck2,
+    fields: [
+      {
+        key: 'ai_provider',
+        type: 'select',
+        options: [
+          { value: 'mock', labelKey: 'settings.aiProviderOptions.mock' },
+          { value: 'gemini', labelKey: 'settings.aiProviderOptions.gemini' },
+        ],
+      },
+      { key: 'ai_model', type: 'text', hint: 'gemini-1.5-flash' },
+    ],
+  },
+  {
     groupKey: 'emailSettings',
     icon: Mail,
     fields: [
@@ -329,10 +344,23 @@ function SettingsGroup({ group, values, onSave }) {
                       dir="ltr"
                     />
                   </div>
+                ) : field.type === 'select' ? (
+                  <Select
+                    id={inputId}
+                    value={draft[field.key] || ''}
+                    onChange={e => handleChange(field.key, e.target.value)}
+                    aria-describedby={describedBy}
+                  >
+                    {(field.options || []).map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {t(option.labelKey)}
+                      </option>
+                    ))}
+                  </Select>
                 ) : (
                   <Input
                     id={inputId}
-                    type={field.type}
+                    type={field.type === 'password' ? 'password' : field.type}
                     value={draft[field.key] || ''}
                     onChange={e => handleChange(field.key, e.target.value)}
                     placeholder={field.hint ?? ''}

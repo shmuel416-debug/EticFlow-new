@@ -798,6 +798,15 @@
       "metadata_only": "Currently, documents are scanned by metadata only (file name/type)."
     },
     "noAnalysis": "No AI analysis has been run yet",
+    "fieldSelector": {
+      "title": "Fields to summarize",
+      "hint": "Only selected fields are sent to AI.",
+      "selectAll": "Select all",
+      "clear": "Clear",
+      "empty": "No fields available.",
+      "loadError": "Failed to load selectable fields.",
+      "answeredBadge": "Answered"
+    },
     "askEnglishQuestion": "Answer in English?",
     "run": "Run AI Analysis",
     "rerun": "Refresh Analysis",
@@ -1146,6 +1155,7 @@
     "institutionInfo": "Institution Info",
     "slaThresholds": "SLA Thresholds",
     "fileUpload": "File Upload",
+    "aiSettings": "AI Settings",
     "emailSettings": "Email Settings",
     "institution_name_he": "Institution Name (Hebrew)",
     "institution_name_en": "Institution Name (English)",
@@ -1157,6 +1167,12 @@
     "sla_decision_days": "Decision Days (SLA)",
     "max_file_size_mb": "Max File Size (MB)",
     "allowed_file_types": "Allowed File Types",
+    "ai_provider": "AI Provider",
+    "ai_model": "Gemini Model",
+    "aiProviderOptions": {
+      "mock": "Mock (development)",
+      "gemini": "Gemini (production)"
+    },
     "email_sender_name": "Email Sender Name",
     "email_sender_address": "Email Sender Address",
     "approvalTemplate": "Approval Letter Template",

@@ -248,6 +248,8 @@ async function seedInstitutionSettings() {
     { key: 'sla_holidays',        value: '[]',                valueType: 'json' },
     { key: 'timezone',            value: 'Asia/Jerusalem',    valueType: 'string' },
     { key: 'decision_model',      value: 'IRB_FULL',          valueType: 'string' },
+    { key: 'ai_provider',         value: 'mock',              valueType: 'string' },
+    { key: 'ai_model',            value: 'gemini-1.5-flash',  valueType: 'string' },
     { key: 'committee_quorum_min_votes', value: '3',          valueType: 'number' },
     { key: 'continuing_review_reminder_days', value: '30',     valueType: 'number' },
     {

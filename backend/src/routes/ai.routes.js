@@ -2,6 +2,7 @@
  * Ethic-Net — AI Routes
  * POST /api/ai/analyze/:subId  — run AI analysis on a submission
  * GET  /api/ai/analyze/:subId  — fetch latest saved analysis
+ * GET  /api/ai/analyze/:subId/fields — fetch selectable form fields for analysis
  *
  * Advisory only — never blocks or auto-decides.
  */
@@ -26,6 +27,12 @@ router.get(
   '/analyze/:subId',
   authenticate,
   controller.getLatest
+)
+
+router.get(
+  '/analyze/:subId/fields',
+  authenticate,
+  controller.getAnalysisFields
 )
 
 export default router

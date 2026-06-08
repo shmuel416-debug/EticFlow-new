@@ -26,6 +26,9 @@ import {
 } from '../constants/accessibilityStatement.js'
 import { getRequestRole } from '../utils/roles.js'
 
+const AI_PROVIDER_KEY = 'ai_provider'
+const AI_MODEL_KEY = 'ai_model'
+
 /** Allowed setting keys to prevent arbitrary key creation via the API. */
 const ADMIN_ONLY_KEYS = new Set([
   'institution_name_he',
@@ -40,6 +43,8 @@ const ADMIN_ONLY_KEYS = new Set([
   'allowed_file_types',
   'email_sender_name',
   'email_sender_address',
+  AI_PROVIDER_KEY,
+  AI_MODEL_KEY,
   'approval_chairman_name_he',
   'approval_chairman_name_en',
   ACCESSIBILITY_STATEMENT_KEY,

@@ -798,6 +798,15 @@
       "metadata_only": "כרגע המסמכים נסרקים לפי מטא-דאטה בלבד (שם קובץ/סוג קובץ)."
     },
     "noAnalysis": "לא בוצע ניתוח AI עדיין",
+    "fieldSelector": {
+      "title": "שדות לתמצות",
+      "hint": "רק השדות המסומנים יישלחו ל-AI.",
+      "selectAll": "בחר הכל",
+      "clear": "נקה בחירה",
+      "empty": "לא נמצאו שדות זמינים.",
+      "loadError": "שגיאה בטעינת שדות התמצות.",
+      "answeredBadge": "מולא"
+    },
     "askEnglishQuestion": "האם לענות באנגלית?",
     "run": "הרץ ניתוח AI",
     "rerun": "עדכן ניתוח",
@@ -1146,6 +1155,7 @@
     "institutionInfo": "פרטי המוסד",
     "slaThresholds": "ספי SLA",
     "fileUpload": "העלאת קבצים",
+    "aiSettings": "הגדרות AI",
     "emailSettings": "הגדרות אימייל",
     "institution_name_he": "שם המוסד (עברית)",
     "institution_name_en": "שם המוסד (אנגלית)",
@@ -1157,6 +1167,12 @@
     "sla_decision_days": "ימי החלטה (SLA)",
     "max_file_size_mb": "גודל קובץ מקסימלי (MB)",
     "allowed_file_types": "סוגי קבצים מותרים",
+    "ai_provider": "ספק AI",
+    "ai_model": "מודל Gemini",
+    "aiProviderOptions": {
+      "mock": "Mock (פיתוח)",
+      "gemini": "Gemini (פרודקשן)"
+    },
     "email_sender_name": "שם שולח האימייל",
     "email_sender_address": "כתובת שולח האימייל",
     "approvalTemplate": "טמפלט מכתב אישור",

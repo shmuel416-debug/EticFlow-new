@@ -57,6 +57,11 @@ export default function AiPanel({ submissionId, canRun = false }) {
   const [running,  setRunning]  = useState(false)
   const [error,    setError]    = useState('')
   const [responseLanguage, setResponseLanguage] = useState('he')
+  const [fieldOptions, setFieldOptions] = useState([])
+  const [selectedFieldIds, setSelectedFieldIds] = useState([])
+  const [fieldsLoading, setFieldsLoading] = useState(false)
+  const [fieldsError, setFieldsError] = useState('')
+  const [isFieldSelectorOpen, setIsFieldSelectorOpen] = useState(false)
 
   /** Loads the latest saved analysis from the API. */
   const loadAnalysis = useCallback(async () => {
@@ -70,20 +75,61 @@ export default function AiPanel({ submissionId, canRun = false }) {
     }
   }, [submissionId, t])
 
+  /**
+   * Loads selectable form fields for AI analysis.
+   * @returns {Promise<void>}
+   */
+  const loadFieldOptions = useCallback(async () => {
+    if (!canRun) return
+    setFieldsLoading(true)
+    setFieldsError('')
+    try {
+      const { data } = await api.get(`/ai/analyze/${submissionId}/fields`)
+      const options = Array.isArray(data?.data) ? data.data : []
+      setFieldOptions(options)
+      const answeredIds = options.filter((item) => item.answered).map((item) => item.id)
+      const fallbackIds = options.map((item) => item.id)
+      setSelectedFieldIds(answeredIds.length > 0 ? answeredIds : fallbackIds)
+    } catch {
+      setFieldsError(t('ai.fieldSelector.loadError'))
+      setFieldOptions([])
+      setSelectedFieldIds([])
+    } finally {
+      setFieldsLoading(false)
+    }
+  }, [canRun, submissionId, t])
+
   useEffect(() => { loadAnalysis() }, [loadAnalysis])
+  useEffect(() => { loadFieldOptions() }, [loadFieldOptions])
 
   /** Triggers a new AI analysis. */
   async function handleRun() {
     setRunning(true)
     setError('')
     try {
-      const { data } = await api.post(`/ai/analyze/${submissionId}`, { responseLanguage })
+      const { data } = await api.post(`/ai/analyze/${submissionId}`, {
+        responseLanguage,
+        fields: selectedFieldIds,
+      })
       setAnalysis(data.data)
     } catch {
       setError(t('ai.runError'))
     } finally {
       setRunning(false)
     }
+  }
+
+  /**
+   * Toggles a field ID in the selection list.
+   * @param {string} fieldId
+   * @returns {void}
+   */
+  function toggleFieldSelection(fieldId) {
+    setSelectedFieldIds((previous) => (
+      previous.includes(fieldId)
+        ? previous.filter((id) => id !== fieldId)
+        : [...previous, fieldId]
+    ))
   }
 
   // ─── Loading ───────────────────────────────────
@@ -247,6 +293,80 @@ export default function AiPanel({ submissionId, canRun = false }) {
         {/* Run button */}
         {canRun && (
           <div aria-live="polite" aria-atomic="true">
+            <div className="mb-3 border border-gray-100 rounded-lg">
+              <button
+                type="button"
+                className="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-700"
+                onClick={() => setIsFieldSelectorOpen((previous) => !previous)}
+              >
+                <span>
+                  {t('ai.fieldSelector.title')} ({selectedFieldIds.length}/{fieldOptions.length})
+                </span>
+                <span>{isFieldSelectorOpen ? '−' : '+'}</span>
+              </button>
+
+              {isFieldSelectorOpen && (
+                <div className="px-3 pb-3 border-t border-gray-100">
+                  <p className="text-[11px] text-gray-500 my-2">{t('ai.fieldSelector.hint')}</p>
+                  {fieldsError && (
+                    <p className="text-xs text-red-600 mb-2">{fieldsError}</p>
+                  )}
+                  {!fieldsError && (
+                    <>
+                      <div className="flex gap-2 mb-2">
+                        <button
+                          type="button"
+                          className="text-[11px] font-semibold text-[var(--lev-navy)]"
+                          onClick={() => setSelectedFieldIds(fieldOptions.map((item) => item.id))}
+                          disabled={fieldsLoading || fieldOptions.length === 0}
+                        >
+                          {t('ai.fieldSelector.selectAll')}
+                        </button>
+                        <button
+                          type="button"
+                          className="text-[11px] font-semibold text-gray-500"
+                          onClick={() => setSelectedFieldIds([])}
+                          disabled={fieldsLoading || fieldOptions.length === 0}
+                        >
+                          {t('ai.fieldSelector.clear')}
+                        </button>
+                      </div>
+                      {fieldsLoading && (
+                        <p className="text-xs text-gray-400">{t('common.loading')}</p>
+                      )}
+                      {!fieldsLoading && fieldOptions.length === 0 && (
+                        <p className="text-xs text-gray-400">{t('ai.fieldSelector.empty')}</p>
+                      )}
+                      {!fieldsLoading && fieldOptions.length > 0 && (
+                        <ul className="max-h-40 overflow-y-auto space-y-1">
+                          {fieldOptions.map((item) => (
+                            <li key={item.id}>
+                              <label className="flex items-center gap-2 text-xs text-gray-700">
+                                <input
+                                  type="checkbox"
+                                  className="w-4 h-4 accent-[var(--lev-navy)]"
+                                  checked={selectedFieldIds.includes(item.id)}
+                                  onChange={() => toggleFieldSelection(item.id)}
+                                />
+                                <span className="flex-1">
+                                  {i18n.language === 'he' ? item.label : (item.labelEn || item.label)}
+                                </span>
+                                {item.answered && (
+                                  <span className="text-[10px] font-semibold text-[var(--status-success)]">
+                                    {t('ai.fieldSelector.answeredBadge')}
+                                  </span>
+                                )}
+                              </label>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+
             <label className="flex items-center gap-2 text-xs text-gray-600 mb-2">
               <input
                 type="checkbox"
