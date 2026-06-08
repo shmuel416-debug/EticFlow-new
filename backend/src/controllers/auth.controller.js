@@ -38,15 +38,16 @@ const BREAK_GLASS_ADMIN_EMAIL = String(process.env.ADMIN_EMAIL ?? '').trim().toL
 
 /**
  * Signs an access JWT token for a user.
- * @param {{ id: string, email: string, role?: string, roles?: string[], mustChangePassword?: boolean }} user
+ * @param {{ id: string, email: string, role?: string, roles?: string[], mustChangePassword?: boolean, authProvider?: string }} user
  * @returns {string} Signed JWT
  */
 function signAccessToken(user) {
   const roles = Array.isArray(user.roles) && user.roles.length > 0
     ? user.roles
     : [user.role || 'RESEARCHER']
+  const requiresPasswordChange = user.authProvider === 'LOCAL' && !!user.mustChangePassword
   return jwt.sign(
-    { id: user.id, email: user.email, role: roles[0], roles, mustChangePassword: !!user.mustChangePassword },
+    { id: user.id, email: user.email, role: roles[0], roles, mustChangePassword: requiresPasswordChange },
     authConfig.jwt.secret,
     { expiresIn: authConfig.jwt.expiresIn, keyid: authConfig.jwt.secretVersion }
   )
