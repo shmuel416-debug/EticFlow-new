@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import api, { buildApiUrl } from '../../services/api'
+import { getUserDisplayName } from '../../utils/userDisplayName'
 import {
   Button, Card, CardHeader, CardBody, CardFooter,
   PageHeader, FormField, Input, Textarea, Select, Tabs, Badge, Switch,
@@ -241,7 +242,7 @@ function buildPreviewContextFromSubmission(lang, submission) {
     issueDate: formatDateForPreview(new Date(), lang),
     approvedDate,
     validUntil: validUntilDate,
-    researcherName: submission.author?.fullName || '',
+    researcherName: getUserDisplayName(submission.author, lang),
     researcherEmail: submission.author?.email || '',
     institutionName: lang === 'he' ? 'המוסד האקדמי' : 'Academic Institution',
   }

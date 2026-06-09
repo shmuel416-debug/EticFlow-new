@@ -10,6 +10,8 @@ import { useEffect } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
+import { useNotifications } from '../../context/NotificationsContext'
+import { getUserDisplayName } from '../../utils/userDisplayName'
 import levLogo from '../../assets/LOGO.jpg'
 import {
   Home, FileText, FilePlus2, ClipboardList, Search, Scale, FolderOpen,
@@ -46,20 +48,48 @@ const NAV_ITEMS = [
 const SIDEBAR_WIDTH = 240
 
 /**
- * Nav item renderer — consistent styling, gold accent when active.
- * @param {{ item: typeof NAV_ITEMS[number], onNavigate: () => void }} props
+ * Renders unread count pill matching the header bell badge.
+ * @param {{ count: number }} props
+ * @returns {JSX.Element|null}
  */
-function NavItem({ item, onNavigate, fromPath }) {
+function UnreadBadge({ count }) {
+  if (count <= 0) return null
+  return (
+    <span
+      aria-hidden="true"
+      className="ms-auto tabular-nums font-bold text-white flex items-center justify-center flex-shrink-0"
+      style={{
+        minWidth: 20,
+        height: 20,
+        padding: '0 6px',
+        borderRadius: 'var(--radius-full)',
+        background: 'var(--lev-purple)',
+        fontSize: 11,
+      }}
+    >
+      {count > 99 ? '99+' : count}
+    </span>
+  )
+}
+
+/**
+ * Nav item renderer — consistent styling, gold accent when active.
+ * @param {{ item: typeof NAV_ITEMS[number], onNavigate: () => void, badgeCount?: number }} props
+ */
+function NavItem({ item, onNavigate, fromPath, badgeCount = 0 }) {
   const { t } = useTranslation()
   const Icon = item.icon
+  const label = t(item.labelKey || `nav.${item.key}`)
   const target = item.key === 'accessibilityStatement'
     ? { pathname: item.path, state: { from: fromPath } }
     : item.path
+  const ariaLabel = badgeCount > 0 ? `${label} — ${badgeCount}` : label
   return (
     <NavLink
       to={target}
       end={item.path === '/dashboard'}
       onClick={onNavigate}
+      aria-label={ariaLabel}
       className={({ isActive }) => [
         'group flex items-center gap-3 rounded-xl font-medium relative',
         'transition-colors outline-none',
@@ -101,7 +131,8 @@ function NavItem({ item, onNavigate, fromPath }) {
             focusable="false"
             style={{ flexShrink: 0, color: 'inherit' }}
           />
-          <span className="truncate">{t(item.labelKey || `nav.${item.key}`)}</span>
+          <span className="truncate">{label}</span>
+          <UnreadBadge count={badgeCount} />
         </>
       )}
     </NavLink>
@@ -114,6 +145,7 @@ function NavItem({ item, onNavigate, fromPath }) {
 export default function Sidebar({ isOpen, onClose }) {
   const { t, i18n } = useTranslation()
   const { user, logout, isImpersonating, impersonation } = useAuth()
+  const { unreadCount } = useNotifications()
   const location = useLocation()
   const navigate = useNavigate()
   const isRtl = i18n.dir() === 'rtl'
@@ -135,7 +167,8 @@ export default function Sidebar({ isOpen, onClose }) {
     onClose()
   }
 
-  const initials = user?.fullName?.charAt(0) ?? '?'
+  const displayName = getUserDisplayName(user, i18n.language)
+  const initials = displayName?.charAt(0) ?? '?'
 
   useEffect(() => {
     if (!isOpen) return undefined
@@ -218,7 +251,13 @@ export default function Sidebar({ isOpen, onClose }) {
           aria-label={t('nav.mainNavigation')}
         >
           {mainItems.map((item) => (
-            <NavItem key={item.key} item={item} onNavigate={onClose} fromPath={`${location.pathname}${location.search}`} />
+            <NavItem
+              key={item.key}
+              item={item}
+              onNavigate={onClose}
+              fromPath={`${location.pathname}${location.search}`}
+              badgeCount={item.key === 'notifications' ? unreadCount : 0}
+            />
           ))}
 
           {settingsItem && (
@@ -247,31 +286,38 @@ export default function Sidebar({ isOpen, onClose }) {
             >
               <UserCircle2 size={14} strokeWidth={2} aria-hidden="true" focusable="false" />
               <span className="truncate">
-                {t('admin.impersonatingAs', { name: impersonation.originalUser.fullName })}
+                {t('admin.impersonatingAs', { name: getUserDisplayName(impersonation.originalUser, i18n.language) })}
               </span>
             </div>
           )}
           <div className="flex items-center gap-2.5 p-2 rounded-xl">
-            <div
-              className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
-              style={{
-                background: isImpersonating ? 'var(--status-warning)' : 'var(--gradient-brand)',
-              }}
-              aria-hidden="true"
+            <NavLink
+              to="/profile"
+              onClick={onClose}
+              className="flex items-center gap-2.5 p-2 rounded-xl flex-1 min-w-0 hover:bg-gray-50 transition-colors"
+              aria-label={t('profile.title')}
             >
-              {initials}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p
-                className="text-xs font-bold truncate"
-                style={{ color: isImpersonating ? 'var(--status-warning)' : 'var(--lev-navy)' }}
+              <div
+                className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
+                style={{
+                  background: isImpersonating ? 'var(--status-warning)' : 'var(--gradient-brand)',
+                }}
+                aria-hidden="true"
               >
-                {user?.fullName}
-              </p>
-              <p className="text-[11px] truncate" style={{ color: 'var(--text-muted)' }}>
-                {t(`roles.${activeRole?.toLowerCase() ?? 'unknown'}`)}
-              </p>
-            </div>
+                {initials}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p
+                  className="text-xs font-bold truncate"
+                  style={{ color: isImpersonating ? 'var(--status-warning)' : 'var(--lev-navy)' }}
+                >
+                  {displayName}
+                </p>
+                <p className="text-[11px] truncate" style={{ color: 'var(--text-muted)' }}>
+                  {t(`roles.${activeRole?.toLowerCase() ?? 'unknown'}`)}
+                </p>
+              </div>
+            </NavLink>
             <button
               type="button"
               onClick={handleLogout}

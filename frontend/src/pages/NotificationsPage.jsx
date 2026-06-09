@@ -9,6 +9,7 @@ import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Bell, Check, AlertCircle } from 'lucide-react'
 import api from '../services/api'
+import { useNotifications } from '../context/NotificationsContext'
 import {
   PageHeader,
   Card,
@@ -40,6 +41,7 @@ function formatDate(iso) {
 export default function NotificationsPage() {
   const { t }               = useTranslation()
   useDocumentTitle(t('notifications.pageTitle'))
+  const { decrementUnreadCount, clearUnreadCount } = useNotifications()
   const [notifications,     setNotifications]     = useState([])
   const [loading,           setLoading]           = useState(true)
   const [error,             setError]             = useState('')
@@ -68,11 +70,13 @@ export default function NotificationsPage() {
    * @param {string} notifId
    */
   async function handleMarkRead(notifId) {
+    const wasUnread = notifications.some((n) => n.id === notifId && !n.isRead)
     try {
       await api.patch(`/notifications/${notifId}/read`)
       setNotifications((prev) =>
         prev.map((n) => (n.id === notifId ? { ...n, isRead: true } : n))
       )
+      if (wasUnread) decrementUnreadCount()
     } catch { /* silent */ }
   }
 
@@ -84,6 +88,7 @@ export default function NotificationsPage() {
     try {
       await api.patch('/notifications/read-all')
       setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })))
+      clearUnreadCount()
     } catch { /* silent */ } finally {
       setMarkingAll(false)
     }

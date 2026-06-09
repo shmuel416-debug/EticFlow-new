@@ -12,6 +12,7 @@ import ExcelJS from 'exceljs'
 import prisma  from '../config/database.js'
 import { recordAuditEntry } from '../middleware/audit.js'
 import { AppError } from '../utils/errors.js'
+import { getUserDisplayName } from '../utils/userDisplayName.js'
 
 const MAX_EXPORT_ROWS = parseInt(process.env.REPORTS_EXPORT_MAX_ROWS ?? '5000', 10)
 const MAX_EXPORT_RANGE_DAYS = parseInt(process.env.REPORTS_EXPORT_MAX_RANGE_DAYS ?? '366', 10)
@@ -268,8 +269,8 @@ export async function exportSubmissions(req, res, next) {
         track:         true,
         createdAt:     true,
         updatedAt:     true,
-        author:        { select: { fullName: true, email: true } },
-        reviewer:      { select: { fullName: true } },
+        author:        { select: { fullName: true, fullNameHe: true, email: true } },
+        reviewer:      { select: { fullName: true, fullNameHe: true } },
         slaTracking:   { select: { isBreached: true } },
       },
     })
@@ -321,9 +322,9 @@ export async function exportSubmissions(req, res, next) {
         title:         sanitizeSpreadsheetCell(s.title),
         status:        sanitizeSpreadsheetCell(STATUS_LABELS[s.status]?.[lang] ?? s.status),
         track:         sanitizeSpreadsheetCell(TRACK_LABELS[s.track]?.[lang] ?? s.track),
-        author:        sanitizeSpreadsheetCell(s.author?.fullName ?? ''),
+        author:        sanitizeSpreadsheetCell(getUserDisplayName(s.author, lang)),
         email:         sanitizeSpreadsheetCell(s.author?.email ?? ''),
-        reviewer:      sanitizeSpreadsheetCell(s.reviewer?.fullName ?? ''),
+        reviewer:      sanitizeSpreadsheetCell(getUserDisplayName(s.reviewer, lang)),
         slaBreach:     sanitizeSpreadsheetCell(s.slaTracking?.isBreached
           ? (lang === 'he' ? 'כן' : 'Yes')
           : (lang === 'he' ? 'לא' : 'No')),
@@ -387,7 +388,7 @@ export async function getAuditLogs(req, res, next) {
         skip,
         take,
         orderBy: { createdAt: 'desc' },
-        include: { user: { select: { id: true, fullName: true, email: true, roles: true } } },
+        include: { user: { select: { id: true, fullName: true, fullNameHe: true, email: true, roles: true } } },
       }),
       prisma.auditLog.count({ where }),
     ])

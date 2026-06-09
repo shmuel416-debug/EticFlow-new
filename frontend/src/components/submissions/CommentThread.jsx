@@ -8,6 +8,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
+import { getUserDisplayName } from '../../utils/userDisplayName'
 
 /**
  * Formats an ISO date string to locale date + time.
@@ -23,11 +24,11 @@ function formatDate(iso) {
  * @param {{ comment: object }} props
  */
 function CommentItem({ comment: c }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   return (
     <article className={`p-3 rounded-lg border text-sm ${c.isInternal ? 'bg-amber-50 border-amber-200' : 'bg-gray-50 border-gray-200'}`}>
       <header className="flex items-center gap-2 mb-1 flex-wrap">
-        <span className="font-semibold" style={{ color: 'var(--lev-navy)' }}>{c.author?.fullName}</span>
+        <span className="font-semibold" style={{ color: 'var(--lev-navy)' }}>{getUserDisplayName(c.author, i18n.language)}</span>
         {c.isInternal && (
           <span className="text-xs bg-amber-200 text-amber-800 px-1.5 py-0.5 rounded">
             {t('submission.detail.internalLabel')}

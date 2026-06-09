@@ -15,6 +15,7 @@ import {
   Button, Card, PageHeader, Input, Select, FormField, Table, Badge,
 } from '../../components/ui'
 import useDocumentTitle from '../../hooks/useDocumentTitle'
+import { getUserDisplayName } from '../../utils/userDisplayName'
 
 /** Action badge tone keyed by action verb prefix */
 const ACTION_TONES = {
@@ -119,7 +120,7 @@ export default function AuditLogPage() {
       header: t('auditLog.user'),
       render: (log) => (
         log.user
-          ? <span className="font-medium" style={{ color: 'var(--text-primary)' }}>{log.user.fullName}</span>
+          ? <span className="font-medium" style={{ color: 'var(--text-primary)' }}>{getUserDisplayName(log.user, i18n.language)}</span>
           : <span style={{ color: 'var(--text-muted)' }}>—</span>
       ),
     },

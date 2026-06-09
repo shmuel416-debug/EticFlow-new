@@ -7,6 +7,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
+import { getUserDisplayName } from '../../utils/userDisplayName'
 
 /**
  * @param {{
@@ -17,7 +18,7 @@ import api from '../../services/api'
  * }} props
  */
 export default function ReviewerSelect({ value, onChange, submissionId, disabled = false }) {
-  const { t }       = useTranslation()
+  const { t, i18n }       = useTranslation()
   const [reviewers, setReviewers] = useState([])
   const [loading,   setLoading]   = useState(true)
 
@@ -60,7 +61,7 @@ export default function ReviewerSelect({ value, onChange, submissionId, disabled
             disabled={r.hasConflict}
             title={r.hasConflict ? (r.conflictReasons?.[0]?.message || t('errors.COI_BLOCKED')) : undefined}
           >
-            {r.fullName}{r.hasConflict ? ` — ${t('coi.blockedReviewer')}` : ''}
+            {getUserDisplayName(r, i18n.language)}{r.hasConflict ? ` — ${t('coi.blockedReviewer')}` : ''}
           </option>
         ))}
       </select>

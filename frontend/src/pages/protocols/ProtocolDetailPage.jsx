@@ -27,6 +27,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import api from '../../services/api'
+import { getUserDisplayName } from '../../utils/userDisplayName'
 import {
   Button,
   IconButton,
@@ -251,7 +252,7 @@ export default function ProtocolDetailPage() {
    */
   async function handleRemoveSignature(signature) {
     if (!signature?.id) return
-    const signerName = signature.user?.fullName || t('common.delete')
+    const signerName = getUserDisplayName(signature.user, i18n.language) || t('common.delete')
     if (!window.confirm(t('protocols.removeSignerConfirm', { name: signerName }))) return
 
     setRemovingSignatureId(signature.id)
@@ -656,7 +657,8 @@ export default function ProtocolDetailPage() {
             <ul className="space-y-2 mb-4" role="list">
               {(protocol?.signatures ?? []).map(sig => {
                 const b = signerBadge(sig.status)
-                const initials = sig.user?.fullName?.charAt(0) ?? '?'
+                const displayName = getUserDisplayName(sig.user, i18n.language)
+                const initials = displayName?.charAt(0) ?? '?'
                 return (
                   <li
                     key={sig.id}
@@ -682,7 +684,7 @@ export default function ProtocolDetailPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-xs font-semibold truncate" style={{ color: 'var(--text-primary)' }}>
-                        {sig.user?.fullName}
+                        {displayName}
                       </div>
                       <div className="mt-0.5">
                         <Badge tone={b.tone} size="sm">{t(b.label)}</Badge>
@@ -802,7 +804,7 @@ export default function ProtocolDetailPage() {
                   />
                   <div>
                     <div className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-                      {u.fullName}
+                      {getUserDisplayName(u, i18n.language)}
                     </div>
                     <div className="text-xs" style={{ color: 'var(--text-muted)' }}>{u.email}</div>
                   </div>

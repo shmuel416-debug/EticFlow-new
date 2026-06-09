@@ -14,17 +14,30 @@ import LanguageSwitcher from '../ui/LanguageSwitcher'
 import ImpersonationBanner from './ImpersonationBanner'
 import RoleSwitcher from './RoleSwitcher'
 import { useAuth } from '../../context/AuthContext'
-import api from '../../services/api'
+import { NotificationsProvider, useNotifications } from '../../context/NotificationsContext'
 
 /**
  * Shell layout used by all protected routes.
+ * @returns {JSX.Element}
  */
 export default function AppLayout() {
+  return (
+    <NotificationsProvider>
+      <AppLayoutShell />
+    </NotificationsProvider>
+  )
+}
+
+/**
+ * Inner layout shell that consumes shared notification state.
+ * @returns {JSX.Element}
+ */
+function AppLayoutShell() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { logout } = useAuth()
+  const { unreadCount } = useNotifications()
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [unreadCount, setUnreadCount] = useState(0)
 
   function handleToggleSidebar() {
     if (window.innerWidth >= 1024) return
@@ -45,24 +58,6 @@ export default function AppLayout() {
     logout()
     navigate('/login')
   }
-
-  useEffect(() => {
-    let active = true
-    async function loadUnreadCount() {
-      try {
-        const { data } = await api.get('/notifications?limit=1&unreadOnly=true')
-        if (active) setUnreadCount(data.unreadCount ?? 0)
-      } catch {
-        if (active) setUnreadCount(0)
-      }
-    }
-    loadUnreadCount()
-    const interval = window.setInterval(loadUnreadCount, 60000)
-    return () => {
-      active = false
-      window.clearInterval(interval)
-    }
-  }, [])
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'var(--surface-base)' }}>

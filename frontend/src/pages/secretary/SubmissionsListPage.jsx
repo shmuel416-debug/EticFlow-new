@@ -22,6 +22,7 @@ import {
 } from '../../components/ui'
 import useDocumentTitle from '../../hooks/useDocumentTitle'
 import { buildSubmissionDetailPath } from '../../utils/submissionRoutes'
+import { getUserDisplayName } from '../../utils/userDisplayName'
 
 /**
  * Formats ISO date to locale short date.
@@ -118,7 +119,7 @@ export default function SubmissionsListPage() {
     {
       key: 'author',
       header: t('submission.list.colAuthor'),
-      render: (row) => row.author?.fullName ?? '—',
+      render: (row) => getUserDisplayName(row.author, i18n.language) || '—',
       hideOnMobile: true,
     },
     {
@@ -135,7 +136,7 @@ export default function SubmissionsListPage() {
     {
       key: 'reviewer',
       header: t('submission.list.colReviewer'),
-      render: (row) => row.reviewer?.fullName ?? '—',
+      render: (row) => getUserDisplayName(row.reviewer, i18n.language) || '—',
       hideOnMobile: true,
     },
   ]

@@ -19,6 +19,7 @@ import StatusBadge from '../../components/submissions/StatusBadge'
 import {
   Button, Card, CardHeader, PageHeader, StatCard, EmptyState, Spinner,
 } from '../../components/ui'
+import { getUserDisplayName } from '../../utils/userDisplayName'
 import useDocumentTitle from '../../hooks/useDocumentTitle'
 import { buildSubmissionDetailPath } from '../../utils/submissionRoutes'
 
@@ -263,7 +264,7 @@ export default function SecretaryDashboard() {
                             {sub.title}
                           </td>
                           <td className="px-4 py-2.5" style={{ color: 'var(--text-secondary)' }}>
-                            {sub.author?.fullName}
+                            {getUserDisplayName(sub.author, i18n.language)}
                           </td>
                           <td className="px-4 py-2.5">
                             <StatusBadge status={sub.status} />
@@ -298,7 +299,7 @@ export default function SecretaryDashboard() {
                       </p>
                       <div className="flex items-center justify-between mt-2 gap-2">
                         <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>
-                          {sub.author?.fullName}
+                          {getUserDisplayName(sub.author, i18n.language)}
                         </p>
                         <StatusBadge status={sub.status} />
                       </div>

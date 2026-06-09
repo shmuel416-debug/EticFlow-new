@@ -62,7 +62,7 @@ export async function listReviewers(req, res, next) {
   try {
     const reviewers = await prisma.user.findMany({
       where:   { roles: { hasSome: ['REVIEWER', 'CHAIRMAN'] }, isActive: true },
-      select:  { id: true, fullName: true, email: true, department: true, roles: true },
+      select:  { id: true, fullName: true, fullNameHe: true, email: true, department: true, roles: true },
       orderBy: { fullName: 'asc' },
     })
     const submissionId = typeof req.query.submissionId === 'string' ? req.query.submissionId : ''
@@ -89,7 +89,7 @@ export async function listSigners(req, res, next) {
         isActive: true,
         roles: { hasSome: COMMITTEE_ROLES },
       },
-      select: { id: true, fullName: true, email: true, roles: true },
+      select: { id: true, fullName: true, fullNameHe: true, email: true, roles: true },
       orderBy: { fullName: 'asc' },
     })
 
@@ -118,12 +118,13 @@ export async function listResearchers(req, res, next) {
     if (search) {
       where.OR = [
         { fullName: { contains: search, mode: 'insensitive' } },
+        { fullNameHe: { contains: search, mode: 'insensitive' } },
         { email: { contains: search, mode: 'insensitive' } },
       ]
     }
     const data = await prisma.user.findMany({
       where,
-      select: { id: true, fullName: true, email: true, department: true },
+      select: { id: true, fullName: true, fullNameHe: true, email: true, department: true },
       orderBy: { fullName: 'asc' },
       take: limit,
     })
@@ -191,6 +192,7 @@ export async function listAll(req, res, next) {
     if (search) {
       where.OR = [
         { fullName:   { contains: search, mode: 'insensitive' } },
+        { fullNameHe: { contains: search, mode: 'insensitive' } },
         { email:      { contains: search, mode: 'insensitive' } },
         { department: { contains: search, mode: 'insensitive' } },
       ]
@@ -209,7 +211,7 @@ export async function listAll(req, res, next) {
         take,
         orderBy: { createdAt: 'desc' },
         select: {
-          id: true, fullName: true, email: true, roles: true,
+          id: true, fullName: true, fullNameHe: true, email: true, roles: true,
           department: true, phone: true, authProvider: true,
           isActive: true, createdAt: true, updatedAt: true,
         },
@@ -239,7 +241,7 @@ export async function listAll(req, res, next) {
  */
 export async function create(req, res, next) {
   try {
-    const { email, fullName, roles = ['RESEARCHER'], department, phone, password } = req.body
+    const { email, fullName, fullNameHe, roles = ['RESEARCHER'], department, phone, password } = req.body
     const normalizedRoles = normalizeRoles(roles)
 
     const existing = await prisma.user.findUnique({ where: { email } })
@@ -252,7 +254,7 @@ export async function create(req, res, next) {
       : null
 
     const user = await prisma.user.create({
-      data: { email, fullName, roles: normalizedRoles, department, phone, passwordHash, authProvider: 'LOCAL' },
+      data: { email, fullName, fullNameHe: fullNameHe ?? null, roles: normalizedRoles, department, phone, passwordHash, authProvider: 'LOCAL' },
     })
 
     res.locals.entityId = user.id
@@ -276,7 +278,7 @@ export async function create(req, res, next) {
 export async function update(req, res, next) {
   try {
     const { id } = req.params
-    const { fullName, roles, department, phone } = req.body
+    const { fullName, fullNameHe, roles, department, phone } = req.body
     const normalizedRoles = roles ? normalizeRoles(roles) : undefined
 
     const user = await prisma.user.findUnique({ where: { id } })
@@ -293,9 +295,13 @@ export async function update(req, res, next) {
       }
     }
 
+    const data = { fullName, department, phone }
+    if (roles) data.roles = normalizedRoles
+    if (fullNameHe !== undefined) data.fullNameHe = fullNameHe
+
     const updated = await prisma.user.update({
       where: { id },
-      data:  { fullName, roles: normalizedRoles, department, phone },
+      data,
     })
 
     res.json({ data: safeUser(updated) })
@@ -376,6 +382,7 @@ export async function impersonate(req, res, next) {
       id:         target.id,
       email:      target.email,
       fullName:   target.fullName,
+      fullNameHe: target.fullNameHe,
       roles:      target.roles,
       activeRole,
       department: target.department,

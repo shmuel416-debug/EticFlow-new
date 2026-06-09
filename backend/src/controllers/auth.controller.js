@@ -533,6 +533,31 @@ export async function me(req, res, next) {
 }
 
 /**
+ * PATCH /api/auth/profile
+ * Updates the authenticated user's Hebrew display name only.
+ * @param {import('express').Request} req - body: { fullNameHe?: string|null }
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
+export async function updateProfile(req, res, next) {
+  try {
+    const { fullNameHe } = req.body
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } })
+    if (!user?.isActive) return next(AppError.notFound('User'))
+
+    const updated = await prisma.user.update({
+      where: { id: req.user.id },
+      data: { fullNameHe: fullNameHe ?? null },
+    })
+
+    res.locals.entityId = updated.id
+    res.json({ user: safeUser(updated) })
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
  * POST /api/auth/sync-session
  * Re-issues an access token from DB roles using the current Bearer token.
  * Used when refresh cookies are unavailable (e.g. SSO token in sessionStorage).

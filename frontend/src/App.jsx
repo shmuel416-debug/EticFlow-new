@@ -47,6 +47,7 @@ import StatusManagementPage       from './pages/admin/StatusManagementPage'
 import SystemTemplatesPage        from './pages/admin/SystemTemplatesPage'
 import AccessibilityStatementAdminPage from './pages/admin/AccessibilityStatementAdminPage'
 import CoiPage                    from './pages/profile/CoiPage'
+import ProfilePage                from './pages/profile/ProfilePage'
 import AccessibilityStatementPage from './pages/AccessibilityStatementPage'
 
 export default function App() {
@@ -76,6 +77,7 @@ export default function App() {
                 <Route path="/settings"      element={<SettingsPage />} />
               </Route>
               <Route path="/notifications"   element={<NotificationsPage />} />
+              <Route path="/profile"         element={<ProfilePage />} />
               <Route element={<ProtectedRoute roles={['SECRETARY', 'REVIEWER', 'CHAIRMAN', 'ADMIN']} />}>
                 <Route path="/profile/coi"   element={<CoiPage />} />
               </Route>

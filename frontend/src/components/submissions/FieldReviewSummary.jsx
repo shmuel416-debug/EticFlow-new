@@ -6,6 +6,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
+import { getUserDisplayName } from '../../utils/userDisplayName'
 import { Badge, Card, CardBody, CardHeader, Spinner, Table } from '../ui'
 
 /**
@@ -100,7 +101,7 @@ export default function FieldReviewSummary({ submissionId }) {
         return (
           <Card key={review.id} as="section">
             <CardHeader
-              title={review.reviewer?.fullName || t('submission.fieldReviews.reviewer')}
+              title={getUserDisplayName(review.reviewer, i18n.language) || t('submission.fieldReviews.reviewer')}
               subtitle={review.reviewer?.email}
               actions={
                 <Badge tone={statusTone} size="sm">

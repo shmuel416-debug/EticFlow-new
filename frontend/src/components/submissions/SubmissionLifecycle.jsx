@@ -5,6 +5,7 @@
 import { Check } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import useStatusConfig from '../../hooks/useStatusConfig'
+import { getUserDisplayName } from '../../utils/userDisplayName'
 
 const NEXT_OWNER_ROLE_BY_STATUS = {
   SUBMITTED: 'SECRETARY',
@@ -265,9 +266,9 @@ export default function SubmissionLifecycle({
                       {description}
                     </p>
                   )}
-                  {statusCode === 'ASSIGNED' && reviewer?.fullName && (
+                  {statusCode === 'ASSIGNED' && getUserDisplayName(reviewer, i18n.language) && (
                     <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
-                      {t('statusPage.reviewer')}: {reviewer.fullName}
+                      {t('statusPage.reviewer')}: {getUserDisplayName(reviewer, i18n.language)}
                     </p>
                   )}
                 </div>

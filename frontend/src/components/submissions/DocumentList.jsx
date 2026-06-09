@@ -12,6 +12,7 @@ import { useState, useRef, useCallback, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { FileText, Image, FileSpreadsheet, Folder, Download, X, Paperclip, Eye } from 'lucide-react'
 import api from '../../services/api'
+import { getUserDisplayName } from '../../utils/userDisplayName'
 import Modal from '../ui/Modal'
 
 /** Allowed extensions for the file picker (informational only — server enforces). */
@@ -65,7 +66,7 @@ function canInlinePreview(mime) {
  * DocumentList — upload area + file list for a submission.
  */
 export default function DocumentList({ submissionId, canUpload = false }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
 
   const [docs,     setDocs]     = useState([])
   const [loading,  setLoading]  = useState(true)
@@ -250,7 +251,7 @@ export default function DocumentList({ submissionId, canUpload = false }) {
                 </p>
                 <p className="text-xs text-gray-400">
                   {fmtSize(doc.sizeBytes)}
-                  {doc.uploadedBy && ` · ${doc.uploadedBy.fullName}`}
+                  {doc.uploadedBy && ` · ${getUserDisplayName(doc.uploadedBy, i18n.language)}`}
                 </p>
               </div>
               <div className="flex gap-1 flex-shrink-0">

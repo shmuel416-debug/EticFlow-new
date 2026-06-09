@@ -36,6 +36,10 @@ const refreshSchema = z.object({
   refreshToken: z.string().min(1).optional(),
 })
 
+const profileSchema = z.object({
+  fullNameHe: z.string().min(2).max(200).optional().nullable(),
+})
+
 router.post(
   '/login',
   loginLimiter,
@@ -45,6 +49,14 @@ router.post(
 )
 
 router.get('/me', authenticate, controller.me)
+
+router.patch(
+  '/profile',
+  authenticate,
+  validate(profileSchema),
+  auditLog('auth.profile_update', 'User'),
+  controller.updateProfile
+)
 
 router.post(
   '/change-password',

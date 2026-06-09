@@ -41,6 +41,7 @@ const listQuerySchema = z.object({
 const createSchema = z.object({
   email:      z.string().email(),
   fullName:   z.string().min(2).max(200),
+  fullNameHe: z.string().min(2).max(200).optional().nullable(),
   roles:      z.array(z.enum(VALID_ROLES)).min(1).default(['RESEARCHER']),
   department: z.string().max(200).optional(),
   phone:      z.string().max(50).optional(),
@@ -49,6 +50,7 @@ const createSchema = z.object({
 
 const updateSchema = z.object({
   fullName:   z.string().min(2).max(200).optional(),
+  fullNameHe: z.string().min(2).max(200).optional().nullable(),
   roles:      z.array(z.enum(VALID_ROLES)).min(1).optional(),
   department: z.string().max(200).optional(),
   phone:      z.string().max(50).optional(),

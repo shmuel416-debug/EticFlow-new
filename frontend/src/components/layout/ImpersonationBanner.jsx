@@ -8,6 +8,7 @@
 import { useTranslation } from 'react-i18next'
 import { User } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
+import { getUserDisplayName } from '../../utils/userDisplayName'
 
 /**
  * Renders a sticky amber banner when impersonation is active.
@@ -15,7 +16,7 @@ import { useAuth } from '../../context/AuthContext'
  * @returns {JSX.Element|null}
  */
 export default function ImpersonationBanner() {
-  const { t }                             = useTranslation()
+  const { t, i18n }                             = useTranslation()
   const { user, isImpersonating, stopImpersonation } = useAuth()
 
   if (!isImpersonating) return null
@@ -30,7 +31,7 @@ export default function ImpersonationBanner() {
         <User size={18} strokeWidth={1.75} className="shrink-0" aria-hidden="true" focusable="false" />
         <span>
           {t('admin.impersonationBanner', {
-            name: user?.fullName ?? user?.email ?? '',
+            name: getUserDisplayName(user, i18n.language) || user?.email || '',
             role: t(`roles.${user?.role?.toLowerCase() ?? 'unknown'}`),
           })}
         </span>

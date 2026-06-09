@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next'
 import { useParams, useLocation, useNavigate } from 'react-router-dom'
 import { Download, Eye, CheckCircle2, AlertCircle, MessageSquare } from 'lucide-react'
 import api from '../../services/api'
+import { getUserDisplayName } from '../../utils/userDisplayName'
 import { useAuth } from '../../context/AuthContext'
 import useStatusConfig from '../../hooks/useStatusConfig'
 import useDocumentTitle from '../../hooks/useDocumentTitle'
@@ -528,7 +529,7 @@ export default function SubmissionDetailPage() {
                   className="text-sm font-medium"
                   style={{ color: 'var(--text-primary)' }}
                 >
-                  {submission.reviewer.fullName}
+                  {getUserDisplayName(submission.reviewer, i18n.language)}
                 </p>
                 <p
                   className="text-xs mt-0.5"
@@ -573,7 +574,7 @@ export default function SubmissionDetailPage() {
                   className="text-sm font-medium"
                   style={{ color: 'var(--text-primary)' }}
                 >
-                  {submission.secondaryReviewer.fullName}
+                  {getUserDisplayName(submission.secondaryReviewer, i18n.language)}
                 </p>
                 <p
                   className="text-xs mt-0.5"

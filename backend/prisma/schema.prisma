@@ -180,6 +180,7 @@ model User {
   email             String       @unique
   passwordHash      String?      @map("password_hash")       // NULL for SSO users
   fullName          String       @map("full_name")
+  fullNameHe        String?      @map("full_name_he")
   roles             Role[]       @default([RESEARCHER])
   department        String?
   phone             String?

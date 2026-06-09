@@ -18,6 +18,7 @@ import api from '../../services/api'
 import {
   Badge, Button, Card, PageHeader, StatCard, EmptyState, Spinner,
 } from '../../components/ui'
+import { getUserDisplayName } from '../../utils/userDisplayName'
 import useDocumentTitle from '../../hooks/useDocumentTitle'
 import { buildSubmissionDetailPath } from '../../utils/submissionRoutes'
 
@@ -59,7 +60,7 @@ function SlaDot({ slaTracking, labels }) {
  * @param {{ submission: object, linkPrefix: string, slaLabels: object, statusLabel: string }} props
  * @returns {JSX.Element}
  */
-function KanbanCard({ submission, linkPrefix, slaLabels, statusLabel }) {
+function KanbanCard({ submission, linkPrefix, slaLabels, statusLabel, lang }) {
   return (
     <Link
       to={buildSubmissionDetailPath(linkPrefix, submission)}
@@ -85,7 +86,7 @@ function KanbanCard({ submission, linkPrefix, slaLabels, statusLabel }) {
         {submission.title}
       </p>
       <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-        {submission.author?.fullName}
+        {getUserDisplayName(submission.author, lang)}
       </p>
     </Link>
   )
@@ -285,6 +286,7 @@ export default function ChairmanDashboard() {
                       linkPrefix={col.link}
                       slaLabels={slaLabels}
                       statusLabel={col.label}
+                      lang={i18n.language}
                     />
                   ))}
                 </div>

@@ -111,9 +111,22 @@
       "errorMismatch": "הסיסמאות אינן תואמות"
     },
     "register": {
-      "fullName": "שם מלא",
+      "fullName": "שם מלא (אנגלית)",
+      "fullNameEn": "שם מלא (אנגלית)",
+      "fullNameHe": "שם מלא (עברית)",
       "email": "כתובת אימייל"
     }
+  },
+  "profile": {
+    "title": "פרופיל אישי",
+    "subtitle": "עדכון פרטים אישיים",
+    "fullNameEn": "שם באנגלית",
+    "fullNameHe": "שם בעברית",
+    "fullNameHeHint": "יוצג בממשק בעברית. אם לא מוגדר — יוצג השם באנגלית.",
+    "email": "אימייל",
+    "readOnlyHint": "שדה זה מסונכרן מ-Microsoft ולא ניתן לעריכה",
+    "saveSuccess": "הפרופיל עודכן בהצלחה",
+    "saveError": "שגיאה בעדכון הפרופיל"
   },
   "nav": {
     "dashboard": "דשבורד",
@@ -952,6 +965,7 @@
     "allRoles": "כל התפקידים",
     "allStatuses": "כל הסטטוסים",
     "department": "מחלקה",
+    "fullNameHe": "שם בעברית",
     "phone": "טלפון",
     "password": "סיסמה (אופציונלי)",
     "createSuccess": "המשתמש נוצר בהצלחה",

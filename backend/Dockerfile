@@ -48,4 +48,6 @@ EXPOSE 5000
 # SEED_DEMO_DATA=false ensures the production container never creates demo
 # users/submissions, and cleanup-test-users removes any leftover @test.com
 # accounts from earlier deploys before the server starts.
-CMD ["sh", "-c", "mkdir -p /app/uploads /app/generated && chown -R app:app /app/uploads /app/generated && su-exec app node_modules/.bin/prisma migrate deploy && SEED_DEMO_DATA=false su-exec app node_modules/.bin/prisma db seed && su-exec app node scripts/cleanup-test-users.mjs && exec su-exec app node src/index.js"]
+# Production: skip seed on every container restart (run prod-bootstrap.mjs manually when needed).
+ENV SKIP_STARTUP_SEED=true
+CMD ["sh", "-c", "mkdir -p /app/uploads /app/generated && chown -R app:app /app/uploads /app/generated && su-exec app node_modules/.bin/prisma migrate deploy && if [ \"${SKIP_STARTUP_SEED:-true}\" != \"true\" ]; then SEED_DEMO_DATA=false su-exec app node_modules/.bin/prisma db seed; fi && su-exec app node scripts/cleanup-test-users.mjs || true && exec su-exec app node src/index.js"]

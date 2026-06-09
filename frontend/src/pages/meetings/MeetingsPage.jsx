@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import api from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
+import { getUserDisplayName } from '../../utils/userDisplayName'
 import {
   Button, Badge, Tabs, Modal, FormField, Input, EmptyState, Spinner,
   PageHeader, AccessibleIcon,
@@ -125,7 +126,7 @@ function PersonalSyncBadge({ sync, t }) {
  * Multi-select attendee picker — scrollable checkbox list of committee users.
  * @param {{ users: Array, selected: string[], onChange: Function, loadError: boolean, t: Function }} props
  */
-function AttendeePicker({ users, selected, onChange, loadError, t }) {
+function AttendeePicker({ users, selected, onChange, loadError, t, lang }) {
   /**
    * Toggles a user in/out of the selected list.
    * @param {string} userId
@@ -174,7 +175,7 @@ function AttendeePicker({ users, selected, onChange, loadError, t }) {
             className="w-4 h-4"
             style={{ accentColor: 'var(--lev-navy)' }}
           />
-          <span className="flex-1 truncate" style={{ color: 'var(--text-primary)' }}>{u.fullName}</span>
+          <span className="flex-1 truncate" style={{ color: 'var(--text-primary)' }}>{getUserDisplayName(u, lang)}</span>
           <span className="text-xs flex-shrink-0" style={{ color: 'var(--text-muted)' }}>
             {t(`roles.${getPrimaryRole(u).toLowerCase()}`, getPrimaryRole(u))}
           </span>
@@ -188,7 +189,7 @@ function AttendeePicker({ users, selected, onChange, loadError, t }) {
  * Create meeting modal — title, date, location, link, duration, attendees.
  * @param {{ open: boolean, onClose: Function, onCreated: Function, t: Function }} props
  */
-function CreateMeetingModal({ open, onClose, onCreated, t }) {
+function CreateMeetingModal({ open, onClose, onCreated, t, lang }) {
   const [form, setForm] = useState({
     title: '', scheduledAt: '', location: '', meetingLink: '', durationMinutes: '60',
   })
@@ -384,6 +385,7 @@ function CreateMeetingModal({ open, onClose, onCreated, t }) {
             onChange={setAttendeeIds}
             loadError={usersLoadError}
             t={t}
+            lang={lang}
           />
         </div>
       </div>
@@ -396,7 +398,7 @@ function CreateMeetingModal({ open, onClose, onCreated, t }) {
  * @returns {JSX.Element}
  */
 export default function MeetingsPage() {
-  const { t }    = useTranslation()
+  const { t, i18n }    = useTranslation()
   useDocumentTitle(t('meetings.title'))
   const { user } = useAuth()
   const location = useLocation()
@@ -602,6 +604,7 @@ export default function MeetingsPage() {
 
       <CreateMeetingModal
         t={t}
+        lang={i18n.language}
         open={showCreate}
         onClose={() => setShowCreate(false)}
         onCreated={fetchMeetings}

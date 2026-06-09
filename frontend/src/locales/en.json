@@ -111,9 +111,22 @@
       "errorMismatch": "Passwords do not match"
     },
     "register": {
-      "fullName": "Full Name",
+      "fullName": "Full Name (English)",
+      "fullNameEn": "Full Name (English)",
+      "fullNameHe": "Full Name (Hebrew)",
       "email": "Email Address"
     }
+  },
+  "profile": {
+    "title": "My Profile",
+    "subtitle": "Update your personal details",
+    "fullNameEn": "Name in English",
+    "fullNameHe": "Name in Hebrew",
+    "fullNameHeHint": "Shown when the interface is in Hebrew. Falls back to English if empty.",
+    "email": "Email",
+    "readOnlyHint": "Synced from Microsoft and cannot be edited here",
+    "saveSuccess": "Profile updated successfully",
+    "saveError": "Failed to update profile"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -952,6 +965,7 @@
     "allRoles": "All Roles",
     "allStatuses": "All Statuses",
     "department": "Department",
+    "fullNameHe": "Hebrew name",
     "phone": "Phone",
     "password": "Password (optional)",
     "createSuccess": "User created successfully",

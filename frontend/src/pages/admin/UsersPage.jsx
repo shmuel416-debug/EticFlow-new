@@ -19,6 +19,7 @@ import {
   Table, Modal,
 } from '../../components/ui'
 import useDocumentTitle from '../../hooks/useDocumentTitle'
+import { getUserDisplayName } from '../../utils/userDisplayName'
 
 const ROLES = ['RESEARCHER', 'SECRETARY', 'REVIEWER', 'CHAIRMAN', 'ADMIN']
 
@@ -65,7 +66,7 @@ export default function UsersPage() {
 
   const [modalOpen, setModalOpen]   = useState(false)
   const [editUser, setEditUser]     = useState(null) // null = create mode
-  const [formData, setFormData]     = useState({ fullName: '', email: '', roles: ['RESEARCHER'], department: '', phone: '', password: '' })
+  const [formData, setFormData]     = useState({ fullName: '', fullNameHe: '', email: '', roles: ['RESEARCHER'], department: '', phone: '', password: '' })
   const [formError, setFormError]   = useState(null)
   const [saving, setSaving]         = useState(false)
 
@@ -103,8 +104,8 @@ export default function UsersPage() {
     setEditUser(user)
     const initialRoles = normalizeRoles(user?.roles ?? (user?.role ? [user.role] : ['RESEARCHER']))
     setFormData(user
-      ? { fullName: user.fullName, email: user.email, roles: initialRoles, department: user.department ?? '', phone: user.phone ?? '', password: '' }
-      : { fullName: '', email: '', roles: ['RESEARCHER'], department: '', phone: '', password: '' }
+      ? { fullName: user.fullName, fullNameHe: user.fullNameHe ?? '', email: user.email, roles: initialRoles, department: user.department ?? '', phone: user.phone ?? '', password: '' }
+      : { fullName: '', fullNameHe: '', email: '', roles: ['RESEARCHER'], department: '', phone: '', password: '' }
     )
     setFormError(null)
     setModalOpen(true)
@@ -120,8 +121,15 @@ export default function UsersPage() {
       const payload = { ...formData }
       if (!payload.password) delete payload.password
       payload.roles = normalizeRoles(payload.roles)
+      payload.fullNameHe = payload.fullNameHe?.trim() || null
       if (editUser) {
-        await api.put(`/users/admin/users/${editUser.id}`, { fullName: payload.fullName, roles: payload.roles, department: payload.department, phone: payload.phone })
+        await api.put(`/users/admin/users/${editUser.id}`, {
+          fullName: payload.fullName,
+          fullNameHe: payload.fullNameHe?.trim() || null,
+          roles: payload.roles,
+          department: payload.department,
+          phone: payload.phone,
+        })
         if (editUser.id === currentUser?.id) {
           await refreshSession()
         }
@@ -173,8 +181,8 @@ export default function UsersPage() {
   const columns = [
     {
       key: 'fullName',
-      header: t('auth.register.fullName'),
-      render: (u) => <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>{u.fullName}</span>,
+      header: t('auth.register.fullNameEn'),
+      render: (u) => <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>{getUserDisplayName(u, i18n.language)}</span>,
     },
     {
       key: 'email',
@@ -219,19 +227,19 @@ export default function UsersPage() {
           {!isImpersonating && !(u.roles ?? [u.role]).includes('ADMIN') && u.isActive && (
             <IconButton
               icon={UserCheck}
-              label={`${t('admin.impersonate')} ${u.fullName}`}
+              label={`${t('admin.impersonate')} ${getUserDisplayName(u, i18n.language)}`}
               onClick={() => handleImpersonate(u)}
             />
           )}
           <IconButton
             icon={Pencil}
-            label={`${t('admin.editUser')} ${u.fullName}`}
+            label={`${t('admin.editUser')} ${getUserDisplayName(u, i18n.language)}`}
             onClick={() => openModal(u)}
           />
           {u.isActive && (
             <IconButton
               icon={Trash2}
-              label={`${t('admin.deactivate')} ${u.fullName}`}
+              label={`${t('admin.deactivate')} ${getUserDisplayName(u, i18n.language)}`}
               onClick={() => handleDeactivate(u)}
             />
           )}
@@ -377,7 +385,8 @@ export default function UsersPage() {
 
         <div className="space-y-4">
           {[
-            { key: 'fullName',   label: t('auth.register.fullName'), type: 'text',     required: true },
+            { key: 'fullName',   label: t('auth.register.fullNameEn'), type: 'text',     required: true },
+            { key: 'fullNameHe', label: t('auth.register.fullNameHe'), type: 'text' },
             { key: 'email',      label: t('auth.register.email'),    type: 'email',    required: !editUser },
             { key: 'department', label: t('admin.department'),       type: 'text' },
             { key: 'phone',      label: t('admin.phone'),            type: 'tel' },

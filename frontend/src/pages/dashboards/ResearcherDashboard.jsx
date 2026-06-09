@@ -22,6 +22,7 @@ import {
   Button, Card, CardHeader, PageHeader, StatCard, EmptyState, Spinner,
 } from '../../components/ui'
 import useDocumentTitle from '../../hooks/useDocumentTitle'
+import { getUserFirstName } from '../../utils/userDisplayName'
 import {
   buildResearcherSubmissionPath,
   buildSubmissionDetailPath,
@@ -214,7 +215,7 @@ function TimelinePane({ sub, returnPath }) {
  * @returns {JSX.Element}
  */
 export default function ResearcherDashboard() {
-  const { t }    = useTranslation()
+  const { t, i18n }    = useTranslation()
   useDocumentTitle(t('dashboard.researcher.title'))
   const location = useLocation()
   const navigate = useNavigate()
@@ -244,7 +245,7 @@ export default function ResearcherDashboard() {
   const revision = submissions.filter(s => s.status === 'PENDING_REVISION').length
   const approved = submissions.filter(s => s.status === 'APPROVED').length
 
-  const firstName = user?.fullName?.split(' ')[0]
+  const firstName = getUserFirstName(user, i18n.language)
   const headerTitle = firstName
     ? `${t('dashboard.researcher.greeting')}, ${firstName}`
     : t('dashboard.researcher.greeting')

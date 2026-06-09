@@ -27,6 +27,7 @@ import {
   Save,
 } from 'lucide-react'
 import api from '../../services/api'
+import { getUserDisplayName } from '../../utils/userDisplayName'
 import { useAuth } from '../../context/AuthContext'
 import CoiBadge from '../../components/meetings/CoiBadge'
 import {
@@ -153,7 +154,7 @@ function PersonalCalendarSyncStrip({ sync, t }) {
  * @returns {JSX.Element}
  */
 export default function MeetingDetailPage() {
-  const { t }     = useTranslation()
+  const { t, i18n }     = useTranslation()
   const { id }    = useParams()
   const { user }  = useAuth()
   const navigate  = useNavigate()
@@ -571,7 +572,7 @@ export default function MeetingDetailPage() {
                     <CoiBadge
                       names={(item.recusedAttendees || []).map((entry) => {
                         const attendee = meeting.attendees?.find((row) => row.userId === entry.userId)
-                        return attendee?.user?.fullName || entry.userId
+                        return getUserDisplayName(attendee?.user, i18n.language) || entry.userId
                       })}
                     />
                   </div>
@@ -648,7 +649,7 @@ export default function MeetingDetailPage() {
                           <option value="">{t('meetings.selectUser')}</option>
                           {uninvitedUsers.map(u => (
                             <option key={u.id} value={u.id}>
-                              {u.fullName} — {t(`roles.${getPrimaryRole(u).toLowerCase()}`, getPrimaryRole(u))}
+                              {getUserDisplayName(u, i18n.language)} — {t(`roles.${getPrimaryRole(u).toLowerCase()}`, getPrimaryRole(u))}
                             </option>
                           ))}
                         </Select>
@@ -697,11 +698,11 @@ export default function MeetingDetailPage() {
                     }}
                     aria-hidden="true"
                   >
-                    {attendee.user?.fullName?.charAt(0) ?? '?'}
+                    {getUserDisplayName(attendee.user, i18n.language)?.charAt(0) ?? '?'}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>
-                      {attendee.user?.fullName}
+                      {getUserDisplayName(attendee.user, i18n.language)}
                     </p>
                     <p className="text-xs inline-flex items-center gap-2 flex-wrap" style={{ color: 'var(--text-muted)' }}>
                       <span className="truncate">{attendee.user?.email}</span>
@@ -723,7 +724,7 @@ export default function MeetingDetailPage() {
                   {canManage && meeting.status !== 'CANCELLED' && (
                     <IconButton
                       icon={Trash2}
-                      label={`${t('meetings.removeAttendee')} — ${attendee.user?.fullName ?? ''}`}
+                      label={`${t('meetings.removeAttendee')} — ${getUserDisplayName(attendee.user, i18n.language)}`}
                       onClick={() => handleRemoveAttendee(attendee.userId)}
                       disabled={removingId === attendee.userId}
                     />
@@ -773,11 +774,11 @@ export default function MeetingDetailPage() {
                     }}
                     aria-hidden="true"
                   >
-                    {attendee.user?.fullName?.charAt(0) ?? '?'}
+                    {getUserDisplayName(attendee.user, i18n.language)?.charAt(0) ?? '?'}
                   </div>
                   <div className="flex-1">
                     <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-                      {attendee.user?.fullName}
+                      {getUserDisplayName(attendee.user, i18n.language)}
                     </p>
                     <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
                       {attendee.user?.email}
@@ -786,7 +787,7 @@ export default function MeetingDetailPage() {
                   <div
                     className="flex items-center gap-3"
                     role="group"
-                    aria-label={attendee.user?.fullName}
+                    aria-label={getUserDisplayName(attendee.user, i18n.language)}
                   >
                     <label className="inline-flex items-center gap-1.5 cursor-pointer text-sm">
                       <input

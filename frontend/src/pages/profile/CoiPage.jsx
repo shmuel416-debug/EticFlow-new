@@ -17,6 +17,7 @@ import {
   ShieldAlert,
 } from 'lucide-react'
 import api from '../../services/api'
+import { getUserDisplayName } from '../../utils/userDisplayName'
 import {
   Button,
   IconButton,
@@ -54,7 +55,7 @@ function scopeTone(scope) {
  * @returns {JSX.Element}
  */
 export default function CoiPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   useDocumentTitle(t('coi.page.title'))
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
@@ -316,7 +317,7 @@ export default function CoiPage() {
                       </option>
                       {researcherOptions.map((user) => (
                         <option key={user.id} value={user.id}>
-                          {`${user.fullName} (${user.email})`}
+                          {`${getUserDisplayName(user, i18n.language)} (${user.email})`}
                         </option>
                       ))}
                     </Select>

@@ -21,6 +21,7 @@ import {
   getDefaultRejectionTemplate,
   normalizeRejectionTemplate,
 } from '../constants/rejectionTemplate.js'
+import { getUserDisplayName } from '../utils/userDisplayName.js'
 
 const GENERATED_DIR = path.resolve('uploads', 'generated', 'approval')
 const GENERATED_REJECTION_DIR = path.resolve('uploads', 'generated', 'rejection')
@@ -186,10 +187,10 @@ async function getChairmanDisplayName(lang) {
 
   const chairmanUser = await prisma.user.findFirst({
     where: { isActive: true, roles: { has: 'CHAIRMAN' } },
-    select: { fullName: true },
+    select: { fullName: true, fullNameHe: true },
     orderBy: { createdAt: 'asc' },
   })
-  if (chairmanUser?.fullName) return String(chairmanUser.fullName).trim()
+  if (chairmanUser) return getUserDisplayName(chairmanUser, lang)
 
   return lang === 'en' ? CHAIRMAN_NAME_EN : CHAIRMAN_NAME_HE
 }
@@ -216,7 +217,7 @@ async function getApprovalSubmission(submissionId) {
   const submission = await prisma.submission.findUnique({
     where: { id: submissionId },
     include: {
-      author: { select: { fullName: true, email: true } },
+      author: { select: { fullName: true, fullNameHe: true, email: true } },
       formConfig: { select: { name: true } },
       slaTracking: true,
     },
@@ -236,7 +237,7 @@ async function getDecisionSubmission(submissionId, requiredStatus) {
   const submission = await prisma.submission.findUnique({
     where: { id: submissionId },
     include: {
-      author: { select: { fullName: true, email: true } },
+      author: { select: { fullName: true, fullNameHe: true, email: true } },
       comments: {
         where: { isInternal: false },
         orderBy: { createdAt: 'desc' },
@@ -265,7 +266,7 @@ function buildApprovalTemplateContext(lang, submission) {
     issueDate: lang === 'he' ? fmtDate(new Date()) : fmtDateEn(new Date()),
     approvedDate: lang === 'he' ? fmtDate(submission.updatedAt) : fmtDateEn(submission.updatedAt),
     validUntil: validUntil(submission.updatedAt, lang),
-    researcherName: String(submission.author?.fullName ?? ''),
+    researcherName: getUserDisplayName(submission.author, lang),
     researcherEmail: String(submission.author?.email ?? ''),
     institutionName: lang === 'he' ? INSTITUTION_NAME_HE : INSTITUTION_NAME_EN,
     chairmanName: '',
@@ -290,7 +291,7 @@ function buildRejectionTemplateContext(lang, submission) {
     trackLabel: lang === 'he' ? track.he : track.en,
     issueDate: lang === 'he' ? fmtDate(new Date()) : fmtDateEn(new Date()),
     rejectedDate: lang === 'he' ? fmtDate(submission.updatedAt) : fmtDateEn(submission.updatedAt),
-    researcherName: String(submission.author?.fullName ?? ''),
+    researcherName: getUserDisplayName(submission.author, lang),
     researcherEmail: String(submission.author?.email ?? ''),
     institutionName: lang === 'he' ? INSTITUTION_NAME_HE : INSTITUTION_NAME_EN,
     rejectionReason: String(latestDecisionComment?.content ?? '').trim() || fallbackReason,
