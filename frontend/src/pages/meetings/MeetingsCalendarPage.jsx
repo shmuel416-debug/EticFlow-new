@@ -22,7 +22,11 @@ import useDocumentTitle from '../../hooks/useDocumentTitle'
  * @returns {string}
  */
 function dateKey(value) {
-  return new Date(value).toISOString().slice(0, 10)
+  const d = new Date(value)
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
 }
 
 /**

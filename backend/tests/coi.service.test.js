@@ -17,7 +17,7 @@ jest.unstable_mockModule('../src/config/database.js', () => ({
   default: prismaMock,
 }))
 
-const { hasConflict } = await import('../src/services/coi.service.js')
+const { hasConflict, buildReviewerConflictExclusion } = await import('../src/services/coi.service.js')
 
 describe('coi.service hasConflict', () => {
   beforeEach(() => {
@@ -70,5 +70,37 @@ describe('coi.service hasConflict', () => {
     const result = await hasConflict('u1', submission)
     expect(result.conflict).toBe(false)
     expect(result.reasons).toHaveLength(0)
+  })
+})
+
+describe('coi.service buildReviewerConflictExclusion', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
+  test('maps active declarations into exclusion buckets', async () => {
+    prismaMock.conflictDeclaration.findMany.mockResolvedValue([
+      { scope: 'SUBMISSION', targetSubmissionId: 'sub-1' },
+      { scope: 'USER', targetUserId: 'author-1' },
+      { scope: 'DEPARTMENT', targetDepartment: 'Medicine' },
+    ])
+
+    const result = await buildReviewerConflictExclusion('rev-1')
+    expect(result).toEqual({
+      blockAll: false,
+      submissionIds: ['sub-1'],
+      userIds: ['rev-1', 'author-1'],
+      departments: ['medicine'],
+    })
+  })
+
+  test('returns blockAll for global declarations', async () => {
+    prismaMock.conflictDeclaration.findMany.mockResolvedValue([
+      { scope: 'GLOBAL' },
+    ])
+
+    const result = await buildReviewerConflictExclusion('rev-1')
+    expect(result.blockAll).toBe(true)
+    expect(result.userIds).toEqual(['rev-1'])
   })
 })

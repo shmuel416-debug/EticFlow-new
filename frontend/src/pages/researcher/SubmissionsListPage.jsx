@@ -21,6 +21,7 @@ import {
 } from '../../components/ui'
 import useDocumentTitle from '../../hooks/useDocumentTitle'
 import { buildResearcherSubmissionPath } from '../../utils/submissionRoutes'
+import { useAuth } from '../../context/AuthContext'
 
 /**
  * Formats an ISO date to he-IL short date.
@@ -40,7 +41,10 @@ function formatDate(iso) {
  */
 export default function ResearcherSubmissionsListPage() {
   const { t, i18n } = useTranslation()
-  useDocumentTitle(t('dashboard.researcher.recentSubmissions'))
+  const { user } = useAuth()
+  const activeRole = user?.activeRole || user?.role
+  const isReviewerView = activeRole === 'REVIEWER'
+  useDocumentTitle(isReviewerView ? t('nav.allSubmissions') : t('dashboard.researcher.recentSubmissions'))
   const isRtl = i18n.dir() === 'rtl'
   const location = useLocation()
   const navigate = useNavigate()
@@ -124,17 +128,35 @@ export default function ResearcherSubmissionsListPage() {
   return (
     <div className="space-y-4">
       <PageHeader
-        title={t('dashboard.researcher.recentSubmissions')}
+        title={isReviewerView ? t('nav.allSubmissions') : t('dashboard.researcher.recentSubmissions')}
         actions={
-          <Button
-            variant="gold"
-            leftIcon={<FilePlus2 size={18} strokeWidth={1.75} aria-hidden="true" focusable="false" />}
-            onClick={() => navigate('/submissions/new')}
-          >
-            {t('nav.newSubmission')}
-          </Button>
+          isReviewerView ? null : (
+            <Button
+              variant="gold"
+              leftIcon={<FilePlus2 size={18} strokeWidth={1.75} aria-hidden="true" focusable="false" />}
+              onClick={() => navigate('/submissions/new')}
+            >
+              {t('nav.newSubmission')}
+            </Button>
+          )
         }
       />
+
+      {isReviewerView && (
+        <div
+          role="status"
+          className="text-sm"
+          style={{
+            background: 'var(--lev-navy-50)',
+            color: 'var(--lev-navy)',
+            border: '1px solid var(--border-default)',
+            borderRadius: 'var(--radius-lg)',
+            padding: '12px 14px',
+          }}
+        >
+          {t('submission.list.reviewerVisibilityHint')}
+        </div>
+      )}
 
       {error && (
         <div
@@ -198,7 +220,7 @@ export default function ResearcherSubmissionsListPage() {
             loading={loading}
             emptyTitle={t('submission.list.noResults')}
             emptyDescription={t('dashboard.researcher.noSubmissionsHint')}
-            emptyAction={
+            emptyAction={!isReviewerView ? (
               <Button
                 variant="gold"
                 leftIcon={<FilePlus2 size={18} strokeWidth={1.75} aria-hidden="true" focusable="false" />}
@@ -206,7 +228,7 @@ export default function ResearcherSubmissionsListPage() {
               >
                 {t('nav.newSubmission')}
               </Button>
-            }
+            ) : null}
             onRowClick={(row) => navigate(buildResearcherSubmissionPath(row), { state: { from: returnPath } })}
             rowAriaLabel={(row) => `${row.title} — ${row.applicationId}`}
           />

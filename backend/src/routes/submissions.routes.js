@@ -92,6 +92,7 @@ const reviewSchema = z.object({
 
 const decisionSchema = z.object({
   decision: z.enum(['APPROVED', 'REJECTED', 'REVISION_REQUIRED']),
+  requiresCommittee: z.boolean().optional(),
   note:     z.string().max(2000).transform(stripHtml).optional(),
 })
 
@@ -195,6 +196,15 @@ router.patch(
 )
 
 router.patch(
+  '/:id/assign-secondary',
+  authenticate,
+  authorize('SECRETARY', 'ADMIN'),
+  validate(assignSchema),
+  auditLog('submission.secondary_reviewer_assigned', 'Submission'),
+  statusController.assignSecondaryReviewer
+)
+
+router.patch(
   '/:id/review',
   authenticate,
   authorize('REVIEWER', 'CHAIRMAN'),
@@ -233,10 +243,17 @@ router.post(
 router.post(
   '/:id/votes',
   authenticate,
-  authorize('REVIEWER', 'SECRETARY', 'CHAIRMAN', 'ADMIN'),
+  authorize('REVIEWER', 'ADMIN'),
   validate(voteSchema),
   auditLog('submission.vote_recorded', 'SubmissionVote'),
   statusController.recordVote
+)
+
+router.get(
+  '/:id/votes',
+  authenticate,
+  authorize('REVIEWER', 'SECRETARY', 'CHAIRMAN', 'ADMIN'),
+  statusController.getVotes
 )
 
 /**

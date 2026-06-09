@@ -28,6 +28,8 @@ import { getRequestRole } from '../utils/roles.js'
 
 const AI_PROVIDER_KEY = 'ai_provider'
 const AI_MODEL_KEY = 'ai_model'
+const REVIEWER_PEER_VISIBILITY_KEY = 'reviewer_peer_visibility'
+const COMMITTEE_QUORUM_KEY = 'committee_quorum_min_votes'
 
 /** Allowed setting keys to prevent arbitrary key creation via the API. */
 const ADMIN_ONLY_KEYS = new Set([
@@ -43,6 +45,8 @@ const ADMIN_ONLY_KEYS = new Set([
   'allowed_file_types',
   'email_sender_name',
   'email_sender_address',
+  REVIEWER_PEER_VISIBILITY_KEY,
+  COMMITTEE_QUORUM_KEY,
   AI_PROVIDER_KEY,
   AI_MODEL_KEY,
   'approval_chairman_name_he',
@@ -148,6 +152,30 @@ export async function list(req, res, next) {
       })
       map.set('system_letterhead_pdf_path', created)
     }
+    if (permissions.readKeys.has(REVIEWER_PEER_VISIBILITY_KEY) && !map.has(REVIEWER_PEER_VISIBILITY_KEY)) {
+      const created = await prisma.institutionSetting.upsert({
+        where: { key: REVIEWER_PEER_VISIBILITY_KEY },
+        update: {},
+        create: {
+          key: REVIEWER_PEER_VISIBILITY_KEY,
+          value: 'false',
+          valueType: 'boolean',
+        },
+      })
+      map.set(REVIEWER_PEER_VISIBILITY_KEY, created)
+    }
+    if (permissions.readKeys.has(COMMITTEE_QUORUM_KEY) && !map.has(COMMITTEE_QUORUM_KEY)) {
+      const created = await prisma.institutionSetting.upsert({
+        where: { key: COMMITTEE_QUORUM_KEY },
+        update: {},
+        create: {
+          key: COMMITTEE_QUORUM_KEY,
+          value: '3',
+          valueType: 'number',
+        },
+      })
+      map.set(COMMITTEE_QUORUM_KEY, created)
+    }
     for (const historyKey of APPROVAL_TEMPLATE_HISTORY_KEYS) {
       if (!permissions.readKeys.has(historyKey) || map.has(historyKey)) continue
       const created = await prisma.institutionSetting.upsert({
@@ -226,6 +254,24 @@ export async function update(req, res, next) {
         },
       })
     }
+    if (!setting && key === REVIEWER_PEER_VISIBILITY_KEY) {
+      setting = await prisma.institutionSetting.create({
+        data: {
+          key: REVIEWER_PEER_VISIBILITY_KEY,
+          value: 'false',
+          valueType: 'boolean',
+        },
+      })
+    }
+    if (!setting && key === COMMITTEE_QUORUM_KEY) {
+      setting = await prisma.institutionSetting.create({
+        data: {
+          key: COMMITTEE_QUORUM_KEY,
+          value: '3',
+          valueType: 'number',
+        },
+      })
+    }
     if (!setting || !setting.isActive) {
       throw new AppError(`Setting "${key}" not found`, 'NOT_FOUND', 404)
     }
@@ -257,6 +303,18 @@ export async function update(req, res, next) {
       }
       nextValue = JSON.stringify(parsed.data)
       nextType = 'json'
+    }
+    if (key === REVIEWER_PEER_VISIBILITY_KEY) {
+      nextValue = value === true || value === 'true' ? 'true' : 'false'
+      nextType = 'boolean'
+    }
+    if (key === COMMITTEE_QUORUM_KEY) {
+      const parsed = Number.parseInt(String(value ?? ''), 10)
+      if (!Number.isFinite(parsed) || parsed < 1 || parsed > 15) {
+        throw new AppError('Committee quorum must be an integer between 1 and 15', 'VALIDATION_ERROR', 400)
+      }
+      nextValue = String(parsed)
+      nextType = 'number'
     }
 
     const updated = await prisma.institutionSetting.update({

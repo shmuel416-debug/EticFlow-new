@@ -16,6 +16,69 @@ import { hasConflict } from '../services/coi.service.js'
 import { getOrCreateReview } from '../services/reviewerChecklist.service.js'
 import { generateApprovalLetter, generateRejectionLetter } from '../services/pdf.service.js'
 
+const COMMITTEE_DECISION_SETTINGS_KEYS = ['decision_model', 'committee_quorum_min_votes']
+
+/**
+ * Loads decision-model settings used for committee votes.
+ * @returns {Promise<{ decisionModel: string, quorum: number }>}
+ */
+async function getCommitteeDecisionSettings() {
+  const decisionSettings = await prisma.institutionSetting.findMany({
+    where: {
+      key: { in: COMMITTEE_DECISION_SETTINGS_KEYS },
+      isActive: true,
+    },
+  })
+  const settingMap = Object.fromEntries(decisionSettings.map((item) => [item.key, item.value]))
+  const decisionModel = settingMap.decision_model || 'IRB_FULL'
+  const parsedQuorum = parseInt(settingMap.committee_quorum_min_votes || '3', 10)
+  const quorum = Number.isFinite(parsedQuorum) && parsedQuorum > 0 ? parsedQuorum : 3
+  return { decisionModel, quorum }
+}
+
+/**
+ * Calculates vote counters for a submission.
+ * @param {Array<{ decision: string }>} votes
+ * @returns {{
+ *   total: number,
+ *   approved: number,
+ *   rejected: number,
+ *   revisionRequired: number,
+ *   abstain: number,
+ *   nonAbstain: number
+ * }}
+ */
+function summarizeVotes(votes) {
+  return votes.reduce((acc, vote) => {
+    acc.total += 1
+    if (vote.decision === 'APPROVED') acc.approved += 1
+    if (vote.decision === 'REJECTED') acc.rejected += 1
+    if (vote.decision === 'REVISION_REQUIRED') acc.revisionRequired += 1
+    if (vote.decision === 'ABSTAIN') acc.abstain += 1
+    if (vote.decision !== 'ABSTAIN') acc.nonAbstain += 1
+    return acc
+  }, {
+    total: 0,
+    approved: 0,
+    rejected: 0,
+    revisionRequired: 0,
+    abstain: 0,
+    nonAbstain: 0,
+  })
+}
+
+/**
+ * Resolves whether committee voting must be enforced for this decision.
+ * @param {{ decision: string, requiresCommittee?: boolean }} payload
+ * @param {string} decisionModel
+ * @returns {boolean}
+ */
+function resolveRequiresCommitteeVote(payload, decisionModel) {
+  if (payload.decision === 'REVISION_REQUIRED') return false
+  if (typeof payload.requiresCommittee === 'boolean') return payload.requiresCommittee
+  return decisionModel === 'IRB_FULL'
+}
+
 /**
  * Throws AppError when transition is not allowed for current role/context.
  * @param {{ status: string }} submission
@@ -39,8 +102,9 @@ async function findOrFail(id) {
   const sub = await prisma.submission.findFirst({
     where:   { id, isActive: true },
     include: {
-      author:   { select: { id: true, email: true, fullName: true } },
-      reviewer: { select: { id: true, email: true, fullName: true } },
+      author:            { select: { id: true, email: true, fullName: true } },
+      reviewer:          { select: { id: true, email: true, fullName: true } },
+      secondaryReviewer: { select: { id: true, email: true, fullName: true } },
     },
   })
   if (!sub) throw AppError.notFound('Submission')
@@ -124,6 +188,71 @@ export async function assignReviewer(req, res, next) {
 }
 
 /**
+ * PATCH /api/submissions/:id/assign-secondary
+ * Assigns a secondary reviewer (in addition to the primary) and, on the first
+ * secondary assignment, moves status ASSIGNED → ASSIGNED_SECONDARY. Re-assigning
+ * a secondary reviewer keeps the current status.
+ * @param {import('express').Request} req - body: { reviewerId }
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
+export async function assignSecondaryReviewer(req, res, next) {
+  try {
+    const activeRole = getRequestRole(req)
+    const sub = await findOrFail(req.params.id)
+    const allowedAssign = await can('ASSIGN', sub.status, activeRole)
+    if (!allowedAssign) return next(AppError.forbidden())
+
+    if (!sub.reviewerId) {
+      return next(new AppError('A primary reviewer must be assigned first', 'PRIMARY_REVIEWER_REQUIRED', 400))
+    }
+    if (req.body.reviewerId === sub.reviewerId) {
+      return next(new AppError('Secondary reviewer must differ from the primary reviewer', 'DUPLICATE_REVIEWER', 400))
+    }
+
+    const reviewer = await prisma.user.findFirst({
+      where: { id: req.body.reviewerId, roles: { hasSome: ['REVIEWER', 'CHAIRMAN'] }, isActive: true },
+    })
+    if (!reviewer) return next(AppError.notFound('Reviewer'))
+
+    const conflictCheck = await hasConflict(reviewer.id, sub)
+    if (conflictCheck.conflict) {
+      return next(new AppError('Conflict of interest', 'COI_BLOCKED', 400, { reasons: conflictCheck.reasons }))
+    }
+
+    // First secondary assignment advances ASSIGNED → ASSIGNED_SECONDARY.
+    // Re-assigning while already in ASSIGNED_SECONDARY keeps the status.
+    const shouldTransition = sub.status === 'ASSIGNED'
+    if (shouldTransition) {
+      await assertTransitionAllowed(sub, 'ASSIGNED_SECONDARY', activeRole)
+    }
+
+    const updated = await prisma.submission.update({
+      where: { id: sub.id },
+      data:  {
+        secondaryReviewerId: reviewer.id,
+        ...(shouldTransition ? { status: 'ASSIGNED_SECONDARY' } : {}),
+      },
+      include: {
+        author:            { select: { id: true, email: true } },
+        reviewer:          { select: { id: true, email: true } },
+        secondaryReviewer: { select: { id: true, email: true } },
+      },
+    })
+
+    // Checklist creation is best-effort: assignment must not be blocked
+    // when no active checklist template exists for the submission track.
+    getOrCreateReview(updated.id, reviewer.id).catch(() => {})
+
+    setDueDates(sub.id, 'ASSIGNED_SECONDARY').catch(() => {})
+    notifyStatusChange(updated, 'ASSIGNED_SECONDARY').catch(() => {})
+    res.json({ submission: updated })
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
  * PATCH /api/submissions/:id/review
  * Reviewer submits their review — adds comment and moves to IN_REVIEW.
  * @param {import('express').Request} req - body: { score, recommendation, comments }
@@ -134,14 +263,15 @@ export async function submitReview(req, res, next) {
   try {
     const activeRole = getRequestRole(req)
     const sub = await findOrFail(req.params.id)
+    const isAssignedReviewer = sub.reviewerId === req.user.id || sub.secondaryReviewerId === req.user.id
     const allowedSubmitReview = await can('SUBMIT_REVIEW', sub.status, activeRole)
-    const assignedChairman = activeRole === 'CHAIRMAN' && sub.reviewerId === req.user.id
+    const assignedChairman = activeRole === 'CHAIRMAN' && isAssignedReviewer
     if (!allowedSubmitReview && !assignedChairman) return next(AppError.forbidden())
 
-    if (sub.status !== 'ASSIGNED') {
-      return next(new AppError('Submission must be ASSIGNED to submit a review', 'INVALID_TRANSITION', 400))
+    if (!['ASSIGNED', 'ASSIGNED_SECONDARY'].includes(sub.status)) {
+      return next(new AppError('Submission must be in a reviewer-assigned state to submit a review', 'INVALID_TRANSITION', 400))
     }
-    if (sub.reviewerId !== req.user.id) return next(AppError.forbidden())
+    if (!isAssignedReviewer) return next(AppError.forbidden())
 
     const { score, recommendation, comments } = req.body
     const commentBody = `[Score: ${score}/5 | ${recommendation}]\n${comments}`
@@ -211,9 +341,47 @@ export async function recordVote(req, res, next) {
 }
 
 /**
+ * GET /api/submissions/:id/votes
+ * Returns committee vote list and tally for decision screens.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
+export async function getVotes(req, res, next) {
+  try {
+    const sub = await findOrFail(req.params.id)
+    const { decisionModel, quorum } = await getCommitteeDecisionSettings()
+    const votes = await prisma.submissionVote.findMany({
+      where: { submissionId: sub.id },
+      orderBy: { updatedAt: 'desc' },
+      include: {
+        voter: {
+          select: { id: true, fullName: true, roles: true },
+        },
+      },
+    })
+    const tally = summarizeVotes(votes)
+    res.json({
+      data: {
+        votes,
+        summary: {
+          ...tally,
+          quorum,
+          quorumMet: tally.total >= quorum,
+          decisionModel,
+          requiresCommitteeByDefault: decisionModel === 'IRB_FULL',
+        },
+      },
+    })
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
  * PATCH /api/submissions/:id/decision
  * Chairman records final decision — maps decision to SubStatus.
- * @param {import('express').Request} req - body: { decision, note? }
+ * @param {import('express').Request} req - body: { decision, requiresCommittee?, note? }
  * @param {import('express').Response} res
  * @param {import('express').NextFunction} next
  */
@@ -229,20 +397,8 @@ export async function recordDecision(req, res, next) {
     if (!newStatus) return next(new AppError('Invalid decision value', 'VALIDATION_ERROR', 400))
     await assertTransitionAllowed(sub, newStatus, activeRole)
 
-    const decisionSettings = await prisma.institutionSetting.findMany({
-      where: {
-        key: { in: ['decision_model', 'committee_quorum_min_votes'] },
-        isActive: true,
-      },
-    })
-    const settingMap = Object.fromEntries(decisionSettings.map((item) => [item.key, item.value]))
-    const decisionModel = settingMap.decision_model || 'IRB_FULL'
-    const quorum = parseInt(settingMap.committee_quorum_min_votes || '3', 10)
-
-    // Requesting a revision returns the submission to the researcher for fixes;
-    // it is a procedural step, not a final committee verdict, so it is not gated
-    // by the committee quorum/majority rules that apply to APPROVED/REJECTED.
-    const requiresCommitteeVote = decisionModel === 'IRB_FULL' && req.body.decision !== 'REVISION_REQUIRED'
+    const { decisionModel, quorum } = await getCommitteeDecisionSettings()
+    const requiresCommitteeVote = resolveRequiresCommitteeVote(req.body, decisionModel)
 
     if (requiresCommitteeVote) {
       const votes = await prisma.submissionVote.findMany({

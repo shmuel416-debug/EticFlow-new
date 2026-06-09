@@ -15,6 +15,7 @@ import SubmissionLifecycle from '../../components/submissions/SubmissionLifecycl
 import CommentThread from '../../components/submissions/CommentThread'
 import FieldReviewGrid from '../../components/submissions/FieldReviewGrid'
 import AiPanel from '../../components/submissions/AiPanel'
+import CommitteeVotePanel from '../../components/submissions/CommitteeVotePanel'
 import {
   PageHeader,
   Card,
@@ -190,11 +191,16 @@ export default function ReviewDetailPage() {
       <Card as="section">
         <CardHeader title={t('reviewer.fieldReview.panelTitle')} />
         <CardBody>
-          <AiPanel submissionId={submission?.id} canRun={submission?.status === 'ASSIGNED'} />
+          <AiPanel submissionId={submission?.id} canRun={['ASSIGNED', 'ASSIGNED_SECONDARY'].includes(submission?.status)} />
         </CardBody>
       </Card>
 
       <FieldReviewGrid submissionId={submission?.id} onSuccess={handleReviewSuccess} />
+
+      <CommitteeVotePanel
+        submissionId={submission?.id}
+        canVote={submission?.status === 'IN_REVIEW' || submission?.status === 'PENDING_REVISION'}
+      />
 
       <Card as="section">
         <CardHeader

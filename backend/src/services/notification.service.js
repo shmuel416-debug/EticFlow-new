@@ -66,6 +66,16 @@ export async function notifyStatusChange(submission, newStatus) {
     )
   }
 
+  if (newStatus === 'ASSIGNED_SECONDARY' && submission.secondaryReviewerId) {
+    await notifyUser(
+      submission.secondaryReviewerId, type,
+      'notifications.types.SUBMISSION_ASSIGNED',
+      'notifications.types.SUBMISSION_ASSIGNED',
+      meta,
+      { to: submission.secondaryReviewer?.email, subject: `הוקצית כסוקר משני: ${submission.applicationId}`, body: `בקשה ${submission.applicationId} הוקצתה לך לביקורת כסוקר משני.` }
+    )
+  }
+
   if (['PENDING_REVISION', 'APPROVED', 'REJECTED'].includes(newStatus)) {
     await notifyUser(
       submission.authorId, type,

@@ -211,7 +211,8 @@
       "DRAFT": "Draft",
       "SUBMITTED": "Submitted",
       "IN_TRIAGE": "In Triage",
-      "ASSIGNED": "Assigned",
+      "ASSIGNED": "Primary Reviewer Assignment",
+      "ASSIGNED_SECONDARY": "Secondary Reviewer Assignment",
       "IN_REVIEW": "In Review",
       "PENDING_REVISION": "Pending Revision",
       "APPROVED": "Approved",
@@ -239,7 +240,8 @@
       "colAuthor": "Researcher",
       "viewDetail": "View details",
       "title": "Recent Submissions",
-      "empty": "No submissions to display"
+      "empty": "No submissions to display",
+      "reviewerVisibilityHint": "Submitted requests are shown here based on the reviewer-visibility setting. Requests with conflicts of interest for you are hidden automatically."
     },
     "detail": {
       "pageTitle": "Submission Details",
@@ -247,9 +249,11 @@
       "sectionComments": "Comments",
       "sectionStatus": "Status & Actions",
       "sectionReviewer": "Assigned Reviewer",
+      "sectionSecondaryReviewer": "Assigned Secondary Reviewer",
       "changeStatus": "Change Status",
       "transitionToStatus": "Move status to {{status}}",
       "assignReviewer": "Assign Reviewer",
+      "assignSecondaryReviewer": "Assign Secondary Reviewer",
       "noReviewer": "No reviewer assigned",
       "addComment": "Add Comment",
       "commentPlaceholder": "Write a comment...",
@@ -258,6 +262,7 @@
       "statusUpdated": "Status updated successfully",
       "statusUpdatedTo": "Status updated to {{status}}",
       "reviewerAssigned": "Reviewer assigned successfully",
+      "secondaryReviewerAssigned": "Secondary reviewer assigned successfully",
       "noAnswer": "No answer provided",
       "loadError": "Failed to load submission",
       "backToList": "Back to list",
@@ -348,7 +353,8 @@
       "DRAFT": "Draft saved",
       "SUBMITTED": "Submitted",
       "IN_TRIAGE": "Initial triage",
-      "ASSIGNED": "Assigned to reviewer",
+      "ASSIGNED": "Primary reviewer assignment",
+      "ASSIGNED_SECONDARY": "Secondary reviewer assignment",
       "IN_REVIEW": "Under review",
       "PENDING_REVISION": "Revision required",
       "APPROVED": "Approved",
@@ -382,7 +388,8 @@
       "DRAFT": "The submission is saved as draft and has not been sent for review yet.",
       "SUBMITTED": "The submission was received and is waiting for secretary intake review.",
       "IN_TRIAGE": "The request is being triaged for completeness before reviewer assignment.",
-      "ASSIGNED": "A reviewer has been assigned and can now start the formal review.",
+      "ASSIGNED": "A primary reviewer has been assigned and can now start the formal review.",
+      "ASSIGNED_SECONDARY": "A secondary reviewer has been assigned in addition to the primary reviewer.",
       "IN_REVIEW": "The review is in progress or completed and awaiting chairman decision.",
       "PENDING_REVISION": "The committee requested revisions before the process can continue.",
       "APPROVED": "The submission has been formally approved by the committee.",
@@ -399,6 +406,7 @@
       },
       "REVIEWER": {
         "ASSIGNED": "Open the submission and complete the reviewer checklist.",
+        "ASSIGNED_SECONDARY": "Open the submission and complete the reviewer checklist as the secondary reviewer.",
         "IN_REVIEW": "Finalize notes and wait for chairman decision."
       },
       "CHAIRMAN": {
@@ -685,6 +693,29 @@
       "searchPlaceholder": "Search by path/value...",
       "hideNoise": "Hide noisy changes ({{count}})",
       "groupPrefix": "Group:"
+    },
+    "committeeVote": {
+      "title": "Committee Vote",
+      "decisionLabel": "Committee member decision",
+      "selectDecision": "Select decision",
+      "noteLabel": "Vote note",
+      "notePlaceholder": "Vote note (optional)",
+      "submit": "Save vote",
+      "quorumLabel": "Quorum status",
+      "quorumValue": "{{total}} out of {{quorum}} required votes",
+      "tally": {
+        "approved": "Approve votes",
+        "rejected": "Reject votes",
+        "revisionRequired": "Revision votes",
+        "abstain": "Abstain votes",
+        "total": "Total votes"
+      },
+      "options": {
+        "APPROVED": "Approve",
+        "REJECTED": "Reject",
+        "REVISION_REQUIRED": "Revision required",
+        "ABSTAIN": "Abstain"
+      }
     }
   },
   "chairman": {
@@ -699,6 +730,13 @@
       "approve": "Approve",
       "reject": "Reject",
       "requestRevision": "Request Revision",
+      "approvalModeLabel": "Decision mode",
+      "voteSummaryTitle": "Committee vote summary",
+      "approvalMode": {
+        "quick": "Quick approval (without committee voting)",
+        "committee": "Committee approval (requires voting)"
+      },
+      "quorumHint": "Collected {{total}} votes out of {{quorum}} required",
       "noteLabel": "Decision note",
       "notePlaceholder": "Explain the decision...",
       "confirmApprove": "Approve this submission?",
@@ -1182,6 +1220,8 @@
     "fileUpload": "File Upload",
     "aiSettings": "AI Settings",
     "emailSettings": "Email Settings",
+    "reviewerVisibility": "Reviewer Visibility",
+    "committeeDecision": "Committee Decisions",
     "institution_name_he": "Institution Name (Hebrew)",
     "institution_name_en": "Institution Name (English)",
     "institution_logo_url": "Logo URL",
@@ -1200,6 +1240,9 @@
     },
     "email_sender_name": "Email Sender Name",
     "email_sender_address": "Email Sender Address",
+    "reviewer_peer_visibility": "Allow all reviewers to see submitted requests",
+    "reviewer_peer_visibility_hint": "When enabled, reviewers can see submitted requests (excluding drafts), except requests where the viewing reviewer has a conflict of interest.",
+    "committee_quorum_min_votes": "Minimum votes required for committee decision",
     "approvalTemplate": "Approval Letter Template",
     "calendar": {
       "title": "Personal Calendar Connection",
@@ -1432,6 +1475,8 @@
     "ROLE_NOT_ALLOWED": "Only committee members are allowed to perform this action",
     "USER_INACTIVE": "The selected user is inactive",
     "COI_BLOCKED": "A conflict of interest blocks this action",
+    "PRIMARY_REVIEWER_REQUIRED": "A primary reviewer must be assigned before a secondary reviewer",
+    "DUPLICATE_REVIEWER": "The secondary reviewer must differ from the primary reviewer",
     "FORM_SCHEMA_EMPTY": "Cannot publish a form without at least one field",
     "INVALID_TRANSITION": "This action is not allowed in the submission's current status",
     "QUORUM_NOT_MET": "The committee has not yet reached the required number of votes",

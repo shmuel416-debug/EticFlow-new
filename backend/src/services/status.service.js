@@ -16,7 +16,8 @@ const DEFAULT_STATUS_CONFIG = [
   // Metadata exists for operational visibility; dispatch is not wired in notifyStatusChange.
   { code: 'SUBMITTED', labelHe: 'הוגש', labelEn: 'Submitted', descriptionHe: 'הבקשה התקבלה במערכת וממתינה לבדיקת מזכירת הוועדה.', descriptionEn: 'The submission was received and is waiting for secretary intake review.', color: '#2563eb', orderIndex: 20, isInitial: false, isTerminal: false, slaPhase: 'TRIAGE', notificationType: 'SUBMISSION_RECEIVED' },
   { code: 'IN_TRIAGE', labelHe: 'בדיקה ראשונית', labelEn: 'In Triage', descriptionHe: 'מבוצעת בדיקת שלמות מסמכים והתאמה לתהליך לפני הקצאה לסוקר.', descriptionEn: 'The request is being triaged for completeness before reviewer assignment.', color: '#ca8a04', orderIndex: 30, isInitial: false, isTerminal: false, slaPhase: 'TRIAGE', notificationType: null },
-  { code: 'ASSIGNED', labelHe: 'הוקצה לסוקר', labelEn: 'Assigned', descriptionHe: 'הבקשה הוקצתה לסוקר שמתחיל כעת בבדיקה מקצועית.', descriptionEn: 'A reviewer has been assigned and can now start the formal review.', color: '#ea580c', orderIndex: 40, isInitial: false, isTerminal: false, slaPhase: 'REVIEW', notificationType: 'SUBMISSION_ASSIGNED' },
+  { code: 'ASSIGNED', labelHe: 'הקצאת סוקר ראשי', labelEn: 'Primary Reviewer Assignment', descriptionHe: 'הבקשה הוקצתה לסוקר ראשי שמתחיל כעת בבדיקה מקצועית.', descriptionEn: 'A primary reviewer has been assigned and can now start the formal review.', color: '#ea580c', orderIndex: 40, isInitial: false, isTerminal: false, slaPhase: 'REVIEW', notificationType: 'SUBMISSION_ASSIGNED' },
+  { code: 'ASSIGNED_SECONDARY', labelHe: 'הקצאת סוקר משני', labelEn: 'Secondary Reviewer Assignment', descriptionHe: 'הבקשה הוקצתה לסוקר משני בנוסף לסוקר הראשי.', descriptionEn: 'A secondary reviewer has been assigned in addition to the primary reviewer.', color: '#fb923c', orderIndex: 45, isInitial: false, isTerminal: false, slaPhase: 'REVIEW', notificationType: 'SUBMISSION_ASSIGNED' },
   // Metadata exists for operational visibility; dispatch is not wired in notifyStatusChange.
   { code: 'IN_REVIEW', labelHe: 'בביקורת', labelEn: 'In Review', descriptionHe: 'הסקירה המקצועית הוגשה וממתינים להחלטת יו״ר הוועדה.', descriptionEn: 'The review is in progress or completed and awaiting chairman decision.', color: '#7c3aed', orderIndex: 50, isInitial: false, isTerminal: false, slaPhase: 'APPROVAL', notificationType: 'REVIEW_REQUESTED' },
   { code: 'PENDING_REVISION', labelHe: 'ממתין לתיקון', labelEn: 'Pending Revision', descriptionHe: 'נדרשים תיקונים מצד החוקר/ת לפני המשך הדיון בבקשה.', descriptionEn: 'The committee requested revisions before the process can continue.', color: '#dc2626', orderIndex: 60, isInitial: false, isTerminal: false, slaPhase: null, notificationType: 'REVISION_REQUIRED' },
@@ -33,7 +34,10 @@ const DEFAULT_TRANSITIONS = [
   { fromCode: 'IN_TRIAGE', toCode: 'WITHDRAWN', allowedRoles: ['SECRETARY', 'ADMIN'], requireReviewerAssigned: false },
   { fromCode: 'IN_TRIAGE', toCode: 'ASSIGNED', allowedRoles: ['SECRETARY', 'ADMIN'], requireReviewerAssigned: true },
   { fromCode: 'ASSIGNED', toCode: 'WITHDRAWN', allowedRoles: ['SECRETARY', 'ADMIN'], requireReviewerAssigned: false },
+  { fromCode: 'ASSIGNED', toCode: 'ASSIGNED_SECONDARY', allowedRoles: ['SECRETARY', 'ADMIN'], requireReviewerAssigned: true },
   { fromCode: 'ASSIGNED', toCode: 'IN_REVIEW', allowedRoles: ['SECRETARY', 'ADMIN'], requireReviewerAssigned: true },
+  { fromCode: 'ASSIGNED_SECONDARY', toCode: 'WITHDRAWN', allowedRoles: ['SECRETARY', 'ADMIN'], requireReviewerAssigned: false },
+  { fromCode: 'ASSIGNED_SECONDARY', toCode: 'IN_REVIEW', allowedRoles: ['SECRETARY', 'ADMIN'], requireReviewerAssigned: true },
   { fromCode: 'IN_REVIEW', toCode: 'APPROVED', allowedRoles: ['CHAIRMAN', 'ADMIN'], requireReviewerAssigned: false },
   { fromCode: 'IN_REVIEW', toCode: 'REJECTED', allowedRoles: ['CHAIRMAN', 'ADMIN'], requireReviewerAssigned: false },
   { fromCode: 'IN_REVIEW', toCode: 'PENDING_REVISION', allowedRoles: ['CHAIRMAN', 'ADMIN'], requireReviewerAssigned: false },

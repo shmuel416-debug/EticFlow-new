@@ -9,13 +9,13 @@ import { useState, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   Building2, Timer, FolderOpen, Mail, FileCheck2, CalendarClock,
-  Check, X as XIcon, Eye, RotateCcw,
+  Check, X as XIcon, Eye, RotateCcw, CheckCircle2,
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import api, { buildApiUrl } from '../../services/api'
 import {
   Button, Card, CardHeader, CardBody, CardFooter,
-  PageHeader, FormField, Input, Textarea, Select, Tabs, Badge,
+  PageHeader, FormField, Input, Textarea, Select, Tabs, Badge, Switch,
 } from '../../components/ui'
 import useDocumentTitle from '../../hooks/useDocumentTitle'
 
@@ -73,6 +73,20 @@ const GROUPS = [
     fields: [
       { key: 'email_sender_name',    type: 'text'  },
       { key: 'email_sender_address', type: 'email' },
+    ],
+  },
+  {
+    groupKey: 'reviewerVisibility',
+    icon: Eye,
+    fields: [
+      { key: 'reviewer_peer_visibility', type: 'switch', hintKey: 'settings.reviewer_peer_visibility_hint' },
+    ],
+  },
+  {
+    groupKey: 'committeeDecision',
+    icon: CheckCircle2,
+    fields: [
+      { key: 'committee_quorum_min_votes', type: 'number', hint: '1-15' },
     ],
   },
 ]
@@ -316,7 +330,7 @@ function SettingsGroup({ group, values, onSave }) {
             <FormField
               key={field.key}
               label={t(`settings.${field.key}`)}
-              hint={field.type !== 'color' ? field.hint : undefined}
+              hint={field.type !== 'color' ? (field.hintKey ? t(field.hintKey) : field.hint) : undefined}
               render={({ inputId, describedBy, invalid }) => (
                 field.type === 'color' ? (
                   <div className="flex items-center gap-2">
@@ -357,6 +371,14 @@ function SettingsGroup({ group, values, onSave }) {
                       </option>
                     ))}
                   </Select>
+                ) : field.type === 'switch' ? (
+                  <Switch
+                    id={inputId}
+                    checked={draft[field.key] === 'true'}
+                    onChange={(nextChecked) => handleChange(field.key, nextChecked ? 'true' : 'false')}
+                    aria-label={t(`settings.${field.key}`)}
+                    aria-describedby={describedBy}
+                  />
                 ) : (
                   <Input
                     id={inputId}

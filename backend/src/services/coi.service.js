@@ -43,6 +43,44 @@ async function listActiveDeclarations(reviewerId) {
 }
 
 /**
+ * Builds exclusion filters for reviewer peer-visibility listing.
+ * @param {string} reviewerId
+ * @returns {Promise<{ blockAll: boolean, submissionIds: string[], userIds: string[], departments: string[] }>}
+ */
+export async function buildReviewerConflictExclusion(reviewerId) {
+  const declarations = await listActiveDeclarations(reviewerId)
+  const submissionIds = new Set()
+  const userIds = new Set([reviewerId])
+  const departments = new Set()
+  let blockAll = false
+
+  for (const declaration of declarations) {
+    if (declaration.scope === 'GLOBAL') {
+      blockAll = true
+      continue
+    }
+    if (declaration.scope === 'SUBMISSION' && declaration.targetSubmissionId) {
+      submissionIds.add(declaration.targetSubmissionId)
+      continue
+    }
+    if (declaration.scope === 'USER' && declaration.targetUserId) {
+      userIds.add(declaration.targetUserId)
+      continue
+    }
+    if (declaration.scope === 'DEPARTMENT' && declaration.targetDepartment) {
+      departments.add(declaration.targetDepartment.trim().toLowerCase())
+    }
+  }
+
+  return {
+    blockAll,
+    submissionIds: [...submissionIds],
+    userIds: [...userIds],
+    departments: [...departments],
+  }
+}
+
+/**
  * Evaluates whether a reviewer conflicts with a submission.
  * @param {string} reviewerId
  * @param {string|object} submissionInput

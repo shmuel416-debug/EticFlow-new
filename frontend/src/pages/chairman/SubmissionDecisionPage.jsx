@@ -28,11 +28,13 @@ import {
   Spinner,
   Modal,
   FormField,
+  Select,
   Textarea,
 } from '../../components/ui'
 import useDocumentTitle from '../../hooks/useDocumentTitle'
 import { buildEntityDocumentTitle } from '../../utils/documentTitle'
 import { buildSubmissionDetailPath } from '../../utils/submissionRoutes'
+import CommitteeVotePanel from '../../components/submissions/CommitteeVotePanel'
 
 const DECISIONS = [
   {
@@ -62,6 +64,15 @@ const DECISIONS = [
 ]
 
 /**
+ * Resolves default approval mode from submission track.
+ * @param {{ track?: string } | null} submission
+ * @returns {'committee' | 'quick'}
+ */
+function getInitialApprovalMode(submission) {
+  return submission?.track === 'FULL' ? 'committee' : 'quick'
+}
+
+/**
  * Chairman's decision page for a single submission.
  * @returns {JSX.Element}
  */
@@ -76,6 +87,8 @@ export default function SubmissionDecisionPage() {
   const [note,       setNote]       = useState('')
   const [error,      setError]      = useState('')
   const [pendingDecision, setPendingDecision] = useState(null)
+  const [approvalMode, setApprovalMode] = useState('committee')
+  const [voteSummary, setVoteSummary] = useState(null)
   const DECISION_TO_STATUS = {
     APPROVED: 'APPROVED',
     REJECTED: 'REJECTED',
@@ -117,6 +130,20 @@ export default function SubmissionDecisionPage() {
 
   useEffect(() => { fetchSubmission() }, [fetchSubmission])
 
+  useEffect(() => {
+    if (!submission?.id) return
+    setApprovalMode(getInitialApprovalMode(submission))
+  }, [submission?.id, submission?.track])
+
+  /**
+   * Receives live vote summary updates from the vote panel.
+   * @param {object} summary
+   * @returns {void}
+   */
+  const handleVotesSummaryChange = useCallback((summary) => {
+    setVoteSummary(summary || null)
+  }, [])
+
   /**
    * Commits the pending decision after modal confirmation.
    */
@@ -127,6 +154,9 @@ export default function SubmissionDecisionPage() {
     try {
       await api.patch(`/submissions/${submission?.id || submissionRef}/decision`, {
         decision: pendingDecision.key,
+        requiresCommittee: pendingDecision.key === 'REVISION_REQUIRED'
+          ? false
+          : approvalMode === 'committee',
         note: note.trim() || undefined,
       })
       const nextStatus = DECISION_TO_STATUS[pendingDecision.key]
@@ -260,6 +290,30 @@ export default function SubmissionDecisionPage() {
               ) : (
                 <div className="space-y-4">
                   <FormField
+                    label={t('chairman.decision.approvalModeLabel')}
+                    render={({ inputId, describedBy }) => (
+                      <Select
+                        id={inputId}
+                        value={approvalMode}
+                        onChange={(event) => setApprovalMode(event.target.value)}
+                        aria-describedby={describedBy}
+                      >
+                        <option value="quick">{t('chairman.decision.approvalMode.quick')}</option>
+                        <option value="committee">{t('chairman.decision.approvalMode.committee')}</option>
+                      </Select>
+                    )}
+                  />
+
+                  {approvalMode === 'committee' && voteSummary && (
+                    <p className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>
+                      {t('chairman.decision.quorumHint', {
+                        total: voteSummary.total ?? 0,
+                        quorum: voteSummary.quorum ?? 0,
+                      })}
+                    </p>
+                  )}
+
+                  <FormField
                     label={t('chairman.decision.noteLabel')}
                     render={({ inputId, describedBy, required, invalid }) => (
                       <Textarea
@@ -314,6 +368,13 @@ export default function SubmissionDecisionPage() {
           </Card>
         </aside>
       </div>
+
+      <CommitteeVotePanel
+        submissionId={submission?.id}
+        canVote={false}
+        titleKey="chairman.decision.voteSummaryTitle"
+        onSummaryChange={handleVotesSummaryChange}
+      />
 
       <Card as="section">
         <CardHeader title={t('submission.detail.sectionComments')} />

@@ -211,7 +211,8 @@
       "DRAFT": "טיוטה",
       "SUBMITTED": "הוגש",
       "IN_TRIAGE": "בדיקה ראשונית",
-      "ASSIGNED": "הוקצה לסוקר",
+      "ASSIGNED": "הקצאת סוקר ראשי",
+      "ASSIGNED_SECONDARY": "הקצאת סוקר משני",
       "IN_REVIEW": "בביקורת",
       "PENDING_REVISION": "ממתין לתיקון",
       "APPROVED": "אושר",
@@ -239,7 +240,8 @@
       "colAuthor": "חוקר",
       "viewDetail": "צפה בפרטים",
       "title": "הגשות אחרונות",
-      "empty": "אין הגשות להצגה"
+      "empty": "אין הגשות להצגה",
+      "reviewerVisibilityHint": "מוצגות כאן בקשות שהוגשו בהתאם להגדרת הנראות לסוקרים. בקשות עם ניגוד עניינים עבורך מוסתרות אוטומטית."
     },
     "detail": {
       "pageTitle": "פרטי הגשה",
@@ -247,9 +249,11 @@
       "sectionComments": "הערות ותגובות",
       "sectionStatus": "סטטוס ופעולות",
       "sectionReviewer": "סוקר מוקצה",
+      "sectionSecondaryReviewer": "סוקר משני מוקצה",
       "changeStatus": "שינוי סטטוס",
       "transitionToStatus": "העבר סטטוס אל {{status}}",
       "assignReviewer": "הקצה סוקר",
+      "assignSecondaryReviewer": "הקצה סוקר משני",
       "noReviewer": "לא הוקצה סוקר",
       "addComment": "הוסף הערה",
       "commentPlaceholder": "כתוב הערה...",
@@ -258,6 +262,7 @@
       "statusUpdated": "הסטטוס עודכן בהצלחה",
       "statusUpdatedTo": "הסטטוס עודכן ל־{{status}}",
       "reviewerAssigned": "הסוקר הוקצה בהצלחה",
+      "secondaryReviewerAssigned": "הסוקר המשני הוקצה בהצלחה",
       "noAnswer": "לא ניתנה תשובה",
       "loadError": "שגיאה בטעינת ההגשה",
       "backToList": "חזרה לרשימה",
@@ -348,7 +353,8 @@
       "DRAFT": "טיוטה נשמרה",
       "SUBMITTED": "הוגש בהצלחה",
       "IN_TRIAGE": "בדיקה ראשונית",
-      "ASSIGNED": "הוקצה לסוקר",
+      "ASSIGNED": "הקצאת סוקר ראשי",
+      "ASSIGNED_SECONDARY": "הקצאת סוקר משני",
       "IN_REVIEW": "בביקורת",
       "PENDING_REVISION": "נדרש תיקון",
       "APPROVED": "אושר סופית",
@@ -382,7 +388,8 @@
       "DRAFT": "הבקשה נשמרה כטיוטה ועדיין לא נשלחה לבדיקה.",
       "SUBMITTED": "הבקשה התקבלה במערכת וממתינה לבדיקת מזכירת הוועדה.",
       "IN_TRIAGE": "מבוצעת בדיקת שלמות מסמכים והתאמה לתהליך לפני הקצאה לסוקר.",
-      "ASSIGNED": "הבקשה הוקצתה לסוקר שמתחיל כעת בבדיקה מקצועית.",
+      "ASSIGNED": "הבקשה הוקצתה לסוקר ראשי שמתחיל כעת בבדיקה מקצועית.",
+      "ASSIGNED_SECONDARY": "הבקשה הוקצתה לסוקר משני בנוסף לסוקר הראשי.",
       "IN_REVIEW": "הסקירה המקצועית הוגשה וממתינים להחלטת יו״ר הוועדה.",
       "PENDING_REVISION": "נדרשים תיקונים מצד החוקר/ת לפני המשך הדיון בבקשה.",
       "APPROVED": "הבקשה אושרה סופית על ידי הוועדה.",
@@ -399,6 +406,7 @@
       },
       "REVIEWER": {
         "ASSIGNED": "פתח/י את הבקשה והשלם/י את צ׳קליסט הסקירה.",
+        "ASSIGNED_SECONDARY": "פתח/י את הבקשה והשלם/י את צ׳קליסט הסקירה כסוקר משני.",
         "IN_REVIEW": "השלם/י הערות והמתן/י להחלטת היו״ר."
       },
       "CHAIRMAN": {
@@ -685,6 +693,29 @@
       "searchPlaceholder": "??? ??? ????/???...",
       "hideNoise": "???? ??????? ?????? ({{count}})",
       "groupPrefix": "?????:"
+    },
+    "committeeVote": {
+      "title": "הצבעת ועדה",
+      "decisionLabel": "החלטת חבר ועדה",
+      "selectDecision": "בחר החלטה",
+      "noteLabel": "הערת הצבעה",
+      "notePlaceholder": "הערת הצבעה (אופציונלי)",
+      "submit": "שמור הצבעה",
+      "quorumLabel": "מצב קוורום",
+      "quorumValue": "{{total}} מתוך {{quorum}} קולות נדרשים",
+      "tally": {
+        "approved": "בעד אישור",
+        "rejected": "בעד דחייה",
+        "revisionRequired": "בעד תיקון",
+        "abstain": "נמנע",
+        "total": "סה\"כ קולות"
+      },
+      "options": {
+        "APPROVED": "אישור",
+        "REJECTED": "דחייה",
+        "REVISION_REQUIRED": "נדרש תיקון",
+        "ABSTAIN": "נמנע"
+      }
     }
   },
   "chairman": {
@@ -699,6 +730,13 @@
       "approve": "אשר",
       "reject": "דחה",
       "requestRevision": "בקש תיקון",
+      "approvalModeLabel": "מסלול החלטה",
+      "voteSummaryTitle": "סיכום הצבעת ועדה",
+      "approvalMode": {
+        "quick": "אישור מהיר (ללא ועדה)",
+        "committee": "אישור בוועדה (דורש הצבעה)"
+      },
+      "quorumHint": "נאספו {{total}} קולות מתוך {{quorum}} הנדרשים",
       "noteLabel": "הערה להחלטה",
       "notePlaceholder": "הסבר את ההחלטה...",
       "confirmApprove": "האם לאשר את ההגשה?",
@@ -1182,6 +1220,8 @@
     "fileUpload": "העלאת קבצים",
     "aiSettings": "הגדרות AI",
     "emailSettings": "הגדרות אימייל",
+    "reviewerVisibility": "נראות לסוקרים",
+    "committeeDecision": "החלטות ועדה",
     "institution_name_he": "שם המוסד (עברית)",
     "institution_name_en": "שם המוסד (אנגלית)",
     "institution_logo_url": "כתובת URL של הלוגו",
@@ -1200,6 +1240,9 @@
     },
     "email_sender_name": "שם שולח האימייל",
     "email_sender_address": "כתובת שולח האימייל",
+    "reviewer_peer_visibility": "אפשר לכל הסוקרים לראות בקשות שהוגשו",
+    "reviewer_peer_visibility_hint": "כאשר מופעל, סוקרים יוכלו לראות בקשות שהוגשו (לא טיוטות), למעט בקשות שבהן קיים ניגוד עניינים עבור הסוקר הצופה.",
+    "committee_quorum_min_votes": "מספר קולות מינימלי להחלטת ועדה",
     "approvalTemplate": "טמפלט מכתב אישור",
     "calendar": {
       "title": "חיבור יומן אישי",
@@ -1432,6 +1475,8 @@
     "ROLE_NOT_ALLOWED": "רק חברי ועדה מורשים לפעולה זו",
     "USER_INACTIVE": "המשתמש אינו פעיל",
     "COI_BLOCKED": "ניגוד עניינים מונע את הפעולה",
+    "PRIMARY_REVIEWER_REQUIRED": "יש להקצות סוקר ראשי לפני הקצאת סוקר משני",
+    "DUPLICATE_REVIEWER": "הסוקר המשני חייב להיות שונה מהסוקר הראשי",
     "FORM_SCHEMA_EMPTY": "לא ניתן לפרסם טופס ללא לפחות שדה אחד",
     "INVALID_TRANSITION": "לא ניתן לבצע את המעבר הזה בסטטוס הנוכחי של הבקשה",
     "QUORUM_NOT_MET": "טרם נאסף מספר הקולות הנדרש להחלטת הוועדה",

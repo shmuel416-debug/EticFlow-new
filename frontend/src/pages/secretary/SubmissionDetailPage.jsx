@@ -70,6 +70,7 @@ export default function SubmissionDetailPage() {
   const [error,          setError]          = useState('')
   const [transitioning,  setTransitioning]  = useState(false)
   const [assigningId,    setAssigningId]    = useState('')
+  const [assigningSecondaryId, setAssigningSecondaryId] = useState('')
   const [successMsg,     setSuccessMsg]     = useState('')
   const [pdfLoading,     setPdfLoading]     = useState(null) // 'download-he' | 'download-en' | 'preview-he' | 'preview-en' | null
   const [previewPdfUrl,  setPreviewPdfUrl]  = useState('')
@@ -116,6 +117,7 @@ export default function SubmissionDetailPage() {
       const { data } = await api.get(`/submissions/${submissionRef}`)
       setSubmission(data.submission)
       setAssigningId(data.submission.reviewerId ?? '')
+      setAssigningSecondaryId(data.submission.secondaryReviewerId ?? '')
     } catch {
       setError(t('submission.detail.loadError'))
     } finally {
@@ -182,6 +184,24 @@ export default function SubmissionDetailPage() {
     try {
       await api.patch(`/submissions/${resolvedSubmissionId}/assign`, { reviewerId: assigningId })
       setSuccessMsg(t('submission.detail.reviewerAssigned'))
+      await fetchSubmission()
+    } catch (err) {
+      setError(t(`errors.${err.code}`, t('errors.SERVER_ERROR')))
+    } finally {
+      setTransitioning(false)
+    }
+  }
+
+  /**
+   * Handles secondary reviewer assignment.
+   */
+  async function handleAssignSecondary() {
+    if (!assigningSecondaryId) return
+    setTransitioning(true)
+    setSuccessMsg('')
+    try {
+      await api.patch(`/submissions/${resolvedSubmissionId}/assign-secondary`, { reviewerId: assigningSecondaryId })
+      setSuccessMsg(t('submission.detail.secondaryReviewerAssigned'))
       await fetchSubmission()
     } catch (err) {
       setError(t(`errors.${err.code}`, t('errors.SERVER_ERROR')))
@@ -281,6 +301,10 @@ export default function SubmissionDetailPage() {
   const canAssign     =
     ['SECRETARY','ADMIN'].includes(user?.role) &&
     ['IN_TRIAGE','ASSIGNED'].includes(submission?.status)
+  const canAssignSecondary =
+    ['SECRETARY','ADMIN'].includes(user?.role) &&
+    ['ASSIGNED','ASSIGNED_SECONDARY'].includes(submission?.status) &&
+    Boolean(submission?.reviewerId)
   const isPdfBusy = pdfLoading !== null
   const decisionLetter = DECISION_LETTER_CONFIG[submission?.status] ?? null
   const backTo        =
@@ -509,6 +533,51 @@ export default function SubmissionDetailPage() {
                   style={{ color: 'var(--text-muted)' }}
                 >
                   {submission.reviewer.email}
+                </p>
+              </CardBody>
+            </Card>
+          )}
+
+          {canAssignSecondary && (
+            <Card as="section">
+              <CardHeader title={t('submission.detail.sectionSecondaryReviewer')} />
+              <CardBody>
+                <ReviewerSelect
+                  value={assigningSecondaryId}
+                  onChange={setAssigningSecondaryId}
+                  submissionId={submission?.id}
+                  disabled={transitioning}
+                />
+                <Button
+                  variant="gold"
+                  fullWidth
+                  className="mt-3"
+                  onClick={handleAssignSecondary}
+                  data-testid="assign-secondary-reviewer-submit"
+                  disabled={transitioning || !assigningSecondaryId || assigningSecondaryId === submission?.reviewerId}
+                  loading={transitioning && !!assigningSecondaryId}
+                >
+                  {t('submission.detail.assignSecondaryReviewer')}
+                </Button>
+              </CardBody>
+            </Card>
+          )}
+
+          {submission?.secondaryReviewer && (
+            <Card as="section">
+              <CardHeader title={t('submission.detail.sectionSecondaryReviewer')} />
+              <CardBody>
+                <p
+                  className="text-sm font-medium"
+                  style={{ color: 'var(--text-primary)' }}
+                >
+                  {submission.secondaryReviewer.fullName}
+                </p>
+                <p
+                  className="text-xs mt-0.5"
+                  style={{ color: 'var(--text-muted)' }}
+                >
+                  {submission.secondaryReviewer.email}
                 </p>
               </CardBody>
             </Card>

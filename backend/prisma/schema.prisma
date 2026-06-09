@@ -203,6 +203,7 @@ model User {
   // Relations
   submissions       Submission[]       @relation("SubmissionAuthor")
   assignedReviews   Submission[]       @relation("SubmissionReviewer")
+  secondaryAssignedReviews Submission[] @relation("SubmissionSecondaryReviewer")
   comments          Comment[]
   notifications     Notification[]
   auditLogs         AuditLog[]
@@ -301,7 +302,8 @@ model Submission {
   status        String    @default("DRAFT") @db.VarChar(40)
   formConfigId  String    @map("form_config_id")
   authorId      String    @map("author_id")
-  reviewerId    String?   @map("reviewer_id")
+  reviewerId    String?   @map("reviewer_id")              // Primary reviewer
+  secondaryReviewerId String? @map("secondary_reviewer_id") // Secondary reviewer
   parentId      String?   @map("parent_id")               // For continuation submissions
   isActive      Boolean   @default(true) @map("is_active")
   submittedAt   DateTime? @map("submitted_at")
@@ -312,6 +314,7 @@ model Submission {
   formConfig   FormConfig         @relation(fields: [formConfigId], references: [id])
   author       User               @relation("SubmissionAuthor", fields: [authorId], references: [id])
   reviewer     User?              @relation("SubmissionReviewer", fields: [reviewerId], references: [id])
+  secondaryReviewer User?         @relation("SubmissionSecondaryReviewer", fields: [secondaryReviewerId], references: [id])
   parent       Submission?        @relation("SubmissionContinuation", fields: [parentId], references: [id])
   continuations Submission[]      @relation("SubmissionContinuation")
   versions     SubmissionVersion[]

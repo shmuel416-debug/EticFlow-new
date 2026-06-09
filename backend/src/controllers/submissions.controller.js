@@ -12,6 +12,43 @@
 import prisma from '../config/database.js'
 import { AppError } from '../utils/errors.js'
 import { getRequestRole, hasAnyRole } from '../utils/roles.js'
+import { buildReviewerConflictExclusion } from '../services/coi.service.js'
+
+const REVIEWER_PEER_VISIBILITY_KEY = 'reviewer_peer_visibility'
+
+/**
+ * Returns true when reviewer peer visibility is enabled.
+ * @returns {Promise<boolean>}
+ */
+async function isPeerVisibilityEnabled() {
+  const setting = await prisma.institutionSetting.findUnique({
+    where: { key: REVIEWER_PEER_VISIBILITY_KEY },
+    select: { value: true },
+  })
+  return setting?.value === 'true'
+}
+
+/**
+ * Builds peer visibility clause while excluding conflicted submissions.
+ * @param {{ id: string }} user
+ * @param {{ submissionIds: string[], userIds: string[], departments: string[] }} exclusion
+ * @returns {object}
+ */
+function buildReviewerPeerClause(user, exclusion) {
+  const peerClause = {
+    status: { not: 'DRAFT' },
+    authorId: { notIn: exclusion.userIds?.length ? exclusion.userIds : [user.id] },
+  }
+  if (exclusion.submissionIds?.length) {
+    peerClause.id = { notIn: exclusion.submissionIds }
+  }
+  if (exclusion.departments?.length) {
+    peerClause.NOT = exclusion.departments.map((department) => ({
+      author: { is: { department: { equals: department, mode: 'insensitive' } } },
+    }))
+  }
+  return peerClause
+}
 
 // ─────────────────────────────────────────────
 // HELPERS
@@ -22,12 +59,27 @@ import { getRequestRole, hasAnyRole } from '../utils/roles.js'
  * @param {{ id: string, roles: string[] }} user
  * @param {string} activeRole
  * @param {object} [extra={}] - Additional where conditions to merge
- * @returns {object} Prisma where clause
+ * @returns {Promise<object>} Prisma where clause
  */
-function roleFilter(user, activeRole, extra = {}) {
+async function roleFilter(user, activeRole, extra = {}) {
   const base = { isActive: true }
   if (activeRole === 'RESEARCHER') base.authorId  = user.id
-  if (activeRole === 'REVIEWER')   base.reviewerId = user.id
+  if (activeRole === 'REVIEWER') {
+    if (!(await isPeerVisibilityEnabled())) {
+      base.OR = [{ reviewerId: user.id }, { secondaryReviewerId: user.id }]
+    } else {
+      const exclusion = await buildReviewerConflictExclusion(user.id)
+      if (exclusion.blockAll) {
+        base.OR = [{ reviewerId: user.id }, { secondaryReviewerId: user.id }]
+      } else {
+        base.OR = [
+          { reviewerId: user.id },
+          { secondaryReviewerId: user.id },
+          buildReviewerPeerClause(user, exclusion),
+        ]
+      }
+    }
+  }
   // Merge: if extra has OR (search), wrap everything in AND to avoid conflict
   if (extra.OR) {
     const { OR, ...rest } = extra
@@ -150,7 +202,7 @@ export async function list(req, res, next) {
     if (req.query.assignedToMe === 'true' && hasAnyRole(req.user, 'REVIEWER', 'CHAIRMAN')) {
       extra.reviewerId = req.user.id
     }
-    const where = roleFilter(req.user, activeRole, extra)
+    const where = await roleFilter(req.user, activeRole, extra)
 
     const [submissions, total] = await Promise.all([
       prisma.submission.findMany({
@@ -159,8 +211,9 @@ export async function list(req, res, next) {
         take:    limit,
         orderBy: { createdAt: 'desc' },
         include: {
-          author:      { select: { id: true, fullName: true, email: true } },
-          reviewer:    { select: { id: true, fullName: true, email: true } },
+          author:            { select: { id: true, fullName: true, email: true } },
+          reviewer:          { select: { id: true, fullName: true, email: true } },
+          secondaryReviewer: { select: { id: true, fullName: true, email: true } },
           formConfig:  { select: { id: true, name: true, nameEn: true, version: true } },
           slaTracking: { select: { triageDue: true, reviewDue: true, revisionDue: true, isBreached: true } },
           checklistReviews: {
@@ -207,7 +260,7 @@ export async function listCoiCandidates(req, res, next) {
         { applicationId: { contains: search, mode: 'insensitive' } },
       ]
     }
-    const where = roleFilter(req.user, activeRole, extra)
+    const where = await roleFilter(req.user, activeRole, extra)
     const data = await prisma.submission.findMany({
       where,
       select: { id: true, applicationId: true, title: true },
@@ -232,15 +285,16 @@ export async function getById(req, res, next) {
   try {
     const activeRole = getRequestRole(req)
     const ref = String(req.params.id || '').trim()
-    const where = roleFilter(req.user, activeRole, {
+    const where = await roleFilter(req.user, activeRole, {
       OR: [{ id: ref }, { applicationId: ref }],
     })
 
     const submission = await prisma.submission.findFirst({
       where,
       include: {
-        author:     { select: { id: true, fullName: true, email: true } },
-        reviewer:   { select: { id: true, fullName: true, email: true } },
+        author:            { select: { id: true, fullName: true, email: true } },
+        reviewer:          { select: { id: true, fullName: true, email: true } },
+        secondaryReviewer: { select: { id: true, fullName: true, email: true } },
         formConfig: { select: { id: true, name: true, nameEn: true, version: true, schemaJson: true } },
         versions:   { orderBy: { versionNum: 'asc' } },
         comments: {

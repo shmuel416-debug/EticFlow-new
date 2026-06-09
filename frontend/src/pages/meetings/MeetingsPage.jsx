@@ -46,6 +46,18 @@ function formatDate(dateStr) {
 }
 
 /**
+ * Rounds a date to the nearest quarter hour.
+ * @param {Date} value
+ * @returns {Date}
+ */
+function roundToNearestQuarterHour(value) {
+  const rounded = new Date(value)
+  const snappedMinutes = Math.round(rounded.getMinutes() / 15) * 15
+  rounded.setMinutes(snappedMinutes, 0, 0)
+  return rounded
+}
+
+/**
  * Meeting status → Badge tone.
  * @param {string} status
  * @returns {'info'|'success'|'danger'|'neutral'}
@@ -202,13 +214,16 @@ function CreateMeetingModal({ open, onClose, onCreated, t }) {
   async function handleSubmit() {
     if (!form.title.trim()) return setError(t('meetings.errorTitleRequired'))
     if (!form.scheduledAt)  return setError(t('meetings.errorDateRequired'))
+    const scheduledAt = new Date(form.scheduledAt)
+    if (Number.isNaN(scheduledAt.getTime())) return setError(t('meetings.errorDateRequired'))
+    const roundedScheduledAt = roundToNearestQuarterHour(scheduledAt)
 
     setSaving(true)
     setError(null)
     try {
       await api.post('/meetings', {
         title:       form.title.trim(),
-        scheduledAt: new Date(form.scheduledAt).toISOString(),
+        scheduledAt: roundedScheduledAt.toISOString(),
         ...(form.location    && { location:    form.location }),
         ...(form.meetingLink && { meetingLink: form.meetingLink }),
         ...(form.durationMinutes && { durationMinutes: parseInt(form.durationMinutes, 10) }),
@@ -294,6 +309,7 @@ function CreateMeetingModal({ open, onClose, onCreated, t }) {
             <Input
               id={inputId}
               type="datetime-local"
+              step="900"
               data-testid="meeting-create-datetime"
               value={form.scheduledAt}
               onChange={(e) => setForm(f => ({ ...f, scheduledAt: e.target.value }))}

@@ -346,7 +346,9 @@ async function getReviewSubmissionContext(submissionId, reviewerId) {
     },
   });
   if (!submission) throw new AppError('Submission not found', 'SUBMISSION_NOT_FOUND', 404);
-  if (submission.reviewerId !== reviewerId) throw new AppError('Forbidden', 'FORBIDDEN', 403);
+  if (submission.reviewerId !== reviewerId && submission.secondaryReviewerId !== reviewerId) {
+    throw new AppError('Forbidden', 'FORBIDDEN', 403);
+  }
   const fields = flattenSchemaFields(submission.formConfig?.schemaJson);
   return { submission, fields, dataJson: submission.versions?.[0]?.dataJson ?? {} };
 }
@@ -457,10 +459,18 @@ export async function submitReview(reviewId, reviewerId, payload) {
   if (review.status === 'SUBMITTED') throw new AppError('Review already submitted', 'ALREADY_SUBMITTED', 409);
   const submission = await prisma.submission.findUnique({
     where: { id: review.submissionId },
-    select: { id: true, status: true, formConfig: { select: { schemaJson: true } } },
+    select: {
+      id: true,
+      status: true,
+      reviewerId: true,
+      secondaryReviewerId: true,
+      formConfig: { select: { schemaJson: true } },
+    },
   });
   if (!submission) throw new AppError('Submission not found', 'SUBMISSION_NOT_FOUND', 404);
-  if (submission.status !== 'ASSIGNED') throw new AppError('Submission must be ASSIGNED', 'INVALID_TRANSITION', 409);
+  if (!['ASSIGNED', 'ASSIGNED_SECONDARY'].includes(submission.status)) {
+    throw new AppError('Submission must be in a reviewer-assigned state', 'INVALID_TRANSITION', 409);
+  }
   const fields = flattenSchemaFields(submission.formConfig?.schemaJson);
   const allowedKeys = new Set(fields.map((field) => field.id || field.key).filter(Boolean));
   const incomingResponses = Array.isArray(payload.responses) ? payload.responses : [];
@@ -471,6 +481,7 @@ export async function submitReview(reviewId, reviewerId, payload) {
     mergedByKey[row.fieldKey] = { status: row.status, comment: row.comment ?? null };
   }
   validateFieldReviewCompletenessFromMap(fields, mergedByKey);
+  let advancedToReview = false;
   const submitted = await prisma.$transaction(async (tx) => {
     for (const row of incomingResponses) {
       await tx.reviewerFieldResponse.upsert({
@@ -503,19 +514,35 @@ export async function submitReview(reviewId, reviewerId, payload) {
         metaJson: { submissionId: review.submissionId, recommendation: payload.recommendation },
       },
     });
-    await tx.submission.update({ where: { id: review.submissionId }, data: { status: 'IN_REVIEW' } });
+    // Advance to IN_REVIEW only once every assigned reviewer (primary + secondary,
+    // when present) has submitted their checklist review. The just-submitted review
+    // is already marked SUBMITTED above, so it is included in this count.
+    const assignedReviewerIds = [submission.reviewerId, submission.secondaryReviewerId].filter(Boolean);
+    const submittedCount = await tx.reviewerChecklistReview.count({
+      where: {
+        submissionId: review.submissionId,
+        reviewerId: { in: assignedReviewerIds },
+        status: 'SUBMITTED',
+      },
+    });
+    if (assignedReviewerIds.length === 0 || submittedCount >= assignedReviewerIds.length) {
+      await tx.submission.update({ where: { id: review.submissionId }, data: { status: 'IN_REVIEW' } });
+      advancedToReview = true;
+    }
     return result;
   });
-  const updatedSubmission = await prisma.submission.findFirst({
-    where: { id: review.submissionId, isActive: true },
-    include: {
-      author: { select: { id: true, email: true } },
-      reviewer: { select: { id: true, email: true } },
-    },
-  });
-  if (updatedSubmission) {
-    setDueDates(review.submissionId, 'IN_REVIEW').catch(() => {});
-    notifyStatusChange(updatedSubmission, 'IN_REVIEW').catch(() => {});
+  if (advancedToReview) {
+    const updatedSubmission = await prisma.submission.findFirst({
+      where: { id: review.submissionId, isActive: true },
+      include: {
+        author: { select: { id: true, email: true } },
+        reviewer: { select: { id: true, email: true } },
+      },
+    });
+    if (updatedSubmission) {
+      setDueDates(review.submissionId, 'IN_REVIEW').catch(() => {});
+      notifyStatusChange(updatedSubmission, 'IN_REVIEW').catch(() => {});
+    }
   }
   return submitted;
 }
