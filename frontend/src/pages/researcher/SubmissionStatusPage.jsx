@@ -45,6 +45,26 @@ import {
 } from '../../utils/submissionRoutes'
 
 const APPROVAL_PDF_TIMEOUT_MS = 60000
+const DECISION_LETTER_CONFIG = {
+  APPROVED: {
+    endpoint: 'approval-letter',
+    filePrefix: 'approval-letter',
+    viewHeKey: 'statusPage.viewPdf',
+    viewEnKey: 'statusPage.viewPdfEn',
+    downloadHeKey: 'statusPage.downloadPdf',
+    downloadEnKey: 'statusPage.downloadPdfEn',
+    progressKey: 'statusPage.pdfInProgress',
+  },
+  REJECTED: {
+    endpoint: 'rejection-letter',
+    filePrefix: 'rejection-letter',
+    viewHeKey: 'statusPage.viewRejectPdf',
+    viewEnKey: 'statusPage.viewRejectPdfEn',
+    downloadHeKey: 'statusPage.downloadRejectPdf',
+    downloadEnKey: 'statusPage.downloadRejectPdfEn',
+    progressKey: 'statusPage.rejectionPdfInProgress',
+  },
+}
 
 /**
  * Renders SLA indicator for a submission.
@@ -143,13 +163,15 @@ export default function SubmissionStatusPage() {
   }, [previewPdfUrl])
 
   /**
-   * Requests approval-letter PDF bytes from API.
+   * Requests decision-letter PDF bytes from API.
    * @param {'he'|'en'} lang
    * @returns {Promise<Blob>}
    */
-  async function requestApprovalPdfBlob(lang) {
+  async function requestDecisionPdfBlob(lang) {
+    const decisionLetter = DECISION_LETTER_CONFIG[submission?.status] ?? null
+    if (!decisionLetter) throw new Error('Decision letter is not available')
     const response = await api.post(
-      `/submissions/${resolvedSubmissionId}/approval-letter?lang=${lang}`,
+      `/submissions/${resolvedSubmissionId}/${decisionLetter.endpoint}?lang=${lang}`,
       {},
       { responseType: 'blob', timeout: APPROVAL_PDF_TIMEOUT_MS }
     )
@@ -163,7 +185,8 @@ export default function SubmissionStatusPage() {
   async function handleDownloadPdf(lang) {
     setPdfLoading(`download-${lang}`)
     try {
-      const blob = await requestApprovalPdfBlob(lang)
+      const decisionLetter = DECISION_LETTER_CONFIG[submission?.status] ?? null
+      const blob = await requestDecisionPdfBlob(lang)
       const url  = URL.createObjectURL(blob)
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
       if (isIOS) {
@@ -172,7 +195,7 @@ export default function SubmissionStatusPage() {
       } else {
         const link = document.createElement('a')
         link.href     = url
-        link.download = `approval-letter-${lang}-${submission.applicationId}.pdf`
+        link.download = `${decisionLetter?.filePrefix || 'decision-letter'}-${lang}-${submission.applicationId}.pdf`
         document.body.appendChild(link)
         link.click()
         link.remove()
@@ -193,7 +216,7 @@ export default function SubmissionStatusPage() {
   async function handlePreviewPdf(lang) {
     setPdfLoading(`preview-${lang}`)
     try {
-      const blob = await requestApprovalPdfBlob(lang)
+      const blob = await requestDecisionPdfBlob(lang)
       if (previewPdfUrl) URL.revokeObjectURL(previewPdfUrl)
       const nextUrl = URL.createObjectURL(blob)
       setPreviewPdfUrl(nextUrl)
@@ -254,6 +277,7 @@ export default function SubmissionStatusPage() {
 
   const isPdfBusy = pdfLoading !== null
   const latest = submission.versions?.slice(-1)[0]
+  const decisionLetter = DECISION_LETTER_CONFIG[submission.status] ?? null
 
   return (
     <main id="main-content" className="max-w-3xl mx-auto p-4 md:p-6 space-y-5">
@@ -310,19 +334,19 @@ export default function SubmissionStatusPage() {
               </Button>
             )}
 
-            {submission.status === 'APPROVED' && user?.role !== 'REVIEWER' && (
+            {decisionLetter && user?.role !== 'REVIEWER' && (
               <div className="flex gap-2 flex-wrap items-center">
                 <button
                   type="button"
                   onClick={() => handlePreviewPdf('he')}
                   disabled={isPdfBusy}
-                  aria-label={t('statusPage.viewPdf')}
-                  title={t('statusPage.viewPdf')}
+                  aria-label={t(decisionLetter.viewHeKey)}
+                  title={t(decisionLetter.viewHeKey)}
                   className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg transition disabled:opacity-60 disabled:cursor-not-allowed hover:bg-[var(--lev-teal-50)]"
                   style={{ color: 'var(--lev-navy)' }}
                 >
                   {pdfLoading === 'preview-he'
-                    ? <Spinner size={16} label={t('statusPage.pdfInProgress')} />
+                    ? <Spinner size={16} label={t(decisionLetter.progressKey)} />
                     : <Eye size={20} strokeWidth={1.75} aria-hidden="true" focusable="false" />}
                 </button>
                 <Button
@@ -340,19 +364,19 @@ export default function SubmissionStatusPage() {
                     />
                   }
                 >
-                  {t('statusPage.downloadPdf')}
+                  {t(decisionLetter.downloadHeKey)}
                 </Button>
                 <button
                   type="button"
                   onClick={() => handlePreviewPdf('en')}
                   disabled={isPdfBusy}
-                  aria-label={t('statusPage.viewPdfEn')}
-                  title={t('statusPage.viewPdfEn')}
+                  aria-label={t(decisionLetter.viewEnKey)}
+                  title={t(decisionLetter.viewEnKey)}
                   className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg transition disabled:opacity-60 disabled:cursor-not-allowed hover:bg-[var(--lev-teal-50)]"
                   style={{ color: 'var(--lev-navy)' }}
                 >
                   {pdfLoading === 'preview-en'
-                    ? <Spinner size={16} label={t('statusPage.pdfInProgress')} />
+                    ? <Spinner size={16} label={t(decisionLetter.progressKey)} />
                     : <Eye size={20} strokeWidth={1.75} aria-hidden="true" focusable="false" />}
                 </button>
                 <Button
@@ -370,14 +394,14 @@ export default function SubmissionStatusPage() {
                     />
                   }
                 >
-                  {t('statusPage.downloadPdfEn')}
+                  {t(decisionLetter.downloadEnKey)}
                 </Button>
               </div>
             )}
             {isPdfBusy && (
               <div className="mt-2 flex items-center gap-2 text-xs" style={{ color: 'var(--text-muted)' }}>
-                <Spinner size={14} label={t('statusPage.pdfInProgress')} />
-                <span>{t('statusPage.pdfInProgress')}</span>
+                <Spinner size={14} label={t(decisionLetter?.progressKey || 'statusPage.pdfInProgress')} />
+                <span>{t(decisionLetter?.progressKey || 'statusPage.pdfInProgress')}</span>
               </div>
             )}
           </div>

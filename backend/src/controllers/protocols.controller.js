@@ -21,7 +21,7 @@ import { generateProtocolPdf } from '../services/pdf.service.js'
 import { resolvePath } from '../services/storage.service.js'
 import { recordAuditEntry } from '../middleware/audit.js'
 import { COMMITTEE_ROLES } from '../constants/roles.js'
-import { getPrimaryRole } from '../utils/roles.js'
+import { getPrimaryRole, getRequestRole } from '../utils/roles.js'
 import { hasConflict } from '../services/coi.service.js'
 
 /** Token validity window in hours. */
@@ -158,6 +158,85 @@ async function syncProtocolStatusFromSignatures(protocolId) {
     where: { id: protocolId },
     data: { status: 'SIGNED' },
   })
+  const protocol = await prisma.protocol.findUnique({
+    where: { id: protocolId },
+    include: {
+      meeting: {
+        select: {
+          title: true,
+          scheduledAt: true,
+          attendees: {
+            where: { isActive: true },
+            include: { user: { select: { id: true, fullName: true } } },
+          },
+          agendaItems: {
+            where: { isActive: true },
+            include: {
+              submission: {
+                select: {
+                  id: true,
+                  applicationId: true,
+                  title: true,
+                  authorId: true,
+                  author: { select: { id: true, fullName: true, department: true } },
+                },
+              },
+            },
+            orderBy: { orderIndex: 'asc' },
+          },
+        },
+      },
+      signatures: {
+        where: { isActive: true },
+        include: { user: { select: { fullName: true } } },
+      },
+    },
+  })
+  if (!protocol || !protocol.isActive) return
+  const contentJson = await buildProtocolContentWithRecusals(protocol, 'he')
+  generateProtocolPdf({ ...protocol, contentJson }, 'he').catch(() => {})
+}
+
+/**
+ * Adds a recusal section to protocol content for PDF rendering.
+ * @param {object} protocol
+ * @param {'he'|'en'|'both'} lang
+ * @returns {Promise<object>}
+ */
+async function buildProtocolContentWithRecusals(protocol, lang) {
+  const recusalLines = []
+  for (const item of protocol.meeting?.agendaItems || []) {
+    const names = []
+    for (const attendee of protocol.meeting?.attendees || []) {
+      const conflict = await hasConflict(attendee.userId, item.submission)
+      if (conflict.conflict) {
+        names.push(attendee.user?.fullName || attendee.userId)
+      }
+    }
+    if (names.length > 0) {
+      recusalLines.push(`${item.submission?.applicationId || item.submission?.id}: ${names.join(', ')}`)
+    }
+  }
+  const recusalHeading = lang === 'en'
+    ? 'Members Recused Due To Conflict Of Interest'
+    : lang === 'both'
+      ? 'חברים שנעדרו מהדיון בשל ניגוד עניינים / Members Recused Due To Conflict Of Interest'
+      : 'חברים שנעדרו מהדיון בשל ניגוד עניינים'
+  const recusalContent = recusalLines.length > 0
+    ? recusalLines.join('\n')
+    : (lang === 'en'
+        ? 'No recusals were recorded.'
+        : lang === 'both'
+          ? 'לא נרשמו היעדרויות עקב ניגוד עניינים. / No recusals were recorded.'
+          : 'לא נרשמו היעדרויות עקב ניגוד עניינים.')
+  const baseSections = Array.isArray(protocol.contentJson?.sections) ? protocol.contentJson.sections : []
+  return {
+    ...protocol.contentJson,
+    sections: [
+      ...baseSections.filter((section) => section?.heading !== recusalHeading),
+      { heading: recusalHeading, content: recusalContent },
+    ],
+  }
 }
 
 // ─────────────────────────────────────────────
@@ -721,6 +800,9 @@ export async function getSignInfo(req, res, next) {
 export async function getPdf(req, res, next) {
   try {
     const { id } = req.params
+    const role = getRequestRole(req)
+    const canForce = role === 'SECRETARY' || role === 'ADMIN'
+    const force = canForce && (req.query.force === '1' || req.query.force === 'true')
     const lang = req.query.lang === 'en' ? 'en' : req.query.lang === 'both' ? 'both' : 'he'
 
     const protocol = await prisma.protocol.findUnique({
@@ -761,43 +843,8 @@ export async function getPdf(req, res, next) {
       throw new AppError('Protocol not found', 'NOT_FOUND', 404)
     }
 
-    const recusalLines = []
-    for (const item of protocol.meeting?.agendaItems || []) {
-      const names = []
-      for (const attendee of protocol.meeting?.attendees || []) {
-        const conflict = await hasConflict(attendee.userId, item.submission)
-        if (conflict.conflict) {
-          names.push(attendee.user?.fullName || attendee.userId)
-        }
-      }
-      if (names.length > 0) {
-        recusalLines.push(`${item.submission?.applicationId || item.submission?.id}: ${names.join(', ')}`)
-      }
-    }
-
-    const recusalHeading = lang === 'en'
-      ? 'Members Recused Due To Conflict Of Interest'
-      : lang === 'both'
-        ? 'חברים שנעדרו מהדיון בשל ניגוד עניינים / Members Recused Due To Conflict Of Interest'
-        : 'חברים שנעדרו מהדיון בשל ניגוד עניינים'
-    const recusalContent = recusalLines.length > 0
-      ? recusalLines.join('\n')
-      : (lang === 'en'
-          ? 'No recusals were recorded.'
-          : lang === 'both'
-            ? 'לא נרשמו היעדרויות עקב ניגוד עניינים. / No recusals were recorded.'
-            : 'לא נרשמו היעדרויות עקב ניגוד עניינים.')
-
-    const baseSections = Array.isArray(protocol.contentJson?.sections) ? protocol.contentJson.sections : []
-    const contentJson = {
-      ...protocol.contentJson,
-      sections: [
-        ...baseSections.filter((section) => section?.heading !== recusalHeading),
-        { heading: recusalHeading, content: recusalContent },
-      ],
-    }
-
-    const { storagePath } = await generateProtocolPdf({ ...protocol, contentJson }, lang)
+    const contentJson = await buildProtocolContentWithRecusals(protocol, lang)
+    const { storagePath } = await generateProtocolPdf({ ...protocol, contentJson }, lang, force)
 
     res.locals.entityId = id
     const absPath = resolvePath(storagePath)

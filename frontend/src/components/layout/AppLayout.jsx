@@ -8,11 +8,12 @@
 import { useEffect, useState } from 'react'
 import { Outlet, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Menu, Bell } from 'lucide-react'
+import { Menu, Bell, LogOut } from 'lucide-react'
 import Sidebar from './Sidebar'
 import LanguageSwitcher from '../ui/LanguageSwitcher'
 import ImpersonationBanner from './ImpersonationBanner'
 import RoleSwitcher from './RoleSwitcher'
+import { useAuth } from '../../context/AuthContext'
 import api from '../../services/api'
 
 /**
@@ -21,6 +22,7 @@ import api from '../../services/api'
 export default function AppLayout() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const { logout } = useAuth()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
 
@@ -38,6 +40,11 @@ export default function AppLayout() {
     window.addEventListener('resize', closeDrawerOnDesktop)
     return () => window.removeEventListener('resize', closeDrawerOnDesktop)
   }, [])
+
+  function handleLogout() {
+    logout()
+    navigate('/login')
+  }
 
   useEffect(() => {
     let active = true
@@ -128,6 +135,19 @@ export default function AppLayout() {
                     {unreadCount > 99 ? '99+' : unreadCount}
                   </span>
                 )}
+              </button>
+              <button
+                type="button"
+                onClick={handleLogout}
+                aria-label={t('common.logout')}
+                className="inline-flex items-center justify-center rounded-lg transition hover:bg-gray-100"
+                style={{
+                  minWidth: 44,
+                  minHeight: 44,
+                  color: 'var(--text-secondary)',
+                }}
+              >
+                <LogOut size={20} strokeWidth={1.75} aria-hidden="true" focusable="false" />
               </button>
             </div>
           </header>

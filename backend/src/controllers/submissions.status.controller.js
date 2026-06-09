@@ -14,6 +14,7 @@ import { can, getAllowedTransitions } from '../services/status.service.js'
 import { getRequestRole } from '../utils/roles.js'
 import { hasConflict } from '../services/coi.service.js'
 import { getOrCreateReview } from '../services/reviewerChecklist.service.js'
+import { generateApprovalLetter, generateRejectionLetter } from '../services/pdf.service.js'
 
 /**
  * Throws AppError when transition is not allowed for current role/context.
@@ -268,6 +269,12 @@ export async function recordDecision(req, res, next) {
     await prisma.$transaction(ops)
 
     const updated = await findOrFail(sub.id)
+    if (newStatus === 'APPROVED') {
+      generateApprovalLetter(sub.id, 'he').catch(() => {})
+    }
+    if (newStatus === 'REJECTED') {
+      generateRejectionLetter(sub.id, 'he').catch(() => {})
+    }
     setDueDates(sub.id, newStatus).catch(() => {})
     notifyStatusChange(updated, newStatus).catch(() => {})
     res.json({ submission: updated })

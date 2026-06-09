@@ -18,7 +18,7 @@ import { auditLog, recordAuditEntry } from '../middleware/audit.js'
 import * as controller from '../controllers/submissions.controller.js'
 
 import * as statusController from '../controllers/submissions.status.controller.js'
-import { generateApprovalLetter } from '../services/pdf.service.js'
+import { generateApprovalLetter, generateRejectionLetter } from '../services/pdf.service.js'
 import * as checklistCtrl from '../controllers/reviewerChecklist.controller.js'
 import { resolvePath } from '../services/storage.service.js'
 import { AppError } from '../utils/errors.js'
@@ -28,6 +28,17 @@ import fs from 'fs'
 
 const router = Router()
 const APPROVAL_COMMITTEE_ROLES = new Set(['CHAIRMAN', 'SECRETARY', 'ADMIN'])
+
+/**
+ * Parses force regeneration flag from query for authorized committee roles only.
+ * @param {import('express').Request} req
+ * @param {boolean} isCommitteeRole
+ * @returns {boolean}
+ */
+function getForceFlag(req, isCommitteeRole) {
+  if (!isCommitteeRole) return false
+  return req.query.force === '1' || req.query.force === 'true'
+}
 
 // ─────────────────────────────────────────────
 // ZOD SCHEMAS
@@ -254,7 +265,8 @@ router.post(
       }
 
       const lang = req.query.lang === 'en' ? 'en' : 'he'
-      const { docId, storagePath } = await generateApprovalLetter(id, lang)
+      const force = getForceFlag(req, isCommitteeRole)
+      const { docId, storagePath } = await generateApprovalLetter(id, lang, force)
 
       const absPath = resolvePath(storagePath)
       if (!fs.existsSync(absPath)) {
@@ -272,6 +284,61 @@ router.post(
       res.on('finish', () => {
         if (res.statusCode < 400) {
           recordAuditEntry(req, res, 'submission.approval_letter_generated', 'Submission').catch((err) => {
+            console.error('[Audit] Failed to write audit log:', err.message)
+          })
+        }
+      })
+      fs.createReadStream(absPath).pipe(res)
+    } catch (err) {
+      next(err)
+    }
+  }
+)
+
+/**
+ * POST /api/submissions/:id/rejection-letter
+ * Generates (or regenerates) the PDF rejection letter for a rejected submission
+ * and streams it to the client as a download.
+ * Allowed roles: CHAIRMAN, SECRETARY, ADMIN, RESEARCHER (own submissions only).
+ */
+router.post(
+  '/:id/rejection-letter',
+  authenticate,
+  async (req, res, next) => {
+    try {
+      const { id } = req.params
+      const role = getRequestRole(req)
+      const isCommitteeRole = APPROVAL_COMMITTEE_ROLES.has(role)
+      if (!isCommitteeRole) {
+        const sub = await prisma.submission.findUnique({
+          where: { id },
+          select: { authorId: true },
+        })
+        if (!sub || sub.authorId !== req.user.id) {
+          throw new AppError('Forbidden', 'FORBIDDEN', 403)
+        }
+      }
+
+      const lang = req.query.lang === 'en' ? 'en' : 'he'
+      const force = getForceFlag(req, isCommitteeRole)
+      const { docId, storagePath } = await generateRejectionLetter(id, lang, force)
+
+      const absPath = resolvePath(storagePath)
+      if (!fs.existsSync(absPath)) {
+        throw new AppError('Generated file not found', 'PDF_MISSING', 500)
+      }
+
+      const stat     = fs.statSync(absPath)
+      const filename = `rejection-letter-${lang}.pdf`
+      res.setHeader('Content-Type', 'application/pdf')
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)
+      res.setHeader('Content-Length', stat.size)
+      res.setHeader('X-Document-Id', docId)
+
+      res.locals.entityId = id
+      res.on('finish', () => {
+        if (res.statusCode < 400) {
+          recordAuditEntry(req, res, 'submission.rejection_letter_generated', 'Submission').catch((err) => {
             console.error('[Audit] Failed to write audit log:', err.message)
           })
         }

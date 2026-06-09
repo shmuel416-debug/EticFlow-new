@@ -263,6 +263,9 @@ export async function remove(req, res, next) {
     if (!doc || !doc.isActive) {
       throw new AppError('Document not found', 'NOT_FOUND', 404)
     }
+    if (doc.source === 'GENERATED') {
+      throw new AppError('Generated documents are immutable', 'FORBIDDEN', 403)
+    }
     if (doc.submission && !(await canWrite(req.user, doc.submission))) {
       throw new AppError('Forbidden', 'FORBIDDEN', 403)
     }

@@ -38,7 +38,7 @@ function roleFilter(user, activeRole, extra = {}) {
 
 /**
  * Generates the next applicationId in the format ETH-{YEAR}-{SEQ}.
- * Sequence is zero-padded to 3 digits and increments from the highest existing ID this year.
+ * Sequence is zero-padded to 3 digits and increments from the highest numeric sequence this year.
  * Note: not race-safe for high-concurrency — a DB sequence should be used in production.
  * @returns {Promise<string>} e.g. "ETH-2026-004"
  */
@@ -46,15 +46,21 @@ async function generateApplicationId() {
   const year   = new Date().getFullYear()
   const prefix = `ETH-${year}-`
 
-  const last = await prisma.submission.findFirst({
+  const existing = await prisma.submission.findMany({
     where:   { applicationId: { startsWith: prefix } },
-    orderBy: { applicationId: 'desc' },
     select:  { applicationId: true },
   })
 
-  if (!last) return `${prefix}001`
-  const seq = parseInt(last.applicationId.split('-')[2], 10) + 1
-  return `${prefix}${String(seq).padStart(3, '0')}`
+  if (existing.length === 0) return `${prefix}001`
+
+  const maxSeq = existing.reduce((max, row) => {
+    const suffix = row.applicationId.slice(prefix.length)
+    const current = Number.parseInt(suffix, 10)
+    if (!Number.isFinite(current)) return max
+    return Math.max(max, current)
+  }, 0)
+
+  return `${prefix}${String(maxSeq + 1).padStart(3, '0')}`
 }
 
 /**

@@ -40,6 +40,12 @@ export async function notifyUser(userId, type, titleKey, bodyKey, metaJson = {},
 /**
  * Notifies relevant parties after a status change.
  * Resolves which users to notify based on the new status.
+ * Current dispatch coverage:
+ * - ASSIGNED             => reviewer
+ * - PENDING_REVISION     => submission author
+ * - APPROVED / REJECTED  => submission author
+ * Statuses like SUBMITTED or IN_REVIEW may have notificationType metadata
+ * in status config but are not dispatched here unless explicit branches are added.
  * @param {object} submission - Full submission with author + reviewer
  * @param {string} newStatus  - The new SubStatus value
  * @returns {Promise<void>}
