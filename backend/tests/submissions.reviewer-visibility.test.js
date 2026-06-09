@@ -71,7 +71,9 @@ describe('submissions.controller reviewer visibility', () => {
     await list(req, res, next)
 
     expect(prismaMock.submission.findMany).toHaveBeenCalledWith(expect.objectContaining({
-      where: expect.objectContaining({ reviewerId: 'rev-1' }),
+      where: expect.objectContaining({
+        OR: [{ reviewerId: 'rev-1' }, { secondaryReviewerId: 'rev-1' }],
+      }),
     }))
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ data: [] }))
     expect(next).not.toHaveBeenCalled()
@@ -91,14 +93,15 @@ describe('submissions.controller reviewer visibility', () => {
     await list(req, { json: jest.fn() }, next)
 
     const where = prismaMock.submission.findMany.mock.calls[0][0].where
-    expect(where.OR).toHaveLength(2)
+    expect(where.OR).toHaveLength(3)
     expect(where.OR[0]).toEqual({ reviewerId: 'rev-1' })
-    expect(where.OR[1]).toEqual(expect.objectContaining({
+    expect(where.OR[1]).toEqual({ secondaryReviewerId: 'rev-1' })
+    expect(where.OR[2]).toEqual(expect.objectContaining({
       status: { not: 'DRAFT' },
       authorId: { notIn: ['rev-1', 'author-2'] },
       id: { notIn: ['sub-locked'] },
     }))
-    expect(where.OR[1].NOT).toEqual([
+    expect(where.OR[2].NOT).toEqual([
       { author: { is: { department: { equals: 'medicine', mode: 'insensitive' } } } },
     ])
     expect(next).not.toHaveBeenCalled()
@@ -117,7 +120,10 @@ describe('submissions.controller reviewer visibility', () => {
     await list(req, { json: jest.fn() }, next)
 
     const where = prismaMock.submission.findMany.mock.calls[0][0].where
-    expect(where.OR).toEqual([{ reviewerId: 'rev-1' }])
+    expect(where.OR).toEqual([
+      { reviewerId: 'rev-1' },
+      { secondaryReviewerId: 'rev-1' },
+    ])
     expect(next).not.toHaveBeenCalled()
   })
 
@@ -134,7 +140,7 @@ describe('submissions.controller reviewer visibility', () => {
     await getById(req, res, next)
 
     const where = prismaMock.submission.findFirst.mock.calls[0][0].where
-    expect(where.AND[0].OR[1].id).toEqual({ notIn: ['sub-locked'] })
+    expect(where.AND[0].OR[2].id).toEqual({ notIn: ['sub-locked'] })
     expect(where.AND[1].OR).toEqual([{ id: 'sub-locked' }, { applicationId: 'sub-locked' }])
     expect(next).toHaveBeenCalledTimes(1)
     expect(next.mock.calls[0][0].code).toBe('NOT_FOUND')

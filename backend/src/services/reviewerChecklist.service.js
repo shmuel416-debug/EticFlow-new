@@ -547,6 +547,33 @@ export async function submitReview(reviewId, reviewerId, payload) {
   return submitted;
 }
 
+/**
+ * Lists all reviewer field reviews for a submission (staff read-only view).
+ * @param {string} submissionId
+ * @returns {Promise<{ fields: object[], reviews: object[] }>}
+ */
+export async function listSubmissionReviewsForStaff(submissionId) {
+  const submission = await prisma.submission.findFirst({
+    where: { id: submissionId, isActive: true },
+    include: {
+      formConfig: { select: { schemaJson: true } },
+    },
+  });
+  if (!submission) throw new AppError('Submission not found', 'SUBMISSION_NOT_FOUND', 404);
+
+  const fields = flattenSchemaFields(submission.formConfig?.schemaJson);
+  const reviews = await prisma.reviewerChecklistReview.findMany({
+    where: { submissionId },
+    include: {
+      reviewer: { select: { id: true, fullName: true, email: true } },
+      fieldResponses: { orderBy: { fieldKey: 'asc' } },
+    },
+    orderBy: { createdAt: 'asc' },
+  });
+
+  return { fields, reviews };
+}
+
 // ─── Internal validation helpers ─────────────────────────────────────────────
 
 /**

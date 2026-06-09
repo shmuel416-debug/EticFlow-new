@@ -281,3 +281,16 @@ export async function submitReview(req, res, next) {
     next(err);
   }
 }
+
+/**
+ * GET /api/submissions/:id/reviews
+ * Staff read-only view of all reviewer field reviews for a submission.
+ */
+export async function listSubmissionReviews(req, res, next) {
+  try {
+    const result = await service.listSubmissionReviewsForStaff(req.params.id);
+    res.json({ data: result });
+  } catch (err) {
+    next(err);
+  }
+}

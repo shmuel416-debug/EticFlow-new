@@ -284,6 +284,15 @@ export async function update(req, res, next) {
       throw new AppError('User not found', 'NOT_FOUND', 404)
     }
 
+    if (normalizedRoles && hasRole(user, 'ADMIN') && !normalizedRoles.includes('ADMIN')) {
+      const adminCount = await prisma.user.count({
+        where: { isActive: true, roles: { has: 'ADMIN' } },
+      })
+      if (adminCount <= 1) {
+        throw new AppError('Cannot remove the last admin', 'LAST_ADMIN', 400)
+      }
+    }
+
     const updated = await prisma.user.update({
       where: { id },
       data:  { fullName, roles: normalizedRoles, department, phone },

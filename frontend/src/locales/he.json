@@ -268,6 +268,22 @@
       "backToList": "חזרה לרשימה",
       "version": "גרסה {{num}}"
     },
+    "fieldReviews": {
+      "sectionTitle": "ביקורות סוקרים לפי שדה",
+      "loadError": "שגיאה בטעינת ביקורות הסוקרים",
+      "empty": "אין ביקורות סוקרים עדיין",
+      "reviewer": "סוקר",
+      "field": "שדה",
+      "status": "סטטוס",
+      "comment": "הערה",
+      "recommendation": "המלצה",
+      "generalNote": "סיכום",
+      "impression": "רושם כללי",
+      "reviewStatus": "מצב הביקורת",
+      "draft": "טיוטה",
+      "submitted": "הוגש",
+      "noComment": "—"
+    },
     "submit": {
       "pageTitle": "הגשת בקשה לאישור מחקר",
       "pageSubtitle": "מלא את כל השדות המסומנים ב-*",
@@ -796,7 +812,9 @@
     "unknown": "לא ידוע",
     "role": "תפקיד",
     "switchActive": "החלף תפקיד פעיל",
-    "actingAs": "פועל כ-"
+    "actingAs": "פועל כ-",
+    "switchedTo": "עברת למצב {{role}}",
+    "autoSwitchedTo": "עברת אוטומטית למצב {{role}}"
   },
   "coi": {
     "declare": "הצהר ניגוד עניינים",
@@ -1465,6 +1483,7 @@
     "VALIDATION_ERROR": "שגיאת אימות נתונים",
     "UNAUTHORIZED": "אין הרשאה — יש להתחבר מחדש",
     "FORBIDDEN": "אין לך הרשאה לבצע פעולה זו",
+    "LAST_ADMIN": "לא ניתן להסיר את מנהל המערכת האחרון",
     "NOT_FOUND": "הרשומה המבוקשת לא נמצאה",
     "CONFLICT": "הרשומה כבר קיימת במערכת",
     "INVALID_CREDENTIALS": "כתובת האימייל או הסיסמה שגויים",

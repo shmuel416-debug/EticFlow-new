@@ -49,7 +49,7 @@ function normalizeRoles(roles) {
 export default function UsersPage() {
   const { t, i18n }                              = useTranslation()
   useDocumentTitle(t('admin.usersPage'))
-  const { startImpersonation, isImpersonating }  = useAuth()
+  const { startImpersonation, isImpersonating, user: currentUser, refreshSession }  = useAuth()
   const navigate                                 = useNavigate()
   const isRtl = i18n.dir() === 'rtl'
 
@@ -122,13 +122,17 @@ export default function UsersPage() {
       payload.roles = normalizeRoles(payload.roles)
       if (editUser) {
         await api.put(`/users/admin/users/${editUser.id}`, { fullName: payload.fullName, roles: payload.roles, department: payload.department, phone: payload.phone })
+        if (editUser.id === currentUser?.id) {
+          await refreshSession()
+        }
       } else {
         await api.post('/users/admin/users', payload)
       }
       setModalOpen(false)
       fetchUsers()
     } catch (err) {
-      setFormError(err.message || t('errors.SERVER_ERROR'))
+      const code = err?.code
+      setFormError(code ? t(`errors.${code}`, { defaultValue: err.message }) : (err.message || t('errors.SERVER_ERROR')))
     } finally {
       setSaving(false)
     }

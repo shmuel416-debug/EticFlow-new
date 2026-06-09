@@ -268,6 +268,22 @@
       "backToList": "Back to list",
       "version": "Version {{num}}"
     },
+    "fieldReviews": {
+      "sectionTitle": "Reviewer Field Reviews",
+      "loadError": "Failed to load reviewer reviews",
+      "empty": "No reviewer reviews yet",
+      "reviewer": "Reviewer",
+      "field": "Field",
+      "status": "Status",
+      "comment": "Comment",
+      "recommendation": "Recommendation",
+      "generalNote": "Summary",
+      "impression": "General impression",
+      "reviewStatus": "Review status",
+      "draft": "Draft",
+      "submitted": "Submitted",
+      "noComment": "—"
+    },
     "submit": {
       "pageTitle": "Submit Research Approval Request",
       "pageSubtitle": "Fill in all fields marked with *",
@@ -796,7 +812,9 @@
     "unknown": "Unknown",
     "role": "Role",
     "switchActive": "Switch active role",
-    "actingAs": "Acting as"
+    "actingAs": "Acting as",
+    "switchedTo": "Switched to {{role}}",
+    "autoSwitchedTo": "Automatically switched to {{role}}"
   },
   "coi": {
     "declare": "Declare conflict",
@@ -1465,6 +1483,7 @@
     "VALIDATION_ERROR": "Validation error",
     "UNAUTHORIZED": "Unauthorized — please sign in again",
     "FORBIDDEN": "You do not have permission for this action",
+    "LAST_ADMIN": "Cannot remove the last system administrator",
     "NOT_FOUND": "The requested record was not found",
     "CONFLICT": "This record already exists",
     "INVALID_CREDENTIALS": "Incorrect email or password",

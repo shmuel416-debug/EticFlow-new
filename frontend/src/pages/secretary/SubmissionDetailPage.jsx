@@ -21,6 +21,7 @@ import StatusTransitionPanel from '../../components/submissions/StatusTransition
 import ReviewerSelect from '../../components/submissions/ReviewerSelect'
 import SubmissionLifecycle from '../../components/submissions/SubmissionLifecycle'
 import FormAnswersViewer from '../../components/submissions/FormAnswersViewer'
+import FieldReviewSummary from '../../components/submissions/FieldReviewSummary'
 import DocumentList from '../../components/submissions/DocumentList'
 import AiPanel from '../../components/submissions/AiPanel'
 import {
@@ -469,15 +470,24 @@ export default function SubmissionDetailPage() {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2" as="section">
-          <CardHeader title={t('submission.detail.sectionAnswers')} />
-          <CardBody>
-            <FormAnswersViewer
-              formConfig={submission?.formConfig}
-              dataJson={latestVersion?.dataJson ?? {}}
-            />
-          </CardBody>
-        </Card>
+        <div className="lg:col-span-2 space-y-6">
+          <Card as="section">
+            <CardHeader title={t('submission.detail.sectionAnswers')} />
+            <CardBody>
+              <FormAnswersViewer
+                formConfig={submission?.formConfig}
+                dataJson={latestVersion?.dataJson ?? {}}
+              />
+            </CardBody>
+          </Card>
+
+          <Card as="section">
+            <CardHeader title={t('submission.fieldReviews.sectionTitle')} />
+            <CardBody>
+              <FieldReviewSummary submissionId={resolvedSubmissionId} />
+            </CardBody>
+          </Card>
+        </div>
 
         <aside className="space-y-5">
           <Card as="section">

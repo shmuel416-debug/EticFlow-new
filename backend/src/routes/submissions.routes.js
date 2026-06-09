@@ -368,6 +368,7 @@ router.post(
 )
 
 // ─── Reviewer Checklist ───────────────────────────────────────────────────────
+router.get('/:id/reviews', authenticate, authorize('SECRETARY', 'CHAIRMAN', 'ADMIN'), checklistCtrl.listSubmissionReviews)
 router.get('/:id/checklist', authenticate, authorize('REVIEWER', 'CHAIRMAN'), checklistCtrl.getChecklist)
 router.put('/:id/checklist', authenticate, authorize('REVIEWER', 'CHAIRMAN'), checklistCtrl.saveDraft)
 router.post('/:id/checklist/submit', authenticate, authorize('REVIEWER', 'CHAIRMAN'), checklistCtrl.submitReview)

@@ -62,30 +62,35 @@ function buildReviewerPeerClause(user, exclusion) {
  * @returns {Promise<object>} Prisma where clause
  */
 async function roleFilter(user, activeRole, extra = {}) {
+  const { assignedToMe, ...restExtra } = extra
   const base = { isActive: true }
   if (activeRole === 'RESEARCHER') base.authorId  = user.id
-  if (activeRole === 'REVIEWER') {
-    if (!(await isPeerVisibilityEnabled())) {
-      base.OR = [{ reviewerId: user.id }, { secondaryReviewerId: user.id }]
-    } else {
-      const exclusion = await buildReviewerConflictExclusion(user.id)
-      if (exclusion.blockAll) {
+  if (activeRole === 'REVIEWER' || (activeRole === 'CHAIRMAN' && assignedToMe)) {
+    if (assignedToMe) {
+      base.OR = [{ reviewerId: assignedToMe }, { secondaryReviewerId: assignedToMe }]
+    } else if (activeRole === 'REVIEWER') {
+      if (!(await isPeerVisibilityEnabled())) {
         base.OR = [{ reviewerId: user.id }, { secondaryReviewerId: user.id }]
       } else {
-        base.OR = [
-          { reviewerId: user.id },
-          { secondaryReviewerId: user.id },
-          buildReviewerPeerClause(user, exclusion),
-        ]
+        const exclusion = await buildReviewerConflictExclusion(user.id)
+        if (exclusion.blockAll) {
+          base.OR = [{ reviewerId: user.id }, { secondaryReviewerId: user.id }]
+        } else {
+          base.OR = [
+            { reviewerId: user.id },
+            { secondaryReviewerId: user.id },
+            buildReviewerPeerClause(user, exclusion),
+          ]
+        }
       }
     }
   }
   // Merge: if extra has OR (search), wrap everything in AND to avoid conflict
-  if (extra.OR) {
-    const { OR, ...rest } = extra
+  if (restExtra.OR) {
+    const { OR, ...rest } = restExtra
     return { AND: [{ ...base, ...rest }, { OR }] }
   }
-  return { ...base, ...extra }
+  return { ...base, ...restExtra }
 }
 
 /**
@@ -200,7 +205,7 @@ export async function list(req, res, next) {
       ]
     }
     if (req.query.assignedToMe === 'true' && hasAnyRole(req.user, 'REVIEWER', 'CHAIRMAN')) {
-      extra.reviewerId = req.user.id
+      extra.assignedToMe = req.user.id
     }
     const where = await roleFilter(req.user, activeRole, extra)
 

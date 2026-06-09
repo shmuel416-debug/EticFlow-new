@@ -102,6 +102,34 @@ export function AuthProvider({ children }) {
     persistActiveRole(role)
   }, [])
 
+  /**
+   * Refreshes JWT and user roles from the server after profile/role updates.
+   * @returns {Promise<object|null>}
+   */
+  const refreshSession = useCallback(async () => {
+    const { data } = await api.post('/auth/refresh', {})
+    if (!data?.token) return null
+
+    setToken(data.token)
+    const roles = Array.isArray(data.user?.roles)
+      ? data.user.roles
+      : [data.user?.role || 'RESEARCHER']
+    const preferredRole = localStorage.getItem(ACTIVE_ROLE_STORAGE_KEY)
+    const activeRole = roles.includes(preferredRole)
+      ? preferredRole
+      : (ROLE_PRIORITY.find((role) => roles.includes(role)) || 'RESEARCHER')
+    persistActiveRole(activeRole)
+    const nextUser = {
+      ...data.user,
+      roles,
+      activeRole,
+      role: activeRole,
+      mustChangePassword: !!data.user?.mustChangePassword,
+    }
+    setUser(nextUser)
+    return nextUser
+  }, [])
+
   const [impersonation, setImpersonation] = useState(() => getInitialImpersonation()) // { originalUser, originalToken }
 
   /** Holds the original token during impersonation so we can restore it. */
@@ -267,6 +295,7 @@ export function AuthProvider({ children }) {
       logout,
       changeLanguage,
       setActiveRole,
+      refreshSession,
       impersonation,
       isImpersonating,
       startImpersonation,
@@ -281,7 +310,8 @@ export function AuthProvider({ children }) {
  * Hook to access auth context.
  * @returns {{ user: object|null, loading: boolean, login: Function, loginWithToken: Function,
  *   logout: Function, changeLanguage: Function, impersonation: object|null,
- *   isImpersonating: boolean, startImpersonation: Function, stopImpersonation: Function, setActiveRole: Function }}
+ *   isImpersonating: boolean, startImpersonation: Function, stopImpersonation: Function,
+ *   setActiveRole: Function, refreshSession: Function }}
  */
 export function useAuth() {
   const ctx = useContext(AuthContext)

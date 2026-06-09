@@ -3,6 +3,7 @@
  * Allows multi-role users to select their active role.
  */
 
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 
@@ -13,11 +14,47 @@ import { useAuth } from '../../context/AuthContext'
 export default function RoleSwitcher() {
   const { t } = useTranslation()
   const { user, setActiveRole, isImpersonating, stopImpersonation } = useAuth()
+  const [toast, setToast] = useState('')
+
+  useEffect(() => {
+    let timer = null
+
+    /**
+     * Shows a short confirmation when the active role changes.
+     * @param {CustomEvent<{ role: string, auto?: boolean }>} event
+     */
+    function onRoleSwitched(event) {
+      const role = event.detail?.role
+      if (!role) return
+      const label = t(`roles.${role.toLowerCase()}`, role)
+      const message = event.detail?.auto
+        ? t('roles.autoSwitchedTo', { role: label })
+        : t('roles.switchedTo', { role: label })
+      setToast(message)
+      if (timer) clearTimeout(timer)
+      timer = setTimeout(() => setToast(''), 3000)
+    }
+
+    window.addEventListener('ef:role-switched', onRoleSwitched)
+    return () => {
+      window.removeEventListener('ef:role-switched', onRoleSwitched)
+      if (timer) clearTimeout(timer)
+    }
+  }, [t])
 
   const roles = Array.isArray(user?.roles) ? user.roles : []
   const showRoleSelect = roles.length > 1
   const showReturnButton = isImpersonating
   if (!showRoleSelect && !showReturnButton) return null
+
+  /**
+   * Switches active role and notifies listeners.
+   * @param {string} role
+   */
+  function handleRoleChange(role) {
+    setActiveRole(role)
+    window.dispatchEvent(new CustomEvent('ef:role-switched', { detail: { role, auto: false } }))
+  }
 
   return (
     <div className="flex items-center gap-2">
@@ -26,7 +63,7 @@ export default function RoleSwitcher() {
           <span>{t('roles.actingAs')}</span>
           <select
             value={user.activeRole}
-            onChange={(event) => setActiveRole(event.target.value)}
+            onChange={(event) => handleRoleChange(event.target.value)}
             className="border border-gray-200 rounded-md px-2 py-1 text-xs bg-white min-h-[32px]"
             aria-label={t('roles.switchActive')}
           >
@@ -38,6 +75,19 @@ export default function RoleSwitcher() {
           </select>
         </label>
       )}
+      {toast ? (
+        <span
+          role="status"
+          aria-live="polite"
+          className="text-xs font-medium px-2 py-1 rounded-md"
+          style={{
+            background: 'var(--lev-navy-50)',
+            color: 'var(--lev-navy)',
+          }}
+        >
+          {toast}
+        </span>
+      ) : null}
       {showReturnButton && (
         <button
           type="button"
