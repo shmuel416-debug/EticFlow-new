@@ -451,7 +451,7 @@ export default function SubmitPage() {
 
   useEffect(() => {
     if (!shouldSwitchToResearcher) return
-    setActiveRole('RESEARCHER')
+    void setActiveRole('RESEARCHER')
   }, [shouldSwitchToResearcher, setActiveRole])
 
   const fields = useMemo(() => {

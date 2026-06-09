@@ -68,6 +68,13 @@ router.post(
 )
 
 router.post(
+  '/sync-session',
+  authenticate,
+  auditLog('auth.sync-session', 'User'),
+  controller.syncSession
+)
+
+router.post(
   '/logout',
   validate(refreshSchema),
   controller.logoutSession

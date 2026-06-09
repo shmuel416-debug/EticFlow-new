@@ -4,6 +4,7 @@
  */
 
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 
@@ -13,6 +14,7 @@ import { useAuth } from '../../context/AuthContext'
  */
 export default function RoleSwitcher() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const { user, setActiveRole, isImpersonating, stopImpersonation } = useAuth()
   const [toast, setToast] = useState('')
 
@@ -51,9 +53,14 @@ export default function RoleSwitcher() {
    * Switches active role and notifies listeners.
    * @param {string} role
    */
-  function handleRoleChange(role) {
-    setActiveRole(role)
+  async function handleRoleChange(role) {
+    const ok = await setActiveRole(role)
+    if (!ok) {
+      setToast(t('errors.UNAUTHORIZED'))
+      return
+    }
     window.dispatchEvent(new CustomEvent('ef:role-switched', { detail: { role, auto: false } }))
+    navigate('/dashboard')
   }
 
   return (

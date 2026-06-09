@@ -38,7 +38,7 @@ export default function ProtectedRoute({ roles }) {
     if (!elevated) return
 
     autoSwitchRef.current = true
-    setActiveRole(elevated)
+    void setActiveRole(elevated)
     notifyRoleSwitch(elevated, true)
   }, [roles, user, setActiveRole, location.pathname])
 

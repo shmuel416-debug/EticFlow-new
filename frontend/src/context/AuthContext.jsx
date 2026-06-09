@@ -15,6 +15,38 @@ const ACTIVE_ROLE_STORAGE_KEY = 'ef_active_role_ui'
 const IMPERSONATION_STORAGE_KEY = 'ef_impersonation_state'
 
 /**
+ * Picks active role from roles list and optional UI preference.
+ * @param {string[]} roles
+ * @param {string|null} preferredRole
+ * @returns {string}
+ */
+function resolveStoredActiveRole(roles, preferredRole) {
+  if (preferredRole && roles.includes(preferredRole)) return preferredRole
+  return ROLE_PRIORITY.find((role) => roles.includes(role)) || 'RESEARCHER'
+}
+
+/**
+ * Builds frontend user object from auth API payload.
+ * @param {object} data
+ * @returns {{ id: string, email: string, roles: string[], activeRole: string, role: string, mustChangePassword: boolean }|null}
+ */
+function buildUserFromAuthPayload(data) {
+  if (!data?.token || !data?.user) return null
+  const roles = Array.isArray(data.user.roles)
+    ? data.user.roles
+    : [data.user.role || 'RESEARCHER']
+  const preferredRole = localStorage.getItem(ACTIVE_ROLE_STORAGE_KEY)
+  const activeRole = resolveStoredActiveRole(roles, preferredRole)
+  return {
+    ...data.user,
+    roles,
+    activeRole,
+    role: activeRole,
+    mustChangePassword: !!data.user.mustChangePassword,
+  }
+}
+
+/**
  * Decodes JWT payload without verifying signature.
  * @param {string} token
  * @returns {object|null}
@@ -50,9 +82,7 @@ function getInitialUserFromToken() {
     ? payload.roles
     : [payload.role || 'RESEARCHER']
   const preferredRole = localStorage.getItem(ACTIVE_ROLE_STORAGE_KEY)
-  const activeRole = roles.includes(preferredRole)
-    ? preferredRole
-    : (ROLE_PRIORITY.find((role) => roles.includes(role)) || 'RESEARCHER')
+  const activeRole = resolveStoredActiveRole(roles, preferredRole)
   return {
     id: payload.id,
     email: payload.email,
@@ -89,17 +119,24 @@ export function AuthProvider({ children }) {
   const { i18n } = useTranslation()
   const [user, setUser]               = useState(() => getInitialUserFromToken())
   const [loading]                     = useState(false)
+  const userRef = useRef(user)
+
+  useEffect(() => {
+    userRef.current = user
+  }, [user])
+
   /**
-   * Sets active role in state and API client.
-   * @param {string} role
+   * Applies auth payload to memory and React state.
+   * @param {object} data
+   * @returns {object|null}
    */
-  const setActiveRole = useCallback((role) => {
-    setUser((prev) => {
-      if (!prev || !prev.roles.includes(role)) return prev
-      return { ...prev, activeRole: role, role }
-    })
-    localStorage.setItem(ACTIVE_ROLE_STORAGE_KEY, role)
-    persistActiveRole(role)
+  const applySessionPayload = useCallback((data) => {
+    const nextUser = buildUserFromAuthPayload(data)
+    if (!nextUser) return null
+    setToken(data.token)
+    persistActiveRole(nextUser.activeRole)
+    setUser(nextUser)
+    return nextUser
   }, [])
 
   /**
@@ -107,28 +144,37 @@ export function AuthProvider({ children }) {
    * @returns {Promise<object|null>}
    */
   const refreshSession = useCallback(async () => {
-    const { data } = await api.post('/auth/refresh', {})
-    if (!data?.token) return null
-
-    setToken(data.token)
-    const roles = Array.isArray(data.user?.roles)
-      ? data.user.roles
-      : [data.user?.role || 'RESEARCHER']
-    const preferredRole = localStorage.getItem(ACTIVE_ROLE_STORAGE_KEY)
-    const activeRole = roles.includes(preferredRole)
-      ? preferredRole
-      : (ROLE_PRIORITY.find((role) => roles.includes(role)) || 'RESEARCHER')
-    persistActiveRole(activeRole)
-    const nextUser = {
-      ...data.user,
-      roles,
-      activeRole,
-      role: activeRole,
-      mustChangePassword: !!data.user?.mustChangePassword,
+    try {
+      const { data } = await api.post('/auth/refresh', {})
+      return applySessionPayload(data)
+    } catch {
+      try {
+        const { data } = await api.post('/auth/sync-session', {})
+        return applySessionPayload(data)
+      } catch {
+        return null
+      }
     }
-    setUser(nextUser)
-    return nextUser
-  }, [])
+  }, [applySessionPayload])
+
+  /**
+   * Sets active role in state and API client, syncing JWT when needed.
+   * @param {string} role
+   * @returns {Promise<boolean>}
+   */
+  const setActiveRole = useCallback(async (role) => {
+    let roles = userRef.current?.roles ?? []
+    if (!roles.includes(role)) {
+      const refreshed = await refreshSession()
+      roles = refreshed?.roles ?? roles
+    }
+    if (!roles.includes(role)) return false
+
+    localStorage.setItem(ACTIVE_ROLE_STORAGE_KEY, role)
+    persistActiveRole(role)
+    setUser((prev) => (prev ? { ...prev, roles, activeRole: role, role } : prev))
+    return true
+  }, [refreshSession])
 
   const [impersonation, setImpersonation] = useState(() => getInitialImpersonation()) // { originalUser, originalToken }
 
@@ -188,9 +234,7 @@ export function AuthProvider({ children }) {
     setToken(data.token)
     const roles = Array.isArray(data.user.roles) ? data.user.roles : [data.user.role || 'RESEARCHER']
     const preferredRole = localStorage.getItem(ACTIVE_ROLE_STORAGE_KEY)
-    const activeRole = roles.includes(preferredRole)
-      ? preferredRole
-      : (ROLE_PRIORITY.find((role) => roles.includes(role)) || 'RESEARCHER')
+    const activeRole = resolveStoredActiveRole(roles, preferredRole)
     persistActiveRole(activeRole)
     const nextUser = { ...data.user, roles, activeRole, role: activeRole, mustChangePassword: !!data.user.mustChangePassword }
     setUser(nextUser)
@@ -221,9 +265,7 @@ export function AuthProvider({ children }) {
       ? payload.roles
       : [payload.role || 'RESEARCHER']
     const preferredRole = localStorage.getItem(ACTIVE_ROLE_STORAGE_KEY)
-    const activeRole = roles.includes(preferredRole)
-      ? preferredRole
-      : (ROLE_PRIORITY.find((role) => roles.includes(role)) || 'RESEARCHER')
+    const activeRole = resolveStoredActiveRole(roles, preferredRole)
     persistActiveRole(activeRole)
     setUser({ id: payload.id, email: payload.email, roles, activeRole, role: activeRole, mustChangePassword: !!payload.mustChangePassword })
   }, [])

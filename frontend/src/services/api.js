@@ -127,9 +127,10 @@ api.interceptors.response.use(
     const originalRequest = err.config || {}
     const requestUrl = String(originalRequest.url || '')
     const isAuthRefresh = requestUrl.includes('/auth/refresh')
+    const isAuthSync = requestUrl.includes('/auth/sync-session')
     const isAuthLogin = requestUrl.includes('/auth/login')
 
-    if (status === 401 && !originalRequest._retry && !isAuthRefresh && !isAuthLogin) {
+    if (status === 401 && !originalRequest._retry && !isAuthRefresh && !isAuthSync && !isAuthLogin) {
       originalRequest._retry = true
       try {
         const refresh = await axios.post(
@@ -147,7 +148,7 @@ api.interceptors.response.use(
       } catch {
         handleSessionExpired()
       }
-    } else if (status === 401 && isAuthRefresh) {
+    } else if (status === 401 && (isAuthRefresh || isAuthSync)) {
       handleSessionExpired()
     }
 

@@ -533,6 +533,36 @@ export async function me(req, res, next) {
 }
 
 /**
+ * POST /api/auth/sync-session
+ * Re-issues an access token from DB roles using the current Bearer token.
+ * Used when refresh cookies are unavailable (e.g. SSO token in sessionStorage).
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
+export async function syncSession(req, res, next) {
+  try {
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } })
+    if (!user?.isActive) return next(AppError.unauthorized())
+
+    const accessToken = signAccessToken(user)
+    if (typeof res.cookie === 'function') {
+      const secure = process.env.NODE_ENV === 'production'
+      res.cookie(authConfig.cookies.accessTokenName, accessToken, {
+        httpOnly: true,
+        secure,
+        sameSite: 'lax',
+        maxAge: parseDurationToMs(authConfig.jwt.expiresIn, 8 * 3600000),
+      })
+    }
+
+    res.json({ token: accessToken, user: safeUser(user) })
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
  * POST /api/auth/refresh
  * Rotates a refresh token and issues a fresh access token.
  * @param {import('express').Request} req

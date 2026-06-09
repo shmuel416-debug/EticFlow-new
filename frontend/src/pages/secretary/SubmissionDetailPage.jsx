@@ -65,7 +65,7 @@ export default function SubmissionDetailPage() {
   const { id: submissionRef } = useParams()
   const location         = useLocation()
   const navigate         = useNavigate()
-  const { user, setActiveRole } = useAuth()
+  const { user } = useAuth()
   const [submission,     setSubmission]     = useState(null)
   const [loading,        setLoading]        = useState(true)
   const [error,          setError]          = useState('')
@@ -88,14 +88,6 @@ export default function SubmissionDetailPage() {
     [submission?.applicationId, submission?.title, t]
   )
   useDocumentTitle(documentTitle)
-
-  useEffect(() => {
-    if (!Array.isArray(user?.roles) || user.roles.length === 0) return
-    const preferredRole = ['SECRETARY', 'CHAIRMAN', 'ADMIN'].find((role) => user.roles.includes(role))
-    if (!preferredRole) return
-    if (user.role === preferredRole) return
-    setActiveRole(preferredRole)
-  }, [user?.roles, user?.role, setActiveRole])
 
   /**
    * Resolves status label by locale with i18n fallback.
