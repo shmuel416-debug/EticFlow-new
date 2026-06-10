@@ -88,6 +88,7 @@ const GROUPS = [
     icon: CheckCircle2,
     fields: [
       { key: 'committee_quorum_min_votes', type: 'number', hint: '1-15' },
+      { key: 'enforce_meeting_voting', type: 'switch', hintKey: 'settings.enforce_meeting_voting_hint' },
     ],
   },
 ]

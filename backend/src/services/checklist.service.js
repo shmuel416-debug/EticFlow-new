@@ -8,6 +8,7 @@
 
 import prisma from '../config/database.js';
 import { AppError } from '../utils/errors.js';
+import { ensureCurrentRound } from './review-round.service.js';
 
 /**
  * List all reviewer checklist templates with pagination
@@ -217,10 +218,14 @@ export async function publishTemplate(templateId) {
  * @returns {Promise<Object>} Created review with empty responses
  */
 export async function createChecklistReview(submissionId, reviewerId, track = null) {
-  // Check if review already exists
+  // Reviews are scoped to the submission's active review round, so the same
+  // reviewer can be assigned again in a later round after a revision.
+  const round = await ensureCurrentRound(submissionId);
+
+  // Check if a review already exists for this reviewer in the current round
   const existing = await prisma.reviewerChecklistReview.findUnique({
     where: {
-      submissionId_reviewerId: { submissionId, reviewerId },
+      reviewRoundId_reviewerId: { reviewRoundId: round.id, reviewerId },
     },
   });
 
@@ -241,6 +246,7 @@ export async function createChecklistReview(submissionId, reviewerId, track = nu
     data: {
       submissionId,
       reviewerId,
+      reviewRoundId: round.id,
       templateId: template.id,
       status: 'DRAFT',
     },

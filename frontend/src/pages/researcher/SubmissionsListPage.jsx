@@ -118,7 +118,7 @@ export default function ResearcherSubmissionsListPage() {
     {
       key: 'status',
       header: t('submission.list.colStatus'),
-      render: (row) => <StatusBadge status={row.status} />,
+      render: (row) => <StatusBadge status={row.status} audience="researcher" />,
     },
   ]
 

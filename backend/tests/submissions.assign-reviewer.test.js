@@ -12,6 +12,9 @@ const prismaMock = {
   user: {
     findFirst: jest.fn(),
   },
+  reviewRound: {
+    update: jest.fn(),
+  },
 }
 
 const statusServiceMock = {
@@ -38,6 +41,14 @@ jest.unstable_mockModule('../src/services/status.service.js', () => statusServic
 jest.unstable_mockModule('../src/services/notification.service.js', () => notificationServiceMock)
 jest.unstable_mockModule('../src/services/sla.service.js', () => slaServiceMock)
 jest.unstable_mockModule('../src/services/coi.service.js', () => coiServiceMock)
+jest.unstable_mockModule('../src/services/review-round.service.js', () => ({
+  ensureCurrentRound: jest.fn().mockResolvedValue({ id: 'round-1' }),
+  closeCurrentRound: jest.fn(),
+  openNextRound: jest.fn(),
+}))
+jest.unstable_mockModule('../src/services/reviewerChecklist.service.js', () => ({
+  getOrCreateReview: jest.fn().mockResolvedValue({ id: 'review-1' }),
+}))
 
 const { assignReviewer } = await import('../src/controllers/submissions.status.controller.js')
 
@@ -76,6 +87,7 @@ describe('submissions.status assignReviewer', () => {
       isActive: true,
     })
     prismaMock.submission.update.mockResolvedValue({ id: 'sub-1', reviewerId: 'rev-1', status: 'ASSIGNED' })
+    prismaMock.reviewRound.update.mockResolvedValue({ id: 'round-1' })
     coiServiceMock.hasConflict.mockResolvedValue({ conflict: false, reasons: [] })
     notificationServiceMock.notifyStatusChange.mockResolvedValue(undefined)
     slaServiceMock.setDueDates.mockResolvedValue(undefined)

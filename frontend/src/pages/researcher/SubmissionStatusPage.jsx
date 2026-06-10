@@ -116,9 +116,11 @@ export default function SubmissionStatusPage() {
   const [error,      setError]      = useState('')
   const [activeTab,  setActiveTab]  = useState('answers')
   const [pdfLoading, setPdfLoading] = useState(null) // 'download-he' | 'download-en' | 'preview-he' | 'preview-en' | null
+  const [pdfFreshGeneration, setPdfFreshGeneration] = useState(false)
   const [previewPdfUrl, setPreviewPdfUrl] = useState('')
   const [previewOpen, setPreviewOpen] = useState(false)
   const [withdrawing, setWithdrawing] = useState(false)
+  const [actionLoading, setActionLoading] = useState(false)
   const [nowMs]      = useState(() => Date.now())
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [withdrawNote, setWithdrawNote] = useState('')
@@ -175,6 +177,8 @@ export default function SubmissionStatusPage() {
       {},
       { responseType: 'blob', timeout: APPROVAL_PDF_TIMEOUT_MS }
     )
+    const cached = String(response.headers['x-generated'] || '').toLowerCase() === 'cached'
+    setPdfFreshGeneration(!cached)
     return new Blob([response.data], { type: 'application/pdf' })
   }
 
@@ -248,6 +252,37 @@ export default function SubmissionStatusPage() {
     }
   }
 
+  /**
+   * Moves a PENDING_REVISION submission into REVISION_DRAFT, then opens the editor.
+   * @returns {Promise<void>}
+   */
+  async function handleStartRevision() {
+    setActionLoading(true)
+    try {
+      await api.post(`/submissions/${resolvedSubmissionId}/start-revision`, {})
+      navigate(buildSubmissionEditPath('/submissions', submission))
+    } catch {
+      setError(t('statusPage.actionError'))
+      setActionLoading(false)
+    }
+  }
+
+  /**
+   * Resubmits a REVISION_DRAFT submission for a new review round.
+   * @returns {Promise<void>}
+   */
+  async function handleResubmit() {
+    setActionLoading(true)
+    try {
+      await api.post(`/submissions/${resolvedSubmissionId}/submit`, {})
+      await load()
+    } catch {
+      setError(t('statusPage.actionError'))
+    } finally {
+      setActionLoading(false)
+    }
+  }
+
   if (loading) {
     return (
       <div
@@ -286,7 +321,7 @@ export default function SubmissionStatusPage() {
         subtitle={submission.applicationId}
         backTo={backTo}
         backLabel={t('statusPage.backToDashboard')}
-        actions={<StatusBadge status={submission.status} />}
+        actions={<StatusBadge status={submission.status} audience="researcher" />}
       />
 
       <Card>
@@ -299,6 +334,7 @@ export default function SubmissionStatusPage() {
               <Button
                 variant="danger"
                 fullWidth
+                loading={actionLoading}
                 leftIcon={
                   <Pencil
                     size={16}
@@ -315,13 +351,41 @@ export default function SubmissionStatusPage() {
                     focusable="false"
                   />
                 }
-                onClick={() => navigate(buildSubmissionEditPath('/submissions', submission))}
+                onClick={handleStartRevision}
               >
                 {t('statusPage.fixAndResubmit')}
               </Button>
             )}
 
-            {['DRAFT', 'SUBMITTED', 'IN_TRIAGE', 'PENDING_REVISION'].includes(
+            {submission.status === 'REVISION_DRAFT' && (
+              <>
+                <Button
+                  variant="secondary"
+                  fullWidth
+                  leftIcon={
+                    <Pencil
+                      size={16}
+                      strokeWidth={1.75}
+                      aria-hidden="true"
+                      focusable="false"
+                    />
+                  }
+                  onClick={() => navigate(buildSubmissionEditPath('/submissions', submission))}
+                >
+                  {t('statusPage.continueEditing')}
+                </Button>
+                <Button
+                  variant="primary"
+                  fullWidth
+                  loading={actionLoading}
+                  onClick={handleResubmit}
+                >
+                  {t('statusPage.resubmit')}
+                </Button>
+              </>
+            )}
+
+            {['DRAFT', 'SUBMITTED', 'IN_TRIAGE', 'PENDING_REVISION', 'REVISION_DRAFT'].includes(
               submission.status
             ) && (
               <Button
@@ -398,12 +462,12 @@ export default function SubmissionStatusPage() {
                 </Button>
               </div>
             )}
-            {isPdfBusy && (
+            {isPdfBusy && pdfFreshGeneration ? (
               <div className="mt-2 flex items-center gap-2 text-xs" style={{ color: 'var(--text-muted)' }}>
                 <Spinner size={14} label={t(decisionLetter?.progressKey || 'statusPage.pdfInProgress')} />
                 <span>{t(decisionLetter?.progressKey || 'statusPage.pdfInProgress')}</span>
               </div>
-            )}
+            ) : null}
           </div>
         </CardBody>
       </Card>
@@ -455,7 +519,7 @@ export default function SubmissionStatusPage() {
             {activeTab === 'documents' && (
               <DocumentList
                 submissionId={submission.id}
-                canUpload={['DRAFT','SUBMITTED','PENDING_REVISION'].includes(
+                canUpload={['DRAFT','SUBMITTED','REVISION_DRAFT'].includes(
                   submission.status
                 )}
               />

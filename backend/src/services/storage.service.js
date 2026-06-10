@@ -42,6 +42,32 @@ export function validateFile(file) {
 }
 
 /**
+ * Returns whether a file exists in the active storage provider.
+ * @param {string} storagePath
+ * @returns {Promise<boolean>}
+ */
+async function existsLocal(storagePath) {
+  const fullPath = path.join(UPLOAD_DIR, storagePath)
+  try {
+    await fs.access(fullPath)
+    return true
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Returns file size in bytes for a stored path.
+ * @param {string} storagePath
+ * @returns {Promise<number>}
+ */
+async function statLocal(storagePath) {
+  const fullPath = path.join(UPLOAD_DIR, storagePath)
+  const stat = await fs.stat(fullPath)
+  return stat.size
+}
+
+/**
  * Saves a file buffer to disk under uploads/submissions/{subId}/.
  * @param {string} subId     - Submission UUID
  * @param {string} filename  - Sanitized filename
@@ -149,6 +175,28 @@ export async function retrieve(storagePath) {
 }
 
 /**
+ * Checks whether a stored object exists.
+ * @param {string} storagePath
+ * @returns {Promise<boolean>}
+ */
+export async function exists(storagePath) {
+  const provider = getActiveProvider()
+  if (provider === 'local') return existsLocal(storagePath)
+  throw new Error(`[Storage] Unsupported provider "${provider}"`)
+}
+
+/**
+ * Returns stored object size in bytes.
+ * @param {string} storagePath
+ * @returns {Promise<number>}
+ */
+export async function stat(storagePath) {
+  const provider = getActiveProvider()
+  if (provider === 'local') return statLocal(storagePath)
+  throw new Error(`[Storage] Unsupported provider "${provider}"`)
+}
+
+/**
  * Deletes a file in the active storage provider.
  * @param {string} storagePath
  * @returns {Promise<void>}
@@ -179,4 +227,6 @@ export const storage = {
   resolvePath,
   saveFile,
   deleteFile,
+  exists,
+  stat,
 }

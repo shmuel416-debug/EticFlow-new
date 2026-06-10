@@ -24,11 +24,16 @@ const coiServiceMock = {
   buildReviewerConflictExclusion: jest.fn(),
 }
 
+const statusServiceMock = {
+  getNonTerminalCodes: jest.fn(),
+}
+
 jest.unstable_mockModule('../src/config/database.js', () => ({
   default: prismaMock,
 }))
 jest.unstable_mockModule('../src/utils/roles.js', () => rolesMock)
 jest.unstable_mockModule('../src/services/coi.service.js', () => coiServiceMock)
+jest.unstable_mockModule('../src/services/status.service.js', () => statusServiceMock)
 
 const { list, getById } = await import('../src/controllers/submissions.controller.js')
 
@@ -58,6 +63,9 @@ describe('submissions.controller reviewer visibility', () => {
     prismaMock.submission.count.mockResolvedValue(0)
     prismaMock.submission.findFirst.mockResolvedValue(null)
     prismaMock.institutionSetting.findUnique.mockResolvedValue({ value: 'false' })
+    statusServiceMock.getNonTerminalCodes.mockResolvedValue([
+      'SUBMITTED', 'IN_TRIAGE', 'ASSIGNED', 'ASSIGNED_SECONDARY', 'IN_REVIEW', 'PENDING_REVISION', 'REVISION_DRAFT',
+    ])
     coiServiceMock.buildReviewerConflictExclusion.mockResolvedValue({
       blockAll: false,
       submissionIds: [],
@@ -97,10 +105,11 @@ describe('submissions.controller reviewer visibility', () => {
     expect(where.OR[0]).toEqual({ reviewerId: 'rev-1' })
     expect(where.OR[1]).toEqual({ secondaryReviewerId: 'rev-1' })
     expect(where.OR[2]).toEqual(expect.objectContaining({
-      status: { not: 'DRAFT' },
+      status: { in: expect.arrayContaining(['SUBMITTED', 'APPROVED']) },
       authorId: { notIn: ['rev-1', 'author-2'] },
       id: { notIn: ['sub-locked'] },
     }))
+    expect(where.OR[2].status.in).not.toContain('DRAFT')
     expect(where.OR[2].NOT).toEqual([
       { author: { is: { department: { equals: 'medicine', mode: 'insensitive' } } } },
     ])

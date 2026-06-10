@@ -9,6 +9,7 @@ import { AppError } from '../utils/errors.js';
 import { notifyStatusChange } from './notification.service.js';
 import { setDueDates } from './sla.service.js';
 import { flattenSchemaFields } from '../utils/formSchema.js';
+import { ensureCurrentRound } from './review-round.service.js';
 
 // ─── Template queries ────────────────────────────────────────────────────────
 
@@ -394,16 +395,17 @@ function createFieldResponseMap(rows) {
  */
 export async function getOrCreateReview(submissionId, reviewerId) {
   const { fields, dataJson } = await getReviewSubmissionContext(submissionId, reviewerId);
+  const round = await ensureCurrentRound(submissionId);
   let review = await prisma.reviewerChecklistReview.findUnique({
-    where: { submissionId_reviewerId: { submissionId, reviewerId } },
+    where: { reviewRoundId_reviewerId: { reviewRoundId: round.id, reviewerId } },
   });
   if (!review) {
     review = await prisma.reviewerChecklistReview.create({
-      data: { submissionId, reviewerId, templateId: null, status: 'DRAFT' },
+      data: { submissionId, reviewerId, reviewRoundId: round.id, templateId: null, status: 'DRAFT' },
     });
   }
   const responses = await prisma.reviewerFieldResponse.findMany({ where: { reviewId: review.id } });
-  return { review, fields, dataJson, responses };
+  return { review, fields, dataJson, responses, round };
 }
 
 /**
@@ -518,9 +520,12 @@ export async function submitReview(reviewId, reviewerId, payload) {
     // when present) has submitted their checklist review. The just-submitted review
     // is already marked SUBMITTED above, so it is included in this count.
     const assignedReviewerIds = [submission.reviewerId, submission.secondaryReviewerId].filter(Boolean);
+    const roundScope = review.reviewRoundId
+      ? { reviewRoundId: review.reviewRoundId }
+      : { submissionId: review.submissionId };
     const submittedCount = await tx.reviewerChecklistReview.count({
       where: {
-        submissionId: review.submissionId,
+        ...roundScope,
         reviewerId: { in: assignedReviewerIds },
         status: 'SUBMITTED',
       },
@@ -548,11 +553,13 @@ export async function submitReview(reviewId, reviewerId, payload) {
 }
 
 /**
- * Lists all reviewer field reviews for a submission (staff read-only view).
+ * Lists reviewer field reviews for a submission (read-only view).
  * @param {string} submissionId
+ * @param {{ submittedOnly?: boolean }} [options] - when submittedOnly, returns
+ *   only SUBMITTED reviews (used when committee peers view each other's reviews).
  * @returns {Promise<{ fields: object[], reviews: object[] }>}
  */
-export async function listSubmissionReviewsForStaff(submissionId) {
+export async function listSubmissionReviewsForStaff(submissionId, options = {}) {
   const submission = await prisma.submission.findFirst({
     where: { id: submissionId, isActive: true },
     include: {
@@ -563,9 +570,13 @@ export async function listSubmissionReviewsForStaff(submissionId) {
 
   const fields = flattenSchemaFields(submission.formConfig?.schemaJson);
   const reviews = await prisma.reviewerChecklistReview.findMany({
-    where: { submissionId },
+    where: {
+      submissionId,
+      ...(options.submittedOnly ? { status: 'SUBMITTED' } : {}),
+    },
     include: {
       reviewer: { select: { id: true, fullName: true, email: true } },
+      reviewRound: { select: { roundNum: true } },
       fieldResponses: { orderBy: { fieldKey: 'asc' } },
     },
     orderBy: { createdAt: 'asc' },

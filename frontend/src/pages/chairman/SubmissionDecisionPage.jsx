@@ -64,15 +64,6 @@ const DECISIONS = [
 ]
 
 /**
- * Resolves default approval mode from submission track.
- * @param {{ track?: string } | null} submission
- * @returns {'committee' | 'quick'}
- */
-function getInitialApprovalMode(submission) {
-  return submission?.track === 'FULL' ? 'committee' : 'quick'
-}
-
-/**
  * Chairman's decision page for a single submission.
  * @returns {JSX.Element}
  */
@@ -132,7 +123,7 @@ export default function SubmissionDecisionPage() {
 
   useEffect(() => {
     if (!submission?.id) return
-    setApprovalMode(getInitialApprovalMode(submission))
+    setApprovalMode(submission.track === 'FULL' ? 'committee' : 'quick')
   }, [submission?.id, submission?.track])
 
   /**

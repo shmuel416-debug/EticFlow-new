@@ -38,6 +38,7 @@ const DEFAULT_SUBMISSION_STATUSES = [
   { code: 'ASSIGNED_SECONDARY', labelHe: 'הקצאת סוקר משני', labelEn: 'Secondary Reviewer Assignment', descriptionHe: 'הבקשה הוקצתה לסוקר משני בנוסף לסוקר הראשי.', descriptionEn: 'A secondary reviewer has been assigned in addition to the primary reviewer.', color: '#fb923c', orderIndex: 45, isInitial: false, isTerminal: false, slaPhase: 'REVIEW', notificationType: 'SUBMISSION_ASSIGNED', isSystem: true },
   { code: 'IN_REVIEW', labelHe: 'בביקורת', labelEn: 'In Review', descriptionHe: 'הסקירה המקצועית הוגשה וממתינים להחלטת יו״ר הוועדה.', descriptionEn: 'The review is in progress or completed and awaiting chairman decision.', color: '#7c3aed', orderIndex: 50, isInitial: false, isTerminal: false, slaPhase: 'APPROVAL', notificationType: 'REVIEW_REQUESTED', isSystem: true },
   { code: 'PENDING_REVISION', labelHe: 'ממתין לתיקון', labelEn: 'Pending Revision', descriptionHe: 'נדרשים תיקונים מצד החוקר/ת לפני המשך הדיון בבקשה.', descriptionEn: 'The committee requested revisions before the process can continue.', color: '#dc2626', orderIndex: 60, isInitial: false, isTerminal: false, slaPhase: null, notificationType: 'REVISION_REQUIRED', isSystem: true },
+  { code: 'REVISION_DRAFT', labelHe: 'בעריכת תיקון', labelEn: 'Revision Draft', descriptionHe: 'החוקר/ת עורך/ת את הבקשה בעקבות בקשת תיקונים, לפני הגשה מחדש.', descriptionEn: 'The researcher is editing the submission following a revision request, before resubmitting.', color: '#f59e0b', orderIndex: 65, isInitial: false, isTerminal: false, slaPhase: null, notificationType: null, isSystem: true },
   { code: 'APPROVED', labelHe: 'אושר', labelEn: 'Approved', descriptionHe: 'הבקשה אושרה סופית על ידי הוועדה.', descriptionEn: 'The submission has been formally approved by the committee.', color: '#16a34a', orderIndex: 70, isInitial: false, isTerminal: true, slaPhase: 'COMPLETED', notificationType: 'APPROVED', isSystem: true },
   { code: 'REJECTED', labelHe: 'נדחה', labelEn: 'Rejected', descriptionHe: 'הבקשה נדחתה וההליך נסגר ללא אישור.', descriptionEn: 'The submission was rejected and the review workflow is closed.', color: '#b91c1c', orderIndex: 80, isInitial: false, isTerminal: true, slaPhase: 'COMPLETED', notificationType: 'REJECTED', isSystem: true },
   { code: 'WITHDRAWN', labelHe: 'בוטל', labelEn: 'Withdrawn', descriptionHe: 'הבקשה בוטלה על ידי החוקר/ת או המזכירות.', descriptionEn: 'The submission was withdrawn by the researcher or secretary.', color: '#6b7280', orderIndex: 90, isInitial: false, isTerminal: true, slaPhase: 'COMPLETED', notificationType: null, isSystem: true },
@@ -59,7 +60,10 @@ const DEFAULT_TRANSITIONS = [
   { fromCode: 'IN_REVIEW', toCode: 'REJECTED', allowedRoles: ['CHAIRMAN', 'ADMIN'], requireReviewerAssigned: false },
   { fromCode: 'IN_REVIEW', toCode: 'PENDING_REVISION', allowedRoles: ['CHAIRMAN', 'ADMIN'], requireReviewerAssigned: false },
   { fromCode: 'PENDING_REVISION', toCode: 'WITHDRAWN', allowedRoles: ['RESEARCHER', 'SECRETARY', 'ADMIN'], requireReviewerAssigned: false },
+  { fromCode: 'PENDING_REVISION', toCode: 'REVISION_DRAFT', allowedRoles: ['RESEARCHER', 'SECRETARY', 'ADMIN'], requireReviewerAssigned: false },
   { fromCode: 'PENDING_REVISION', toCode: 'SUBMITTED', allowedRoles: ['SECRETARY', 'ADMIN'], requireReviewerAssigned: false },
+  { fromCode: 'REVISION_DRAFT', toCode: 'SUBMITTED', allowedRoles: ['RESEARCHER', 'SECRETARY', 'ADMIN'], requireReviewerAssigned: false },
+  { fromCode: 'REVISION_DRAFT', toCode: 'WITHDRAWN', allowedRoles: ['RESEARCHER', 'SECRETARY', 'ADMIN'], requireReviewerAssigned: false },
 ]
 
 const STATUS_ACTIONS = ['VIEW', 'EDIT', 'COMMENT', 'UPLOAD_DOC', 'DELETE_DOC', 'VIEW_INTERNAL', 'TRANSITION', 'ASSIGN', 'SUBMIT_REVIEW', 'RECORD_DECISION']
@@ -273,17 +277,17 @@ async function seedStatusManagement() {
           action === 'VIEW'
             ? true
             : action === 'EDIT'
-              ? role === 'ADMIN' || role === 'SECRETARY' || (role === 'RESEARCHER' && ['DRAFT', 'PENDING_REVISION'].includes(status.code))
+              ? role === 'ADMIN' || role === 'SECRETARY' || (role === 'RESEARCHER' && ['DRAFT', 'REVISION_DRAFT'].includes(status.code))
               : action === 'COMMENT'
                 ? ['SECRETARY', 'REVIEWER', 'CHAIRMAN', 'ADMIN'].includes(role)
                 : action === 'UPLOAD_DOC'
-                  ? role === 'ADMIN' || role === 'SECRETARY' || (role === 'RESEARCHER' && ['DRAFT', 'SUBMITTED', 'PENDING_REVISION'].includes(status.code))
+                  ? role === 'ADMIN' || role === 'SECRETARY' || (role === 'RESEARCHER' && ['DRAFT', 'SUBMITTED', 'REVISION_DRAFT'].includes(status.code))
                   : action === 'DELETE_DOC'
-                    ? role === 'ADMIN' || role === 'SECRETARY' || (role === 'RESEARCHER' && ['DRAFT', 'SUBMITTED', 'PENDING_REVISION'].includes(status.code))
+                    ? role === 'ADMIN' || role === 'SECRETARY' || (role === 'RESEARCHER' && ['DRAFT', 'SUBMITTED', 'REVISION_DRAFT'].includes(status.code))
                     : action === 'VIEW_INTERNAL'
                       ? ['SECRETARY', 'REVIEWER', 'CHAIRMAN', 'ADMIN'].includes(role)
                       : action === 'TRANSITION'
-                        ? (['SUBMITTED', 'IN_TRIAGE', 'ASSIGNED', 'ASSIGNED_SECONDARY', 'PENDING_REVISION'].includes(status.code) && ['SECRETARY', 'ADMIN'].includes(role))
+                        ? (['SUBMITTED', 'IN_TRIAGE', 'ASSIGNED', 'ASSIGNED_SECONDARY', 'PENDING_REVISION', 'REVISION_DRAFT'].includes(status.code) && ['SECRETARY', 'ADMIN'].includes(role))
                           || (status.code === 'IN_REVIEW' && ['CHAIRMAN', 'ADMIN'].includes(role))
                         : action === 'ASSIGN'
                           ? ['SECRETARY', 'ADMIN'].includes(role) && ['IN_TRIAGE', 'ASSIGNED', 'ASSIGNED_SECONDARY'].includes(status.code)
@@ -336,7 +340,8 @@ async function seedInstitutionSettings() {
     { key: 'decision_model',      value: 'IRB_FULL',          valueType: 'string' },
     { key: 'ai_provider',         value: 'mock',              valueType: 'string' },
     { key: 'ai_model',            value: 'gemini-1.5-flash',  valueType: 'string' },
-    { key: 'reviewer_peer_visibility', value: 'false',         valueType: 'boolean' },
+    { key: 'reviewer_peer_visibility', value: 'true',          valueType: 'boolean' },
+    { key: 'enforce_meeting_voting', value: 'false',           valueType: 'boolean' },
     { key: 'committee_quorum_min_votes', value: '3',          valueType: 'number' },
     { key: 'continuing_review_reminder_days', value: '30',     valueType: 'number' },
     {

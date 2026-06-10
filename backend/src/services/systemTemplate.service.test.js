@@ -105,9 +105,9 @@ const systemTemplateService = await import('./systemTemplate.service.js')
 
 describe('systemTemplate.service', () => {
   const mockFile = {
-    originalname: 'questionnaire-he.docx',
-    buffer: Buffer.from('test content'),
-    mimetype: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    originalname: 'questionnaire-he.pdf',
+    buffer: Buffer.from([0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x34]),
+    mimetype: 'application/pdf',
     size: 1024,
   }
 

@@ -50,8 +50,9 @@ export const APPROVAL_TEMPLATE_PLACEHOLDERS = [
 ]
 
 /**
- * Builds default approval template content by language.
+ * Builds default approval template content by language and route.
  * @param {'he'|'en'} lang
+ * @param {'COMMITTEE'|'EXPEDITED'} [route='COMMITTEE']
  * @returns {{
  *  docTitle: string,
  *  subject: string,
@@ -62,7 +63,34 @@ export const APPROVAL_TEMPLATE_PLACEHOLDERS = [
  *  legalFooter: string
  * }}
  */
-export function getDefaultApprovalTemplate(lang) {
+export function getDefaultApprovalTemplate(lang, route = 'COMMITTEE') {
+  if (route === 'EXPEDITED') {
+    if (lang === 'en') {
+      return {
+        docTitle: 'Expedited Ethics Approval',
+        subject: 'Re: Expedited Ethics Committee Approval',
+        intro:
+          'Following an expedited review, the Ethics Committee approves the conduct of the research described below, subject to the conditions stated in this decision.',
+        conditionsTitle: 'Approval Conditions:',
+        conditions: DEFAULT_CONDITIONS_EN,
+        signatureLabel: 'Chairperson, Ethics Committee',
+        legalFooter:
+          'This official document is valid subject to ethics committee policies and authorized signatures.',
+      }
+    }
+    return {
+      docTitle: 'אישור ועדת אתיקה — מסלול מקוצר',
+      subject: 'הנדון: אישור ועדת אתיקה במסלול מקוצר',
+      intro:
+        'לאחר בדיקה במסלול מקוצר, ועדת האתיקה מאשרת את ביצוע המחקר המפורט להלן, בכפוף לתנאים הנקובים בהחלטה.',
+      conditionsTitle: 'תנאי האישור:',
+      conditions: DEFAULT_CONDITIONS_HE,
+      signatureLabel: 'יו"ר ועדת האתיקה',
+      legalFooter:
+        'מסמך רשמי זה תקף בכפוף לנהלי ועדת האתיקה וחתימות מורשות.',
+    }
+  }
+
   if (lang === 'en') {
     return {
       docTitle: 'Ethics Committee Approval',

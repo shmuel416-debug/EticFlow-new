@@ -1,7 +1,7 @@
 // =============================================================
 // Ethic-Net — Prisma Schema
 // Database: PostgreSQL 16
-// Conventions: Models=PascalCase→@@map("snake_case"), Fields=camelCase→@map("snake_case")
+// Conventions: Models=PascalCase->@@map("snake_case"), Fields=camelCase->@map("snake_case")
 // Soft delete: isActive Boolean on all main entities
 // SSO-ready: User.passwordHash nullable, authProvider enum
 // =============================================================
@@ -165,6 +165,11 @@ enum ChecklistRecommendation {
   REJECTED
 }
 
+enum ApprovalRoute {
+  COMMITTEE
+  EXPEDITED
+}
+
 enum ReviewerFieldStatus {
   VALID
   INVALID
@@ -222,6 +227,8 @@ model User {
   declaredConflicts    ConflictDeclaration[]        @relation("ConflictDeclarer")
   targetConflicts      ConflictDeclaration[]        @relation("ConflictTargetUser")
   checklistReviews     ReviewerChecklistReview[]    @relation("ReviewerChecklistReviews")
+  primaryReviewRounds   ReviewRound[]               @relation("RoundPrimaryReviewer")
+  secondaryReviewRounds ReviewRound[]               @relation("RoundSecondaryReviewer")
 
   @@map("users")
 }
@@ -303,8 +310,10 @@ model Submission {
   status        String    @default("DRAFT") @db.VarChar(40)
   formConfigId  String    @map("form_config_id")
   authorId      String    @map("author_id")
-  reviewerId    String?   @map("reviewer_id")              // Primary reviewer
-  secondaryReviewerId String? @map("secondary_reviewer_id") // Secondary reviewer
+  reviewerId    String?   @map("reviewer_id")              // Primary reviewer (current round)
+  secondaryReviewerId String? @map("secondary_reviewer_id") // Secondary reviewer (current round)
+  currentRound  Int       @default(1) @map("current_round") // Active review round number
+  approvalRoute ApprovalRoute? @map("approval_route")     // Set when approved: committee vs expedited path
   parentId      String?   @map("parent_id")               // For continuation submissions
   isActive      Boolean   @default(true) @map("is_active")
   submittedAt   DateTime? @map("submitted_at")
@@ -318,6 +327,7 @@ model Submission {
   secondaryReviewer User?         @relation("SubmissionSecondaryReviewer", fields: [secondaryReviewerId], references: [id])
   parent       Submission?        @relation("SubmissionContinuation", fields: [parentId], references: [id])
   continuations Submission[]      @relation("SubmissionContinuation")
+  reviewRounds ReviewRound[]
   versions     SubmissionVersion[]
   comments     Comment[]
   slaTracking  SLATracking?
@@ -350,6 +360,37 @@ model SubmissionVersion {
 
   @@unique([submissionId, versionNum])
   @@map("submission_versions")
+}
+
+// ─────────────────────────────────────────────
+// 4.1 REVIEW ROUND
+// ─────────────────────────────────────────────
+// One round per review cycle of a submission. A new round opens whenever a
+// submission re-enters review after a requested revision. Each round snapshots
+// the reviewers assigned for that cycle, so reviewer history across rounds is
+// preserved even when reviewers are replaced. Submission.currentRound points to
+// the active round number.
+model ReviewRound {
+  id                  String    @id @default(uuid())
+  submissionId        String    @map("submission_id")
+  roundNum            Int       @map("round_num")
+  primaryReviewerId   String?   @map("primary_reviewer_id")
+  secondaryReviewerId String?   @map("secondary_reviewer_id")
+  outcome             String?   @db.VarChar(40)            // Decision that closed the round: APPROVED | REJECTED | REVISION_REQUIRED
+  openedAt            DateTime  @default(now()) @map("opened_at")
+  closedAt            DateTime? @map("closed_at")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  submission        Submission @relation(fields: [submissionId], references: [id])
+  primaryReviewer   User?      @relation("RoundPrimaryReviewer", fields: [primaryReviewerId], references: [id], onDelete: SetNull)
+  secondaryReviewer User?      @relation("RoundSecondaryReviewer", fields: [secondaryReviewerId], references: [id], onDelete: SetNull)
+  checklistReviews  ReviewerChecklistReview[]
+
+  @@unique([submissionId, roundNum])
+  @@index([submissionId])
+  @@map("review_rounds")
 }
 
 // ─────────────────────────────────────────────
@@ -545,6 +586,7 @@ model Meeting {
   attendees   MeetingAttendee[]
   calendarSyncs MeetingCalendarSync[]
   protocols   Protocol[]
+  submissionVotes SubmissionVote[]
 
   @@map("meetings")
 }
@@ -756,6 +798,7 @@ model SubmissionVote {
   id           String                @id @default(uuid())
   submissionId String                @map("submission_id")
   voterId      String                @map("voter_id")
+  meetingId    String?               @map("meeting_id")
   decision     CommitteeVoteDecision
   note         String?
   createdAt    DateTime              @default(now()) @map("created_at")
@@ -763,9 +806,11 @@ model SubmissionVote {
 
   submission Submission @relation(fields: [submissionId], references: [id])
   voter      User       @relation(fields: [voterId], references: [id])
+  meeting    Meeting?   @relation(fields: [meetingId], references: [id])
 
   @@unique([submissionId, voterId])
   @@index([submissionId, createdAt])
+  @@index([meetingId])
   @@map("submission_votes")
 }
 
@@ -904,6 +949,7 @@ model ReviewerChecklistReview {
   id                        String                  @id @default(uuid())
   submissionId              String                  @map("submission_id")
   reviewerId                String                  @map("reviewer_id")
+  reviewRoundId             String?                 @map("review_round_id")
   templateId                String?                 @map("template_id")
   status                    ChecklistReviewStatus   @default(DRAFT)
   recommendation            ChecklistRecommendation?
@@ -919,11 +965,12 @@ model ReviewerChecklistReview {
 
   submission Submission                  @relation(fields: [submissionId], references: [id])
   reviewer   User                        @relation("ReviewerChecklistReviews", fields: [reviewerId], references: [id])
+  reviewRound ReviewRound?               @relation(fields: [reviewRoundId], references: [id], onDelete: SetNull)
   template   ReviewerChecklistTemplate?  @relation(fields: [templateId], references: [id])
   responses  ReviewerChecklistResponse[]
   fieldResponses ReviewerFieldResponse[]
 
-  @@unique([submissionId, reviewerId])
+  @@unique([reviewRoundId, reviewerId])
   @@index([submissionId, status])
   @@index([reviewerId, status])
   @@map("reviewer_checklist_reviews")

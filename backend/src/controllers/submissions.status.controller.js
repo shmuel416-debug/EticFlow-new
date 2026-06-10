@@ -14,9 +14,10 @@ import { can, getAllowedTransitions } from '../services/status.service.js'
 import { getRequestRole } from '../utils/roles.js'
 import { hasConflict } from '../services/coi.service.js'
 import { getOrCreateReview } from '../services/reviewerChecklist.service.js'
+import { ensureCurrentRound, closeCurrentRound, openNextRound } from '../services/review-round.service.js'
 import { generateApprovalLetter, generateRejectionLetter } from '../services/pdf.service.js'
 
-const COMMITTEE_DECISION_SETTINGS_KEYS = ['decision_model', 'committee_quorum_min_votes']
+const COMMITTEE_DECISION_SETTINGS_KEYS = ['decision_model', 'committee_quorum_min_votes', 'enforce_meeting_voting']
 
 /**
  * Loads decision-model settings used for committee votes.
@@ -34,6 +35,34 @@ async function getCommitteeDecisionSettings() {
   const parsedQuorum = parseInt(settingMap.committee_quorum_min_votes || '3', 10)
   const quorum = Number.isFinite(parsedQuorum) && parsedQuorum > 0 ? parsedQuorum : 3
   return { decisionModel, quorum }
+}
+
+/**
+ * Returns true when committee votes must be cast during an active meeting agenda item.
+ * @returns {Promise<boolean>}
+ */
+async function isMeetingVotingEnforced() {
+  const setting = await prisma.institutionSetting.findUnique({
+    where: { key: 'enforce_meeting_voting' },
+    select: { value: true, isActive: true },
+  })
+  return setting?.isActive !== false && setting?.value === 'true'
+}
+
+/**
+ * Resolves the active meeting agenda item for a submission, if any.
+ * @param {string} submissionId
+ * @returns {Promise<object|null>}
+ */
+async function findActiveAgendaItem(submissionId) {
+  return prisma.meetingAgendaItem.findFirst({
+    where: {
+      submissionId,
+      isActive: true,
+      meeting: { status: { in: ['SCHEDULED', 'IN_PROGRESS'] }, isActive: true },
+    },
+    select: { id: true, meetingId: true },
+  })
 }
 
 /**
@@ -126,10 +155,17 @@ export async function transitionStatus(req, res, next) {
 
     await assertTransitionAllowed(sub, newStatus, activeRole)
 
-    const updated = await prisma.submission.update({
-      where: { id: sub.id },
-      data:  { status: newStatus, ...(newStatus === 'SUBMITTED' ? { submittedAt: new Date() } : {}) },
-      include: { author: { select: { id: true, email: true } }, reviewer: { select: { id: true, email: true } } },
+    // Resubmitting from a revision state opens a fresh review round so the
+    // previous cycle's reviewers/reviews are preserved and new ones are chosen.
+    const opensNewRound = ['REVISION_DRAFT', 'PENDING_REVISION'].includes(sub.status) && newStatus === 'SUBMITTED'
+
+    const updated = await prisma.$transaction(async (tx) => {
+      if (opensNewRound) await openNextRound(sub.id, tx)
+      return tx.submission.update({
+        where: { id: sub.id },
+        data:  { status: newStatus, ...(newStatus === 'SUBMITTED' ? { submittedAt: new Date() } : {}) },
+        include: { author: { select: { id: true, email: true } }, reviewer: { select: { id: true, email: true } } },
+      })
     })
 
     setDueDates(sub.id, newStatus).catch(() => {})
@@ -174,6 +210,10 @@ export async function assignReviewer(req, res, next) {
         reviewer: { select: { id: true, email: true } },
       },
     })
+
+    // Record the primary reviewer on the active round (round history per cycle).
+    const round = await ensureCurrentRound(updated.id)
+    await prisma.reviewRound.update({ where: { id: round.id }, data: { primaryReviewerId: reviewer.id } })
 
     // Checklist creation is best-effort: assignment must not be blocked
     // when no active checklist template exists for the submission track.
@@ -239,6 +279,10 @@ export async function assignSecondaryReviewer(req, res, next) {
         secondaryReviewer: { select: { id: true, email: true } },
       },
     })
+
+    // Record the secondary reviewer on the active round (round history per cycle).
+    const round = await ensureCurrentRound(updated.id)
+    await prisma.reviewRound.update({ where: { id: round.id }, data: { secondaryReviewerId: reviewer.id } })
 
     // Checklist creation is best-effort: assignment must not be blocked
     // when no active checklist template exists for the submission track.
@@ -314,6 +358,25 @@ export async function recordVote(req, res, next) {
       return next(new AppError('Voting is allowed only during review phases', 'INVALID_TRANSITION', 400))
     }
 
+    let meetingId = null
+    if (await isMeetingVotingEnforced()) {
+      const agendaItem = await findActiveAgendaItem(sub.id)
+      if (!agendaItem) {
+        return next(new AppError('Submission is not on an active meeting agenda', 'NOT_ON_AGENDA', 400))
+      }
+      const attendee = await prisma.meetingAttendee.findFirst({
+        where: {
+          meetingId: agendaItem.meetingId,
+          userId: req.user.id,
+          isActive: true,
+        },
+      })
+      if (!attendee) {
+        return next(new AppError('Only invited meeting participants may vote', 'NOT_MEETING_ATTENDEE', 403))
+      }
+      meetingId = agendaItem.meetingId
+    }
+
     const vote = await prisma.submissionVote.upsert({
       where: {
         submissionId_voterId: {
@@ -324,10 +387,12 @@ export async function recordVote(req, res, next) {
       create: {
         submissionId: sub.id,
         voterId: req.user.id,
+        meetingId,
         decision: req.body.decision,
         note: req.body.note ?? null,
       },
       update: {
+        meetingId,
         decision: req.body.decision,
         note: req.body.note ?? null,
       },
@@ -414,7 +479,15 @@ export async function recordDecision(req, res, next) {
       }
     }
 
-    const ops = [prisma.submission.update({ where: { id: sub.id }, data: { status: newStatus } })]
+    const ops = [prisma.submission.update({
+      where: { id: sub.id },
+      data: {
+        status: newStatus,
+        ...(newStatus === 'APPROVED'
+          ? { approvalRoute: requiresCommitteeVote ? 'COMMITTEE' : 'EXPEDITED' }
+          : {}),
+      },
+    })]
 
     if (req.body.note) {
       ops.push(prisma.comment.create({
@@ -423,6 +496,10 @@ export async function recordDecision(req, res, next) {
     }
 
     await prisma.$transaction(ops)
+
+    // Close the active review round, recording the decision that ended it.
+    // Preserves reviewers/reviews of this cycle for history and version diff.
+    await closeCurrentRound(sub.id, req.body.decision).catch(() => {})
 
     const updated = await findOrFail(sub.id)
     if (newStatus === 'APPROVED') {

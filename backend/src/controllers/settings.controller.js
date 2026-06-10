@@ -9,7 +9,7 @@
 
 import prisma from '../config/database.js'
 import { AppError } from '../utils/errors.js'
-import { generateApprovalLetterPreview } from '../services/pdf.service.js'
+import { generateApprovalLetterPreview, invalidateCachedDecisionLetters } from '../services/pdf.service.js'
 import {
   APPROVAL_TEMPLATE_KEYS,
   APPROVAL_SIGNATURE_KEY,
@@ -47,6 +47,7 @@ const ADMIN_ONLY_KEYS = new Set([
   'email_sender_address',
   REVIEWER_PEER_VISIBILITY_KEY,
   COMMITTEE_QUORUM_KEY,
+  'enforce_meeting_voting',
   AI_PROVIDER_KEY,
   AI_MODEL_KEY,
   'approval_chairman_name_he',
@@ -56,6 +57,14 @@ const ADMIN_ONLY_KEYS = new Set([
 const TEMPLATE_MANAGED_KEYS = new Set([...APPROVAL_TEMPLATE_KEYS, APPROVAL_SIGNATURE_KEY])
 const ALLOWED_UPDATE_KEYS = new Set([...ADMIN_ONLY_KEYS, ...TEMPLATE_MANAGED_KEYS])
 const ALLOWED_READ_KEYS = new Set([...ADMIN_ONLY_KEYS, ...TEMPLATE_MANAGED_KEYS, ...APPROVAL_TEMPLATE_HISTORY_KEYS])
+
+/** Setting keys that invalidate cached approval/rejection PDFs when changed. */
+const DECISION_LETTER_CACHE_KEYS = new Set([
+  ...APPROVAL_TEMPLATE_KEYS,
+  APPROVAL_SIGNATURE_KEY,
+  'approval_chairman_name_he',
+  'approval_chairman_name_en',
+])
 
 /**
  * Resolves keys available for a role.
@@ -358,6 +367,10 @@ export async function update(req, res, next) {
           valueType: 'json',
         },
       })
+    }
+
+    if (DECISION_LETTER_CACHE_KEYS.has(key)) {
+      await invalidateCachedDecisionLetters()
     }
 
     res.locals.entityId = updated.id

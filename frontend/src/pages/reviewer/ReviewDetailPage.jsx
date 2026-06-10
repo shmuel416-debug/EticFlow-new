@@ -14,6 +14,7 @@ import StatusBadge from '../../components/submissions/StatusBadge'
 import SubmissionLifecycle from '../../components/submissions/SubmissionLifecycle'
 import CommentThread from '../../components/submissions/CommentThread'
 import FieldReviewGrid from '../../components/submissions/FieldReviewGrid'
+import FieldReviewSummary from '../../components/submissions/FieldReviewSummary'
 import AiPanel from '../../components/submissions/AiPanel'
 import CommitteeVotePanel from '../../components/submissions/CommitteeVotePanel'
 import {
@@ -196,6 +197,9 @@ export default function ReviewDetailPage() {
       </Card>
 
       <FieldReviewGrid submissionId={submission?.id} onSuccess={handleReviewSuccess} />
+
+      {/* Peer reviews: all committee members can see reviewer 1 & 2's submitted reviews. */}
+      <FieldReviewSummary submissionId={submission?.id} />
 
       <CommitteeVotePanel
         submissionId={submission?.id}

@@ -13,6 +13,11 @@ import prisma from '../config/database.js'
 import { AppError } from '../utils/errors.js'
 import { getRequestRole, hasAnyRole } from '../utils/roles.js'
 import { buildReviewerConflictExclusion } from '../services/coi.service.js'
+import { openNextRound, getPreviousRound } from '../services/review-round.service.js'
+import { getNonTerminalCodes } from '../services/status.service.js'
+
+/** Statuses in which a RESEARCHER may edit their own submission content. */
+const RESEARCHER_EDITABLE_STATUSES = ['DRAFT', 'REVISION_DRAFT']
 
 const REVIEWER_PEER_VISIBILITY_KEY = 'reviewer_peer_visibility'
 
@@ -30,13 +35,19 @@ async function isPeerVisibilityEnabled() {
 
 /**
  * Builds peer visibility clause while excluding conflicted submissions.
+ * Visible range: active (non-terminal except DRAFT) plus approved submissions.
  * @param {{ id: string }} user
  * @param {{ submissionIds: string[], userIds: string[], departments: string[] }} exclusion
- * @returns {object}
+ * @returns {Promise<object>}
  */
-function buildReviewerPeerClause(user, exclusion) {
+async function buildReviewerPeerClause(user, exclusion) {
+  const nonTerminal = await getNonTerminalCodes()
+  const visibleStatuses = [
+    ...nonTerminal.filter((code) => code !== 'DRAFT'),
+    'APPROVED',
+  ]
   const peerClause = {
-    status: { not: 'DRAFT' },
+    status: { in: visibleStatuses },
     authorId: { notIn: exclusion.userIds?.length ? exclusion.userIds : [user.id] },
   }
   if (exclusion.submissionIds?.length) {
@@ -79,7 +90,7 @@ async function roleFilter(user, activeRole, extra = {}) {
           base.OR = [
             { reviewerId: user.id },
             { secondaryReviewerId: user.id },
-            buildReviewerPeerClause(user, exclusion),
+            await buildReviewerPeerClause(user, exclusion),
           ]
         }
       }
@@ -400,9 +411,9 @@ export async function update(req, res, next) {
     const canEdit = hasAnyRole(req.user, 'SECRETARY', 'ADMIN')
     if (!isOwner && !canEdit) return next(AppError.forbidden())
 
-    // Only DRAFT submissions can be edited by researcher
-    if (activeRole === 'RESEARCHER' && existing.status !== 'DRAFT') {
-      return next(new AppError('Only draft submissions can be edited', 'SUBMISSION_NOT_DRAFT', 400))
+    // Researchers can edit their own submission only in draft or revision-draft.
+    if (activeRole === 'RESEARCHER' && !RESEARCHER_EDITABLE_STATUSES.includes(existing.status)) {
+      return next(new AppError('Only draft or revision submissions can be edited', 'SUBMISSION_NOT_DRAFT', 400))
     }
 
     const { title, dataJson, changeNote } = req.body
@@ -517,17 +528,70 @@ export async function researcherSubmit(req, res, next) {
       where: { id: req.params.id, authorId: req.user.id, isActive: true },
     })
     if (!sub) return next(AppError.notFound('Submission'))
-    if (sub.status !== 'DRAFT') {
-      return next(new AppError('Only draft submissions can be submitted', 'INVALID_STATUS', 400))
+    if (!RESEARCHER_EDITABLE_STATUSES.includes(sub.status)) {
+      return next(new AppError('Only draft or revision submissions can be submitted', 'INVALID_STATUS', 400))
     }
 
-    const updated = await prisma.submission.update({
-      where: { id: sub.id },
-      data:  { status: 'SUBMITTED', submittedAt: new Date() },
+    // A revision resubmission opens a fresh review round (clearing the previous
+    // reviewer assignment) so the secretary re-assigns reviewers for the new cycle.
+    const isRevision = sub.status === 'REVISION_DRAFT'
+    const updated = await prisma.$transaction(async (tx) => {
+      if (isRevision) await openNextRound(sub.id, tx)
+      return tx.submission.update({
+        where: { id: sub.id },
+        data:  { status: 'SUBMITTED', submittedAt: new Date() },
+      })
     })
 
     res.locals.entityId = updated.id
     res.json({ submission: updated })
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
+ * POST /api/submissions/:id/start-revision
+ * Moves a RESEARCHER's own submission from PENDING_REVISION to REVISION_DRAFT so
+ * they can edit and resubmit. Only the submission owner may call this endpoint.
+ * @param {import('express').Request}  req - params: { id }
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
+export async function startRevision(req, res, next) {
+  try {
+    const sub = await prisma.submission.findFirst({
+      where: { id: req.params.id, authorId: req.user.id, isActive: true },
+    })
+    if (!sub) return next(AppError.notFound('Submission'))
+    if (sub.status !== 'PENDING_REVISION') {
+      return next(new AppError('Only submissions pending revision can enter revision editing', 'INVALID_STATUS', 400))
+    }
+
+    const updated = await prisma.submission.update({
+      where: { id: sub.id },
+      data:  { status: 'REVISION_DRAFT' },
+    })
+
+    res.locals.entityId = updated.id
+    res.json({ submission: updated })
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
+ * GET /api/submissions/:id/previous-round
+ * Returns the most recent closed review round (with its reviewers) for a
+ * submission, so staff can see who reviewed in the previous cycle.
+ * @param {import('express').Request}  req - params: { id }
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
+export async function previousRound(req, res, next) {
+  try {
+    const round = await getPreviousRound(req.params.id)
+    res.json({ data: round })
   } catch (err) {
     next(err)
   }

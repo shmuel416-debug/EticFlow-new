@@ -30,6 +30,7 @@ import api from '../../services/api'
 import { getUserDisplayName } from '../../utils/userDisplayName'
 import { useAuth } from '../../context/AuthContext'
 import CoiBadge from '../../components/meetings/CoiBadge'
+import CommitteeVotePanel from '../../components/submissions/CommitteeVotePanel'
 import {
   Button,
   IconButton,
@@ -542,13 +543,14 @@ export default function MeetingDetailPage() {
               {meeting.agendaItems?.map((item, idx) => (
                 <li
                   key={item.id}
-                  className="flex items-center gap-3 p-3"
+                  className="p-3 space-y-3"
                   style={{
                     border: '1px solid var(--border-subtle)',
                     borderRadius: 'var(--radius-lg)',
                     background: 'var(--surface-raised)',
                   }}
                 >
+                  <div className="flex items-center gap-3">
                   <span
                     className="flex items-center justify-center flex-shrink-0 text-xs font-bold"
                     style={{
@@ -586,6 +588,14 @@ export default function MeetingDetailPage() {
                       onClick={() => handleRemoveAgendaItem(item.id)}
                     />
                   )}
+                  </div>
+                  {['SCHEDULED', 'IN_PROGRESS'].includes(meeting.status) && item.submission?.id ? (
+                    <CommitteeVotePanel
+                      submissionId={item.submission.id}
+                      canVote={['REVIEWER', 'CHAIRMAN'].includes(getPrimaryRole(user))}
+                      titleKey="meetings.agendaVoteTitle"
+                    />
+                  ) : null}
                 </li>
               ))}
             </ol>

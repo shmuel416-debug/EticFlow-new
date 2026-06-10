@@ -7,6 +7,9 @@
 
 import { z } from 'zod';
 import * as service from '../services/reviewerChecklist.service.js';
+import { getRequestRole, hasAnyRole } from '../utils/roles.js';
+import { hasConflict } from '../services/coi.service.js';
+import { AppError } from '../utils/errors.js';
 
 // ─── Zod schemas ─────────────────────────────────────────────────────────────
 
@@ -284,11 +287,24 @@ export async function submitReview(req, res, next) {
 
 /**
  * GET /api/submissions/:id/reviews
- * Staff read-only view of all reviewer field reviews for a submission.
+ * Read-only view of reviewer field reviews for a submission.
+ * Staff (SECRETARY/CHAIRMAN/ADMIN) see every review including drafts.
+ * Committee reviewers see only SUBMITTED reviews, and are blocked when they have
+ * a declared conflict of interest on the submission.
  */
 export async function listSubmissionReviews(req, res, next) {
   try {
-    const result = await service.listSubmissionReviewsForStaff(req.params.id);
+    const activeRole = getRequestRole(req);
+    const isStaff = hasAnyRole(req.user, 'SECRETARY', 'CHAIRMAN', 'ADMIN');
+    if (!isStaff && activeRole === 'REVIEWER') {
+      const conflictCheck = await hasConflict(req.user.id, req.params.id);
+      if (conflictCheck.conflict) {
+        return next(new AppError('Conflict of interest', 'COI_BLOCKED', 403, { reasons: conflictCheck.reasons }));
+      }
+    }
+    const result = await service.listSubmissionReviewsForStaff(req.params.id, {
+      submittedOnly: !isStaff,
+    });
     res.json({ data: result });
   } catch (err) {
     next(err);

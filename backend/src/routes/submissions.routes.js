@@ -20,7 +20,7 @@ import * as controller from '../controllers/submissions.controller.js'
 import * as statusController from '../controllers/submissions.status.controller.js'
 import { generateApprovalLetter, generateRejectionLetter } from '../services/pdf.service.js'
 import * as checklistCtrl from '../controllers/reviewerChecklist.controller.js'
-import { resolvePath } from '../services/storage.service.js'
+import { resolvePath, stat as storageStat } from '../services/storage.service.js'
 import { AppError } from '../utils/errors.js'
 import { getRequestRole } from '../utils/roles.js'
 import prisma from '../config/database.js'
@@ -170,6 +170,21 @@ router.post(
 )
 
 router.post(
+  '/:id/start-revision',
+  authenticate,
+  authorize('RESEARCHER'),
+  auditLog('submission.revision_started', 'Submission'),
+  controller.startRevision
+)
+
+router.get(
+  '/:id/previous-round',
+  authenticate,
+  authorize('SECRETARY', 'REVIEWER', 'CHAIRMAN', 'ADMIN'),
+  controller.previousRound
+)
+
+router.post(
   '/:id/continue',
   authenticate,
   authorize('RESEARCHER'),
@@ -283,19 +298,20 @@ router.post(
 
       const lang = req.query.lang === 'en' ? 'en' : 'he'
       const force = getForceFlag(req, isCommitteeRole)
-      const { docId, storagePath } = await generateApprovalLetter(id, lang, force)
+      const { docId, storagePath, cached } = await generateApprovalLetter(id, lang, force)
 
       const absPath = resolvePath(storagePath)
       if (!fs.existsSync(absPath)) {
         throw new AppError('Generated file not found', 'PDF_MISSING', 500)
       }
 
-      const stat     = fs.statSync(absPath)
+      const sizeBytes = await storageStat(storagePath)
       const filename = `approval-letter-${lang}.pdf`
       res.setHeader('Content-Type',        'application/pdf')
       res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)
-      res.setHeader('Content-Length',      stat.size)
+      res.setHeader('Content-Length',      sizeBytes)
       res.setHeader('X-Document-Id',       docId)
+      res.setHeader('X-Generated',         cached ? 'cached' : 'fresh')
 
       res.locals.entityId = id
       res.on('finish', () => {
@@ -338,19 +354,20 @@ router.post(
 
       const lang = req.query.lang === 'en' ? 'en' : 'he'
       const force = getForceFlag(req, isCommitteeRole)
-      const { docId, storagePath } = await generateRejectionLetter(id, lang, force)
+      const { docId, storagePath, cached } = await generateRejectionLetter(id, lang, force)
 
       const absPath = resolvePath(storagePath)
       if (!fs.existsSync(absPath)) {
         throw new AppError('Generated file not found', 'PDF_MISSING', 500)
       }
 
-      const stat     = fs.statSync(absPath)
+      const sizeBytes = await storageStat(storagePath)
       const filename = `rejection-letter-${lang}.pdf`
       res.setHeader('Content-Type', 'application/pdf')
       res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)
-      res.setHeader('Content-Length', stat.size)
+      res.setHeader('Content-Length', sizeBytes)
       res.setHeader('X-Document-Id', docId)
+      res.setHeader('X-Generated', cached ? 'cached' : 'fresh')
 
       res.locals.entityId = id
       res.on('finish', () => {
@@ -368,7 +385,7 @@ router.post(
 )
 
 // ─── Reviewer Checklist ───────────────────────────────────────────────────────
-router.get('/:id/reviews', authenticate, authorize('SECRETARY', 'CHAIRMAN', 'ADMIN'), checklistCtrl.listSubmissionReviews)
+router.get('/:id/reviews', authenticate, authorize('SECRETARY', 'REVIEWER', 'CHAIRMAN', 'ADMIN'), checklistCtrl.listSubmissionReviews)
 router.get('/:id/checklist', authenticate, authorize('REVIEWER', 'CHAIRMAN'), checklistCtrl.getChecklist)
 router.put('/:id/checklist', authenticate, authorize('REVIEWER', 'CHAIRMAN'), checklistCtrl.saveDraft)
 router.post('/:id/checklist/submit', authenticate, authorize('REVIEWER', 'CHAIRMAN'), checklistCtrl.submitReview)

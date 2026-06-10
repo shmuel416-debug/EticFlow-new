@@ -22,6 +22,7 @@ import {
   normalizeRejectionTemplate,
 } from '../constants/rejectionTemplate.js'
 import { getUserDisplayName } from '../utils/userDisplayName.js'
+import { exists as storageExists, stat as storageStat, save as storageSave } from './storage.service.js'
 
 const GENERATED_DIR = path.resolve('uploads', 'generated', 'approval')
 const GENERATED_REJECTION_DIR = path.resolve('uploads', 'generated', 'rejection')
@@ -132,15 +133,36 @@ function fitApprovalTemplateToSinglePage(template) {
  * @param {'he'|'en'} lang
  * @returns {Promise<ReturnType<typeof getDefaultApprovalTemplate>>}
  */
-async function getStoredApprovalTemplate(lang) {
+/**
+ * Loads stored approval template by language and route variant.
+ * @param {'he'|'en'} lang
+ * @param {'COMMITTEE'|'EXPEDITED'} [route='COMMITTEE']
+ * @returns {Promise<ReturnType<typeof getDefaultApprovalTemplate>>}
+ */
+async function getStoredApprovalTemplate(lang, route = 'COMMITTEE') {
   const key = lang === 'en' ? 'approval_template_en' : 'approval_template_he'
   const setting = await prisma.institutionSetting.findUnique({ where: { key }, select: { value: true } })
-  if (!setting?.value) return getDefaultApprovalTemplate(lang)
-  try {
-    return normalizeApprovalTemplate(JSON.parse(setting.value), lang)
-  } catch {
-    return getDefaultApprovalTemplate(lang)
+  let template
+  if (!setting?.value) {
+    template = getDefaultApprovalTemplate(lang, route)
+  } else {
+    try {
+      template = normalizeApprovalTemplate(JSON.parse(setting.value), lang)
+    } catch {
+      template = getDefaultApprovalTemplate(lang, route)
+    }
   }
+  if (route === 'EXPEDITED') {
+    const expeditedDefaults = getDefaultApprovalTemplate(lang, 'EXPEDITED')
+    template = {
+      ...template,
+      docTitle: expeditedDefaults.docTitle,
+      subject: expeditedDefaults.subject,
+      intro: expeditedDefaults.intro,
+      signatureLabel: expeditedDefaults.signatureLabel,
+    }
+  }
+  return template
 }
 
 /**
@@ -301,15 +323,11 @@ function buildRejectionTemplateContext(lang, submission) {
 
 /**
  * Checks whether a generated PDF already exists and is active.
- * @param {{ absPath: string, storagePath: string, submissionId?: string, protocolId?: string }} input
- * @returns {Promise<{ docId: string, storagePath: string }|null>}
+ * @param {{ storagePath: string, submissionId?: string, protocolId?: string }} input
+ * @returns {Promise<{ docId: string, storagePath: string, cached: true }|null>}
  */
 async function findCachedGeneratedDoc(input) {
-  try {
-    await fs.access(input.absPath)
-  } catch {
-    return null
-  }
+  if (!(await storageExists(input.storagePath))) return null
   const where = input.submissionId
     ? { submissionId: input.submissionId, storagePath: input.storagePath, isActive: true }
     : input.protocolId
@@ -319,7 +337,27 @@ async function findCachedGeneratedDoc(input) {
     where,
     select: { id: true },
   })
-  return existing ? { docId: existing.id, storagePath: input.storagePath } : null
+  return existing ? { docId: existing.id, storagePath: input.storagePath, cached: true } : null
+}
+
+/**
+ * Deactivates cached approval/rejection PDFs after template or signature changes.
+ * Next download regenerates with updated settings.
+ * @returns {Promise<number>} Count of deactivated document rows
+ */
+export async function invalidateCachedDecisionLetters() {
+  const result = await prisma.document.updateMany({
+    where: {
+      isActive: true,
+      source: 'GENERATED',
+      OR: [
+        { storagePath: { startsWith: 'generated/approval/' } },
+        { storagePath: { startsWith: 'generated/rejection/' } },
+      ],
+    },
+    data: { isActive: false },
+  })
+  return result.count
 }
 
 /**
@@ -362,22 +400,24 @@ async function upsertGeneratedDocument(input) {
  * @param {string} submissionId
  * @param {'he'|'en'} lang
  * @param {boolean} [force]
- * @returns {Promise<{ docId: string, storagePath: string }>}
+ * @returns {Promise<{ docId: string, storagePath: string, cached?: boolean }>}
  */
 export async function generateApprovalLetter(submissionId, lang = 'he', force = false) {
   const safeLang = lang === 'en' ? 'en' : 'he'
   const submission = await getApprovalSubmission(submissionId)
-  const filename = `approval-letter-${safeLang}.pdf`
+  const route = submission.approvalRoute || 'COMMITTEE'
+  const routeSlug = route === 'EXPEDITED' ? 'expedited' : 'committee'
+  const filename = `approval-letter-${routeSlug}-${safeLang}.pdf`
   const dir = path.join(GENERATED_DIR, submissionId)
   await fs.mkdir(dir, { recursive: true })
   const absPath = path.join(dir, filename)
   const storagePath = path.join('generated', 'approval', submissionId, filename)
   if (!force) {
-    const cached = await findCachedGeneratedDoc({ absPath, storagePath, submissionId })
+    const cached = await findCachedGeneratedDoc({ storagePath, submissionId })
     if (cached) return cached
   }
   const [template, signatureDataUrl, brandPrimary] = await Promise.all([
-    getStoredApprovalTemplate(safeLang),
+    getStoredApprovalTemplate(safeLang, route),
     getStoredChairmanSignature(),
     getInstitutionPrimaryColorHex(),
   ])
@@ -388,15 +428,17 @@ export async function generateApprovalLetter(submissionId, lang = 'he', force = 
     ? buildHeHtml(submission, hydratedTemplate, ctx, signatureDataUrl, brandPrimary)
     : buildEnHtml(submission, hydratedTemplate, ctx, signatureDataUrl, brandPrimary)
   await renderHtmlToPdf(html, absPath)
-  const stat = await fs.stat(absPath)
+  const pdfBuffer = await fs.readFile(absPath)
+  await storageSave(storagePath, pdfBuffer)
+  const sizeBytes = pdfBuffer.length
   const dbDoc = await upsertGeneratedDocument({
     submissionId,
     filename,
     storagePath,
-    originalName: `approval-letter-${safeLang}-${submission.applicationId}.pdf`,
-    sizeBytes: stat.size,
+    originalName: `approval-letter-${routeSlug}-${safeLang}-${submission.applicationId}.pdf`,
+    sizeBytes,
   })
-  return { docId: dbDoc.id, storagePath }
+  return { docId: dbDoc.id, storagePath, cached: false }
 }
 
 /**
@@ -415,7 +457,7 @@ export async function generateRejectionLetter(submissionId, lang = 'he', force =
   const absPath = path.join(dir, filename)
   const storagePath = path.join('generated', 'rejection', submissionId, filename)
   if (!force) {
-    const cached = await findCachedGeneratedDoc({ absPath, storagePath, submissionId })
+    const cached = await findCachedGeneratedDoc({ storagePath, submissionId })
     if (cached) return cached
   }
   const [template, signatureDataUrl, brandPrimary] = await Promise.all([
@@ -429,15 +471,16 @@ export async function generateRejectionLetter(submissionId, lang = 'he', force =
     ? buildHeRejectionHtml(submission, template, ctx, signatureDataUrl, brandPrimary)
     : buildEnRejectionHtml(submission, template, ctx, signatureDataUrl, brandPrimary)
   await renderHtmlToPdf(html, absPath)
-  const stat = await fs.stat(absPath)
+  const pdfBuffer = await fs.readFile(absPath)
+  await storageSave(storagePath, pdfBuffer)
   const dbDoc = await upsertGeneratedDocument({
     submissionId,
     filename,
     storagePath,
     originalName: `rejection-letter-${safeLang}-${submission.applicationId}.pdf`,
-    sizeBytes: stat.size,
+    sizeBytes: pdfBuffer.length,
   })
-  return { docId: dbDoc.id, storagePath }
+  return { docId: dbDoc.id, storagePath, cached: false }
 }
 
 /**
@@ -445,16 +488,22 @@ export async function generateRejectionLetter(submissionId, lang = 'he', force =
  * @param {string} submissionId
  * @returns {Promise<{ docId: string, storagePath: string }>}
  */
-export async function generateBilingualApprovalLetter(submissionId) {
+export async function generateBilingualApprovalLetter(submissionId, force = false) {
   const submission = await getApprovalSubmission(submissionId)
-  const filename = 'approval-letter-bilingual.pdf'
+  const route = submission.approvalRoute || 'COMMITTEE'
+  const routeSlug = route === 'EXPEDITED' ? 'expedited' : 'committee'
+  const filename = `approval-letter-bilingual-${routeSlug}.pdf`
   const dir = path.join(GENERATED_DIR, submissionId)
   await fs.mkdir(dir, { recursive: true })
   const absPath = path.join(dir, filename)
   const storagePath = path.join('generated', 'approval', submissionId, filename)
+  if (!force) {
+    const cached = await findCachedGeneratedDoc({ storagePath, submissionId })
+    if (cached) return cached
+  }
   const [heTemplate, enTemplate, signatureDataUrl, brandPrimary] = await Promise.all([
-    getStoredApprovalTemplate('he'),
-    getStoredApprovalTemplate('en'),
+    getStoredApprovalTemplate('he', route),
+    getStoredApprovalTemplate('en', route),
     getStoredChairmanSignature(),
     getInstitutionPrimaryColorHex(),
   ])
@@ -472,15 +521,16 @@ export async function generateBilingualApprovalLetter(submissionId) {
     brandPrimary
   )
   await renderHtmlToPdf(html, absPath)
-  const stat = await fs.stat(absPath)
+  const pdfBuffer = await fs.readFile(absPath)
+  await storageSave(storagePath, pdfBuffer)
   const dbDoc = await upsertGeneratedDocument({
     submissionId,
     filename,
     storagePath,
-    originalName: `approval-letter-bilingual-${submission.applicationId}.pdf`,
-    sizeBytes: stat.size,
+    originalName: `approval-letter-bilingual-${routeSlug}-${submission.applicationId}.pdf`,
+    sizeBytes: pdfBuffer.length,
   })
-  return { docId: dbDoc.id, storagePath }
+  return { docId: dbDoc.id, storagePath, cached: false }
 }
 
 /**
@@ -530,7 +580,7 @@ export async function generateProtocolPdf(protocol, lang = 'he', force = false) 
   const storagePath = path.join('generated', 'protocols', protocol.id, filename)
   const canReuse = protocol.status === 'SIGNED' && !force
   if (canReuse) {
-    const cached = await findCachedGeneratedDoc({ absPath, storagePath, protocolId: protocol.id })
+    const cached = await findCachedGeneratedDoc({ storagePath, protocolId: protocol.id })
     if (cached) return cached
   }
   const brandPrimary = await getInstitutionPrimaryColorHex()

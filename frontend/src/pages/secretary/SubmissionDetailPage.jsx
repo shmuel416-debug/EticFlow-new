@@ -75,8 +75,10 @@ export default function SubmissionDetailPage() {
   const [assigningSecondaryId, setAssigningSecondaryId] = useState('')
   const [successMsg,     setSuccessMsg]     = useState('')
   const [pdfLoading,     setPdfLoading]     = useState(null) // 'download-he' | 'download-en' | 'preview-he' | 'preview-en' | null
+  const [pdfFreshGeneration, setPdfFreshGeneration] = useState(false)
   const [previewPdfUrl,  setPreviewPdfUrl]  = useState('')
   const [previewOpen,    setPreviewOpen]    = useState(false)
+  const [previousRound,  setPreviousRound]  = useState(null)
   const resolvedSubmissionId = submission?.id || submissionRef
   const { statusMap }    = useStatusConfig({ submissionId: resolvedSubmissionId })
 
@@ -122,6 +124,22 @@ export default function SubmissionDetailPage() {
   useEffect(() => { fetchSubmission() }, [fetchSubmission])
 
   useEffect(() => {
+    if (!resolvedSubmissionId || !submission?.currentRound || submission.currentRound <= 1) {
+      setPreviousRound(null)
+      return
+    }
+    let cancelled = false
+    api.get(`/submissions/${resolvedSubmissionId}/previous-round`)
+      .then(({ data }) => {
+        if (!cancelled) setPreviousRound(data.data)
+      })
+      .catch(() => {
+        if (!cancelled) setPreviousRound(null)
+      })
+    return () => { cancelled = true }
+  }, [resolvedSubmissionId, submission?.currentRound])
+
+  useEffect(() => {
     if (!submission) return
     const canonicalPath = buildSubmissionDetailPath('/secretary/submissions', submission)
     if (!canonicalPath || location.pathname === canonicalPath) return
@@ -147,6 +165,8 @@ export default function SubmissionDetailPage() {
       {},
       { responseType: 'blob', timeout: APPROVAL_PDF_TIMEOUT_MS }
     )
+    const cached = String(response.headers['x-generated'] || '').toLowerCase() === 'cached'
+    setPdfFreshGeneration(!cached)
     return new Blob([response.data], { type: 'application/pdf' })
   }
 
@@ -165,6 +185,21 @@ export default function SubmissionDetailPage() {
       setError(t(`errors.${err.code}`, t('errors.SERVER_ERROR')))
     } finally {
       setTransitioning(false)
+    }
+  }
+
+  /**
+   * Pre-fills reviewer selectors from the previous review round.
+   * @param {'primary'|'secondary'} role
+   * @returns {void}
+   */
+  function handleReassignFromPrevious(role) {
+    if (!previousRound) return
+    if (role === 'primary' && previousRound.primaryReviewer?.id) {
+      setAssigningId(previousRound.primaryReviewer.id)
+    }
+    if (role === 'secondary' && previousRound.secondaryReviewer?.id) {
+      setAssigningSecondaryId(previousRound.secondaryReviewer.id)
     }
   }
 
@@ -452,12 +487,12 @@ export default function SubmissionDetailPage() {
                 {t(decisionLetter.downloadEnKey)}
               </Button>
             </div>
-            {isPdfBusy && (
+            {isPdfBusy && pdfFreshGeneration ? (
               <div className="mt-2 flex items-center gap-2 text-xs" style={{ color: 'var(--text-muted)' }}>
                 <Spinner size={14} label={t(decisionLetter?.progressKey || 'statusPage.pdfInProgress')} />
                 <span>{t(decisionLetter?.progressKey || 'statusPage.pdfInProgress')}</span>
               </div>
-            )}
+            ) : null}
           </CardBody>
         </Card>
       )}
@@ -495,6 +530,50 @@ export default function SubmissionDetailPage() {
               />
             </CardBody>
           </Card>
+
+          {canAssign && previousRound && (
+            <Card as="section">
+              <CardHeader title={t('submission.detail.previousRoundTitle')} />
+              <CardBody className="space-y-3">
+                {previousRound.primaryReviewer ? (
+                  <div>
+                    <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                      {t('submission.detail.previousRoundPrimary')}
+                    </p>
+                    <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                      {getUserDisplayName(previousRound.primaryReviewer, i18n.language)}
+                    </p>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="mt-2"
+                      onClick={() => handleReassignFromPrevious('primary')}
+                    >
+                      {t('submission.detail.reassignPrimary')}
+                    </Button>
+                  </div>
+                ) : null}
+                {previousRound.secondaryReviewer ? (
+                  <div>
+                    <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                      {t('submission.detail.previousRoundSecondary')}
+                    </p>
+                    <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                      {getUserDisplayName(previousRound.secondaryReviewer, i18n.language)}
+                    </p>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="mt-2"
+                      onClick={() => handleReassignFromPrevious('secondary')}
+                    >
+                      {t('submission.detail.reassignSecondary')}
+                    </Button>
+                  </div>
+                ) : null}
+              </CardBody>
+            </Card>
+          )}
 
           {canAssign && (
             <Card as="section">
