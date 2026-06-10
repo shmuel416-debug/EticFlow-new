@@ -1,6 +1,6 @@
 /**
  * Ethic-Net — DocumentList Component
- * Displays uploaded documents for a submission.
+ * Displays researcher-uploaded documents for a submission (not system-generated letters).
  * Allows upload (drag-and-drop or file picker) and delete for authorized users.
  * IS 5568 compliant, mobile-first, Lev palette.
  *
@@ -74,6 +74,8 @@ export default function DocumentList({ submissionId, canUpload = false }) {
   const [error,    setError]    = useState('')
   const [drag,     setDrag]     = useState(false)
   const [previewDoc, setPreviewDoc] = useState(null)
+  const [previewUrl, setPreviewUrl] = useState('')
+  const [previewLoading, setPreviewLoading] = useState(false)
 
   const inputRef = useRef(null)
 
@@ -90,6 +92,24 @@ export default function DocumentList({ submissionId, canUpload = false }) {
   }, [submissionId, t])
 
   useEffect(() => { loadDocs() }, [loadDocs])
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl)
+    }
+  }, [previewUrl])
+
+  /**
+   * Fetches document bytes with JWT auth (iframe/window.open cannot send Authorization).
+   * @param {string} docId
+   * @param {'preview'|'download'} mode
+   * @returns {Promise<Blob>}
+   */
+  async function fetchDocumentBlob(docId, mode) {
+    const endpoint = mode === 'preview' ? 'preview' : 'download'
+    const { data } = await api.get(`/documents/${docId}/${endpoint}`, { responseType: 'blob' })
+    return data
+  }
 
   /**
    * Uploads selected files to the server.
@@ -128,31 +148,53 @@ export default function DocumentList({ submissionId, canUpload = false }) {
     }
   }
 
-  /** Opens the download URL in a new tab. @param {string} docId */
-  function handleDownload(docId) {
-    window.open(`/api/documents/${docId}/download`, '_blank', 'noopener,noreferrer')
+  /**
+   * Downloads a document via authenticated blob fetch.
+   * @param {object} doc
+   */
+  async function handleDownload(doc) {
+    try {
+      const blob = await fetchDocumentBlob(doc.id, 'download')
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = doc.originalName || doc.filename || 'document'
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      URL.revokeObjectURL(url)
+    } catch {
+      setError(t('documents.loadError'))
+    }
   }
 
   /**
    * Opens an inline preview modal for a selected document.
    * @param {object} doc
    */
-  function handlePreview(doc) {
+  async function handlePreview(doc) {
     setPreviewDoc(doc)
+    setPreviewLoading(true)
+    setError('')
+    try {
+      const blob = await fetchDocumentBlob(doc.id, 'preview')
+      if (previewUrl) URL.revokeObjectURL(previewUrl)
+      setPreviewUrl(URL.createObjectURL(blob))
+    } catch {
+      setPreviewDoc(null)
+      setError(t('documents.previewError'))
+    } finally {
+      setPreviewLoading(false)
+    }
   }
 
-  /** Closes document preview modal. */
+  /** Closes document preview modal and revokes blob URL. */
   function closePreview() {
     setPreviewDoc(null)
-  }
-
-  /**
-   * Builds preview URL for iframe/image embedding.
-   * @param {string} docId
-   * @returns {string}
-   */
-  function getPreviewUrl(docId) {
-    return `/api/documents/${docId}/preview`
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl)
+      setPreviewUrl('')
+    }
   }
 
   // ─── Drag-and-drop handlers ───────────────────
@@ -267,7 +309,7 @@ export default function DocumentList({ submissionId, canUpload = false }) {
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleDownload(doc.id)}
+                  onClick={() => handleDownload(doc)}
                   aria-label={t('documents.downloadLabel', { name: doc.originalName })}
                   className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg transition
                     hover:bg-[var(--lev-teal-50)]"
@@ -303,13 +345,23 @@ export default function DocumentList({ submissionId, canUpload = false }) {
       >
         {previewDoc && (
           <div className="space-y-3">
-            {canInlinePreview(previewDoc.mimeType) ? (
+            {previewLoading ? (
+              <p className="text-sm text-center py-8 text-gray-500">{t('common.loading')}</p>
+            ) : canInlinePreview(previewDoc.mimeType) && previewUrl ? (
               <div className="rounded-lg border border-gray-200 overflow-hidden bg-white">
-                <iframe
-                  title={t('documents.previewFrameLabel', { name: previewDoc.originalName })}
-                  src={getPreviewUrl(previewDoc.id)}
-                  className="w-full h-[65vh]"
-                />
+                {previewDoc.mimeType.startsWith('image/') ? (
+                  <img
+                    src={previewUrl}
+                    alt={previewDoc.originalName}
+                    className="w-full max-h-[65vh] object-contain mx-auto"
+                  />
+                ) : (
+                  <iframe
+                    title={t('documents.previewFrameLabel', { name: previewDoc.originalName })}
+                    src={previewUrl}
+                    className="w-full h-[65vh]"
+                  />
+                )}
               </div>
             ) : (
               <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-3">
@@ -319,14 +371,7 @@ export default function DocumentList({ submissionId, canUpload = false }) {
                 <div className="flex gap-2">
                   <button
                     type="button"
-                    onClick={() => window.open(getPreviewUrl(previewDoc.id), '_blank', 'noopener,noreferrer')}
-                    className="min-h-[44px] px-4 rounded-lg border border-gray-300 text-sm font-medium hover:bg-gray-100"
-                  >
-                    {t('documents.openInNewTab')}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleDownload(previewDoc.id)}
+                    onClick={() => handleDownload(previewDoc)}
                     className="min-h-[44px] px-4 rounded-lg text-sm font-medium text-white"
                     style={{ backgroundColor: 'var(--lev-teal)' }}
                   >

@@ -43,7 +43,7 @@ export default function AssignmentsPage() {
   useEffect(() => {
     async function fetchAssignments() {
       try {
-        const { data } = await api.get('/submissions?statuses=ASSIGNED,ASSIGNED_SECONDARY,IN_REVIEW&assignedToMe=true')
+        const { data } = await api.get('/submissions?assignedToMe=true&actionableOnly=true')
         setSubmissions(data.data)
       } catch {
         setError(t('reviewer.assignments.loadError'))

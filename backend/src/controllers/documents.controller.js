@@ -15,6 +15,7 @@ import { AppError } from '../utils/errors.js'
 import { validateFile, saveFile, deleteFile, resolvePath } from '../services/storage.service.js'
 import { can as canByStatusPermission } from '../services/status.service.js'
 import { getRequestRole, hasAnyRole } from '../utils/roles.js'
+import { roleFilter } from './submissions.controller.js'
 import path     from 'path'
 import fs       from 'fs'
 
@@ -23,16 +24,24 @@ import fs       from 'fs'
 // ─────────────────────────────────────────────
 
 /**
- * Returns true when the user may access the submission.
- * @param {{ id: string, role: string }} user
+ * Returns true when the user may access the submission documents.
+ * Reviewers may access uploads on assigned submissions or peer-visible submissions.
+ * @param {{ id: string, activeRole?: string }} user
  * @param {object} submission - Prisma submission record
- * @returns {boolean}
+ * @returns {Promise<boolean>}
  */
-function canAccess(user, submission) {
+async function canAccess(user, submission) {
   const activeRole = user.activeRole ?? 'RESEARCHER'
   if (hasAnyRole(user, 'SECRETARY', 'CHAIRMAN', 'ADMIN')) return true
-  if (activeRole === 'RESEARCHER')  return submission.authorId   === user.id
-  if (activeRole === 'REVIEWER')    return submission.reviewerId === user.id
+  if (activeRole === 'RESEARCHER') return submission.authorId === user.id
+  if (activeRole === 'REVIEWER') {
+    if (submission.reviewerId === user.id || submission.secondaryReviewerId === user.id) {
+      return true
+    }
+    const where = await roleFilter(user, 'REVIEWER', { id: submission.id })
+    const visible = await prisma.submission.findFirst({ where, select: { id: true } })
+    return Boolean(visible)
+  }
   return false
 }
 
@@ -78,7 +87,7 @@ async function resolveDocumentForRead(req, id) {
   if (!doc || !doc.isActive) {
     throw new AppError('Document not found', 'NOT_FOUND', 404)
   }
-  if (doc.submission && !canAccess(req.user, doc.submission)) {
+  if (doc.submission && !(await canAccess(req.user, doc.submission))) {
     throw new AppError('Forbidden', 'FORBIDDEN', 403)
   }
 
@@ -171,12 +180,12 @@ export async function list(req, res, next) {
     if (!submission || !submission.isActive) {
       throw new AppError('Submission not found', 'NOT_FOUND', 404)
     }
-    if (!canAccess(req.user, submission)) {
+    if (!(await canAccess(req.user, submission))) {
       throw new AppError('Forbidden', 'FORBIDDEN', 403)
     }
 
     const docs = await prisma.document.findMany({
-      where:   { submissionId: subId, isActive: true },
+      where:   { submissionId: subId, isActive: true, source: 'UPLOADED' },
       orderBy: { createdAt: 'asc' },
       include: {
         uploadedBy: { select: { id: true, fullName: true, email: true } },

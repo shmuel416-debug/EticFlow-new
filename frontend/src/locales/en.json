@@ -256,7 +256,7 @@
       "viewDetail": "View details",
       "title": "Recent Submissions",
       "empty": "No submissions to display",
-      "reviewerVisibilityHint": "Submitted requests are shown here based on the reviewer-visibility setting. Requests with conflicts of interest for you are hidden automatically."
+      "reviewerVisibilityHint": "Requests assigned to you for action appear only under My Assignments. This list shows other peer-visible submissions per the visibility setting. Conflict-of-interest requests are hidden automatically."
     },
     "detail": {
       "pageTitle": "Submission Details",
@@ -388,6 +388,14 @@
     "viewPdfEn": "View (English)",
     "downloadPdf": "Download (Hebrew)",
     "downloadPdfEn": "Download (English)",
+    "viewRejectPdf": "View rejection letter (Hebrew)",
+    "viewRejectPdfEn": "View rejection letter (English)",
+    "downloadRejectPdf": "Download rejection letter (Hebrew)",
+    "downloadRejectPdfEn": "Download rejection letter (English)",
+    "rejectionPdfInProgress": "Generating rejection PDF, please wait...",
+    "decisionLetterTitle": "Approval Letter",
+    "decisionLetterRejectedTitle": "Rejection Letter",
+    "decisionLetterReady": "Decision letter is ready — view or download below",
     "pdfInProgress": "Generating approval PDF, please wait...",
     "steps": {
       "DRAFT": "Draft saved",
@@ -940,6 +948,7 @@
     "previewFrameLabel": "Inline preview for {{name}}",
     "previewHint": "If this file cannot be rendered in your browser, use the download button.",
     "previewUnsupported": "This file type is not supported for inline browser preview.",
+    "previewError": "Could not load document preview — try downloading the file.",
     "openInNewTab": "Open in new tab",
     "downloadFallback": "Download file",
     "closePreviewLabel": "Close document preview",

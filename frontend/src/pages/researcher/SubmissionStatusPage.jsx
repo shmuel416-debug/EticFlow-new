@@ -12,6 +12,7 @@ import { useParams, useLocation, useNavigate } from 'react-router-dom'
 import {
   Download,
   Eye,
+  CheckCircle2,
   AlertTriangle,
   AlertCircle,
   Pencil,
@@ -399,6 +400,15 @@ export default function SubmissionStatusPage() {
             )}
 
             {decisionLetter && user?.role !== 'REVIEWER' && (
+              <>
+              <p
+                className="text-sm flex items-center gap-2"
+                style={{ color: 'var(--status-success)' }}
+                role="status"
+              >
+                <CheckCircle2 size={16} strokeWidth={1.75} aria-hidden="true" focusable="false" />
+                {t('statusPage.decisionLetterReady')}
+              </p>
               <div className="flex gap-2 flex-wrap items-center">
                 <button
                   type="button"
@@ -461,6 +471,7 @@ export default function SubmissionStatusPage() {
                   {t(decisionLetter.downloadEnKey)}
                 </Button>
               </div>
+              </>
             )}
             {isPdfBusy && pdfFreshGeneration ? (
               <div className="mt-2 flex items-center gap-2 text-xs" style={{ color: 'var(--text-muted)' }}>

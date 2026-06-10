@@ -66,26 +66,71 @@ async function buildReviewerPeerClause(user, exclusion) {
 // ─────────────────────────────────────────────
 
 /**
+ * Builds reviewer actionable-assignment clause (pending checklist review).
+ * @param {string} userId
+ * @returns {object}
+ */
+function buildActionableAssignmentClause(userId) {
+  const pendingReview = {
+    NOT: {
+      checklistReviews: {
+        some: { reviewerId: userId, status: 'SUBMITTED' },
+      },
+    },
+  }
+  return {
+    OR: [
+      {
+        reviewerId: userId,
+        status: { in: ['ASSIGNED', 'ASSIGNED_SECONDARY'] },
+        ...pendingReview,
+      },
+      {
+        secondaryReviewerId: userId,
+        status: { in: ['ASSIGNED', 'ASSIGNED_SECONDARY'] },
+        ...pendingReview,
+      },
+    ],
+  }
+}
+
+/**
  * Builds a Prisma `where` clause based on the requester's role.
  * @param {{ id: string, roles: string[] }} user
  * @param {string} activeRole
  * @param {object} [extra={}] - Additional where conditions to merge
  * @returns {Promise<object>} Prisma where clause
  */
-async function roleFilter(user, activeRole, extra = {}) {
-  const { assignedToMe, ...restExtra } = extra
+export async function roleFilter(user, activeRole, extra = {}) {
+  const { assignedToMe, actionableOnly, excludeMyAssignments, ...restExtra } = extra
   const base = { isActive: true }
   if (activeRole === 'RESEARCHER') base.authorId  = user.id
   if (activeRole === 'REVIEWER' || (activeRole === 'CHAIRMAN' && assignedToMe)) {
+    if (actionableOnly && assignedToMe) {
+      const actionable = buildActionableAssignmentClause(assignedToMe)
+      if (restExtra.OR) {
+        const { OR, ...rest } = restExtra
+        return { AND: [{ ...base, ...rest, ...actionable }, { OR }] }
+      }
+      return { ...base, ...restExtra, ...actionable }
+    }
     if (assignedToMe) {
       base.OR = [{ reviewerId: assignedToMe }, { secondaryReviewerId: assignedToMe }]
     } else if (activeRole === 'REVIEWER') {
       if (!(await isPeerVisibilityEnabled())) {
+        if (excludeMyAssignments) {
+          return { ...base, ...restExtra, id: { in: [] } }
+        }
         base.OR = [{ reviewerId: user.id }, { secondaryReviewerId: user.id }]
       } else {
         const exclusion = await buildReviewerConflictExclusion(user.id)
         if (exclusion.blockAll) {
+          if (excludeMyAssignments) {
+            return { ...base, ...restExtra, id: { in: [] } }
+          }
           base.OR = [{ reviewerId: user.id }, { secondaryReviewerId: user.id }]
+        } else if (excludeMyAssignments) {
+          base.OR = [await buildReviewerPeerClause(user, exclusion)]
         } else {
           base.OR = [
             { reviewerId: user.id },
@@ -217,6 +262,11 @@ export async function list(req, res, next) {
     }
     if (req.query.assignedToMe === 'true' && hasAnyRole(req.user, 'REVIEWER', 'CHAIRMAN')) {
       extra.assignedToMe = req.user.id
+      if (req.query.actionableOnly === 'true') {
+        extra.actionableOnly = true
+      }
+    } else if (activeRole === 'REVIEWER') {
+      extra.excludeMyAssignments = true
     }
     const where = await roleFilter(req.user, activeRole, extra)
 

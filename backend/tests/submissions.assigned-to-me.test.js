@@ -78,6 +78,26 @@ describe('submissions.controller assignedToMe filter', () => {
     expect(next).not.toHaveBeenCalled()
   })
 
+  test('actionableOnly returns pending-assignment clause for reviewer', async () => {
+    const { req, next } = makeAssignedContext({
+      query: { assignedToMe: 'true', actionableOnly: 'true' },
+    })
+    await list(req, { json: jest.fn() }, next)
+
+    const where = prismaMock.submission.findMany.mock.calls[0][0].where
+    expect(where.OR).toEqual([
+      expect.objectContaining({
+        reviewerId: 'rev-secondary',
+        status: { in: ['ASSIGNED', 'ASSIGNED_SECONDARY'] },
+      }),
+      expect.objectContaining({
+        secondaryReviewerId: 'rev-secondary',
+        status: { in: ['ASSIGNED', 'ASSIGNED_SECONDARY'] },
+      }),
+    ])
+    expect(next).not.toHaveBeenCalled()
+  })
+
   test('applies assignedToMe filter for chairman active role', async () => {
     rolesMock.getRequestRole.mockReturnValue('CHAIRMAN')
     const { req, next } = makeAssignedContext({

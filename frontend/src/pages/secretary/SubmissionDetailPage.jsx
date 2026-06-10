@@ -425,8 +425,20 @@ export default function SubmissionDetailPage() {
       {/* Decision letter download — available for approved/rejected */}
       {decisionLetter && (
         <Card>
-          <CardHeader title={t('documents.sectionTitle')} />
+          <CardHeader
+            title={submission?.status === 'REJECTED'
+              ? t('statusPage.decisionLetterRejectedTitle')
+              : t('statusPage.decisionLetterTitle')}
+          />
           <CardBody>
+            <p
+              className="text-sm mb-3 flex items-center gap-2"
+              style={{ color: 'var(--status-success)' }}
+              role="status"
+            >
+              <CheckCircle2 size={16} strokeWidth={1.75} aria-hidden="true" focusable="false" />
+              {t('statusPage.decisionLetterReady')}
+            </p>
             <div className="flex flex-wrap gap-2 items-center">
               <button
                 type="button"

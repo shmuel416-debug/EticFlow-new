@@ -74,13 +74,14 @@ describe('submissions.controller reviewer visibility', () => {
     })
   })
 
-  test('uses assigned-only filter when reviewer peer visibility is disabled', async () => {
+  test('returns empty general list when peer visibility is disabled', async () => {
     const { req, res, next } = makeReviewerContext()
     await list(req, res, next)
 
     expect(prismaMock.submission.findMany).toHaveBeenCalledWith(expect.objectContaining({
       where: expect.objectContaining({
-        OR: [{ reviewerId: 'rev-1' }, { secondaryReviewerId: 'rev-1' }],
+        id: { in: [] },
+        isActive: true,
       }),
     }))
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ data: [] }))
@@ -88,7 +89,7 @@ describe('submissions.controller reviewer visibility', () => {
     expect(coiServiceMock.buildReviewerConflictExclusion).not.toHaveBeenCalled()
   })
 
-  test('adds peer visibility clause with COI exclusions when enabled', async () => {
+  test('lists peer-visible submissions only (excludes own assignments) when enabled', async () => {
     prismaMock.institutionSetting.findUnique.mockResolvedValue({ value: 'true' })
     coiServiceMock.buildReviewerConflictExclusion.mockResolvedValue({
       blockAll: false,
@@ -101,22 +102,20 @@ describe('submissions.controller reviewer visibility', () => {
     await list(req, { json: jest.fn() }, next)
 
     const where = prismaMock.submission.findMany.mock.calls[0][0].where
-    expect(where.OR).toHaveLength(3)
-    expect(where.OR[0]).toEqual({ reviewerId: 'rev-1' })
-    expect(where.OR[1]).toEqual({ secondaryReviewerId: 'rev-1' })
-    expect(where.OR[2]).toEqual(expect.objectContaining({
+    expect(where.OR).toHaveLength(1)
+    expect(where.OR[0]).toEqual(expect.objectContaining({
       status: { in: expect.arrayContaining(['SUBMITTED', 'APPROVED']) },
       authorId: { notIn: ['rev-1', 'author-2'] },
       id: { notIn: ['sub-locked'] },
     }))
-    expect(where.OR[2].status.in).not.toContain('DRAFT')
-    expect(where.OR[2].NOT).toEqual([
+    expect(where.OR[0].status.in).not.toContain('DRAFT')
+    expect(where.OR[0].NOT).toEqual([
       { author: { is: { department: { equals: 'medicine', mode: 'insensitive' } } } },
     ])
     expect(next).not.toHaveBeenCalled()
   })
 
-  test('falls back to assigned-only when global COI blocks peer visibility', async () => {
+  test('returns empty general list when global COI blocks peer visibility', async () => {
     prismaMock.institutionSetting.findUnique.mockResolvedValue({ value: 'true' })
     coiServiceMock.buildReviewerConflictExclusion.mockResolvedValue({
       blockAll: true,
@@ -129,10 +128,7 @@ describe('submissions.controller reviewer visibility', () => {
     await list(req, { json: jest.fn() }, next)
 
     const where = prismaMock.submission.findMany.mock.calls[0][0].where
-    expect(where.OR).toEqual([
-      { reviewerId: 'rev-1' },
-      { secondaryReviewerId: 'rev-1' },
-    ])
+    expect(where.id).toEqual({ in: [] })
     expect(next).not.toHaveBeenCalled()
   })
 

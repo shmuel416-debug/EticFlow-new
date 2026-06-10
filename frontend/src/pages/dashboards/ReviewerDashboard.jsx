@@ -44,7 +44,7 @@ export default function ReviewerDashboard() {
       setLoading(true)
       setError('')
       const [assignedR, completedR] = await Promise.allSettled([
-        api.get('/submissions?statuses=ASSIGNED,ASSIGNED_SECONDARY,IN_REVIEW&assignedToMe=true&page=1&limit=1'),
+        api.get('/submissions?assignedToMe=true&actionableOnly=true&page=1&limit=1'),
         api.get('/submissions?statuses=APPROVED,REJECTED,CONTINUED&assignedToMe=true&page=1&limit=1'),
       ])
       if (cancelled) return

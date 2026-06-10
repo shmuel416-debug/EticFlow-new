@@ -256,7 +256,7 @@
       "viewDetail": "צפה בפרטים",
       "title": "הגשות אחרונות",
       "empty": "אין הגשות להצגה",
-      "reviewerVisibilityHint": "מוצגות כאן בקשות שהוגשו בהתאם להגדרת הנראות לסוקרים. בקשות עם ניגוד עניינים עבורך מוסתרות אוטומטית."
+      "reviewerVisibilityHint": "בקשות שמוקצות אליך לטיפול מופיעות ב״הקצאות שלי״ בלבד. כאן מוצגות שאר הבקשות הגלויות לסוקרים (לפי הגדרת הנראות). בקשות עם ניגוד עניינים מוסתרות אוטומטית."
     },
     "detail": {
       "pageTitle": "פרטי הגשה",
@@ -388,6 +388,14 @@
     "viewPdfEn": "צפה באישור (אנגלית)",
     "downloadPdf": "הורד אישור (עברית)",
     "downloadPdfEn": "הורד אישור (אנגלית)",
+    "viewRejectPdf": "צפה במכתב דחייה (עברית)",
+    "viewRejectPdfEn": "צפה במכתב דחייה (אנגלית)",
+    "downloadRejectPdf": "הורד מכתב דחייה (עברית)",
+    "downloadRejectPdfEn": "הורד מכתב דחייה (אנגלית)",
+    "rejectionPdfInProgress": "מייצר מכתב דחייה PDF, נא להמתין...",
+    "decisionLetterTitle": "מכתב אישור",
+    "decisionLetterRejectedTitle": "מכתב דחייה",
+    "decisionLetterReady": "מכתב ההחלטה מוכן — ניתן לצפות או להוריד",
     "pdfInProgress": "מייצר אישור PDF, נא להמתין...",
     "steps": {
       "DRAFT": "טיוטה נשמרה",
@@ -940,6 +948,7 @@
     "previewFrameLabel": "תצוגה פנימית עבור {{name}}",
     "previewHint": "אם המסמך לא נטען בתצוגה, ניתן להשתמש בכפתור ההורדה.",
     "previewUnsupported": "סוג קובץ זה לא נתמך לתצוגה ישירה בתוך הדפדפן.",
+    "previewError": "לא ניתן לטעון את המסמך לתצוגה — נסה להוריד את הקובץ.",
     "openInNewTab": "פתח בלשונית חדשה",
     "downloadFallback": "הורד קובץ",
     "closePreviewLabel": "סגור תצוגת מסמך",
