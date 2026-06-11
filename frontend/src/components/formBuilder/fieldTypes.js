@@ -101,7 +101,7 @@ export function createField(type) {
     placeholderHe: '',
     required:     true,
     validation:   { minLength: null, maxLength: null },
-    conditions:   [],
+    conditions:   { logic: 'AND', rules: [] },
   }
   if (CHOICE_FIELD_TYPES.includes(type)) {
     field.options = [createOption(), createOption()]

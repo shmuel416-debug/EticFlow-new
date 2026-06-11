@@ -63,11 +63,13 @@ const updateSchema = z.object({
 const statusCodeSchema = z.string().trim().regex(/^[A-Z_]{2,40}$/)
 
 const listQuerySchema = z.object({
-  status:   statusCodeSchema.optional(),
-  statuses: z.string().optional(),
-  search:   z.string().max(200).optional(),
-  page:     z.string().regex(/^\d+$/).optional(),
-  limit:    z.string().regex(/^\d+$/).optional(),
+  status:         statusCodeSchema.optional(),
+  statuses:       z.string().optional(),
+  search:         z.string().max(200).optional(),
+  page:           z.string().regex(/^\d+$/).optional(),
+  limit:          z.string().regex(/^\d+$/).optional(),
+  assignedToMe:   z.enum(['true', 'false']).optional(),
+  actionableOnly: z.enum(['true', 'false']).optional(),
 })
 
 const coiCandidatesQuerySchema = z.object({

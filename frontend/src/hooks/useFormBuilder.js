@@ -26,6 +26,16 @@ export default function useFormBuilder(initialName = '', initialNameEn = '') {
 
   const selectedField = fields.find(f => f.id === selectedId) ?? null
 
+  const setFormNameDirty = useCallback((name) => {
+    setFormName(name)
+    setIsDirty(true)
+  }, [])
+
+  const setFormNameEnDirty = useCallback((nameEn) => {
+    setFormNameEn(nameEn)
+    setIsDirty(true)
+  }, [])
+
   /** Add a new field from the palette → auto-select + open settings */
   const addField = useCallback((type) => {
     const field = createField(type)
@@ -92,8 +102,8 @@ export default function useFormBuilder(initialName = '', initialNameEn = '') {
   }, [])
 
   return {
-    formName,    setFormName,
-    formNameEn,  setFormNameEn,
+    formName,    setFormName: setFormNameDirty,
+    formNameEn,  setFormNameEn: setFormNameEnDirty,
     fields,      setFields,
     selectedId,  selectedField,
     activeTab,   setActiveTab,

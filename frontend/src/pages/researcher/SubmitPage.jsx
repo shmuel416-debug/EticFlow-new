@@ -21,6 +21,7 @@ import {
 } from 'lucide-react'
 import api                                           from '../../services/api'
 import FormRenderer                                  from '../../components/formRenderer/FormRenderer'
+import { evaluateFieldVisibility, stripHiddenFieldValues } from '../../utils/formConditions.js'
 import InstructionsAccordion                         from '../../components/InstructionsAccordion'
 import {
   PageHeader,
@@ -596,11 +597,12 @@ export default function SubmitPage() {
     setErrors(prev => ({ ...prev, [id]: '' }))
   }, [])
 
-  /** Validate required fields → returns error map */
+  /** Validate required fields → returns error map (skips hidden fields) */
   const validate = useCallback(() => {
     const errs = {}
     fields.forEach(f => {
       if (!f.required) return
+      if (!evaluateFieldVisibility(f, values, fields)) return
       const fid = f.id || f.key
       const v = values[fid]
       const empty = v === undefined || v === '' || v === false || (Array.isArray(v) && v.length === 0)
@@ -608,6 +610,12 @@ export default function SubmitPage() {
     })
     return errs
   }, [fields, values, t])
+
+  /** Values excluding hidden conditional fields for persistence */
+  const persistValues = useMemo(
+    () => stripHiddenFieldValues(values, fields),
+    [values, fields]
+  )
 
   /** Split fields into 3 sections by index */
   const sections = useMemo(() => {
@@ -633,12 +641,12 @@ export default function SubmitPage() {
     setDraftSaved(false)
     try {
       if (submissionId) {
-        await api.put(`/submissions/${submissionId}`, { dataJson: values })
+        await api.put(`/submissions/${submissionId}`, { dataJson: persistValues })
       } else {
         const { data } = await api.post('/submissions', {
           formConfigId: formMeta.id,
-          title:        values[fields[0]?.id || fields[0]?.key] || t('submission.submit.pageTitle'),
-          dataJson:     values,
+          title:        persistValues[fields[0]?.id || fields[0]?.key] || t('submission.submit.pageTitle'),
+          dataJson:     persistValues,
         })
         setSubmissionId(data.submission?.id ?? null)
       }
@@ -650,7 +658,7 @@ export default function SubmitPage() {
     } finally {
       setSavingDraft(false)
     }
-  }, [submissionId, formMeta, fields, values, t])
+  }, [submissionId, formMeta, fields, persistValues, t])
 
   const handleSubmit = useCallback(async () => {
     const errs = validate()
@@ -662,13 +670,13 @@ export default function SubmitPage() {
       let applicationId
 
       if (targetId) {
-        const { data } = await api.put(`/submissions/${targetId}`, { dataJson: values })
+        const { data } = await api.put(`/submissions/${targetId}`, { dataJson: persistValues })
         applicationId = data.submission?.applicationId
       } else {
         const { data } = await api.post('/submissions', {
           formConfigId: formMeta.id,
-          title:        values[fields[0]?.id || fields[0]?.key] || t('submission.submit.pageTitle'),
-          dataJson:     values,
+          title:        persistValues[fields[0]?.id || fields[0]?.key] || t('submission.submit.pageTitle'),
+          dataJson:     persistValues,
         })
         targetId      = data.submission?.id
         applicationId = data.submission?.applicationId
@@ -682,7 +690,7 @@ export default function SubmitPage() {
     } finally {
       setSubmitting(false)
     }
-  }, [validate, submissionId, formMeta, fields, values, t])
+  }, [validate, submissionId, formMeta, fields, persistValues, t])
 
   /* ── Render states ── */
   if (loading) {

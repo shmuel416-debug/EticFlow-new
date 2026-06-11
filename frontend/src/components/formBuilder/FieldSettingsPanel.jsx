@@ -5,38 +5,91 @@
  * @module components/formBuilder/FieldSettingsPanel
  */
 
-import { useEffect, useState }  from 'react'
+import { useLayoutEffect, useState, useImperativeHandle, forwardRef, useRef } from 'react'
 import { useTranslation }        from 'react-i18next'
 import { Plus, Trash2 }          from 'lucide-react'
 import { FIELD_TYPE_COLOR, CHOICE_FIELD_TYPES, createOption } from './fieldTypes'
+import ConditionEditor from './ConditionEditor'
+import { normalizeConditions } from '../../utils/formConditions.js'
 
 /**
+ * Builds the update payload from a field draft.
+ * @param {object} draft
+ * @returns {object}
+ */
+function buildFieldUpdates(draft) {
+  const isChoiceField = CHOICE_FIELD_TYPES.includes(draft.type)
+  return {
+    labelHe:       draft.labelHe,
+    labelEn:       draft.labelEn,
+    placeholderHe: draft.placeholderHe,
+    required:      draft.required,
+    validation:    draft.validation,
+    conditions:    normalizeConditions(draft.conditions),
+    ...(isChoiceField ? { options: draft.options ?? [] } : {}),
+  }
+}
+
+/**
+ * Edits a single field; remounted when selection changes so pending edits auto-commit on unmount.
  * @param {{
- *   field:    object | null,
- *   onSave:   (id: string, updates: object) => void,
- *   onCancel: () => void,
+ *   field:      object,
+ *   allFields:  object[],
+ *   onSave:     (id: string, updates: object) => void,
+ *   onCancel:   () => void,
  * }} props
  */
-export default function FieldSettingsPanel({ field, onSave, onCancel }) {
+const FieldSettingsEditor = forwardRef(function FieldSettingsEditor(
+  { field, allFields = [], onSave, onCancel },
+  ref
+) {
   const { t } = useTranslation()
+  const [draft, setDraft] = useState(() => ({ ...field }))
+  const draftRef = useRef(draft)
+  const syncedFieldRef = useRef({ ...field })
+  const onSaveRef = useRef(onSave)
 
-  const [draft, setDraft] = useState(null)
+  useLayoutEffect(() => {
+    draftRef.current = draft
+    onSaveRef.current = onSave
+  }, [draft, onSave])
 
-  /* Sync local draft when selected field changes */
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDraft(field ? { ...field } : null)
-    }, 0)
-    return () => clearTimeout(timer)
-  }, [field])
+  useLayoutEffect(() => {
+    return () => {
+      const current = draftRef.current
+      const baseline = syncedFieldRef.current
+      if (!current || !baseline) return
+      const updates = buildFieldUpdates(current)
+      if (JSON.stringify(updates) !== JSON.stringify(buildFieldUpdates(baseline))) {
+        onSaveRef.current(current.id, updates)
+      }
+    }
+  }, [field.id])
 
-  if (!draft) {
-    return (
-      <div className="flex-1 flex items-center justify-center p-6 text-center">
-        <p className="text-sm text-gray-400">{t('secretary.formBuilder.noFieldSelected')}</p>
-      </div>
-    )
-  }
+  useImperativeHandle(ref, () => ({
+    /**
+     * Commits pending panel edits to parent state.
+     * @returns {{ id: string, updates: object }|null}
+     */
+    commitDraft() {
+      const current = draftRef.current
+      const baseline = syncedFieldRef.current
+      if (!current || !baseline) return null
+      const updates = buildFieldUpdates(current)
+      if (JSON.stringify(updates) === JSON.stringify(buildFieldUpdates(baseline))) return null
+      onSaveRef.current(current.id, updates)
+      syncedFieldRef.current = { ...current, ...updates }
+      return { id: current.id, updates }
+    },
+    /** @returns {boolean} */
+    hasDraftChanges() {
+      const current = draftRef.current
+      const baseline = syncedFieldRef.current
+      if (!current || !baseline) return false
+      return JSON.stringify(buildFieldUpdates(current))
+        !== JSON.stringify(buildFieldUpdates(baseline))
+    },
+  }), [])
 
   /** @param {Partial<object>} updates */
   const patch = (updates) => setDraft(prev => ({ ...prev, ...updates }))
@@ -63,14 +116,11 @@ export default function FieldSettingsPanel({ field, onSave, onCancel }) {
       options: options.map((opt, i) => (i === index ? { ...opt, [key]: value } : opt)),
     })
 
-  const handleSave = () => onSave(draft.id, {
-    labelHe:       draft.labelHe,
-    labelEn:       draft.labelEn,
-    placeholderHe: draft.placeholderHe,
-    required:      draft.required,
-    validation:    draft.validation,
-    ...(isChoiceField ? { options } : {}),
-  })
+  const handleSave = () => {
+    const updates = buildFieldUpdates(draft)
+    onSave(draft.id, updates)
+    syncedFieldRef.current = { ...draft, ...updates }
+  }
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
@@ -242,18 +292,18 @@ export default function FieldSettingsPanel({ field, onSave, onCancel }) {
           </div>
         </div>
 
-        {/* Conditional logic (placeholder) */}
+        {/* Conditional logic */}
         <div className="border-t pt-3">
           <p className="text-xs font-semibold mb-1" style={{ color: 'var(--lev-navy)' }}>
             {t('secretary.formBuilder.settingsConditional')}
           </p>
           <p className="text-xs text-gray-400 mb-2">{t('secretary.formBuilder.settingsConditionalHint')}</p>
-          <button type="button" disabled
-            title={t('secretary.formBuilder.conditionalComingSoon')}
-            className="text-xs opacity-40 cursor-not-allowed"
-            style={{ color: 'var(--lev-teal-text)', minHeight: '44px' }}>
-            {t('secretary.formBuilder.settingsAddCondition')}
-          </button>
+          <ConditionEditor
+            conditions={draft.conditions}
+            targetFieldId={draft.id}
+            allFields={allFields}
+            onChange={next => patch({ conditions: next })}
+          />
         </div>
       </div>
 
@@ -272,4 +322,46 @@ export default function FieldSettingsPanel({ field, onSave, onCancel }) {
       </div>
     </div>
   )
-}
+})
+
+/**
+ * @param {{
+ *   field:      object | null,
+ *   allFields:  object[],
+ *   onSave:     (id: string, updates: object) => void,
+ *   onCancel:   () => void,
+ * }} props
+ */
+const FieldSettingsPanel = forwardRef(function FieldSettingsPanel(
+  { field, allFields = [], onSave, onCancel },
+  ref
+) {
+  const { t } = useTranslation()
+  const editorRef = useRef(null)
+
+  useImperativeHandle(ref, () => ({
+    commitDraft: () => editorRef.current?.commitDraft?.() ?? null,
+    hasDraftChanges: () => editorRef.current?.hasDraftChanges?.() ?? false,
+  }), [])
+
+  if (!field) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-6 text-center">
+        <p className="text-sm text-gray-400">{t('secretary.formBuilder.noFieldSelected')}</p>
+      </div>
+    )
+  }
+
+  return (
+    <FieldSettingsEditor
+      key={field.id}
+      ref={editorRef}
+      field={field}
+      allFields={allFields}
+      onSave={onSave}
+      onCancel={onCancel}
+    />
+  )
+})
+
+export default FieldSettingsPanel

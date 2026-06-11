@@ -7,6 +7,7 @@
 
 import { useTranslation } from 'react-i18next'
 import { Check, Paperclip } from 'lucide-react'
+import { filterVisibleFields } from '../../utils/formConditions.js'
 
 const INPUT_BASE = 'w-full text-sm border rounded-lg px-3 py-2.5 bg-white focus:outline-none transition-colors'
 
@@ -262,9 +263,11 @@ export function FormField({ field, value, error, lang, onChange }) {
  * @param {{ fields: object[], values: object, errors: object, lang: 'he'|'en', onChange: fn }} props
  */
 export default function FormRenderer({ fields, values, errors, lang, onChange }) {
+  const visibleFields = filterVisibleFields(fields, values)
+
   return (
     <div className="space-y-5">
-      {fields.map(field => {
+      {visibleFields.map(field => {
         const fieldId = field.id || field.key
         return (
           <FormField

@@ -10,6 +10,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ClipboardList } from 'lucide-react'
 import FormFieldPreview from './FormFieldPreview'
+import { filterVisibleFields, normalizeConditions } from '../../utils/formConditions.js'
 
 /**
  * Language toggle bar.
@@ -50,8 +51,15 @@ function LangToggle({ lang, onChange }) {
 export default function FormPreview({ formName, formNameEn, fields, initialLang = 'he', showLangToggle = true }) {
   const { t } = useTranslation()
   const [lang, setLang] = useState(initialLang)
+  const [previewValues, setPreviewValues] = useState({})
 
   const displayName = (lang === 'en' && formNameEn) ? formNameEn : (formName || t('secretary.formBuilder.title'))
+  const visibleFields = filterVisibleFields(fields, previewValues)
+
+  /** @param {string} id @param {*} val */
+  const handlePreviewChange = (id, val) => {
+    setPreviewValues(prev => ({ ...prev, [id]: val }))
+  }
 
   return (
     <div className="flex flex-col h-full overflow-hidden bg-gray-50">
@@ -107,9 +115,23 @@ export default function FormPreview({ formName, formNameEn, fields, initialLang 
 
           {/* Fields */}
           <div className="space-y-6">
-            {fields.map(field => (
-              <FormFieldPreview key={field.id} field={field} previewLang={lang} />
+            {visibleFields.map(field => (
+              <FormFieldPreview
+                key={field.id}
+                field={field}
+                previewLang={lang}
+                interactive
+                value={previewValues[field.id]}
+                onChange={val => handlePreviewChange(field.id, val)}
+              />
             ))}
+            {fields.some(f => normalizeConditions(f.conditions)) && visibleFields.length < fields.length && (
+              <p className="text-xs text-center" style={{ color: 'var(--lev-teal-text)' }}>
+                {t('secretary.formBuilder.conditionalHiddenHint', {
+                  count: fields.length - visibleFields.length,
+                })}
+              </p>
+            )}
           </div>
 
           {/* Submit button (decorative in preview) */}

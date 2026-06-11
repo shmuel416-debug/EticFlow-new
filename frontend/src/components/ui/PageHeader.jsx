@@ -20,9 +20,10 @@ import { ArrowRight, ArrowLeft } from 'lucide-react'
  * @param {React.ReactNode} [props.actions] - CTA slot on the end (LTR side)
  * @param {string} [props.backTo] - optional path for a "back" link
  * @param {string} [props.backLabel] - aria-label/text for back link
+ * @param {() => void} [props.onBackClick] - custom back handler (blocks default Link)
  * @returns {JSX.Element}
  */
-export default function PageHeader({ title, subtitle, actions, backTo, backLabel, className = '' }) {
+export default function PageHeader({ title, subtitle, actions, backTo, backLabel, onBackClick, className = '' }) {
   const { i18n } = useTranslation()
   const isRtl = i18n.dir() === 'rtl'
   const BackIcon = isRtl ? ArrowRight : ArrowLeft
@@ -32,6 +33,17 @@ export default function PageHeader({ title, subtitle, actions, backTo, backLabel
       <div className="flex flex-col gap-3 min-[600px]:flex-row min-[600px]:items-start min-[600px]:justify-between min-[600px]:gap-4 w-full min-w-0">
         <div className="min-w-0 flex items-center gap-2 sm:gap-3 max-w-full">
           {backTo && (
+            onBackClick ? (
+              <button
+                type="button"
+                onClick={onBackClick}
+                aria-label={backLabel || (isRtl ? 'חזרה' : 'Back')}
+                className="inline-flex shrink-0 items-center justify-center rounded-lg transition hover:bg-gray-100"
+                style={{ minWidth: 40, minHeight: 40, color: 'var(--text-secondary)' }}
+              >
+                <BackIcon size={20} strokeWidth={1.75} aria-hidden="true" focusable="false" />
+              </button>
+            ) : (
             <Link
               to={backTo}
               aria-label={backLabel || (isRtl ? 'חזרה' : 'Back')}
@@ -40,6 +52,7 @@ export default function PageHeader({ title, subtitle, actions, backTo, backLabel
             >
               <BackIcon size={20} strokeWidth={1.75} aria-hidden="true" focusable="false" />
             </Link>
+            )
           )}
           <div className="min-w-0">
             <h1

@@ -8,7 +8,7 @@
  * @module pages/secretary/FormBuilderPage
  */
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useNavigate, Link }      from 'react-router-dom'
 import { useTranslation }                    from 'react-i18next'
 import {
@@ -26,6 +26,9 @@ import FieldPalette         from '../../components/formBuilder/FieldPalette'
 import FormCanvas           from '../../components/formBuilder/FormCanvas'
 import FieldSettingsPanel   from '../../components/formBuilder/FieldSettingsPanel'
 import PublishDialog        from '../../components/formBuilder/PublishDialog'
+import UnsavedChangesDialog from '../../components/formBuilder/UnsavedChangesDialog'
+import useFormAutoSave      from '../../hooks/useFormAutoSave'
+import useUnsavedChangesGuard from '../../hooks/useUnsavedChangesGuard'
 import {
   Button, IconButton, PageHeader, Badge, Input,
 } from '../../components/ui'
@@ -76,7 +79,7 @@ function ErrorBanner({ message, onDismiss }) {
  * Toolbar: form names (he + en) + status badge + preview link.
  * The save/publish CTAs live in the PageHeader actions slot above.
  */
-function NameToolbar({ formName, setFormName, formNameEn, setFormNameEn, status, formId }) {
+function NameToolbar({ formName, setFormName, formNameEn, setFormNameEn, status, formId, onPreviewNavigate }) {
   const { t } = useTranslation()
   return (
     <div
@@ -107,6 +110,18 @@ function NameToolbar({ formName, setFormName, formNameEn, setFormNameEn, status,
         {t(`secretary.formBuilder.status${status.charAt(0).toUpperCase() + status.slice(1)}`)}
       </Badge>
       {formId && (
+        onPreviewNavigate ? (
+          <button
+            type="button"
+            onClick={() => onPreviewNavigate(`/secretary/forms/${formId}/preview`)}
+            aria-label={t('secretary.formPreview.openPreview')}
+            className="inline-flex items-center gap-2 text-sm font-semibold transition hover:opacity-80 ms-auto"
+            style={{ color: 'var(--lev-teal-text)', minHeight: 44, padding: '0 12px' }}
+          >
+            <Eye size={16} strokeWidth={1.75} aria-hidden="true" focusable="false" />
+            <span className="hidden sm:inline">{t('secretary.formPreview.openPreview')}</span>
+          </button>
+        ) : (
         <Link
           to={`/secretary/forms/${formId}/preview`}
           aria-label={t('secretary.formPreview.openPreview')}
@@ -120,6 +135,7 @@ function NameToolbar({ formName, setFormName, formNameEn, setFormNameEn, status,
           <Eye size={16} strokeWidth={1.75} aria-hidden="true" focusable="false" />
           <span className="hidden sm:inline">{t('secretary.formPreview.openPreview')}</span>
         </Link>
+        )
       )}
     </div>
   )
@@ -129,7 +145,7 @@ function NameToolbar({ formName, setFormName, formNameEn, setFormNameEn, status,
  * Desktop left panel with palette / settings tabs.
  * @param {{ activeTab, setActiveTab, onAdd, selectedField, onSave, onCancel }} props
  */
-function LeftPanel({ activeTab, setActiveTab, onAdd, selectedField, onSave, onCancel }) {
+function LeftPanel({ activeTab, setActiveTab, onAdd, selectedField, allFields, onSave, onCancel, settingsRef }) {
   const { t } = useTranslation()
   const TABS = [
     { key: 'palette',  label: t('secretary.formBuilder.tabFields')   },
@@ -167,7 +183,7 @@ function LeftPanel({ activeTab, setActiveTab, onAdd, selectedField, onSave, onCa
       </div>
       {activeTab === 'palette'
         ? <FieldPalette onAdd={onAdd} />
-        : <FieldSettingsPanel field={selectedField} onSave={onSave} onCancel={onCancel} />
+        : <FieldSettingsPanel ref={settingsRef} field={selectedField} allFields={allFields} onSave={onSave} onCancel={onCancel} />
       }
     </aside>
   )
@@ -245,6 +261,7 @@ export default function FormBuilderPage() {
   const [saveError,        setSaveError]        = useState('')
   const [publishDialogOpen, setPublishDialogOpen] = useState(false)
   const [loadingForm,      setLoadingForm]      = useState(!!routeId)
+  const settingsPanelRef   = useRef(null)
 
   useEffect(() => {
     if (!routeId) return
@@ -275,57 +292,98 @@ export default function FormBuilderPage() {
     []
   )
 
-  const handleSaveForm = useCallback(async () => {
+  /**
+   * Persists draft form to API. Returns true on success.
+   * @param {{ silent?: boolean }} [options]
+   * @returns {Promise<{ ok: boolean, formId?: string }>}
+   */
+  const saveFormDraft = useCallback(async ({ silent = false } = {}) => {
+    const committed = settingsPanelRef.current?.commitDraft?.()
+    const saveFields = committed
+      ? fields.map(f => (f.id === committed.id ? { ...f, ...committed.updates } : f))
+      : fields
     if (!formName.trim()) {
-      setSaveError(t('secretary.formBuilder.errorNoName'))
-      return
+      if (!silent) setSaveError(t('secretary.formBuilder.errorNoName'))
+      return { ok: false }
     }
-    setIsSaving(true)
-    setSaveError('')
+    if (!silent) {
+      setIsSaving(true)
+      setSaveError('')
+    }
     try {
       const payload = {
         name:       formName.trim(),
         nameEn:     formNameEn.trim() || undefined,
-        schemaJson: buildSchema(fields),
+        schemaJson: buildSchema(saveFields),
       }
       if (formId) {
         await api.put(`/forms/${formId}`, payload)
         setIsDirty(false)
-      } else {
-        const { data } = await api.post('/forms', payload)
-        setFormId(data.form.id)
-        setIsDirty(false)
-        navigate(`/secretary/forms/${data.form.id}`, { replace: true })
+        return { ok: true, formId }
       }
+      const { data } = await api.post('/forms', payload)
+      const newId = data.form.id
+      setFormId(newId)
+      setIsDirty(false)
+      navigate(`/secretary/forms/${newId}`, { replace: true })
+      return { ok: true, formId: newId }
     } catch (err) {
-      setSaveError(t(`errors.${err.code}`) || t('errors.SERVER_ERROR'))
+      if (!silent) setSaveError(t(`errors.${err.code}`) || t('errors.SERVER_ERROR'))
+      return { ok: false }
     } finally {
-      setIsSaving(false)
+      if (!silent) setIsSaving(false)
     }
   }, [formName, formNameEn, formId, fields, buildSchema, navigate, setIsDirty, t])
+
+  const handleSaveForm = useCallback(async () => {
+    await saveFormDraft()
+  }, [saveFormDraft])
+
+  const { saveStatus } = useFormAutoSave({
+    isDirty,
+    enabled: status === 'draft',
+    canSave: Boolean(formName.trim()),
+    saveFn: async () => (await saveFormDraft({ silent: true })).ok,
+  })
+
+  const getExtraBlocked = useCallback(
+    () => settingsPanelRef.current?.hasDraftChanges?.() ?? false,
+    []
+  )
+
+  const isLeaveBlocked = isDirty || saveStatus === 'saving'
+
+  const {
+    showDialog: showLeaveDialog,
+    requestNavigation,
+    confirmLeave,
+    cancelLeave,
+    saveAndLeave,
+    isSavingLeave,
+  } = useUnsavedChangesGuard({
+    isBlocked: isLeaveBlocked,
+    getExtraBlocked,
+    onSaveAndLeave: async () => (await saveFormDraft({ silent: true })).ok,
+  })
+
+  const handleBackClick = useCallback(() => {
+    settingsPanelRef.current?.commitDraft?.()
+    requestNavigation('/secretary/forms')
+  }, [requestNavigation])
 
   const handlePublishConfirm = useCallback(async () => {
     setIsSaving(true)
     setSaveError('')
     setPublishDialogOpen(false)
     try {
+      settingsPanelRef.current?.commitDraft?.()
       let targetId = formId
       if (!targetId || isDirty) {
-        const payload = {
-          name:       formName.trim(),
-          nameEn:     formNameEn.trim() || undefined,
-          schemaJson: buildSchema(fields),
-        }
-        if (targetId) {
-          await api.put(`/forms/${targetId}`, payload)
-        } else {
-          const { data } = await api.post('/forms', payload)
-          targetId = data.form.id
-          setFormId(targetId)
-          navigate(`/secretary/forms/${targetId}`, { replace: true })
-        }
-        setIsDirty(false)
+        const saved = await saveFormDraft({ silent: true })
+        if (!saved.ok) return
+        targetId = saved.formId ?? targetId
       }
+      if (!targetId) return
       await api.post(`/forms/${targetId}/publish`)
       setStatus('published')
     } catch (err) {
@@ -333,7 +391,7 @@ export default function FormBuilderPage() {
     } finally {
       setIsSaving(false)
     }
-  }, [formId, isDirty, formName, formNameEn, fields, buildSchema, navigate, setIsDirty, t])
+  }, [formId, isDirty, saveFormDraft, t])
 
   const handleSaveField = useCallback((id, updates) => {
     updateField(id, updates)
@@ -384,8 +442,24 @@ export default function FormBuilderPage() {
         <PageHeader
           title={formName || 'בונה הטפסים'}
           backTo="/secretary/forms"
+          onBackClick={handleBackClick}
           actions={
             <>
+              {saveStatus === 'saving' && (
+                <span className="text-xs self-center" style={{ color: 'var(--text-muted)' }}>
+                  {t('secretary.formBuilder.autoSaveSaving')}
+                </span>
+              )}
+              {saveStatus === 'saved' && (
+                <span className="text-xs self-center" style={{ color: 'var(--lev-teal-text)' }}>
+                  {t('secretary.formBuilder.autoSaveSaved')}
+                </span>
+              )}
+              {saveStatus === 'error' && (
+                <span className="text-xs self-center" style={{ color: 'var(--status-danger)' }}>
+                  {t('secretary.formBuilder.autoSaveError')}
+                </span>
+              )}
               <Button
                 variant="secondary"
                 onClick={handleSaveForm}
@@ -419,6 +493,7 @@ export default function FormBuilderPage() {
         setFormNameEn={setFormNameEn}
         status={status}
         formId={formId}
+        onPreviewNavigate={requestNavigation}
       />
 
       <ErrorBanner message={saveError} onDismiss={() => setSaveError('')} />
@@ -429,6 +504,8 @@ export default function FormBuilderPage() {
             activeTab={activeTab}     setActiveTab={setActiveTab}
             onAdd={addField}
             selectedField={selectedField}
+            allFields={fields}
+            settingsRef={settingsPanelRef}
             onSave={handleSaveField}  onCancel={handleCancelSettings}
           />
 
@@ -448,7 +525,9 @@ export default function FormBuilderPage() {
             )}
             {mobileTab === 'settings' && (
               <FieldSettingsPanel
+                ref={settingsPanelRef}
                 field={selectedField}
+                allFields={fields}
                 onSave={handleSaveField}  onCancel={handleCancelSettings}
               />
             )}
@@ -473,6 +552,14 @@ export default function FormBuilderPage() {
         isOpen={publishDialogOpen}
         onConfirm={handlePublishConfirm}
         onClose={() => setPublishDialogOpen(false)}
+      />
+
+      <UnsavedChangesDialog
+        isOpen={showLeaveDialog}
+        onCancel={cancelLeave}
+        onLeave={confirmLeave}
+        onSaveAndLeave={saveAndLeave}
+        isSaving={isSavingLeave}
       />
     </div>
   )

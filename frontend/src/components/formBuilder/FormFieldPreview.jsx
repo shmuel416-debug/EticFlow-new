@@ -38,10 +38,10 @@ function FieldWrapper({ id, label, required, hint, children }) {
 }
 
 /**
- * Renders a single field in preview mode (not editable by design, but interactive for UX feel).
- * @param {{ field: object, previewLang: 'he'|'en' }} props
+ * Renders a single field in preview mode (optionally interactive for conditional preview).
+ * @param {{ field: object, previewLang: 'he'|'en', interactive?: boolean, value?: *, onChange?: (v: *) => void }} props
  */
-export default function FormFieldPreview({ field, previewLang }) {
+export default function FormFieldPreview({ field, previewLang, interactive = false, value, onChange }) {
   const { t } = useTranslation()
   const id    = `preview-${field.id}`
   const label = (previewLang === 'en' && field.labelEn) ? field.labelEn : (field.labelHe || field.labelEn || t(`secretary.fieldTypes.${field.type}`))
@@ -70,6 +70,9 @@ export default function FormFieldPreview({ field, previewLang }) {
           aria-required={field.required}
           className={INPUT_CLASS}
           style={{ minHeight: '44px' }}
+          value={interactive ? (value ?? '') : undefined}
+          readOnly={!interactive}
+          onChange={interactive ? e => onChange?.(e.target.value) : undefined}
           onFocus={e => Object.assign(e.target.style, INPUT_FOCUS)}
           onBlur={e  => Object.assign(e.target.style, INPUT_BLUR)}
         />
@@ -113,9 +116,11 @@ export default function FormFieldPreview({ field, previewLang }) {
         <select id={id} aria-required={field.required}
           className={INPUT_CLASS}
           style={{ minHeight: '44px' }}
+          value={interactive ? (value ?? '') : undefined}
+          onChange={interactive ? e => onChange?.(e.target.value) : undefined}
           onFocus={e => Object.assign(e.target.style, INPUT_FOCUS)}
           onBlur={e  => Object.assign(e.target.style, INPUT_BLUR)}
-          defaultValue="">
+          defaultValue={interactive ? undefined : ''}>
           <option value="" disabled>{t('secretary.formPreview.selectPlaceholder')}</option>
           {choiceOptions.length > 0 ? (
             choiceOptions.map((opt, i) => (
@@ -145,7 +150,14 @@ export default function FormFieldPreview({ field, previewLang }) {
           : [t('secretary.formPreview.sampleOption1'), t('secretary.formPreview.sampleOption2')].map((text, i) => ({ key: i, text }))
         ).map((opt, i) => (
           <label key={opt.key} className="flex items-center gap-2 text-sm cursor-pointer" style={{ minHeight: '44px' }}>
-            <input type="radio" name={id} value={i} className="accent-[var(--lev-navy)]" />
+            <input
+              type="radio"
+              name={id}
+              value={choiceOptions[i]?.value ?? i}
+              checked={interactive ? value === (choiceOptions[i]?.value ?? String(i)) : undefined}
+              onChange={interactive ? () => onChange?.(choiceOptions[i]?.value ?? String(i)) : undefined}
+              className="accent-[var(--lev-navy)]"
+            />
             <span style={{ color: '#374151' }}>{opt.text}</span>
           </label>
         ))}
@@ -164,12 +176,25 @@ export default function FormFieldPreview({ field, previewLang }) {
         {(choiceOptions.length > 0
           ? choiceOptions.map((opt, i) => ({ key: opt.value ?? i, text: optionLabel(opt, i) }))
           : [t('secretary.formPreview.sampleOption1'), t('secretary.formPreview.sampleOption2')].map((text, i) => ({ key: i, text }))
-        ).map((opt) => (
+        ).map((opt, idx) => {
+          const optValue = choiceOptions[idx]?.value ?? String(idx)
+          const selected = Array.isArray(value) ? value : []
+          return (
           <label key={opt.key} className="flex items-center gap-2 text-sm cursor-pointer" style={{ minHeight: '44px' }}>
-            <input type="checkbox" className="accent-[var(--lev-navy)]" />
+            <input
+              type="checkbox"
+              className="accent-[var(--lev-navy)]"
+              checked={interactive ? selected.includes(optValue) : undefined}
+              onChange={interactive ? e => {
+                const next = e.target.checked
+                  ? [...selected, optValue]
+                  : selected.filter(v => v !== optValue)
+                onChange?.(next)
+              } : undefined}
+            />
             <span style={{ color: '#374151' }}>{opt.text}</span>
           </label>
-        ))}
+        )})}
       </fieldset>
     )
   }
@@ -204,7 +229,10 @@ export default function FormFieldPreview({ field, previewLang }) {
         </p>
         <label className="flex items-center gap-2 text-sm cursor-pointer" style={{ minHeight: '44px' }}>
           <input type="checkbox" id={id} aria-required={field.required}
-            className="accent-[var(--lev-navy)]" />
+            className="accent-[var(--lev-navy)]"
+            checked={interactive ? Boolean(value) : undefined}
+            onChange={interactive ? e => onChange?.(e.target.checked) : undefined}
+          />
           <span style={{ color: '#374151' }}>{t('secretary.formPreview.declarationAccept')}</span>
         </label>
       </div>
