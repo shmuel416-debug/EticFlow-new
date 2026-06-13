@@ -37,10 +37,11 @@ function buildFieldUpdates(draft) {
  *   allFields:  object[],
  *   onSave:     (id: string, updates: object) => void,
  *   onCancel:   () => void,
+ *   onDraftChange?: () => void,
  * }} props
  */
 const FieldSettingsEditor = forwardRef(function FieldSettingsEditor(
-  { field, allFields = [], onSave, onCancel },
+  { field, allFields = [], onSave, onCancel, onDraftChange },
   ref
 ) {
   const { t } = useTranslation()
@@ -92,7 +93,10 @@ const FieldSettingsEditor = forwardRef(function FieldSettingsEditor(
   }), [])
 
   /** @param {Partial<object>} updates */
-  const patch = (updates) => setDraft(prev => ({ ...prev, ...updates }))
+  const patch = (updates) => {
+    setDraft(prev => ({ ...prev, ...updates }))
+    onDraftChange?.()
+  }
 
   const badgeColor = FIELD_TYPE_COLOR[draft.type] ?? 'var(--lev-navy)'
   const isChoiceField = CHOICE_FIELD_TYPES.includes(draft.type)
@@ -330,10 +334,11 @@ const FieldSettingsEditor = forwardRef(function FieldSettingsEditor(
  *   allFields:  object[],
  *   onSave:     (id: string, updates: object) => void,
  *   onCancel:   () => void,
+ *   onDraftChange?: () => void,
  * }} props
  */
 const FieldSettingsPanel = forwardRef(function FieldSettingsPanel(
-  { field, allFields = [], onSave, onCancel },
+  { field, allFields = [], onSave, onCancel, onDraftChange },
   ref
 ) {
   const { t } = useTranslation()
@@ -360,6 +365,7 @@ const FieldSettingsPanel = forwardRef(function FieldSettingsPanel(
       allFields={allFields}
       onSave={onSave}
       onCancel={onCancel}
+      onDraftChange={onDraftChange}
     />
   )
 })
