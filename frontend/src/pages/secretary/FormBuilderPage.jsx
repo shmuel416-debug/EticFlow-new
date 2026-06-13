@@ -143,9 +143,9 @@ function NameToolbar({ formName, setFormName, formNameEn, setFormNameEn, status,
 
 /**
  * Desktop left panel with palette / settings tabs.
- * @param {{ activeTab, setActiveTab, onAdd, selectedField, onSave, onCancel }} props
+ * @param {{ activeTab, setActiveTab, onAdd, selectedField, onSave, onCancel, onDraftChange }} props
  */
-function LeftPanel({ activeTab, setActiveTab, onAdd, selectedField, allFields, onSave, onCancel, settingsRef }) {
+function LeftPanel({ activeTab, setActiveTab, onAdd, selectedField, allFields, onSave, onCancel, onDraftChange, settingsRef }) {
   const { t } = useTranslation()
   const TABS = [
     { key: 'palette',  label: t('secretary.formBuilder.tabFields')   },
@@ -183,7 +183,7 @@ function LeftPanel({ activeTab, setActiveTab, onAdd, selectedField, allFields, o
       </div>
       {activeTab === 'palette'
         ? <FieldPalette onAdd={onAdd} />
-        : <FieldSettingsPanel ref={settingsRef} field={selectedField} allFields={allFields} onSave={onSave} onCancel={onCancel} />
+        : <FieldSettingsPanel ref={settingsRef} field={selectedField} allFields={allFields} onSave={onSave} onCancel={onCancel} onDraftChange={onDraftChange} />
       }
     </aside>
   )
@@ -351,6 +351,10 @@ export default function FormBuilderPage() {
     []
   )
 
+  const handleSettingsDraftChange = useCallback(() => {
+    setIsDirty(true)
+  }, [setIsDirty])
+
   const isLeaveBlocked = isDirty || saveStatus === 'saving'
 
   const {
@@ -367,7 +371,6 @@ export default function FormBuilderPage() {
   })
 
   const handleBackClick = useCallback(() => {
-    settingsPanelRef.current?.commitDraft?.()
     requestNavigation('/secretary/forms')
   }, [requestNavigation])
 
@@ -376,9 +379,9 @@ export default function FormBuilderPage() {
     setSaveError('')
     setPublishDialogOpen(false)
     try {
-      settingsPanelRef.current?.commitDraft?.()
+      const hasPendingFieldDraft = getExtraBlocked()
       let targetId = formId
-      if (!targetId || isDirty) {
+      if (!targetId || isDirty || hasPendingFieldDraft) {
         const saved = await saveFormDraft({ silent: true })
         if (!saved.ok) return
         targetId = saved.formId ?? targetId
@@ -391,7 +394,7 @@ export default function FormBuilderPage() {
     } finally {
       setIsSaving(false)
     }
-  }, [formId, isDirty, saveFormDraft, t])
+  }, [formId, getExtraBlocked, isDirty, saveFormDraft, t])
 
   const handleSaveField = useCallback((id, updates) => {
     updateField(id, updates)
@@ -507,6 +510,7 @@ export default function FormBuilderPage() {
             allFields={fields}
             settingsRef={settingsPanelRef}
             onSave={handleSaveField}  onCancel={handleCancelSettings}
+            onDraftChange={handleSettingsDraftChange}
           />
 
           <div className="md:hidden flex-1 flex flex-col overflow-hidden">
@@ -529,6 +533,7 @@ export default function FormBuilderPage() {
                 field={selectedField}
                 allFields={fields}
                 onSave={handleSaveField}  onCancel={handleCancelSettings}
+                onDraftChange={handleSettingsDraftChange}
               />
             )}
           </div>
