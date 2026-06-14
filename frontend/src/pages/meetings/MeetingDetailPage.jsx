@@ -30,7 +30,6 @@ import api from '../../services/api'
 import { getUserDisplayName } from '../../utils/userDisplayName'
 import { useAuth } from '../../context/AuthContext'
 import CoiBadge from '../../components/meetings/CoiBadge'
-import CommitteeVotePanel from '../../components/submissions/CommitteeVotePanel'
 import {
   Button,
   IconButton,
@@ -589,13 +588,6 @@ export default function MeetingDetailPage() {
                     />
                   )}
                   </div>
-                  {['SCHEDULED', 'IN_PROGRESS'].includes(meeting.status) && item.submission?.id ? (
-                    <CommitteeVotePanel
-                      submissionId={item.submission.id}
-                      canVote={['REVIEWER', 'CHAIRMAN'].includes(getPrimaryRole(user))}
-                      titleKey="meetings.agendaVoteTitle"
-                    />
-                  ) : null}
                 </li>
               ))}
             </ol>

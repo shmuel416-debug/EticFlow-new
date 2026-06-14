@@ -407,6 +407,7 @@
     "printSubmission": "Print submission",
     "exportInProgress": "Generating PDF file, please wait...",
     "exportError": "Failed to export submission — please try again",
+    "printBlocked": "Could not open the print window — allow pop-ups and try again",
     "steps": {
       "DRAFT": "Draft saved",
       "SUBMITTED": "Submitted",

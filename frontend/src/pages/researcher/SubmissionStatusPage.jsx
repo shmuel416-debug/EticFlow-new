@@ -224,7 +224,7 @@ export default function SubmissionStatusPage() {
   }
 
   /**
-   * Opens the submission export PDF in a print-friendly window.
+   * Opens the submission export PDF and triggers the browser print dialog.
    * @returns {Promise<void>}
    */
   async function handlePrintSubmission() {
@@ -233,25 +233,21 @@ export default function SubmissionStatusPage() {
     try {
       const blob = await requestSubmissionExportBlob()
       blobUrl = URL.createObjectURL(blob)
-      const printFrame = document.createElement('iframe')
-      printFrame.style.position = 'fixed'
-      printFrame.style.right = '0'
-      printFrame.style.bottom = '0'
-      printFrame.style.width = '0'
-      printFrame.style.height = '0'
-      printFrame.style.border = '0'
-      printFrame.src = blobUrl
-      printFrame.onload = () => {
+      const printWindow = window.open(blobUrl, '_blank', 'noopener,noreferrer')
+      if (!printWindow) {
+        setError(t('statusPage.printBlocked'))
+        URL.revokeObjectURL(blobUrl)
+        return
+      }
+      printWindow.onload = () => {
         try {
-          printFrame.contentWindow?.focus()
-          printFrame.contentWindow?.print()
+          printWindow.focus()
+          printWindow.print()
         } catch {
-          window.open(blobUrl, '_blank', 'noopener,noreferrer')
+          setError(t('statusPage.printBlocked'))
         }
       }
-      document.body.appendChild(printFrame)
       window.setTimeout(() => {
-        printFrame.remove()
         URL.revokeObjectURL(blobUrl)
       }, 60000)
     } catch {

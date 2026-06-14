@@ -407,6 +407,7 @@
     "printSubmission": "הדפס בקשה",
     "exportInProgress": "מייצר קובץ PDF, נא להמתין...",
     "exportError": "שגיאה ביצוא הבקשה — נסה שוב",
+    "printBlocked": "לא ניתן לפתוח חלון הדפסה — אפשר חלונות קופצים ונסה שוב",
     "steps": {
       "DRAFT": "טיוטה נשמרה",
       "SUBMITTED": "הוגש בהצלחה",

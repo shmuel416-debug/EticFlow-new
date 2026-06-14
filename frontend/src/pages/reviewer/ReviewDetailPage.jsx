@@ -16,7 +16,6 @@ import CommentThread from '../../components/submissions/CommentThread'
 import FieldReviewGrid from '../../components/submissions/FieldReviewGrid'
 import FieldReviewSummary from '../../components/submissions/FieldReviewSummary'
 import AiPanel from '../../components/submissions/AiPanel'
-import CommitteeVotePanel from '../../components/submissions/CommitteeVotePanel'
 import DocumentList from '../../components/submissions/DocumentList'
 import {
   PageHeader,
@@ -208,11 +207,6 @@ export default function ReviewDetailPage() {
           <DocumentList submissionId={submission?.id} canUpload={false} />
         </CardBody>
       </Card>
-
-      <CommitteeVotePanel
-        submissionId={submission?.id}
-        canVote={submission?.status === 'IN_REVIEW' || submission?.status === 'PENDING_REVISION'}
-      />
 
       <Card as="section">
         <CardHeader

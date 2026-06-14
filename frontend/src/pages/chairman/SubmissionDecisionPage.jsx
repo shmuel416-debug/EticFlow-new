@@ -33,7 +33,6 @@ import {
 import useDocumentTitle from '../../hooks/useDocumentTitle'
 import { buildEntityDocumentTitle } from '../../utils/documentTitle'
 import { buildSubmissionDetailPath } from '../../utils/submissionRoutes'
-import CommitteeVotePanel from '../../components/submissions/CommitteeVotePanel'
 import DocumentList from '../../components/submissions/DocumentList'
 
 const DECISIONS = [
@@ -321,12 +320,6 @@ export default function SubmissionDecisionPage() {
           </Card>
         </aside>
       </div>
-
-      <CommitteeVotePanel
-        submissionId={submission?.id}
-        canVote={false}
-        titleKey="chairman.decision.voteSummaryAdvisory"
-      />
 
       <Card as="section">
         <CardHeader title={t('documents.sectionTitle')} />

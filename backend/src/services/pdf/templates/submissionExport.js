@@ -3,6 +3,11 @@
  */
 
 import { escapeHtml, pageShell } from '../layout.js'
+import {
+  INSTITUTION_NAME_EN,
+  INSTITUTION_NAME_HE,
+  PRODUCT_NAME,
+} from '../../../constants/product.js'
 
 /**
  * Formats a field answer for PDF display.
@@ -88,9 +93,7 @@ function buildSubmissionExportBody(submission, dataJson, lang) {
     ? new Date(submission.submittedAt).toLocaleDateString(isHe ? 'he-IL' : 'en-GB')
     : (isHe ? 'לא הוגש' : 'Not submitted')
   const versionNum = submission.latestVersionNum ?? submission.versions?.[0]?.versionNum ?? 1
-  const institutionName = isHe
-    ? (process.env.INSTITUTION_NAME_HE || 'EticFlow')
-    : (process.env.INSTITUTION_NAME_EN || process.env.INSTITUTION_NAME_HE || 'EticFlow')
+  const institutionName = isHe ? INSTITUTION_NAME_HE : INSTITUTION_NAME_EN
 
   const labels = isHe
     ? {
@@ -103,7 +106,7 @@ function buildSubmissionExportBody(submission, dataJson, lang) {
         submittedAt: 'תאריך הגשה',
         version: 'גרסה',
         answers: 'תשובות הטופס',
-        footer: 'מסמך זה נוצר אוטומטית ממערכת EticFlow',
+        footer: `מסמך זה נוצר אוטומטית ממערכת ${PRODUCT_NAME}`,
       }
     : {
         docTitle: 'Submission Copy',
@@ -115,7 +118,7 @@ function buildSubmissionExportBody(submission, dataJson, lang) {
         submittedAt: 'Submitted on',
         version: 'Version',
         answers: 'Form Answers',
-        footer: 'This document was generated automatically by EticFlow',
+        footer: `This document was generated automatically by ${PRODUCT_NAME}`,
       }
 
   return `<div class="page" dir="${dir}">
