@@ -1,0 +1,230 @@
+# Ethic-Net Azure deployment pipeline (Azure DevOps).
+#
+# Port of .github/workflows/deploy-azure.yml. MANUAL ONLY (trigger: none) — runs only
+# when started by hand from Pipelines -> Run, exactly like the GitHub workflow_dispatch.
+#
+# Two deploy modes (runtime parameter `deployMode`):
+#   - direct (default): push images, update App Service container, restart, health check.
+#                       For Basic tiers (B1/B2/B3). Brief downtime (~5-15s) on swap.
+#   - slots:            deploy to staging slot, smoke, then (optional) swap -> production.
+#                       Requires Standard/Premium tier (S1+).
+#
+# Prerequisites in Azure DevOps:
+#   - Service connection (ARM, Workload Identity federation/OIDC): `svc-ethicnet-azure`
+#     bound to the SAME service principal as the existing GitHub OIDC deploy (add a
+#     second federated credential — do NOT replace the GitHub one until cutover).
+#   - Variable group `eticnet-deploy-prod` (Pipelines -> Library) with:
+#       AZURE_RESOURCE_GROUP, AZURE_ACR_NAME, AZURE_API_APP_NAME,
+#       AZURE_WEB_APP_NAME, AZURE_API_BASE_URL
+#   - Environment `production` (Pipelines -> Environments) with an approval check.
+
+trigger: none
+pr: none
+
+parameters:
+  - name: deployMode
+    displayName: Deploy mode (direct = B1 tier; slots = S1+ staging slot)
+    type: string
+    default: direct
+    values:
+      - direct
+      - slots
+  - name: imageTag
+    displayName: Optional image tag override (defaults to commit SHA)
+    type: string
+    default: ''
+  - name: autoSwap
+    displayName: (slots only) Swap staging -> production automatically after smoke
+    type: boolean
+    default: false
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  - group: eticnet-deploy-prod
+  - name: serviceConnection
+    value: svc-ethicnet-azure
+  - name: apiImageName
+    value: ethic-net-api
+  - name: webImageName
+    value: ethic-net-web
+
+stages:
+  # ---------------------------------------------------------------------------
+  - stage: BuildAndPush
+    displayName: Build and push images
+    jobs:
+      - job: build
+        displayName: Build + push API/Web to ACR
+        steps:
+          - task: AzureCLI@2
+            name: meta
+            displayName: Resolve tag, build and push
+            inputs:
+              azureSubscription: $(serviceConnection)
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                set -e
+                OVERRIDE="${{ parameters.imageTag }}"
+                if [ -n "$OVERRIDE" ]; then
+                  TAG="$OVERRIDE"
+                else
+                  TAG=$(echo "$(Build.SourceVersion)" | cut -c1-12)
+                fi
+                echo "Image tag: $TAG"
+                echo "##vso[task.setvariable variable=imageTag;isOutput=true]$TAG"
+
+                REGISTRY="$(AZURE_ACR_NAME).azurecr.io"
+                az acr login --name "$(AZURE_ACR_NAME)"
+
+                docker build -t "$REGISTRY/$(apiImageName):$TAG" ./backend
+                docker push "$REGISTRY/$(apiImageName):$TAG"
+
+                docker build -t "$REGISTRY/$(webImageName):$TAG" ./frontend
+                docker push "$REGISTRY/$(webImageName):$TAG"
+
+  # ---------------------------------------------------------------------------
+  - stage: DeployDirect
+    displayName: Deploy (direct)
+    dependsOn: BuildAndPush
+    condition: and(succeeded(), eq('${{ parameters.deployMode }}', 'direct'))
+    variables:
+      imageTag: $[ stageDependencies.BuildAndPush.build.outputs['meta.imageTag'] ]
+    jobs:
+      - deployment: deployDirect
+        displayName: Update App Service containers + health check
+        environment: production
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+                - task: AzureCLI@2
+                  displayName: Update containers (API + Web) and restart
+                  inputs:
+                    azureSubscription: $(serviceConnection)
+                    scriptType: bash
+                    scriptLocation: inlineScript
+                    inlineScript: |
+                      set -e
+                      REGISTRY="$(AZURE_ACR_NAME).azurecr.io"
+
+                      az webapp config container set \
+                        --resource-group "$(AZURE_RESOURCE_GROUP)" \
+                        --name "$(AZURE_API_APP_NAME)" \
+                        --container-image-name "$REGISTRY/$(apiImageName):$(imageTag)"
+                      az webapp restart \
+                        --resource-group "$(AZURE_RESOURCE_GROUP)" \
+                        --name "$(AZURE_API_APP_NAME)"
+
+                      az webapp config container set \
+                        --resource-group "$(AZURE_RESOURCE_GROUP)" \
+                        --name "$(AZURE_WEB_APP_NAME)" \
+                        --container-image-name "$REGISTRY/$(webImageName):$(imageTag)"
+                      az webapp restart \
+                        --resource-group "$(AZURE_RESOURCE_GROUP)" \
+                        --name "$(AZURE_WEB_APP_NAME)"
+                - script: sleep 60
+                  displayName: Wait for containers to boot
+                - script: |
+                    set -e
+                    for i in 1 2 3 4 5; do
+                      status=$(curl -o /dev/null -s -w "%{http_code}" "$(AZURE_API_BASE_URL)/api/health" || echo "000")
+                      echo "Attempt $i: HTTP $status"
+                      if [ "$status" = "200" ]; then echo "API healthy"; exit 0; fi
+                      sleep 15
+                    done
+                    echo "API did not become healthy in time"; exit 1
+                  displayName: Health check API
+
+  - stage: SmokeDirect
+    displayName: Smoke (direct)
+    dependsOn: DeployDirect
+    condition: and(succeeded(), eq('${{ parameters.deployMode }}', 'direct'))
+    jobs:
+      - job: smoke
+        displayName: Microsoft SSO smoke against live API
+        steps:
+          - checkout: self
+          - task: NodeTool@0
+            inputs:
+              versionSpec: 22.x
+          - script: npm ci
+            workingDirectory: backend
+          - script: npm run smoke:sso
+            workingDirectory: backend
+            env:
+              SMOKE_BASE_URL: $(AZURE_API_BASE_URL)
+              SMOKE_ASSERT: '1'
+
+  # ---------------------------------------------------------------------------
+  - stage: DeploySlots
+    displayName: Deploy (slots -> staging)
+    dependsOn: BuildAndPush
+    condition: and(succeeded(), eq('${{ parameters.deployMode }}', 'slots'))
+    variables:
+      imageTag: $[ stageDependencies.BuildAndPush.build.outputs['meta.imageTag'] ]
+    jobs:
+      - deployment: deploySlots
+        displayName: Deploy images to staging slot
+        environment: production
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: AzureCLI@2
+                  displayName: Deploy API + Web to staging slot
+                  inputs:
+                    azureSubscription: $(serviceConnection)
+                    scriptType: bash
+                    scriptLocation: inlineScript
+                    inlineScript: |
+                      set -e
+                      REGISTRY="$(AZURE_ACR_NAME).azurecr.io"
+                      az webapp config container set \
+                        --resource-group "$(AZURE_RESOURCE_GROUP)" \
+                        --name "$(AZURE_API_APP_NAME)" --slot staging \
+                        --container-image-name "$REGISTRY/$(apiImageName):$(imageTag)"
+                      az webapp config container set \
+                        --resource-group "$(AZURE_RESOURCE_GROUP)" \
+                        --name "$(AZURE_WEB_APP_NAME)" --slot staging \
+                        --container-image-name "$REGISTRY/$(webImageName):$(imageTag)"
+                - script: sleep 45
+                  displayName: Wait for staging boot
+
+  - stage: SmokeAndSwap
+    displayName: Smoke staging + swap
+    dependsOn: DeploySlots
+    condition: and(succeeded(), eq('${{ parameters.deployMode }}', 'slots'))
+    jobs:
+      - job: smokeSwap
+        displayName: Smoke staging then optional swap
+        steps:
+          - checkout: self
+          - task: NodeTool@0
+            inputs:
+              versionSpec: 22.x
+          - script: npm ci
+            workingDirectory: backend
+          - script: npm run smoke:sso
+            workingDirectory: backend
+            env:
+              SMOKE_BASE_URL: $(AZURE_API_BASE_URL)
+              SMOKE_ASSERT: '1'
+          - ${{ if eq(parameters.autoSwap, true) }}:
+              - task: AzureCLI@2
+                displayName: Swap staging -> production (API + Web)
+                inputs:
+                  azureSubscription: $(serviceConnection)
+                  scriptType: bash
+                  scriptLocation: inlineScript
+                  inlineScript: |
+                    set -e
+                    az webapp deployment slot swap \
+                      --resource-group "$(AZURE_RESOURCE_GROUP)" \
+                      --name "$(AZURE_API_APP_NAME)" --slot staging --target-slot production
+                    az webapp deployment slot swap \
+                      --resource-group "$(AZURE_RESOURCE_GROUP)" \
+                      --name "$(AZURE_WEB_APP_NAME)" --slot staging --target-slot production

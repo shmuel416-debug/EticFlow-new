@@ -1,0 +1,109 @@
+# Ethic-Net CI pipeline (Azure DevOps).
+#
+# Port of .github/workflows/quality-gates.yml — runs on every push to main and on PRs.
+# Three parallel jobs: backend quality (prisma validate + tests), frontend quality
+# (lint + build), and E2E (Playwright, skipped unless E2E_* role secrets exist).
+#
+# Variable group `eticnet-ci` (Pipelines -> Library) must provide:
+#   DATABASE_URL  + optional E2E_* role credentials (as secret variables).
+
+trigger:
+  branches:
+    include:
+      - main
+
+pr:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  - group: eticnet-ci
+
+stages:
+  - stage: Quality
+    displayName: Quality Gates
+    jobs:
+      - job: backend
+        displayName: Backend quality
+        steps:
+          - task: NodeTool@0
+            inputs:
+              versionSpec: 22.x
+          - script: npm ci
+            displayName: Install dependencies
+            workingDirectory: backend
+          - script: npx prisma validate
+            displayName: Prisma validate
+            workingDirectory: backend
+          - script: npm test
+            displayName: Backend tests
+            workingDirectory: backend
+            env:
+              DATABASE_URL: $(DATABASE_URL)
+
+      - job: frontend
+        displayName: Frontend quality
+        steps:
+          - task: NodeTool@0
+            inputs:
+              versionSpec: 22.x
+          - script: npm ci
+            displayName: Install dependencies
+            workingDirectory: frontend
+          - script: npm run lint
+            displayName: Frontend lint
+            workingDirectory: frontend
+          - script: npm run build
+            displayName: Frontend build
+            workingDirectory: frontend
+
+      - job: e2e
+        displayName: E2E (Playwright)
+        steps:
+          - task: NodeTool@0
+            inputs:
+              versionSpec: 22.x
+          - script: npm ci
+            displayName: Install dependencies
+            workingDirectory: frontend
+          # Run E2E only when role credentials are configured in the variable group.
+          - script: |
+              if [ -n "$(E2E_RESEARCHER_EMAIL)" ]; then
+                echo "##vso[task.setvariable variable=e2eConfigured]true"
+              else
+                echo "##vso[task.setvariable variable=e2eConfigured]false"
+                echo "E2E role credentials not configured — skipping role-based E2E."
+              fi
+            displayName: Check E2E role secrets
+          - script: npx playwright install --with-deps chromium
+            displayName: Install Playwright browsers
+            condition: eq(variables['e2eConfigured'], 'true')
+            workingDirectory: frontend
+          - script: npm run e2e:ci:strict
+            displayName: Run Playwright core E2E (strict)
+            condition: eq(variables['e2eConfigured'], 'true')
+            workingDirectory: frontend
+            env:
+              E2E_BASE_URL: $(E2E_BASE_URL)
+              E2E_API_URL: $(E2E_API_URL)
+              E2E_RESEARCHER_EMAIL: $(E2E_RESEARCHER_EMAIL)
+              E2E_RESEARCHER_PASSWORD: $(E2E_RESEARCHER_PASSWORD)
+              E2E_SECRETARY_EMAIL: $(E2E_SECRETARY_EMAIL)
+              E2E_SECRETARY_PASSWORD: $(E2E_SECRETARY_PASSWORD)
+              E2E_REVIEWER_EMAIL: $(E2E_REVIEWER_EMAIL)
+              E2E_REVIEWER_PASSWORD: $(E2E_REVIEWER_PASSWORD)
+              E2E_CHAIRMAN_EMAIL: $(E2E_CHAIRMAN_EMAIL)
+              E2E_CHAIRMAN_PASSWORD: $(E2E_CHAIRMAN_PASSWORD)
+              E2E_ADMIN_EMAIL: $(E2E_ADMIN_EMAIL)
+              E2E_ADMIN_PASSWORD: $(E2E_ADMIN_PASSWORD)
+          - task: PublishPipelineArtifact@1
+            displayName: Upload Playwright report
+            condition: always()
+            inputs:
+              targetPath: frontend/playwright-report
+              artifact: playwright-report
+            continueOnError: true
