@@ -643,7 +643,18 @@ export async function startRevision(req, res, next) {
  */
 export async function previousRound(req, res, next) {
   try {
-    const round = await getPreviousRound(req.params.id)
+    const activeRole = getRequestRole(req)
+    const ref = String(req.params.id || '').trim()
+    const where = await roleFilter(req.user, activeRole, {
+      OR: [{ id: ref }, { applicationId: ref }],
+    })
+    const submission = await prisma.submission.findFirst({
+      where,
+      select: { id: true },
+    })
+    if (!submission) return next(AppError.notFound('Submission'))
+
+    const round = await getPreviousRound(submission.id)
     res.json({ data: round })
   } catch (err) {
     next(err)

@@ -98,14 +98,67 @@ function summarizeVotes(votes) {
 
 /**
  * Resolves whether committee voting must be enforced for this decision.
+ * Full-track submissions cannot be downgraded by a client-supplied expedited flag.
+ * @param {{ track?: string|null }} submission
  * @param {{ decision: string, requiresCommittee?: boolean }} payload
  * @param {string} decisionModel
  * @returns {boolean}
  */
-function resolveRequiresCommitteeVote(payload, decisionModel) {
+function resolveRequiresCommitteeVote(submission, payload, decisionModel) {
   if (payload.decision === 'REVISION_REQUIRED') return false
+  if (submission.track === 'FULL') return true
   if (typeof payload.requiresCommittee === 'boolean') return payload.requiresCommittee
   return decisionModel === 'IRB_FULL'
+}
+
+/**
+ * Returns the vote count supporting the requested final decision.
+ * @param {{ approved: number, rejected: number, revisionRequired: number }} tally
+ * @param {string} decision
+ * @returns {number}
+ */
+function getSupportingVoteCount(tally, decision) {
+  if (decision === 'APPROVED') return tally.approved
+  if (decision === 'REJECTED') return tally.rejected
+  if (decision === 'REVISION_REQUIRED') return tally.revisionRequired
+  return 0
+}
+
+/**
+ * Returns true when the requested decision has a strict non-abstain plurality.
+ * @param {{ approved: number, rejected: number, revisionRequired: number }} tally
+ * @param {string} decision
+ * @returns {boolean}
+ */
+function hasSupportingVoteMajority(tally, decision) {
+  const supporting = getSupportingVoteCount(tally, decision)
+  const competingCounts = {
+    APPROVED: [tally.rejected, tally.revisionRequired],
+    REJECTED: [tally.approved, tally.revisionRequired],
+    REVISION_REQUIRED: [tally.approved, tally.rejected],
+  }[decision] ?? []
+  return supporting > 0 && competingCounts.every((count) => supporting > count)
+}
+
+/**
+ * Verifies quorum and vote support before a committee decision is finalized.
+ * @param {string} submissionId
+ * @param {string} decision
+ * @param {number} quorum
+ * @returns {Promise<void>}
+ */
+async function assertCommitteeDecisionSupported(submissionId, decision, quorum) {
+  const votes = await prisma.submissionVote.findMany({
+    where: { submissionId },
+    select: { decision: true },
+  })
+  const tally = summarizeVotes(votes)
+  if (tally.total < quorum) {
+    throw new AppError('Committee quorum not met', 'QUORUM_NOT_MET', 400, { quorum, votes: tally.total })
+  }
+  if (!hasSupportingVoteMajority(tally, decision)) {
+    throw new AppError('Committee votes do not support this decision', 'COMMITTEE_DECISION_NOT_SUPPORTED', 400, tally)
+  }
 }
 
 /**
@@ -462,11 +515,19 @@ export async function recordDecision(req, res, next) {
     if (!newStatus) return next(new AppError('Invalid decision value', 'VALIDATION_ERROR', 400))
     await assertTransitionAllowed(sub, newStatus, activeRole)
 
+    const { decisionModel, quorum } = await getCommitteeDecisionSettings()
+    const requiresCommittee = resolveRequiresCommitteeVote(sub, req.body, decisionModel)
+    if (requiresCommittee) {
+      await assertCommitteeDecisionSupported(sub.id, req.body.decision, quorum)
+    }
+
     const ops = [prisma.submission.update({
       where: { id: sub.id },
       data: {
         status: newStatus,
-        ...(newStatus === 'APPROVED' ? { approvalRoute: 'EXPEDITED' } : {}),
+        ...(newStatus === 'APPROVED'
+          ? { approvalRoute: requiresCommittee ? 'COMMITTEE' : 'EXPEDITED' }
+          : {}),
       },
     })]
 
