@@ -133,12 +133,8 @@ body {
 .page {
   width: 210mm;
   min-height: 296mm;
-  max-height: 296mm;
   display: flex;
   flex-direction: column;
-  page-break-inside: avoid;
-  break-inside: avoid-page;
-  overflow: hidden;
 }
 .header {
   background: ${brandPrimary};
