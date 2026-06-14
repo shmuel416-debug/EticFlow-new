@@ -10,6 +10,8 @@ import * as service from '../services/reviewerChecklist.service.js';
 import { getRequestRole, hasAnyRole } from '../utils/roles.js';
 import { hasConflict } from '../services/coi.service.js';
 import { AppError } from '../utils/errors.js';
+import prisma from '../config/database.js';
+import { roleFilter } from './submissions.controller.js';
 
 // ─── Zod schemas ─────────────────────────────────────────────────────────────
 
@@ -66,6 +68,28 @@ const submitSchema = saveDraftSchema.extend({
     'EXEMPT', 'APPROVED', 'APPROVED_CONDITIONAL', 'REVISION_REQUIRED', 'REJECTED',
   ]),
 });
+
+/**
+ * Resolves a submission through role-based visibility before exposing reviews.
+ * @param {import('express').Request} req
+ * @param {string} activeRole
+ * @param {boolean} isStaff
+ * @returns {Promise<string>}
+ */
+async function resolveReviewableSubmissionId(req, activeRole, isStaff) {
+  const ref = String(req.params.id || '').trim();
+  if (isStaff) return ref;
+
+  const where = await roleFilter(req.user, activeRole, {
+    OR: [{ id: ref }, { applicationId: ref }],
+  });
+  const submission = await prisma.submission.findFirst({
+    where,
+    select: { id: true },
+  });
+  if (!submission) throw AppError.notFound('Submission');
+  return submission.id;
+}
 
 // ─── Admin: Template handlers ─────────────────────────────────────────────────
 
@@ -296,13 +320,14 @@ export async function listSubmissionReviews(req, res, next) {
   try {
     const activeRole = getRequestRole(req);
     const isStaff = hasAnyRole(req.user, 'SECRETARY', 'CHAIRMAN', 'ADMIN');
+    const submissionId = await resolveReviewableSubmissionId(req, activeRole, isStaff);
     if (!isStaff && activeRole === 'REVIEWER') {
-      const conflictCheck = await hasConflict(req.user.id, req.params.id);
+      const conflictCheck = await hasConflict(req.user.id, submissionId);
       if (conflictCheck.conflict) {
         return next(new AppError('Conflict of interest', 'COI_BLOCKED', 403, { reasons: conflictCheck.reasons }));
       }
     }
-    const result = await service.listSubmissionReviewsForStaff(req.params.id, {
+    const result = await service.listSubmissionReviewsForStaff(submissionId, {
       submittedOnly: !isStaff,
     });
     res.json({ data: result });
