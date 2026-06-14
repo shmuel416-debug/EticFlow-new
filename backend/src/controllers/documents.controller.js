@@ -220,6 +220,7 @@ export async function preview(req, res, next) {
     res.setHeader('X-Content-Type-Options', 'nosniff')
 
     const stream = fs.createReadStream(absPath)
+    stream.on('error', (streamErr) => next(streamErr))
     stream.pipe(res)
   } catch (err) {
     next(err)
@@ -243,6 +244,7 @@ export async function download(req, res, next) {
     res.setHeader('Content-Length',      doc.sizeBytes)
 
     const stream = fs.createReadStream(absPath)
+    stream.on('error', (streamErr) => next(streamErr))
     stream.pipe(res)
   } catch (err) {
     next(err)

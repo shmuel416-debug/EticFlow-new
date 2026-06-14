@@ -18,6 +18,8 @@ import {
   Pencil,
   ArrowRight,
   ArrowLeft,
+  Printer,
+  FileDown,
 } from 'lucide-react'
 import api from '../../services/api'
 import { useAuth } from '../../context/AuthContext'
@@ -46,6 +48,7 @@ import {
 } from '../../utils/submissionRoutes'
 
 const APPROVAL_PDF_TIMEOUT_MS = 60000
+const EXPORT_PDF_TIMEOUT_MS = 60000
 const DECISION_LETTER_CONFIG = {
   APPROVED: {
     endpoint: 'approval-letter',
@@ -116,7 +119,7 @@ export default function SubmissionStatusPage() {
   const [loading,    setLoading]    = useState(true)
   const [error,      setError]      = useState('')
   const [activeTab,  setActiveTab]  = useState('answers')
-  const [pdfLoading, setPdfLoading] = useState(null) // 'download-he' | 'download-en' | 'preview-he' | 'preview-en' | null
+  const [pdfLoading, setPdfLoading] = useState(null) // 'download-he' | 'download-en' | 'preview-he' | 'preview-en' | 'export' | 'print' | null
   const [pdfFreshGeneration, setPdfFreshGeneration] = useState(false)
   const [previewPdfUrl, setPreviewPdfUrl] = useState('')
   const [previewOpen, setPreviewOpen] = useState(false)
@@ -181,6 +184,82 @@ export default function SubmissionStatusPage() {
     const cached = String(response.headers['x-generated'] || '').toLowerCase() === 'cached'
     setPdfFreshGeneration(!cached)
     return new Blob([response.data], { type: 'application/pdf' })
+  }
+
+  /**
+   * Requests submission snapshot PDF bytes from API.
+   * @returns {Promise<Blob>}
+   */
+  async function requestSubmissionExportBlob() {
+    const lang = i18n.language === 'he' ? 'he' : 'en'
+    const response = await api.post(
+      `/submissions/${resolvedSubmissionId}/export-pdf?lang=${lang}`,
+      {},
+      { responseType: 'blob', timeout: EXPORT_PDF_TIMEOUT_MS }
+    )
+    return new Blob([response.data], { type: 'application/pdf' })
+  }
+
+  /**
+   * Downloads the submitted request as a PDF file.
+   * @returns {Promise<void>}
+   */
+  async function handleExportSubmissionPdf() {
+    setPdfLoading('export')
+    try {
+      const blob = await requestSubmissionExportBlob()
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `submission-${submission.applicationId}.pdf`
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      URL.revokeObjectURL(url)
+    } catch {
+      setError(t('statusPage.exportError'))
+    } finally {
+      setPdfLoading(null)
+    }
+  }
+
+  /**
+   * Opens the submission export PDF in a print-friendly window.
+   * @returns {Promise<void>}
+   */
+  async function handlePrintSubmission() {
+    setPdfLoading('print')
+    let blobUrl = ''
+    try {
+      const blob = await requestSubmissionExportBlob()
+      blobUrl = URL.createObjectURL(blob)
+      const printFrame = document.createElement('iframe')
+      printFrame.style.position = 'fixed'
+      printFrame.style.right = '0'
+      printFrame.style.bottom = '0'
+      printFrame.style.width = '0'
+      printFrame.style.height = '0'
+      printFrame.style.border = '0'
+      printFrame.src = blobUrl
+      printFrame.onload = () => {
+        try {
+          printFrame.contentWindow?.focus()
+          printFrame.contentWindow?.print()
+        } catch {
+          window.open(blobUrl, '_blank', 'noopener,noreferrer')
+        }
+      }
+      document.body.appendChild(printFrame)
+      window.setTimeout(() => {
+        printFrame.remove()
+        URL.revokeObjectURL(blobUrl)
+      }, 60000)
+    } catch {
+      if (blobUrl) URL.revokeObjectURL(blobUrl)
+      setError(t('statusPage.exportError'))
+    } finally {
+      setPdfLoading(null)
+    }
   }
 
   /**
@@ -314,6 +393,7 @@ export default function SubmissionStatusPage() {
   const isPdfBusy = pdfLoading !== null
   const latest = submission.versions?.slice(-1)[0]
   const decisionLetter = DECISION_LETTER_CONFIG[submission.status] ?? null
+  const canExportSubmission = Boolean(submission.submittedAt) || submission.status !== 'DRAFT'
 
   return (
     <main id="main-content" className="max-w-3xl mx-auto p-4 md:p-6 space-y-5">
@@ -328,6 +408,50 @@ export default function SubmissionStatusPage() {
       <Card>
         <CardBody>
           <SlaIndicator sla={submission.slaTracking} nowMs={nowMs} />
+
+          {canExportSubmission && (
+            <div className="mt-4 flex flex-col gap-2">
+              <p className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+                {t('statusPage.exportSectionTitle')}
+              </p>
+              <div className="flex gap-2 flex-wrap">
+                <Button
+                  variant="secondary"
+                  fullWidth
+                  onClick={handleExportSubmissionPdf}
+                  disabled={isPdfBusy}
+                  loading={pdfLoading === 'export'}
+                  leftIcon={
+                    <FileDown
+                      size={16}
+                      strokeWidth={1.75}
+                      aria-hidden="true"
+                      focusable="false"
+                    />
+                  }
+                >
+                  {t('statusPage.exportPdf')}
+                </Button>
+                <Button
+                  variant="secondary"
+                  fullWidth
+                  onClick={handlePrintSubmission}
+                  disabled={isPdfBusy}
+                  loading={pdfLoading === 'print'}
+                  leftIcon={
+                    <Printer
+                      size={16}
+                      strokeWidth={1.75}
+                      aria-hidden="true"
+                      focusable="false"
+                    />
+                  }
+                >
+                  {t('statusPage.printSubmission')}
+                </Button>
+              </div>
+            </div>
+          )}
 
           {/* Action buttons */}
           <div className="mt-4 flex flex-col gap-2">

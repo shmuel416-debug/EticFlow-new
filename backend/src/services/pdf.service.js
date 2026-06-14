@@ -11,6 +11,7 @@ import { renderHtmlToPdf } from './pdf/renderer.js'
 import { buildHeHtml, buildEnHtml, buildBilingualHtml } from './pdf/templates/approvalLetter.js'
 import { buildHeRejectionHtml, buildEnRejectionHtml } from './pdf/templates/rejectionLetter.js'
 import { buildProtocolHtml, buildBilingualProtocolHtml } from './pdf/templates/protocol.js'
+import { buildSubmissionExportHtml } from './pdf/templates/submissionExport.js'
 import {
   APPROVAL_SIGNATURE_KEY,
   getDefaultApprovalTemplate,
@@ -26,6 +27,7 @@ import { exists as storageExists, stat as storageStat, save as storageSave } fro
 
 const GENERATED_DIR = path.resolve('uploads', 'generated', 'approval')
 const GENERATED_REJECTION_DIR = path.resolve('uploads', 'generated', 'rejection')
+const GENERATED_EXPORT_DIR = path.resolve('uploads', 'generated', 'export')
 const PROTOCOL_GENERATED_DIR = path.resolve('uploads', 'generated', 'protocols')
 const BRAND_PRIMARY = '#1e3a5f'
 const INSTITUTION_NAME_HE = process.env.INSTITUTION_NAME_HE || 'המוסד האקדמי'
@@ -629,6 +631,57 @@ export async function generateProtocolPdf(protocol, lang = 'he', force = false) 
     sizeBytes: stat.size,
   })
   return { docId: dbDoc.id, storagePath }
+}
+
+/**
+ * Loads submission data required for export PDF generation.
+ * @param {string} submissionId
+ * @returns {Promise<object>}
+ */
+async function getSubmissionForExport(submissionId) {
+  const submission = await prisma.submission.findFirst({
+    where: { id: submissionId, isActive: true },
+    include: {
+      author: { select: { fullName: true, fullNameHe: true, email: true } },
+      formConfig: { select: { name: true, schemaJson: true } },
+      versions: { orderBy: { versionNum: 'desc' }, take: 1 },
+    },
+  })
+  if (!submission) throw new Error('Submission not found')
+  return submission
+}
+
+/**
+ * Generates a PDF snapshot of a submitted request (form answers + metadata).
+ * @param {string} submissionId
+ * @param {'he'|'en'} lang
+ * @returns {Promise<{ storagePath: string, sizeBytes: number }>}
+ */
+export async function generateSubmissionExportPdf(submissionId, lang = 'he') {
+  const safeLang = lang === 'en' ? 'en' : 'he'
+  const submission = await getSubmissionForExport(submissionId)
+  if (submission.status === 'DRAFT' && !submission.submittedAt) {
+    throw new Error('Submission has not been submitted yet')
+  }
+
+  const latestVersion = submission.versions?.[0]
+  const dataJson = latestVersion?.dataJson ?? {}
+  const filename = `submission-export-${safeLang}.pdf`
+  const dir = path.join(GENERATED_EXPORT_DIR, submissionId)
+  await fs.mkdir(dir, { recursive: true })
+  const absPath = path.join(dir, filename)
+  const storagePath = path.join('generated', 'export', submissionId, filename)
+  const brandPrimary = await getInstitutionPrimaryColorHex()
+  const html = buildSubmissionExportHtml(
+    { ...submission, latestVersionNum: latestVersion?.versionNum },
+    dataJson,
+    safeLang,
+    brandPrimary
+  )
+  await renderHtmlToPdf(html, absPath)
+  const pdfBuffer = await fs.readFile(absPath)
+  await storageSave(storagePath, pdfBuffer)
+  return { storagePath, sizeBytes: pdfBuffer.length }
 }
 
 export { buildHeHtml, buildEnHtml }

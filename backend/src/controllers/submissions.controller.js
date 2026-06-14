@@ -15,6 +15,9 @@ import { getRequestRole, hasAnyRole } from '../utils/roles.js'
 import { buildReviewerConflictExclusion } from '../services/coi.service.js'
 import { openNextRound, getPreviousRound } from '../services/review-round.service.js'
 import { getNonTerminalCodes } from '../services/status.service.js'
+import { deleteFile } from '../services/storage.service.js'
+import path from 'path'
+import fs from 'fs/promises'
 
 /** Statuses in which a RESEARCHER may edit their own submission content. */
 const RESEARCHER_EDITABLE_STATUSES = ['DRAFT', 'REVISION_DRAFT']
@@ -686,6 +689,145 @@ export async function secretaryDashboard(req, res, next) {
 
     res.json({ data: { total, inTriage, inReview, pendingRevision, slaBreach, recentSubmissions } })
   } catch (err) {
+    next(err)
+  }
+}
+
+/**
+ * Resolves a submission by id/applicationId with role-based visibility.
+ * @param {import('express').Request} req
+ * @param {string} ref
+ * @returns {Promise<object|null>}
+ */
+async function findAccessibleSubmission(req, ref) {
+  const activeRole = getRequestRole(req)
+  const where = await roleFilter(req.user, activeRole, {
+    OR: [{ id: ref }, { applicationId: ref }],
+  })
+  return prisma.submission.findFirst({ where })
+}
+
+/**
+ * DELETE /api/submissions/:id
+ * Permanently deletes a submission and all related records (ADMIN only).
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
+export async function permanentlyDeleteSubmission(req, res, next) {
+  try {
+    const ref = String(req.params.id || '').trim()
+    const submission = await prisma.submission.findFirst({
+      where: {
+        OR: [{ id: ref }, { applicationId: ref }],
+      },
+      select: {
+        id: true,
+        applicationId: true,
+        title: true,
+        status: true,
+      },
+    })
+    if (!submission) return next(AppError.notFound('Submission'))
+
+    const storagePaths = await prisma.$transaction(async (tx) => {
+      await tx.submission.updateMany({
+        where: { parentId: submission.id },
+        data: { parentId: null },
+      })
+
+      const docs = await tx.document.findMany({
+        where: { submissionId: submission.id },
+        select: { storagePath: true },
+      })
+
+      await tx.reviewerChecklistReview.deleteMany({ where: { submissionId: submission.id } })
+      await tx.submissionVote.deleteMany({ where: { submissionId: submission.id } })
+      await tx.meetingAgendaItem.deleteMany({ where: { submissionId: submission.id } })
+      await tx.conflictDeclaration.deleteMany({ where: { targetSubmissionId: submission.id } })
+      await tx.aIAnalysis.deleteMany({ where: { submissionId: submission.id } })
+      await tx.sLATracking.deleteMany({ where: { submissionId: submission.id } })
+      await tx.comment.deleteMany({ where: { submissionId: submission.id } })
+      await tx.reviewRound.deleteMany({ where: { submissionId: submission.id } })
+      await tx.submissionVersion.deleteMany({ where: { submissionId: submission.id } })
+      await tx.document.deleteMany({ where: { submissionId: submission.id } })
+      await tx.submission.delete({ where: { id: submission.id } })
+
+      return docs.map((doc) => doc.storagePath)
+    })
+
+    await Promise.all(storagePaths.map((storagePath) => deleteFile(storagePath).catch(() => {})))
+
+    const uploadDirs = [
+      path.resolve('uploads', 'submissions', submission.id),
+      path.resolve('uploads', 'generated', 'approval', submission.id),
+      path.resolve('uploads', 'generated', 'rejection', submission.id),
+      path.resolve('uploads', 'generated', 'export', submission.id),
+    ]
+    await Promise.all(uploadDirs.map((dir) => fs.rm(dir, { recursive: true, force: true }).catch(() => {})))
+
+    res.locals.entityId = submission.id
+    res.json({
+      success: true,
+      deleted: {
+        id: submission.id,
+        applicationId: submission.applicationId,
+        title: submission.title,
+        status: submission.status,
+      },
+    })
+  } catch (err) {
+    next(err)
+  }
+}
+
+/**
+ * Asserts the requester may export the given submission as PDF.
+ * @param {import('express').Request} req
+ * @param {object} submission
+ * @returns {void}
+ */
+function assertExportAccess(req, submission) {
+  const activeRole = getRequestRole(req)
+  if (activeRole === 'RESEARCHER' && submission.authorId !== req.user.id) {
+    throw AppError.forbidden()
+  }
+  if (activeRole === 'REVIEWER') {
+    throw AppError.forbidden()
+  }
+}
+
+/**
+ * POST /api/submissions/:id/export-pdf
+ * Generates a PDF snapshot of the submission for download/print.
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
+ */
+export async function exportSubmissionPdf(req, res, next) {
+  try {
+    const ref = String(req.params.id || '').trim()
+    const submission = await findAccessibleSubmission(req, ref)
+    if (!submission) return next(AppError.notFound('Submission'))
+    assertExportAccess(req, submission)
+
+    const { generateSubmissionExportPdf } = await import('../services/pdf.service.js')
+    const lang = req.query.lang === 'en' ? 'en' : 'he'
+    const { storagePath, sizeBytes } = await generateSubmissionExportPdf(submission.id, lang)
+    const absPath = path.resolve('uploads', storagePath)
+    const filename = `submission-${submission.applicationId}-${lang}.pdf`
+
+    res.setHeader('Content-Type', 'application/pdf')
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)
+    res.setHeader('Content-Length', sizeBytes)
+    res.locals.entityId = submission.id
+    res.sendFile(absPath, (err) => {
+      if (err) next(err)
+    })
+  } catch (err) {
+    if (err?.message === 'Submission has not been submitted yet') {
+      return next(new AppError(err.message, 'NOT_SUBMITTED', 400))
+    }
     next(err)
   }
 }

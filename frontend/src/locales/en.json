@@ -287,7 +287,12 @@
       "noAnswer": "No answer provided",
       "loadError": "Failed to load submission",
       "backToList": "Back to list",
-      "version": "Version {{num}}"
+      "version": "Version {{num}}",
+      "permanentDelete": "Permanently delete submission",
+      "permanentDeleteTitle": "Permanent deletion",
+      "permanentDeleteConfirm": "This action is irreversible. All submission data, documents, and review history will be removed.",
+      "permanentDeleteHint": "Type {{applicationId}} to confirm:",
+      "permanentDeleteSuccess": "Submission permanently deleted"
     },
     "fieldReviews": {
       "sectionTitle": "Reviewer Field Reviews",
@@ -397,6 +402,11 @@
     "decisionLetterRejectedTitle": "Rejection Letter",
     "decisionLetterReady": "Decision letter is ready — view or download below",
     "pdfInProgress": "Generating approval PDF, please wait...",
+    "exportSectionTitle": "Save & print",
+    "exportPdf": "Save submission as PDF",
+    "printSubmission": "Print submission",
+    "exportInProgress": "Generating PDF file, please wait...",
+    "exportError": "Failed to export submission — please try again",
     "steps": {
       "DRAFT": "Draft saved",
       "SUBMITTED": "Submitted",
@@ -816,7 +826,9 @@
       "confirmReject": "Reject this submission?",
       "confirmRevision": "Request revision for this submission?",
       "decisionRecorded": "Decision recorded successfully",
-      "decisionRecordedTo": "Decision saved and status updated to {{status}}"
+      "decisionRecordedTo": "Decision saved and status updated to {{status}}",
+      "finalAuthorityHint": "The committee chair's decision is final and does not depend on member votes.",
+      "voteSummaryAdvisory": "Committee votes (advisory only)"
     }
   },
   "notifications": {
@@ -973,7 +985,12 @@
     "previewFrameLabel": "Inline preview for {{name}}",
     "previewHint": "If this file cannot be rendered in your browser, use the download button.",
     "previewUnsupported": "This file type is not supported for inline browser preview.",
-    "previewError": "Could not load document preview — try downloading the file.",
+    "previewError": {
+      "generic": "Could not load document preview — try downloading the file.",
+      "FILE_MISSING": "File not found on server — it may have been uploaded before a backup or removed.",
+      "FORBIDDEN": "You do not have permission to view this document.",
+      "NOT_FOUND": "Document not found."
+    },
     "openInNewTab": "Open in new tab",
     "downloadFallback": "Download file",
     "closePreviewLabel": "Close document preview",

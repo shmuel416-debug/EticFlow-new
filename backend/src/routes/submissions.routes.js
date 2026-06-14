@@ -194,6 +194,22 @@ router.post(
   controller.continueSubmission
 )
 
+router.post(
+  '/:id/export-pdf',
+  authenticate,
+  authorize('RESEARCHER', 'SECRETARY', 'CHAIRMAN', 'ADMIN'),
+  auditLog('submission.export_pdf', 'Submission'),
+  controller.exportSubmissionPdf
+)
+
+router.delete(
+  '/:id',
+  authenticate,
+  authorize('ADMIN'),
+  auditLog('submission.permanently_deleted', 'Submission'),
+  controller.permanentlyDeleteSubmission
+)
+
 router.patch(
   '/:id/status',
   authenticate,

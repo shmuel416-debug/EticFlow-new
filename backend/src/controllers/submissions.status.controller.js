@@ -462,30 +462,11 @@ export async function recordDecision(req, res, next) {
     if (!newStatus) return next(new AppError('Invalid decision value', 'VALIDATION_ERROR', 400))
     await assertTransitionAllowed(sub, newStatus, activeRole)
 
-    const { decisionModel, quorum } = await getCommitteeDecisionSettings()
-    const requiresCommitteeVote = resolveRequiresCommitteeVote(req.body, decisionModel)
-
-    if (requiresCommitteeVote) {
-      const votes = await prisma.submissionVote.findMany({
-        where: { submissionId: sub.id },
-      })
-      if (votes.length < quorum) {
-        return next(new AppError('Quorum not met for committee decision', 'QUORUM_NOT_MET', 400, { quorum, votes: votes.length }))
-      }
-      const nonAbstain = votes.filter((vote) => vote.decision !== 'ABSTAIN')
-      const supportCount = nonAbstain.filter((vote) => vote.decision === req.body.decision).length
-      if (nonAbstain.length === 0 || supportCount <= nonAbstain.length / 2) {
-        return next(new AppError('Vote majority does not match requested decision', 'VOTE_MAJORITY_MISMATCH', 400))
-      }
-    }
-
     const ops = [prisma.submission.update({
       where: { id: sub.id },
       data: {
         status: newStatus,
-        ...(newStatus === 'APPROVED'
-          ? { approvalRoute: requiresCommitteeVote ? 'COMMITTEE' : 'EXPEDITED' }
-          : {}),
+        ...(newStatus === 'APPROVED' ? { approvalRoute: 'EXPEDITED' } : {}),
       },
     })]
 

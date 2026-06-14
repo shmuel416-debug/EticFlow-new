@@ -17,6 +17,7 @@ import FieldReviewGrid from '../../components/submissions/FieldReviewGrid'
 import FieldReviewSummary from '../../components/submissions/FieldReviewSummary'
 import AiPanel from '../../components/submissions/AiPanel'
 import CommitteeVotePanel from '../../components/submissions/CommitteeVotePanel'
+import DocumentList from '../../components/submissions/DocumentList'
 import {
   PageHeader,
   Card,
@@ -200,6 +201,13 @@ export default function ReviewDetailPage() {
 
       {/* Peer reviews: all committee members can see reviewer 1 & 2's submitted reviews. */}
       <FieldReviewSummary submissionId={submission?.id} />
+
+      <Card as="section">
+        <CardHeader title={t('documents.sectionTitle')} />
+        <CardBody>
+          <DocumentList submissionId={submission?.id} canUpload={false} />
+        </CardBody>
+      </Card>
 
       <CommitteeVotePanel
         submissionId={submission?.id}

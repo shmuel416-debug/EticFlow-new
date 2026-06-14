@@ -287,7 +287,12 @@
       "noAnswer": "לא ניתנה תשובה",
       "loadError": "שגיאה בטעינת ההגשה",
       "backToList": "חזרה לרשימה",
-      "version": "גרסה {{num}}"
+      "version": "גרסה {{num}}",
+      "permanentDelete": "מחק בקשה לצמיתות",
+      "permanentDeleteTitle": "מחיקה לצמיתות",
+      "permanentDeleteConfirm": "פעולה זו בלתי הפיכה. כל נתוני הבקשה, המסמכים והיסטוריית הביקורת יימחקו.",
+      "permanentDeleteHint": "הקלד/י {{applicationId}} לאישור:",
+      "permanentDeleteSuccess": "הבקשה נמחקה לצמיתות"
     },
     "fieldReviews": {
       "sectionTitle": "ביקורות סוקרים לפי שדה",
@@ -397,6 +402,11 @@
     "decisionLetterRejectedTitle": "מכתב דחייה",
     "decisionLetterReady": "מכתב ההחלטה מוכן — ניתן לצפות או להוריד",
     "pdfInProgress": "מייצר אישור PDF, נא להמתין...",
+    "exportSectionTitle": "שמירה והדפסה",
+    "exportPdf": "שמור בקשה כ-PDF",
+    "printSubmission": "הדפס בקשה",
+    "exportInProgress": "מייצר קובץ PDF, נא להמתין...",
+    "exportError": "שגיאה ביצוא הבקשה — נסה שוב",
     "steps": {
       "DRAFT": "טיוטה נשמרה",
       "SUBMITTED": "הוגש בהצלחה",
@@ -816,7 +826,9 @@
       "confirmReject": "האם לדחות את ההגשה?",
       "confirmRevision": "האם לבקש תיקון?",
       "decisionRecorded": "ההחלטה נרשמה בהצלחה",
-      "decisionRecordedTo": "ההחלטה נשמרה והסטטוס עודכן ל־{{status}}"
+      "decisionRecordedTo": "ההחלטה נשמרה והסטטוס עודכן ל־{{status}}",
+      "finalAuthorityHint": "החלטת יו\"ר הוועדה היא סופית ואינה תלויה בהצבעות חברי הוועדה.",
+      "voteSummaryAdvisory": "הצבעות ועדה (לתיעוד בלבד)"
     }
   },
   "notifications": {
@@ -973,7 +985,12 @@
     "previewFrameLabel": "תצוגה פנימית עבור {{name}}",
     "previewHint": "אם המסמך לא נטען בתצוגה, ניתן להשתמש בכפתור ההורדה.",
     "previewUnsupported": "סוג קובץ זה לא נתמך לתצוגה ישירה בתוך הדפדפן.",
-    "previewError": "לא ניתן לטעון את המסמך לתצוגה — נסה להוריד את הקובץ.",
+    "previewError": {
+      "generic": "לא ניתן לטעון את המסמך לתצוגה — נסה להוריד את הקובץ.",
+      "FILE_MISSING": "הקובץ לא נמצא בשרת — ייתכן שהועלה לפני גיבוי או שהוסר.",
+      "FORBIDDEN": "אין לך הרשאה לצפות במסמך זה.",
+      "NOT_FOUND": "המסמך לא נמצא."
+    },
     "openInNewTab": "פתח בלשונית חדשה",
     "downloadFallback": "הורד קובץ",
     "closePreviewLabel": "סגור תצוגת מסמך",

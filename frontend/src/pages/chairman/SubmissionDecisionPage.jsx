@@ -28,13 +28,13 @@ import {
   Spinner,
   Modal,
   FormField,
-  Select,
   Textarea,
 } from '../../components/ui'
 import useDocumentTitle from '../../hooks/useDocumentTitle'
 import { buildEntityDocumentTitle } from '../../utils/documentTitle'
 import { buildSubmissionDetailPath } from '../../utils/submissionRoutes'
 import CommitteeVotePanel from '../../components/submissions/CommitteeVotePanel'
+import DocumentList from '../../components/submissions/DocumentList'
 
 const DECISIONS = [
   {
@@ -78,8 +78,6 @@ export default function SubmissionDecisionPage() {
   const [note,       setNote]       = useState('')
   const [error,      setError]      = useState('')
   const [pendingDecision, setPendingDecision] = useState(null)
-  const [approvalMode, setApprovalMode] = useState('committee')
-  const [voteSummary, setVoteSummary] = useState(null)
   const DECISION_TO_STATUS = {
     APPROVED: 'APPROVED',
     REJECTED: 'REJECTED',
@@ -121,20 +119,6 @@ export default function SubmissionDecisionPage() {
 
   useEffect(() => { fetchSubmission() }, [fetchSubmission])
 
-  useEffect(() => {
-    if (!submission?.id) return
-    setApprovalMode(submission.track === 'FULL' ? 'committee' : 'quick')
-  }, [submission?.id, submission?.track])
-
-  /**
-   * Receives live vote summary updates from the vote panel.
-   * @param {object} summary
-   * @returns {void}
-   */
-  const handleVotesSummaryChange = useCallback((summary) => {
-    setVoteSummary(summary || null)
-  }, [])
-
   /**
    * Commits the pending decision after modal confirmation.
    */
@@ -145,9 +129,7 @@ export default function SubmissionDecisionPage() {
     try {
       await api.patch(`/submissions/${submission?.id || submissionRef}/decision`, {
         decision: pendingDecision.key,
-        requiresCommittee: pendingDecision.key === 'REVISION_REQUIRED'
-          ? false
-          : approvalMode === 'committee',
+        requiresCommittee: false,
         note: note.trim() || undefined,
       })
       const nextStatus = DECISION_TO_STATUS[pendingDecision.key]
@@ -280,29 +262,9 @@ export default function SubmissionDecisionPage() {
                 </p>
               ) : (
                 <div className="space-y-4">
-                  <FormField
-                    label={t('chairman.decision.approvalModeLabel')}
-                    render={({ inputId, describedBy }) => (
-                      <Select
-                        id={inputId}
-                        value={approvalMode}
-                        onChange={(event) => setApprovalMode(event.target.value)}
-                        aria-describedby={describedBy}
-                      >
-                        <option value="quick">{t('chairman.decision.approvalMode.quick')}</option>
-                        <option value="committee">{t('chairman.decision.approvalMode.committee')}</option>
-                      </Select>
-                    )}
-                  />
-
-                  {approvalMode === 'committee' && voteSummary && (
-                    <p className="text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>
-                      {t('chairman.decision.quorumHint', {
-                        total: voteSummary.total ?? 0,
-                        quorum: voteSummary.quorum ?? 0,
-                      })}
-                    </p>
-                  )}
+                  <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                    {t('chairman.decision.finalAuthorityHint')}
+                  </p>
 
                   <FormField
                     label={t('chairman.decision.noteLabel')}
@@ -363,9 +325,15 @@ export default function SubmissionDecisionPage() {
       <CommitteeVotePanel
         submissionId={submission?.id}
         canVote={false}
-        titleKey="chairman.decision.voteSummaryTitle"
-        onSummaryChange={handleVotesSummaryChange}
+        titleKey="chairman.decision.voteSummaryAdvisory"
       />
+
+      <Card as="section">
+        <CardHeader title={t('documents.sectionTitle')} />
+        <CardBody>
+          <DocumentList submissionId={submission?.id} canUpload={false} />
+        </CardBody>
+      </Card>
 
       <Card as="section">
         <CardHeader title={t('submission.detail.sectionComments')} />

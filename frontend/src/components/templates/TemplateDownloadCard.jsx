@@ -88,6 +88,8 @@ export default function TemplateDownloadCard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [previewLang, setPreviewLang] = useState(null)
+  const [previewUrl, setPreviewUrl] = useState('')
+  const [previewLoading, setPreviewLoading] = useState(false)
 
   /**
    * Returns true when an API error indicates "no active template".
@@ -137,6 +139,12 @@ export default function TemplateDownloadCard() {
     loadTemplates()
   }, [loadTemplates])
 
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl)
+    }
+  }, [previewUrl])
+
   /**
    * Downloads the template file for a given language.
    * @param {string} lang
@@ -157,10 +165,36 @@ export default function TemplateDownloadCard() {
     }
   }
 
+  /**
+   * Loads template preview via authenticated blob fetch.
+   * @param {string} lang
+   */
+  async function handlePreview(lang) {
+    setPreviewLang(lang)
+    setPreviewLoading(true)
+    setError(null)
+    try {
+      const blob = await systemTemplatesApi.previewTemplate(TEMPLATE_KEY, lang)
+      if (previewUrl) URL.revokeObjectURL(previewUrl)
+      setPreviewUrl(URL.createObjectURL(blob))
+    } catch {
+      setPreviewLang(null)
+      setError(t('documents.previewError.generic'))
+    } finally {
+      setPreviewLoading(false)
+    }
+  }
+
+  /** Closes preview modal and revokes blob URL. */
+  function closePreview() {
+    setPreviewLang(null)
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl)
+      setPreviewUrl('')
+    }
+  }
+
   const previewTemplate = previewLang ? templates[previewLang] : null
-  const previewUrl = previewLang
-    ? systemTemplatesApi.getPreviewUrl(TEMPLATE_KEY, previewLang)
-    : null
 
   if (loading) {
     return null
@@ -201,7 +235,7 @@ export default function TemplateDownloadCard() {
             langLabel="עברית"
             version={templates.he.version}
             templateName={t('systemTemplates.questionnaire_preface')}
-            onPreview={() => setPreviewLang('he')}
+            onPreview={() => handlePreview('he')}
             onDownload={() => handleDownload('he')}
           />
         )}
@@ -211,7 +245,7 @@ export default function TemplateDownloadCard() {
             langLabel="English"
             version={templates.en.version}
             templateName={t('systemTemplates.questionnaire_preface')}
-            onPreview={() => setPreviewLang('en')}
+            onPreview={() => handlePreview('en')}
             onDownload={() => handleDownload('en')}
           />
         )}
@@ -219,15 +253,17 @@ export default function TemplateDownloadCard() {
 
       <Modal
         open={Boolean(previewLang)}
-        onClose={() => setPreviewLang(null)}
+        onClose={closePreview}
         title={t('documents.previewTitle')}
         description={t('systemTemplates.questionnaire_preface')}
         size="lg"
         closeLabel={t('documents.closePreviewLabel')}
       >
-        {previewTemplate && previewUrl && (
+        {previewTemplate && (
           <div className="space-y-3">
-            {canInlinePreview(previewTemplate.mimeType) ? (
+            {previewLoading ? (
+              <p className="text-sm text-center py-8 text-gray-500">{t('common.loading')}</p>
+            ) : canInlinePreview(previewTemplate.mimeType) && previewUrl ? (
               <div className="rounded-lg border border-gray-200 overflow-hidden bg-white">
                 <iframe
                   title={t('documents.previewFrameLabel', {
@@ -243,13 +279,6 @@ export default function TemplateDownloadCard() {
                   {t('documents.previewUnsupported')}
                 </p>
                 <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => window.open(previewUrl, '_blank', 'noopener,noreferrer')}
-                    className="min-h-[44px] px-4 rounded-lg border border-gray-300 text-sm font-medium hover:bg-gray-100"
-                  >
-                    {t('documents.openInNewTab')}
-                  </button>
                   <button
                     type="button"
                     onClick={() => handleDownload(previewLang)}

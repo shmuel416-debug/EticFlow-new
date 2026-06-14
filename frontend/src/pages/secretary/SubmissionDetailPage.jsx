@@ -8,7 +8,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams, useLocation, useNavigate } from 'react-router-dom'
-import { Download, Eye, CheckCircle2, AlertCircle, MessageSquare } from 'lucide-react'
+import { Download, Eye, CheckCircle2, AlertCircle, MessageSquare, Trash2 } from 'lucide-react'
 import api from '../../services/api'
 import { getUserDisplayName } from '../../utils/userDisplayName'
 import { useAuth } from '../../context/AuthContext'
@@ -33,6 +33,8 @@ import {
   Button,
   Spinner,
   Modal,
+  FormField,
+  Textarea,
 } from '../../components/ui'
 
 const APPROVAL_PDF_TIMEOUT_MS = 60000
@@ -79,8 +81,12 @@ export default function SubmissionDetailPage() {
   const [previewPdfUrl,  setPreviewPdfUrl]  = useState('')
   const [previewOpen,    setPreviewOpen]    = useState(false)
   const [previousRound,  setPreviousRound]  = useState(null)
+  const [deleteOpen,     setDeleteOpen]     = useState(false)
+  const [deleteConfirm,  setDeleteConfirm]  = useState('')
+  const [deleting,       setDeleting]       = useState(false)
   const resolvedSubmissionId = submission?.id || submissionRef
   const { statusMap }    = useStatusConfig({ submissionId: resolvedSubmissionId })
+  const isAdmin = user?.roles?.includes('ADMIN') || user?.activeRole === 'ADMIN'
 
   const documentTitle = useMemo(
     () => buildEntityDocumentTitle(
@@ -247,6 +253,28 @@ export default function SubmissionDetailPage() {
   async function handleAddComment(content, isInternal) {
     await api.post(`/submissions/${resolvedSubmissionId}/comments`, { content, isInternal })
     await fetchSubmission()
+  }
+
+  /**
+   * Permanently deletes the submission (ADMIN only).
+   * @returns {Promise<void>}
+   */
+  async function handlePermanentDelete() {
+    if (deleteConfirm.trim() !== submission?.applicationId) return
+    setDeleting(true)
+    setError('')
+    try {
+      await api.delete(`/submissions/${resolvedSubmissionId}`)
+      setDeleteOpen(false)
+      setDeleteConfirm('')
+      navigate('/secretary/submissions', {
+        state: { statusMessage: t('submission.detail.permanentDeleteSuccess') },
+      })
+    } catch (err) {
+      setError(t(`errors.${err.code}`, t('errors.SERVER_ERROR')))
+    } finally {
+      setDeleting(false)
+    }
   }
 
   /**
@@ -709,6 +737,31 @@ export default function SubmissionDetailPage() {
         </CardBody>
       </Card>
 
+      {isAdmin && (
+        <Card as="section">
+          <CardHeader title={t('submission.detail.permanentDeleteTitle')} />
+          <CardBody>
+            <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
+              {t('submission.detail.permanentDeleteConfirm')}
+            </p>
+            <Button
+              variant="danger"
+              onClick={() => setDeleteOpen(true)}
+              leftIcon={
+                <Trash2
+                  size={16}
+                  strokeWidth={1.75}
+                  aria-hidden="true"
+                  focusable="false"
+                />
+              }
+            >
+              {t('submission.detail.permanentDelete')}
+            </Button>
+          </CardBody>
+        </Card>
+      )}
+
       <Modal
         open={previewOpen}
         onClose={() => setPreviewOpen(false)}
@@ -726,6 +779,57 @@ export default function SubmissionDetailPage() {
             />
           </div>
         )}
+      </Modal>
+
+      <Modal
+        open={deleteOpen}
+        onClose={() => !deleting && setDeleteOpen(false)}
+        title={t('submission.detail.permanentDeleteTitle')}
+        description={t('submission.detail.permanentDeleteConfirm')}
+        footer={
+          <>
+            <Button
+              variant="secondary"
+              onClick={() => setDeleteOpen(false)}
+              disabled={deleting}
+            >
+              {t('common.cancel', 'ביטול')}
+            </Button>
+            <Button
+              variant="danger"
+              onClick={handlePermanentDelete}
+              loading={deleting}
+              disabled={deleteConfirm.trim() !== submission?.applicationId}
+              leftIcon={
+                <Trash2
+                  size={16}
+                  strokeWidth={1.75}
+                  aria-hidden="true"
+                  focusable="false"
+                />
+              }
+            >
+              {t('submission.detail.permanentDelete')}
+            </Button>
+          </>
+        }
+      >
+        <FormField
+          label={t('submission.detail.permanentDeleteHint', {
+            applicationId: submission?.applicationId || '',
+          })}
+          render={({ inputId, describedBy, required, invalid }) => (
+            <Textarea
+              id={inputId}
+              value={deleteConfirm}
+              onChange={(e) => setDeleteConfirm(e.target.value)}
+              aria-required={required || undefined}
+              aria-describedby={describedBy}
+              invalid={invalid}
+              rows={2}
+            />
+          )}
+        />
       </Modal>
     </main>
   )

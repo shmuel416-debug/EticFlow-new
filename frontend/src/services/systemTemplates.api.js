@@ -3,7 +3,7 @@
  * Client-side API calls for template download, upload, and management
  */
 
-import api, { getApiBaseUrl } from './api.js';
+import api from './api.js';
 
 /**
  * Get metadata for an active template
@@ -33,14 +33,18 @@ export async function downloadTemplate(key, lang = 'he') {
 }
 
 /**
- * Build the inline-preview URL for a template (for iframe/image embedding).
- * Relies on cookie-based auth (sent automatically by the browser).
+ * Fetches template bytes for authenticated inline preview (blob URL pattern).
  * @param {string} key - Template key
  * @param {string} lang - Language ('he' or 'en')
- * @returns {string} Absolute preview URL
+ * @returns {Promise<Blob>}
  */
-export function getPreviewUrl(key, lang = 'he') {
-  return `${getApiBaseUrl()}/system-templates/${key}/preview?lang=${encodeURIComponent(lang)}`;
+export async function previewTemplate(key, lang = 'he') {
+  const { data } = await api.get(`/system-templates/${key}/preview`, {
+    params: { lang },
+    responseType: 'blob',
+    timeout: 60000,
+  });
+  return data;
 }
 
 /**

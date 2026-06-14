@@ -105,10 +105,35 @@ export default function DocumentList({ submissionId, canUpload = false }) {
    * @param {'preview'|'download'} mode
    * @returns {Promise<Blob>}
    */
+  /**
+   * Parses API error code from a blob error response.
+   * @param {unknown} err
+   * @returns {Promise<string>}
+   */
+  async function parseBlobErrorCode(err) {
+    const blob = err?.response?.data
+    if (!(blob instanceof Blob)) return err?.response?.data?.code || err?.code || ''
+    try {
+      const text = await blob.text()
+      const parsed = JSON.parse(text)
+      return parsed?.code || parsed?.error?.code || ''
+    } catch {
+      return ''
+    }
+  }
+
   async function fetchDocumentBlob(docId, mode) {
     const endpoint = mode === 'preview' ? 'preview' : 'download'
-    const { data } = await api.get(`/documents/${docId}/${endpoint}`, { responseType: 'blob' })
-    return data
+    try {
+      const { data } = await api.get(`/documents/${docId}/${endpoint}`, {
+        responseType: 'blob',
+        timeout: 60000,
+      })
+      return data
+    } catch (err) {
+      const code = await parseBlobErrorCode(err)
+      throw new Error(code || 'GENERIC')
+    }
   }
 
   /**
@@ -163,8 +188,9 @@ export default function DocumentList({ submissionId, canUpload = false }) {
       link.click()
       link.remove()
       URL.revokeObjectURL(url)
-    } catch {
-      setError(t('documents.loadError'))
+    } catch (err) {
+      const code = err?.message
+      setError(t(`documents.previewError.${code}`, { defaultValue: t('documents.loadError') }))
     }
   }
 
@@ -180,9 +206,10 @@ export default function DocumentList({ submissionId, canUpload = false }) {
       const blob = await fetchDocumentBlob(doc.id, 'preview')
       if (previewUrl) URL.revokeObjectURL(previewUrl)
       setPreviewUrl(URL.createObjectURL(blob))
-    } catch {
+    } catch (err) {
       setPreviewDoc(null)
-      setError(t('documents.previewError'))
+      const code = err?.message
+      setError(t(`documents.previewError.${code}`, { defaultValue: t('documents.previewError.generic') }))
     } finally {
       setPreviewLoading(false)
     }
