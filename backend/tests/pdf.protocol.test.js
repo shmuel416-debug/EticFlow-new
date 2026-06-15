@@ -85,6 +85,18 @@ async function renderAndParse(html) {
 describe('protocol PDFs', () => {
   jest.setTimeout(90000)
 
+  it('keeps source content in English-only output when no translation exists', () => {
+    const html = buildProtocolHtml(protocol, 'en', context)
+    expect(html).toContain('הבקשה ETH-2026-1001 אושרה.')
+    expect(html).not.toContain('See the Hebrew page for the full committee discussion details.')
+  })
+
+  it('uses a Hebrew-page reference only for bilingual English pages', () => {
+    const html = buildBilingualProtocolHtml(protocol, context)
+    expect(html).toContain('הבקשה ETH-2026-1001 אושרה.')
+    expect(html).toContain('See the Hebrew page for the full committee discussion details.')
+  })
+
   it('renders Hebrew protocol PDF', async () => {
     const html = buildProtocolHtml(protocol, 'he', context)
     const { text, size } = await renderAndParse(html)
