@@ -7,9 +7,11 @@
 
 import { z } from 'zod';
 import * as service from '../services/reviewerChecklist.service.js';
-import { getRequestRole, hasAnyRole } from '../utils/roles.js';
+import { getRequestRole } from '../utils/roles.js';
 import { hasConflict } from '../services/coi.service.js';
 import { AppError } from '../utils/errors.js';
+import prisma from '../config/database.js';
+import { roleFilter } from './submissions.controller.js';
 
 // ─── Zod schemas ─────────────────────────────────────────────────────────────
 
@@ -66,6 +68,20 @@ const submitSchema = saveDraftSchema.extend({
     'EXEMPT', 'APPROVED', 'APPROVED_CONDITIONAL', 'REVISION_REQUIRED', 'REJECTED',
   ]),
 });
+
+const STAFF_REVIEW_ROLES = new Set(['SECRETARY', 'CHAIRMAN', 'ADMIN']);
+
+/**
+ * Resolves a submission through the standard role-based visibility predicate.
+ * @param {import('express').Request} req
+ * @param {string} submissionId
+ * @returns {Promise<{ id: string }|null>}
+ */
+async function findVisibleSubmission(req, submissionId) {
+  const activeRole = getRequestRole(req);
+  const where = await roleFilter(req.user, activeRole, { id: submissionId });
+  return prisma.submission.findFirst({ where, select: { id: true } });
+}
 
 // ─── Admin: Template handlers ─────────────────────────────────────────────────
 
@@ -295,14 +311,19 @@ export async function submitReview(req, res, next) {
 export async function listSubmissionReviews(req, res, next) {
   try {
     const activeRole = getRequestRole(req);
-    const isStaff = hasAnyRole(req.user, 'SECRETARY', 'CHAIRMAN', 'ADMIN');
+    const isStaff = STAFF_REVIEW_ROLES.has(activeRole);
+    const visibleSubmission = await findVisibleSubmission(req, req.params.id);
+    if (!visibleSubmission) {
+      return next(AppError.notFound('Submission'));
+    }
+
     if (!isStaff && activeRole === 'REVIEWER') {
       const conflictCheck = await hasConflict(req.user.id, req.params.id);
       if (conflictCheck.conflict) {
         return next(new AppError('Conflict of interest', 'COI_BLOCKED', 403, { reasons: conflictCheck.reasons }));
       }
     }
-    const result = await service.listSubmissionReviewsForStaff(req.params.id, {
+    const result = await service.listSubmissionReviewsForStaff(visibleSubmission.id, {
       submittedOnly: !isStaff,
     });
     res.json({ data: result });

@@ -643,7 +643,10 @@ export async function startRevision(req, res, next) {
  */
 export async function previousRound(req, res, next) {
   try {
-    const round = await getPreviousRound(req.params.id)
+    const submission = await findAccessibleSubmission(req, req.params.id)
+    if (!submission) return next(AppError.notFound('Submission'))
+
+    const round = await getPreviousRound(submission.id)
     res.json({ data: round })
   } catch (err) {
     next(err)
