@@ -163,12 +163,12 @@ describe('submissions.controller reviewer visibility', () => {
 
     await previousRound(req, res, next)
 
-    expect(prismaMock.submission.findFirst).toHaveBeenCalledWith(expect.objectContaining({
-      where: expect.objectContaining({
-        id: 'sub-hidden',
-        isActive: true,
-      }),
+    const where = prismaMock.submission.findFirst.mock.calls[0][0].where
+    expect(where.AND[0]).toEqual(expect.objectContaining({
+      OR: [{ reviewerId: 'rev-1' }, { secondaryReviewerId: 'rev-1' }],
+      isActive: true,
     }))
+    expect(where.AND[1].OR).toEqual([{ id: 'sub-hidden' }, { applicationId: 'sub-hidden' }])
     expect(reviewRoundServiceMock.getPreviousRound).not.toHaveBeenCalled()
     expect(next).toHaveBeenCalledTimes(1)
     expect(next.mock.calls[0][0].code).toBe('NOT_FOUND')
