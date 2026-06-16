@@ -6,7 +6,9 @@
  */
 
 import { z } from 'zod';
+import prisma from '../config/database.js';
 import * as service from '../services/reviewerChecklist.service.js';
+import { roleFilter } from './submissions.controller.js';
 import { getRequestRole, hasAnyRole } from '../utils/roles.js';
 import { hasConflict } from '../services/coi.service.js';
 import { AppError } from '../utils/errors.js';
@@ -66,6 +68,24 @@ const submitSchema = saveDraftSchema.extend({
     'EXEMPT', 'APPROVED', 'APPROVED_CONDITIONAL', 'REVISION_REQUIRED', 'REJECTED',
   ]),
 });
+
+/**
+ * Verifies that a reviewer may read submitted peer reviews for a submission.
+ * @param {import('express').Request} req - Authenticated request.
+ * @returns {Promise<void>}
+ */
+async function assertReviewerCanReadSubmissionReviews(req) {
+  const conflictCheck = await hasConflict(req.user.id, req.params.id);
+  if (conflictCheck.conflict) {
+    throw new AppError('Conflict of interest', 'COI_BLOCKED', 403, { reasons: conflictCheck.reasons });
+  }
+
+  const where = await roleFilter(req.user, 'REVIEWER', { id: req.params.id });
+  const visibleSubmission = await prisma.submission.findFirst({ where, select: { id: true } });
+  if (!visibleSubmission) {
+    throw new AppError('Forbidden', 'FORBIDDEN', 403);
+  }
+}
 
 // ─── Admin: Template handlers ─────────────────────────────────────────────────
 
@@ -297,10 +317,7 @@ export async function listSubmissionReviews(req, res, next) {
     const activeRole = getRequestRole(req);
     const isStaff = hasAnyRole(req.user, 'SECRETARY', 'CHAIRMAN', 'ADMIN');
     if (!isStaff && activeRole === 'REVIEWER') {
-      const conflictCheck = await hasConflict(req.user.id, req.params.id);
-      if (conflictCheck.conflict) {
-        return next(new AppError('Conflict of interest', 'COI_BLOCKED', 403, { reasons: conflictCheck.reasons }));
-      }
+      await assertReviewerCanReadSubmissionReviews(req);
     }
     const result = await service.listSubmissionReviewsForStaff(req.params.id, {
       submittedOnly: !isStaff,
