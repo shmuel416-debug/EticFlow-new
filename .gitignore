@@ -36,6 +36,12 @@ Thumbs.db
 # Logs
 *.log
 npm-debug.log*
+tmp_logs/
+api_logs*.zip
+
+# Deploy artifacts (generated at runtime)
+.deploy_tag_letters
+.deploy_newtag.txt
 
 # Testing
 coverage/

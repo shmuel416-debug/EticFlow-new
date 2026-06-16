@@ -42,7 +42,7 @@ pool:
   vmImage: ubuntu-latest
 
 variables:
-  - group: eticnet-deploy-prod
+  - group: ethicnet-deploy-prod
   - name: serviceConnection
     value: svc-ethicnet-azure
   - name: apiImageName

@@ -21,7 +21,7 @@ pool:
   vmImage: ubuntu-latest
 
 variables:
-  - group: eticnet-ci
+  - group: ethicnet-ci
 
 stages:
   - stage: Quality
