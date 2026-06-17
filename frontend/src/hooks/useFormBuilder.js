@@ -60,14 +60,14 @@ export default function useFormBuilder(initialName = '', initialNameEn = '') {
     setActiveTab('settings')
     setMobileTab('settings')
     setIsDirty(true)
-  }, [])
+  }, [setFields])
 
   /** Remove a field by id */
   const removeField = useCallback((id) => {
     setFields(prev => prev.filter(f => f.id !== id))
     setSelectedId(prev => (prev === id ? null : prev))
     setIsDirty(true)
-  }, [])
+  }, [setFields])
 
   /** Clone a field and insert it after the original */
   const duplicateField = useCallback((id) => {
@@ -80,7 +80,7 @@ export default function useFormBuilder(initialName = '', initialNameEn = '') {
       return next
     })
     setIsDirty(true)
-  }, [])
+  }, [setFields])
 
   /** Select a field → switch left panel to settings tab */
   const selectField = useCallback((id) => {
@@ -93,7 +93,7 @@ export default function useFormBuilder(initialName = '', initialNameEn = '') {
   const updateField = useCallback((id, updates) => {
     setFields(prev => prev.map(f => f.id === id ? { ...f, ...updates } : f))
     setIsDirty(true)
-  }, [])
+  }, [setFields])
 
   /** Reorder: called from DndContext.onDragEnd with active/over ids */
   const reorderFields = useCallback((activeId, overId) => {
@@ -103,7 +103,7 @@ export default function useFormBuilder(initialName = '', initialNameEn = '') {
       return arrayMove(prev, oldIdx, newIdx)
     })
     setIsDirty(true)
-  }, [])
+  }, [setFields])
 
   /** Keyboard-accessible nudge: move field by delta (-1 up, +1 down) */
   const moveField = useCallback((id, delta) => {
@@ -115,7 +115,7 @@ export default function useFormBuilder(initialName = '', initialNameEn = '') {
       return arrayMove(prev, idx, nextIdx)
     })
     setIsDirty(true)
-  }, [])
+  }, [setFields])
 
   return {
     formName,    setFormName: setFormNameDirty,
