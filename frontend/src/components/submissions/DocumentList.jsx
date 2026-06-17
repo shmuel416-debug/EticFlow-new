@@ -78,6 +78,7 @@ export default function DocumentList({ submissionId, canUpload = false }) {
   const [previewLoading, setPreviewLoading] = useState(false)
 
   const inputRef = useRef(null)
+  const previewRequestIdRef = useRef(0)
 
   /** Fetches document list from API. */
   const loadDocs = useCallback(async () => {
@@ -199,29 +200,31 @@ export default function DocumentList({ submissionId, canUpload = false }) {
    * @param {object} doc
    */
   async function handlePreview(doc) {
+    const requestId = previewRequestIdRef.current + 1
+    previewRequestIdRef.current = requestId
     setPreviewDoc(doc)
     setPreviewLoading(true)
     setError('')
     try {
       const blob = await fetchDocumentBlob(doc.id, 'preview')
-      if (previewUrl) URL.revokeObjectURL(previewUrl)
+      if (requestId !== previewRequestIdRef.current) return
       setPreviewUrl(URL.createObjectURL(blob))
     } catch (err) {
+      if (requestId !== previewRequestIdRef.current) return
       setPreviewDoc(null)
       const code = err?.message
       setError(t(`documents.previewError.${code}`, { defaultValue: t('documents.previewError.generic') }))
     } finally {
-      setPreviewLoading(false)
+      if (requestId === previewRequestIdRef.current) setPreviewLoading(false)
     }
   }
 
   /** Closes document preview modal and revokes blob URL. */
   function closePreview() {
+    previewRequestIdRef.current += 1
     setPreviewDoc(null)
-    if (previewUrl) {
-      URL.revokeObjectURL(previewUrl)
-      setPreviewUrl('')
-    }
+    setPreviewLoading(false)
+    setPreviewUrl('')
   }
 
   // ─── Drag-and-drop handlers ───────────────────

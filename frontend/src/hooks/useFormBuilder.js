@@ -5,26 +5,42 @@
  * @module hooks/useFormBuilder
  */
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { arrayMove }              from '@dnd-kit/sortable'
 import { createField }            from '../components/formBuilder/fieldTypes'
 
 /**
  * Central state and action handlers for the Form Builder.
  * @param {string} [initialName=''] - initial form name
+ * @param {string} [initialNameEn=''] - initial English form name
  * @returns {object} state + handlers
  */
 export default function useFormBuilder(initialName = '', initialNameEn = '') {
   const [formName,    setFormName]    = useState(initialName)
   const [formNameEn,  setFormNameEn]  = useState(initialNameEn)
-  const [fields,      setFields]      = useState([])
+  const [fields,      setFieldsState] = useState([])
   const [selectedId,  setSelectedId]  = useState(null)
   const [activeTab,   setActiveTab]   = useState('palette') // 'palette' | 'settings'
   const [mobileTab,   setMobileTab]   = useState('fields')  // 'fields' | 'canvas' | 'settings'
   const [isDirty,     setIsDirty]     = useState(false)
   const [previewLang, setPreviewLang] = useState('he')
+  const fieldsRef = useRef([])
 
   const selectedField = fields.find(f => f.id === selectedId) ?? null
+
+  /**
+   * Updates fields state and a synchronous ref used by save paths.
+   * @param {object[]|((fields: object[]) => object[])} updater
+   * @returns {object[]}
+   */
+  const setFields = useCallback((updater) => {
+    const nextFields = typeof updater === 'function'
+      ? updater(fieldsRef.current)
+      : updater
+    fieldsRef.current = nextFields
+    setFieldsState(nextFields)
+    return nextFields
+  }, [])
 
   const setFormNameDirty = useCallback((name) => {
     setFormName(name)
@@ -44,14 +60,14 @@ export default function useFormBuilder(initialName = '', initialNameEn = '') {
     setActiveTab('settings')
     setMobileTab('settings')
     setIsDirty(true)
-  }, [])
+  }, [setFields])
 
   /** Remove a field by id */
   const removeField = useCallback((id) => {
     setFields(prev => prev.filter(f => f.id !== id))
     setSelectedId(prev => (prev === id ? null : prev))
     setIsDirty(true)
-  }, [])
+  }, [setFields])
 
   /** Clone a field and insert it after the original */
   const duplicateField = useCallback((id) => {
@@ -64,7 +80,7 @@ export default function useFormBuilder(initialName = '', initialNameEn = '') {
       return next
     })
     setIsDirty(true)
-  }, [])
+  }, [setFields])
 
   /** Select a field → switch left panel to settings tab */
   const selectField = useCallback((id) => {
@@ -77,7 +93,7 @@ export default function useFormBuilder(initialName = '', initialNameEn = '') {
   const updateField = useCallback((id, updates) => {
     setFields(prev => prev.map(f => f.id === id ? { ...f, ...updates } : f))
     setIsDirty(true)
-  }, [])
+  }, [setFields])
 
   /** Reorder: called from DndContext.onDragEnd with active/over ids */
   const reorderFields = useCallback((activeId, overId) => {
@@ -87,7 +103,7 @@ export default function useFormBuilder(initialName = '', initialNameEn = '') {
       return arrayMove(prev, oldIdx, newIdx)
     })
     setIsDirty(true)
-  }, [])
+  }, [setFields])
 
   /** Keyboard-accessible nudge: move field by delta (-1 up, +1 down) */
   const moveField = useCallback((id, delta) => {
@@ -99,12 +115,12 @@ export default function useFormBuilder(initialName = '', initialNameEn = '') {
       return arrayMove(prev, idx, nextIdx)
     })
     setIsDirty(true)
-  }, [])
+  }, [setFields])
 
   return {
     formName,    setFormName: setFormNameDirty,
     formNameEn,  setFormNameEn: setFormNameEnDirty,
-    fields,      setFields,
+    fields,      fieldsRef,    setFields,
     selectedId,  selectedField,
     activeTab,   setActiveTab,
     mobileTab,   setMobileTab,

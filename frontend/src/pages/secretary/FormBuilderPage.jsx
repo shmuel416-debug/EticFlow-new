@@ -242,7 +242,7 @@ export default function FormBuilderPage() {
   const {
     formName,    setFormName,
     formNameEn,  setFormNameEn,
-    fields,      setFields,
+    fields,      fieldsRef,    setFields,
     setIsDirty,
     selectedId,  selectedField,
     activeTab,   setActiveTab,
@@ -298,10 +298,8 @@ export default function FormBuilderPage() {
    * @returns {Promise<{ ok: boolean, formId?: string }>}
    */
   const saveFormDraft = useCallback(async ({ silent = false } = {}) => {
-    const committed = settingsPanelRef.current?.commitDraft?.()
-    const saveFields = committed
-      ? fields.map(f => (f.id === committed.id ? { ...f, ...committed.updates } : f))
-      : fields
+    settingsPanelRef.current?.commitDraft?.()
+    const saveFields = fieldsRef.current
     if (!formName.trim()) {
       if (!silent) setSaveError(t('secretary.formBuilder.errorNoName'))
       return { ok: false }
@@ -333,7 +331,7 @@ export default function FormBuilderPage() {
     } finally {
       if (!silent) setIsSaving(false)
     }
-  }, [formName, formNameEn, formId, fields, buildSchema, navigate, setIsDirty, t])
+  }, [formName, formNameEn, formId, fieldsRef, buildSchema, navigate, setIsDirty, t])
 
   const handleSaveForm = useCallback(async () => {
     await saveFormDraft()
