@@ -141,6 +141,15 @@ async function findOrFail(id) {
 }
 
 /**
+ * Maps a submission's review track to the approval-letter route.
+ * @param {{ track?: string|null }} submission - Submission being approved.
+ * @returns {'COMMITTEE'|'EXPEDITED'}
+ */
+function getApprovalRouteForSubmission(submission) {
+  return submission?.track === 'FULL' ? 'COMMITTEE' : 'EXPEDITED'
+}
+
+/**
  * PATCH /api/submissions/:id/status
  * Advances submission through the workflow. Validates allowed transitions.
  * @param {import('express').Request} req - body: { status, note? }
@@ -466,7 +475,7 @@ export async function recordDecision(req, res, next) {
       where: { id: sub.id },
       data: {
         status: newStatus,
-        ...(newStatus === 'APPROVED' ? { approvalRoute: 'EXPEDITED' } : {}),
+        ...(newStatus === 'APPROVED' ? { approvalRoute: getApprovalRouteForSubmission(sub) } : {}),
       },
     })]
 

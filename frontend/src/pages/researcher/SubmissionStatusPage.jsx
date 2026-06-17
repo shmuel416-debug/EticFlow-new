@@ -146,6 +146,7 @@ export default function SubmissionStatusPage() {
     try {
       const { data } = await api.get(`/submissions/${submissionRef}`)
       setSubmission(data.submission)
+      setError('')
     } catch {
       setError(t('statusPage.loadError'))
     } finally {
@@ -206,6 +207,7 @@ export default function SubmissionStatusPage() {
    */
   async function handleExportSubmissionPdf() {
     setPdfLoading('export')
+    setError('')
     try {
       const blob = await requestSubmissionExportBlob()
       const url = URL.createObjectURL(blob)
@@ -229,6 +231,7 @@ export default function SubmissionStatusPage() {
    */
   async function handlePrintSubmission() {
     setPdfLoading('print')
+    setError('')
     let blobUrl = ''
     try {
       const blob = await requestSubmissionExportBlob()
@@ -264,6 +267,7 @@ export default function SubmissionStatusPage() {
    */
   async function handleDownloadPdf(lang) {
     setPdfLoading(`download-${lang}`)
+    setError('')
     try {
       const decisionLetter = DECISION_LETTER_CONFIG[submission?.status] ?? null
       const blob = await requestDecisionPdfBlob(lang)
@@ -295,6 +299,7 @@ export default function SubmissionStatusPage() {
    */
   async function handlePreviewPdf(lang) {
     setPdfLoading(`preview-${lang}`)
+    setError('')
     try {
       const blob = await requestDecisionPdfBlob(lang)
       if (previewPdfUrl) URL.revokeObjectURL(previewPdfUrl)
@@ -314,6 +319,7 @@ export default function SubmissionStatusPage() {
    */
   async function handleConfirmWithdraw() {
     setWithdrawing(true)
+    setError('')
     try {
       await api.post(`/submissions/${resolvedSubmissionId}/withdraw`, {
         note: withdrawNote.trim() || undefined,
@@ -334,6 +340,7 @@ export default function SubmissionStatusPage() {
    */
   async function handleStartRevision() {
     setActionLoading(true)
+    setError('')
     try {
       await api.post(`/submissions/${resolvedSubmissionId}/start-revision`, {})
       navigate(buildSubmissionEditPath('/submissions', submission))
@@ -349,6 +356,7 @@ export default function SubmissionStatusPage() {
    */
   async function handleResubmit() {
     setActionLoading(true)
+    setError('')
     try {
       await api.post(`/submissions/${resolvedSubmissionId}/submit`, {})
       await load()
@@ -373,7 +381,7 @@ export default function SubmissionStatusPage() {
       </div>
     )
   }
-  if (error) {
+  if (error && !submission) {
     return (
       <div
         role="alert"
@@ -400,6 +408,22 @@ export default function SubmissionStatusPage() {
         backLabel={t('statusPage.backToDashboard')}
         actions={<StatusBadge status={submission.status} audience="researcher" />}
       />
+
+      {error ? (
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="rounded-lg border px-4 py-3 text-sm font-medium flex items-center gap-2"
+          style={{
+            borderColor: 'var(--status-danger)',
+            background: 'var(--status-danger-50)',
+            color: 'var(--status-danger)',
+          }}
+        >
+          <AlertCircle size={16} strokeWidth={1.75} aria-hidden="true" focusable="false" />
+          <span>{error}</span>
+        </div>
+      ) : null}
 
       <Card>
         <CardBody>
