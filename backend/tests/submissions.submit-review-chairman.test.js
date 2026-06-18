@@ -8,9 +8,11 @@ const prismaMock = {
   submission: {
     findFirst: jest.fn(),
     update: jest.fn(),
+    updateMany: jest.fn(),
   },
   comment: {
     create: jest.fn(),
+    findMany: jest.fn(),
   },
   $transaction: jest.fn(),
 }
@@ -67,7 +69,8 @@ describe('submissions.status submitReview chairman support', () => {
     statusServiceMock.can.mockResolvedValue(false)
     prismaMock.comment.create.mockResolvedValue({ id: 'c-1' })
     prismaMock.submission.update.mockResolvedValue({ id: 'sub-1', status: 'IN_REVIEW' })
-    prismaMock.$transaction.mockResolvedValue(undefined)
+    prismaMock.submission.updateMany.mockResolvedValue({ count: 1 })
+    prismaMock.comment.findMany.mockResolvedValue([{ authorId: 'chair-1' }])
     notificationServiceMock.notifyStatusChange.mockResolvedValue(undefined)
     slaServiceMock.setDueDates.mockResolvedValue(undefined)
   })
@@ -94,8 +97,48 @@ describe('submissions.status submitReview chairman support', () => {
     const { req, res, next } = makeContext()
     await submitReview(req, res, next)
 
-    expect(prismaMock.$transaction).toHaveBeenCalledTimes(1)
+    expect(prismaMock.comment.create).toHaveBeenCalledTimes(1)
+    expect(prismaMock.submission.updateMany).toHaveBeenCalledWith({
+      where: { id: 'sub-1', isActive: true, status: { in: ['ASSIGNED', 'ASSIGNED_SECONDARY'] } },
+      data: { status: 'IN_REVIEW' },
+    })
     expect(res.json).toHaveBeenCalledWith({ submission: expect.objectContaining({ id: 'sub-1', status: 'IN_REVIEW' }) })
+    expect(next).not.toHaveBeenCalled()
+  })
+
+  test('keeps dual-reviewer submission assigned until both reviews are submitted', async () => {
+    prismaMock.submission.findFirst
+      .mockResolvedValueOnce({
+        id: 'sub-1',
+        status: 'ASSIGNED_SECONDARY',
+        authorId: 'author-1',
+        reviewerId: 'chair-1',
+        secondaryReviewerId: 'rev-2',
+        author: { id: 'author-1' },
+        reviewer: { id: 'chair-1' },
+        secondaryReviewer: { id: 'rev-2' },
+      })
+      .mockResolvedValueOnce({
+        id: 'sub-1',
+        status: 'ASSIGNED_SECONDARY',
+        authorId: 'author-1',
+        reviewerId: 'chair-1',
+        secondaryReviewerId: 'rev-2',
+        author: { id: 'author-1' },
+        reviewer: { id: 'chair-1' },
+        secondaryReviewer: { id: 'rev-2' },
+      })
+    prismaMock.comment.findMany.mockResolvedValue([{ authorId: 'chair-1' }])
+
+    const { req, res, next } = makeContext()
+    await submitReview(req, res, next)
+
+    expect(prismaMock.comment.create).toHaveBeenCalledTimes(1)
+    expect(prismaMock.submission.updateMany).not.toHaveBeenCalled()
+    expect(notificationServiceMock.notifyStatusChange).not.toHaveBeenCalled()
+    expect(res.json).toHaveBeenCalledWith({
+      submission: expect.objectContaining({ id: 'sub-1', status: 'ASSIGNED_SECONDARY' }),
+    })
     expect(next).not.toHaveBeenCalled()
   })
 

@@ -9,6 +9,12 @@ const prismaMock = {
     findFirst: jest.fn(),
     update: jest.fn(),
   },
+  institutionSetting: {
+    findMany: jest.fn(),
+  },
+  submissionVote: {
+    findMany: jest.fn(),
+  },
   comment: {
     create: jest.fn(),
   },
@@ -74,18 +80,17 @@ describe('submissions.status recordDecision chairman-final', () => {
     jest.clearAllMocks()
     statusServiceMock.can.mockResolvedValue(true)
     statusServiceMock.getAllowedTransitions.mockResolvedValue({ next: ['APPROVED'] })
-    prismaMock.submission.findFirst
-      .mockResolvedValueOnce({
-        id: 'sub-1',
-        status: 'IN_REVIEW',
-        track: 'FULL',
-        applicationId: 'ETH-2026-001',
-      })
-      .mockResolvedValueOnce({
-        id: 'sub-1',
-        status: 'APPROVED',
-        approvalRoute: 'EXPEDITED',
-      })
+    prismaMock.submission.findFirst.mockResolvedValueOnce({
+      id: 'sub-1',
+      status: 'IN_REVIEW',
+      track: 'FULL',
+      applicationId: 'ETH-2026-001',
+    })
+    prismaMock.institutionSetting.findMany.mockResolvedValue([
+      { key: 'decision_model', value: 'IRB_FULL' },
+      { key: 'committee_quorum_min_votes', value: '3' },
+    ])
+    prismaMock.submissionVote.findMany.mockResolvedValue([])
     prismaMock.$transaction.mockImplementation(async (ops) => {
       if (typeof ops === 'function') return ops(prismaMock)
       await Promise.all(ops)
@@ -96,18 +101,39 @@ describe('submissions.status recordDecision chairman-final', () => {
     slaServiceMock.setDueDates.mockResolvedValue(undefined)
   })
 
-  test('approves without committee quorum even when requiresCommittee is true', async () => {
+  test('blocks committee decision without quorum when requiresCommittee is true', async () => {
+    const { req, res, next } = makeContext({ requiresCommittee: true })
+    await recordDecision(req, res, next)
+
+    expect(prismaMock.$transaction).not.toHaveBeenCalled()
+    expect(next).toHaveBeenCalledTimes(1)
+    expect(next.mock.calls[0][0].code).toBe('COMMITTEE_QUORUM_NOT_MET')
+    expect(res.json).not.toHaveBeenCalled()
+  })
+
+  test('approves committee decision after quorum and majority are met', async () => {
+    prismaMock.submission.findFirst.mockResolvedValueOnce({
+      id: 'sub-1',
+      status: 'APPROVED',
+      approvalRoute: 'COMMITTEE',
+    })
+    prismaMock.submissionVote.findMany.mockResolvedValue([
+      { decision: 'APPROVED' },
+      { decision: 'APPROVED' },
+      { decision: 'APPROVED' },
+    ])
+
     const { req, res, next } = makeContext({ requiresCommittee: true })
     await recordDecision(req, res, next)
 
     expect(prismaMock.$transaction).toHaveBeenCalledTimes(1)
     expect(prismaMock.submission.update).toHaveBeenCalledWith({
       where: { id: 'sub-1' },
-      data: { status: 'APPROVED', approvalRoute: 'EXPEDITED' },
+      data: { status: 'APPROVED', approvalRoute: 'COMMITTEE' },
     })
     expect(next).not.toHaveBeenCalled()
     expect(res.json).toHaveBeenCalledWith({
-      submission: expect.objectContaining({ status: 'APPROVED', approvalRoute: 'EXPEDITED' }),
+      submission: expect.objectContaining({ status: 'APPROVED', approvalRoute: 'COMMITTEE' }),
     })
   })
 })

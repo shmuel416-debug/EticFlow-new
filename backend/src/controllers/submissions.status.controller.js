@@ -18,6 +18,8 @@ import { ensureCurrentRound, closeCurrentRound, openNextRound } from '../service
 import { generateApprovalLetter, generateRejectionLetter } from '../services/pdf.service.js'
 
 const COMMITTEE_DECISION_SETTINGS_KEYS = ['decision_model', 'committee_quorum_min_votes', 'enforce_meeting_voting']
+const LEGACY_REVIEW_COMMENT_PREFIX = '[Score:'
+const REVIEW_ASSIGNMENT_STATUSES = ['ASSIGNED', 'ASSIGNED_SECONDARY']
 
 /**
  * Loads decision-model settings used for committee votes.
@@ -106,6 +108,73 @@ function resolveRequiresCommitteeVote(payload, decisionModel) {
   if (payload.decision === 'REVISION_REQUIRED') return false
   if (typeof payload.requiresCommittee === 'boolean') return payload.requiresCommittee
   return decisionModel === 'IRB_FULL'
+}
+
+/**
+ * Returns assigned reviewer IDs for primary and secondary review slots.
+ * @param {{ reviewerId?: string|null, secondaryReviewerId?: string|null }} submission
+ * @returns {string[]}
+ */
+function getAssignedReviewerIds(submission) {
+  return [submission.reviewerId, submission.secondaryReviewerId].filter(Boolean)
+}
+
+/**
+ * Checks whether the requested committee decision has a majority.
+ * @param {ReturnType<typeof summarizeVotes>} tally
+ * @param {string} decision
+ * @returns {boolean}
+ */
+function hasCommitteeMajority(tally, decision) {
+  if (tally.nonAbstain === 0) return false
+  const supportingVotes = decision === 'APPROVED' ? tally.approved : tally.rejected
+  return supportingVotes > tally.nonAbstain / 2
+}
+
+/**
+ * Enforces committee quorum and majority before a final decision.
+ * @param {string} submissionId
+ * @param {string} decision
+ * @param {number} quorum
+ * @returns {Promise<void>}
+ */
+async function assertCommitteeDecisionAllowed(submissionId, decision, quorum) {
+  const votes = await prisma.submissionVote.findMany({
+    where: { submissionId },
+    select: { decision: true },
+  })
+  const tally = summarizeVotes(votes)
+  if (tally.total < quorum) {
+    throw new AppError('Committee quorum has not been met', 'COMMITTEE_QUORUM_NOT_MET', 409, { quorum, total: tally.total })
+  }
+  if (!hasCommitteeMajority(tally, decision)) {
+    throw new AppError('Committee decision does not have majority support', 'COMMITTEE_MAJORITY_NOT_MET', 409, { decision, summary: tally })
+  }
+}
+
+/**
+ * Advances a legacy review only after every assigned reviewer has submitted.
+ * @param {{ id: string, reviewerId?: string|null, secondaryReviewerId?: string|null }} submission
+ * @returns {Promise<boolean>}
+ */
+async function advanceWhenAllLegacyReviewsSubmitted(submission) {
+  const assignedReviewerIds = getAssignedReviewerIds(submission)
+  if (assignedReviewerIds.length === 0) return false
+  const submittedReviews = await prisma.comment.findMany({
+    where: {
+      submissionId: submission.id,
+      authorId: { in: assignedReviewerIds },
+      content: { startsWith: LEGACY_REVIEW_COMMENT_PREFIX },
+    },
+    select: { authorId: true },
+  })
+  const submittedReviewerIds = new Set(submittedReviews.map((review) => review.authorId))
+  if (submittedReviewerIds.size < assignedReviewerIds.length) return false
+  const result = await prisma.submission.updateMany({
+    where: { id: submission.id, isActive: true, status: { in: REVIEW_ASSIGNMENT_STATUSES } },
+    data: { status: 'IN_REVIEW' },
+  })
+  return result.count > 0
 }
 
 /**
@@ -320,24 +389,22 @@ export async function submitReview(req, res, next) {
     const { score, recommendation, comments } = req.body
     const commentBody = `[Score: ${score}/5 | ${recommendation}]\n${comments}`
 
-    await prisma.$transaction([
-      prisma.comment.create({
-        data: {
-          submissionId: sub.id,
-          authorId:     req.user.id,
-          content:      commentBody,
-          isInternal:   false,
-        },
-      }),
-      prisma.submission.update({
-        where: { id: sub.id },
-        data:  { status: 'IN_REVIEW' },
-      }),
-    ])
+    await prisma.comment.create({
+      data: {
+        submissionId: sub.id,
+        authorId:     req.user.id,
+        content:      commentBody,
+        isInternal:   false,
+      },
+    })
+
+    const advancedToReview = await advanceWhenAllLegacyReviewsSubmitted(sub)
 
     const updated = await findOrFail(sub.id)
-    setDueDates(sub.id, 'IN_REVIEW').catch(() => {})
-    notifyStatusChange(updated, 'IN_REVIEW').catch(() => {})
+    if (advancedToReview) {
+      setDueDates(sub.id, 'IN_REVIEW').catch(() => {})
+      notifyStatusChange(updated, 'IN_REVIEW').catch(() => {})
+    }
     res.json({ submission: updated })
   } catch (err) {
     next(err)
@@ -461,12 +528,17 @@ export async function recordDecision(req, res, next) {
     const newStatus  = STATUS_MAP[req.body.decision]
     if (!newStatus) return next(new AppError('Invalid decision value', 'VALIDATION_ERROR', 400))
     await assertTransitionAllowed(sub, newStatus, activeRole)
+    const { decisionModel, quorum } = await getCommitteeDecisionSettings()
+    const requiresCommitteeVote = resolveRequiresCommitteeVote(req.body, decisionModel)
+    if (requiresCommitteeVote) {
+      await assertCommitteeDecisionAllowed(sub.id, req.body.decision, quorum)
+    }
 
     const ops = [prisma.submission.update({
       where: { id: sub.id },
       data: {
         status: newStatus,
-        ...(newStatus === 'APPROVED' ? { approvalRoute: 'EXPEDITED' } : {}),
+        ...(newStatus === 'APPROVED' ? { approvalRoute: requiresCommitteeVote ? 'COMMITTEE' : 'EXPEDITED' } : {}),
       },
     })]
 
