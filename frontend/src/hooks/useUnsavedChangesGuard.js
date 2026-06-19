@@ -30,9 +30,9 @@ export default function useUnsavedChangesGuard({ isBlocked, getExtraBlocked, onS
   const pendingPathRef = useRef(null)
 
   useEffect(() => {
-    const blocked = isBlocked || getExtraBlocked?.()
-    if (!blocked) return undefined
     const handler = (e) => {
+      const blocked = isBlocked || getExtraBlocked?.()
+      if (!blocked) return
       e.preventDefault()
       e.returnValue = ''
     }
