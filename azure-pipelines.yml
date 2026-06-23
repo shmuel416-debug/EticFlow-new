@@ -39,6 +39,8 @@ stages:
           - script: npx prisma validate
             displayName: Prisma validate
             workingDirectory: backend
+            env:
+              DATABASE_URL: $(DATABASE_URL)
           - script: npm test
             displayName: Backend tests
             workingDirectory: backend
