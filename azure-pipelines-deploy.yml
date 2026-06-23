@@ -148,9 +148,9 @@ stages:
         displayName: Microsoft SSO smoke against live API
         steps:
           - checkout: self
-          - task: NodeTool@0
+          - task: UseNode@1
             inputs:
-              versionSpec: 22.x
+              version: 22.x
           - script: npm ci
             workingDirectory: backend
           - script: npm run smoke:sso
@@ -203,9 +203,9 @@ stages:
         displayName: Smoke staging then optional swap
         steps:
           - checkout: self
-          - task: NodeTool@0
+          - task: UseNode@1
             inputs:
-              versionSpec: 22.x
+              version: 22.x
           - script: npm ci
             workingDirectory: backend
           - script: npm run smoke:sso

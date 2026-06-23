@@ -30,9 +30,9 @@ stages:
       - job: backend
         displayName: Backend quality
         steps:
-          - task: NodeTool@0
+          - task: UseNode@1
             inputs:
-              versionSpec: 22.x
+              version: 22.x
           - script: npm ci
             displayName: Install dependencies
             workingDirectory: backend
@@ -48,9 +48,9 @@ stages:
       - job: frontend
         displayName: Frontend quality
         steps:
-          - task: NodeTool@0
+          - task: UseNode@1
             inputs:
-              versionSpec: 22.x
+              version: 22.x
           - script: npm ci
             displayName: Install dependencies
             workingDirectory: frontend
@@ -64,9 +64,9 @@ stages:
       - job: e2e
         displayName: E2E (Playwright)
         steps:
-          - task: NodeTool@0
+          - task: UseNode@1
             inputs:
-              versionSpec: 22.x
+              version: 22.x
           - script: npm ci
             displayName: Install dependencies
             workingDirectory: frontend
