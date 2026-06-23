@@ -561,3 +561,152 @@ GOOGLE_AUTH_ALLOWED_DOMAIN=lev.ac.il    # leave empty for any Google account
 **First-time SSO users:** Created automatically as `RESEARCHER` role. Admin can promote via Users page.
 
 **Email conflict:** If the email already exists (local or Microsoft SSO), the user sees a Hebrew error and is asked to use the original login method.
+
+---
+
+## Azure DevOps CI/CD Setup
+
+All deployments go through Azure DevOps — not GitHub Actions. The two pipeline files are:
+
+| File | Purpose | Trigger |
+|------|---------|---------|
+| `azure-pipelines.yml` | Quality gates (tests, lint, build, E2E) | Automatic — every push/PR to `main` |
+| `azure-pipelines-deploy.yml` | Build images + deploy to Azure | **Manual only** — run from Pipelines → Run pipeline |
+
+### One-time Setup (do once per project)
+
+#### 1. Import pipelines into Azure DevOps
+
+1. Go to your Azure DevOps project → **Pipelines → New pipeline**
+2. Choose **Azure Repos Git** (or GitHub if repo is there)
+3. Select **Existing Azure Pipelines YAML file**
+4. Choose `/azure-pipelines.yml` → Save (don't run yet)
+5. Repeat for `/azure-pipelines-deploy.yml`
+
+#### 2. Create Service Connection (for deploy pipeline only)
+
+1. Go to **Project Settings → Service connections → New service connection**
+2. Choose **Azure Resource Manager** → **Workload Identity federation (automatic)**
+3. Select your subscription and resource group
+4. Name it exactly: **`svc-ethicnet-azure`**
+5. Check "Grant access permission to all pipelines" → Save
+
+> This creates an OIDC federated credential — no client secrets needed.
+
+#### 3. Create Variable Group: `ethicnet-ci` (for CI pipeline)
+
+1. Go to **Pipelines → Library → + Variable group**
+2. Name: **`ethicnet-ci`**
+3. Add variables:
+
+| Variable | Value | Secret? |
+|----------|-------|---------|
+| `DATABASE_URL` | `postgresql://user:pass@host:5432/ethicnet` | ✅ Yes |
+| `E2E_BASE_URL` | `https://your-app.azurewebsites.net` | No |
+| `E2E_API_URL` | `https://your-api.azurewebsites.net` | No |
+| `E2E_RESEARCHER_EMAIL` | researcher test account email | ✅ Yes |
+| `E2E_RESEARCHER_PASSWORD` | researcher test account password | ✅ Yes |
+| `E2E_SECRETARY_EMAIL` | secretary test account email | ✅ Yes |
+| `E2E_SECRETARY_PASSWORD` | secretary test account password | ✅ Yes |
+| `E2E_REVIEWER_EMAIL` | reviewer test account email | ✅ Yes |
+| `E2E_REVIEWER_PASSWORD` | reviewer test account password | ✅ Yes |
+| `E2E_CHAIRMAN_EMAIL` | chairman test account email | ✅ Yes |
+| `E2E_CHAIRMAN_PASSWORD` | chairman test account password | ✅ Yes |
+| `E2E_ADMIN_EMAIL` | admin test account email | ✅ Yes |
+| `E2E_ADMIN_PASSWORD` | admin test account password | ✅ Yes |
+
+> E2E variables are optional. If `E2E_RESEARCHER_EMAIL` is absent, E2E tests are skipped automatically.
+
+4. Click **Save**
+
+#### 4. Create Variable Group: `ethicnet-deploy-prod` (for deploy pipeline)
+
+1. **Pipelines → Library → + Variable group**
+2. Name: **`ethicnet-deploy-prod`**
+3. Add variables:
+
+| Variable | Example value | Secret? |
+|----------|--------------|---------|
+| `AZURE_RESOURCE_GROUP` | `rg-ethicnet-prod` | No |
+| `AZURE_ACR_NAME` | `acrethinetprod` | No |
+| `AZURE_API_APP_NAME` | `app-ethic-net-api` | No |
+| `AZURE_WEB_APP_NAME` | `app-ethic-net-web` | No |
+| `AZURE_API_BASE_URL` | `https://app-ethic-net-api.azurewebsites.net` | No |
+
+4. Click **Save**
+
+#### 5. Create `production` Environment (approval gate)
+
+1. Go to **Pipelines → Environments → New environment**
+2. Name: **`production`**, Resource: None → Create
+3. Click the environment → **Approvals and checks → + → Approvals**
+4. Add yourself (and any other approvers) → **Create**
+
+> Every deploy must be approved before it reaches production. This is your safety net.
+
+---
+
+### How to Deploy (day-to-day)
+
+#### Normal deploy (direct mode — B1/B2 tier)
+
+1. **Pipelines → azure-pipelines-deploy → Run pipeline**
+2. Parameters:
+   - Deploy mode: **`direct`** (default)
+   - Image tag: leave blank (uses commit SHA)
+   - Auto swap: N/A
+3. Click **Run**
+4. The `production` environment approval screen appears — review and **Approve**
+5. Pipeline builds images → pushes to ACR → updates App Service → health check
+
+Total time: ~8–12 minutes.
+
+#### Zero-downtime deploy (slots mode — S1+ tier only)
+
+1. Same as above, but set Deploy mode: **`slots`**
+2. Optional: check **Auto swap** to swap staging→production automatically after smoke
+3. If Auto swap is off: after smoke passes, go to Azure Portal → App Service → Deployment slots → Swap manually
+
+#### Rollback
+
+If something goes wrong after deploy:
+
+```bash
+# Find the previous image tag from pipeline history
+az webapp config container set \
+  --resource-group rg-ethicnet-prod \
+  --name app-ethic-net-api \
+  --container-image-name <acr-name>.azurecr.io/ethic-net-api:<previous-tag>
+az webapp restart --resource-group rg-ethicnet-prod --name app-ethic-net-api
+
+# Same for web app
+az webapp config container set \
+  --resource-group rg-ethicnet-prod \
+  --name app-ethic-net-web \
+  --container-image-name <acr-name>.azurecr.io/ethic-net-web:<previous-tag>
+az webapp restart --resource-group rg-ethicnet-prod --name app-ethic-net-web
+```
+
+Or in Azure Portal: App Service → Deployment Center → select previous revision → Redeploy.
+
+---
+
+### Pipeline Architecture (summary)
+
+```
+Push to main
+     │
+     ▼
+azure-pipelines.yml (CI — automatic)
+  ├── Backend: npm ci → prisma validate → npm test
+  ├── Frontend: npm ci → lint → build
+  └── E2E: Playwright (skipped if no role credentials)
+
+Manual trigger
+     │
+     ▼
+azure-pipelines-deploy.yml
+  ├── Stage 1: Build Docker images → push to ACR
+  ├── Stage 2: [direct] Update App Service → health check → smoke
+  └── Stage 2: [slots] Deploy to staging slot → smoke → (optional swap)
+```
