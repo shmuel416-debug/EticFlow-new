@@ -353,9 +353,13 @@ export async function submitReview(req, res, next) {
  */
 export async function recordVote(req, res, next) {
   try {
+    const activeRole = getRequestRole(req)
     const sub = await findOrFail(req.params.id)
     if (!['IN_REVIEW', 'PENDING_REVISION'].includes(sub.status)) {
       return next(new AppError('Voting is allowed only during review phases', 'INVALID_TRANSITION', 400))
+    }
+    if (activeRole === 'REVIEWER' && sub.reviewerId !== req.user.id) {
+      return next(AppError.forbidden())
     }
 
     let meetingId = null
