@@ -104,7 +104,7 @@ stages:
               E2E_ADMIN_PASSWORD: $(E2E_ADMIN_PASSWORD)
           - task: PublishPipelineArtifact@1
             displayName: Upload Playwright report
-            condition: always()
+            condition: eq(variables['e2eConfigured'], 'true')
             inputs:
               targetPath: frontend/playwright-report
               artifact: playwright-report
