@@ -200,7 +200,9 @@ export async function assignReviewer(req, res, next) {
       return next(new AppError('Conflict of interest', 'COI_BLOCKED', 400, { reasons: conflictCheck.reasons }))
     }
 
-    await assertTransitionAllowed({ ...sub, reviewerId: reviewer.id }, 'ASSIGNED', activeRole)
+    if (sub.status !== 'ASSIGNED') {
+      await assertTransitionAllowed({ ...sub, reviewerId: reviewer.id }, 'ASSIGNED', activeRole)
+    }
 
     const updated = await prisma.submission.update({
       where: { id: sub.id },
