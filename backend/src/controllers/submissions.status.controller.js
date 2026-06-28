@@ -109,6 +109,28 @@ function resolveRequiresCommitteeVote(payload, decisionModel) {
 }
 
 /**
+ * Enforces quorum and simple majority before a committee decision is finalized.
+ * @param {string} submissionId
+ * @param {'APPROVED'|'REJECTED'|'REVISION_REQUIRED'} decision
+ * @param {number} quorum
+ * @returns {Promise<void>}
+ */
+async function assertCommitteeDecisionReady(submissionId, decision, quorum) {
+  const votes = await prisma.submissionVote.findMany({
+    where: { submissionId },
+    select: { decision: true },
+  })
+  const summary = summarizeVotes(votes)
+  if (summary.total < quorum) {
+    throw new AppError('Committee quorum was not met', 'COMMITTEE_QUORUM_NOT_MET', 400, { quorum, total: summary.total })
+  }
+  const decisionCount = decision === 'APPROVED' ? summary.approved : summary.rejected
+  if (summary.nonAbstain === 0 || decisionCount <= summary.nonAbstain / 2) {
+    throw new AppError('Committee majority does not support this decision', 'COMMITTEE_MAJORITY_NOT_MET', 400)
+  }
+}
+
+/**
  * Throws AppError when transition is not allowed for current role/context.
  * @param {{ status: string }} submission
  * @param {string} nextStatus
@@ -462,11 +484,19 @@ export async function recordDecision(req, res, next) {
     if (!newStatus) return next(new AppError('Invalid decision value', 'VALIDATION_ERROR', 400))
     await assertTransitionAllowed(sub, newStatus, activeRole)
 
+    const { decisionModel, quorum } = await getCommitteeDecisionSettings()
+    const requiresCommitteeVote = resolveRequiresCommitteeVote(req.body, decisionModel)
+    if (requiresCommitteeVote) {
+      await assertCommitteeDecisionReady(sub.id, req.body.decision, quorum)
+    }
+
     const ops = [prisma.submission.update({
       where: { id: sub.id },
       data: {
         status: newStatus,
-        ...(newStatus === 'APPROVED' ? { approvalRoute: 'EXPEDITED' } : {}),
+        ...(newStatus === 'APPROVED'
+          ? { approvalRoute: requiresCommitteeVote ? 'COMMITTEE' : 'EXPEDITED' }
+          : {}),
       },
     })]
 

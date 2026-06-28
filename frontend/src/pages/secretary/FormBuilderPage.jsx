@@ -367,7 +367,6 @@ export default function FormBuilderPage() {
   })
 
   const handleBackClick = useCallback(() => {
-    settingsPanelRef.current?.commitDraft?.()
     requestNavigation('/secretary/forms')
   }, [requestNavigation])
 
@@ -376,9 +375,9 @@ export default function FormBuilderPage() {
     setSaveError('')
     setPublishDialogOpen(false)
     try {
-      settingsPanelRef.current?.commitDraft?.()
       let targetId = formId
-      if (!targetId || isDirty) {
+      const hasDraftChanges = settingsPanelRef.current?.hasDraftChanges?.() ?? false
+      if (!targetId || isDirty || hasDraftChanges) {
         const saved = await saveFormDraft({ silent: true })
         if (!saved.ok) return
         targetId = saved.formId ?? targetId

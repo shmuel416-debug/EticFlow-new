@@ -63,6 +63,16 @@ async function canWrite(user, submission) {
 }
 
 /**
+ * Returns true when the user may read a generated protocol document.
+ * @param {{ roles?: string[], role?: string }} user
+ * @param {object} protocol
+ * @returns {boolean}
+ */
+function canAccessProtocol(user, protocol) {
+  return Boolean(protocol?.isActive) && hasAnyRole(user, 'SECRETARY', 'CHAIRMAN', 'ADMIN')
+}
+
+/**
  * Sanitizes an uploaded filename: strips path traversal, keeps extension.
  * @param {string} originalName
  * @returns {string}
@@ -81,13 +91,19 @@ function sanitizeName(originalName) {
 async function resolveDocumentForRead(req, id) {
   const doc = await prisma.document.findUnique({
     where:   { id },
-    include: { submission: true },
+    include: { submission: true, protocol: true },
   })
 
   if (!doc || !doc.isActive) {
     throw new AppError('Document not found', 'NOT_FOUND', 404)
   }
   if (doc.submission && !(await canAccess(req.user, doc.submission))) {
+    throw new AppError('Forbidden', 'FORBIDDEN', 403)
+  }
+  if (doc.protocol && !canAccessProtocol(req.user, doc.protocol)) {
+    throw new AppError('Forbidden', 'FORBIDDEN', 403)
+  }
+  if (!doc.submission && !doc.protocol) {
     throw new AppError('Forbidden', 'FORBIDDEN', 403)
   }
 
