@@ -611,8 +611,8 @@ export default function SubmitPage() {
     return errs
   }, [fields, values, t])
 
-  /** Values excluding hidden conditional fields for persistence */
-  const persistValues = useMemo(
+  /** Values excluding hidden conditional fields for final submission. */
+  const submissionValues = useMemo(
     () => stripHiddenFieldValues(values, fields),
     [values, fields]
   )
@@ -641,12 +641,12 @@ export default function SubmitPage() {
     setDraftSaved(false)
     try {
       if (submissionId) {
-        await api.put(`/submissions/${submissionId}`, { dataJson: persistValues })
+        await api.put(`/submissions/${submissionId}`, { dataJson: values })
       } else {
         const { data } = await api.post('/submissions', {
           formConfigId: formMeta.id,
-          title:        persistValues[fields[0]?.id || fields[0]?.key] || t('submission.submit.pageTitle'),
-          dataJson:     persistValues,
+          title:        values[fields[0]?.id || fields[0]?.key] || t('submission.submit.pageTitle'),
+          dataJson:     values,
         })
         setSubmissionId(data.submission?.id ?? null)
       }
@@ -658,7 +658,7 @@ export default function SubmitPage() {
     } finally {
       setSavingDraft(false)
     }
-  }, [submissionId, formMeta, fields, persistValues, t])
+  }, [submissionId, formMeta, fields, values, t])
 
   const handleSubmit = useCallback(async () => {
     const errs = validate()
@@ -670,13 +670,13 @@ export default function SubmitPage() {
       let applicationId
 
       if (targetId) {
-        const { data } = await api.put(`/submissions/${targetId}`, { dataJson: persistValues })
+        const { data } = await api.put(`/submissions/${targetId}`, { dataJson: submissionValues })
         applicationId = data.submission?.applicationId
       } else {
         const { data } = await api.post('/submissions', {
           formConfigId: formMeta.id,
-          title:        persistValues[fields[0]?.id || fields[0]?.key] || t('submission.submit.pageTitle'),
-          dataJson:     persistValues,
+          title:        submissionValues[fields[0]?.id || fields[0]?.key] || t('submission.submit.pageTitle'),
+          dataJson:     submissionValues,
         })
         targetId      = data.submission?.id
         applicationId = data.submission?.applicationId
@@ -690,7 +690,7 @@ export default function SubmitPage() {
     } finally {
       setSubmitting(false)
     }
-  }, [validate, submissionId, formMeta, fields, persistValues, t])
+  }, [validate, submissionId, formMeta, fields, submissionValues, t])
 
   /* ── Render states ── */
   if (loading) {
