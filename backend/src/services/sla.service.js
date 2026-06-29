@@ -129,7 +129,7 @@ export async function runSlaCheck() {
   const escalationUsers = await prisma.user.findMany({
     where: {
       isActive: true,
-      role: { in: ['SECRETARY', 'CHAIRMAN', 'ADMIN'] },
+      roles: { hasSome: ['SECRETARY', 'CHAIRMAN', 'ADMIN'] },
     },
     select: { id: true },
   })
