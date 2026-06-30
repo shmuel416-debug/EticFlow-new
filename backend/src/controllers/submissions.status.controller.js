@@ -141,6 +141,26 @@ async function findOrFail(id) {
 }
 
 /**
+ * Ensures a reviewer may see and vote on this submission.
+ * @param {import('express').Request} req
+ * @param {object} sub
+ * @returns {Promise<void>}
+ */
+async function assertReviewerVoteAccess(req, sub) {
+  if (getRequestRole(req) !== 'REVIEWER') return
+  if (sub.reviewerId === req.user.id || sub.secondaryReviewerId === req.user.id) return
+
+  const peerVisibility = await prisma.institutionSetting.findUnique({
+    where: { key: 'reviewer_peer_visibility' },
+    select: { value: true },
+  })
+  if (peerVisibility?.value !== 'true') throw AppError.notFound('Submission')
+
+  const conflict = await hasConflict(req.user.id, sub)
+  if (conflict.conflict) throw AppError.notFound('Submission')
+}
+
+/**
  * PATCH /api/submissions/:id/status
  * Advances submission through the workflow. Validates allowed transitions.
  * @param {import('express').Request} req - body: { status, note? }
@@ -354,6 +374,8 @@ export async function submitReview(req, res, next) {
 export async function recordVote(req, res, next) {
   try {
     const sub = await findOrFail(req.params.id)
+    await assertReviewerVoteAccess(req, sub)
+
     if (!['IN_REVIEW', 'PENDING_REVISION'].includes(sub.status)) {
       return next(new AppError('Voting is allowed only during review phases', 'INVALID_TRANSITION', 400))
     }
@@ -415,6 +437,8 @@ export async function recordVote(req, res, next) {
 export async function getVotes(req, res, next) {
   try {
     const sub = await findOrFail(req.params.id)
+    await assertReviewerVoteAccess(req, sub)
+
     const { decisionModel, quorum } = await getCommitteeDecisionSettings()
     const votes = await prisma.submissionVote.findMany({
       where: { submissionId: sub.id },

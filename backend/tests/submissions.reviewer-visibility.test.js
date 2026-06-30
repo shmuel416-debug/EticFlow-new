@@ -28,14 +28,20 @@ const statusServiceMock = {
   getNonTerminalCodes: jest.fn(),
 }
 
+const reviewRoundServiceMock = {
+  openNextRound: jest.fn(),
+  getPreviousRound: jest.fn(),
+}
+
 jest.unstable_mockModule('../src/config/database.js', () => ({
   default: prismaMock,
 }))
 jest.unstable_mockModule('../src/utils/roles.js', () => rolesMock)
 jest.unstable_mockModule('../src/services/coi.service.js', () => coiServiceMock)
 jest.unstable_mockModule('../src/services/status.service.js', () => statusServiceMock)
+jest.unstable_mockModule('../src/services/review-round.service.js', () => reviewRoundServiceMock)
 
-const { list, getById } = await import('../src/controllers/submissions.controller.js')
+const { list, getById, previousRound } = await import('../src/controllers/submissions.controller.js')
 
 /**
  * Creates a standard reviewer request context.
@@ -72,6 +78,7 @@ describe('submissions.controller reviewer visibility', () => {
       userIds: ['rev-1'],
       departments: [],
     })
+    reviewRoundServiceMock.getPreviousRound.mockResolvedValue({ id: 'round-1' })
   })
 
   test('returns empty general list when peer visibility is disabled', async () => {
@@ -147,6 +154,24 @@ describe('submissions.controller reviewer visibility', () => {
     const where = prismaMock.submission.findFirst.mock.calls[0][0].where
     expect(where.AND[0].OR[2].id).toEqual({ notIn: ['sub-locked'] })
     expect(where.AND[1].OR).toEqual([{ id: 'sub-locked' }, { applicationId: 'sub-locked' }])
+    expect(next).toHaveBeenCalledTimes(1)
+    expect(next.mock.calls[0][0].code).toBe('NOT_FOUND')
+    expect(res.json).not.toHaveBeenCalled()
+  })
+
+  test('blocks previous-round data when reviewer cannot see submission', async () => {
+    const { req, res, next } = makeReviewerContext({ params: { id: 'sub-hidden' } })
+
+    await previousRound(req, res, next)
+
+    expect(prismaMock.submission.findFirst).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({
+        id: 'sub-hidden',
+        isActive: true,
+      }),
+      select: { id: true },
+    }))
+    expect(reviewRoundServiceMock.getPreviousRound).not.toHaveBeenCalled()
     expect(next).toHaveBeenCalledTimes(1)
     expect(next.mock.calls[0][0].code).toBe('NOT_FOUND')
     expect(res.json).not.toHaveBeenCalled()
