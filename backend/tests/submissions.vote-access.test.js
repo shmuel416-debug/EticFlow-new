@@ -77,6 +77,7 @@ function makeReviewerContext(overrides = {}) {
   }
   const res = {
     json: jest.fn(),
+    locals: {},
     status: jest.fn().mockReturnThis(),
   }
   const next = jest.fn()
