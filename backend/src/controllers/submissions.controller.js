@@ -153,6 +153,23 @@ export async function roleFilter(user, activeRole, extra = {}) {
 }
 
 /**
+ * Ensures reviewer-only endpoints do not bypass submission visibility rules.
+ * @param {import('express').Request} req
+ * @param {string} submissionId
+ * @returns {Promise<void>}
+ */
+async function assertReviewerSubmissionAccess(req, submissionId) {
+  if (getRequestRole(req) !== 'REVIEWER') return
+
+  const where = await roleFilter(req.user, 'REVIEWER', { id: submissionId })
+  const visible = await prisma.submission.findFirst({
+    where,
+    select: { id: true },
+  })
+  if (!visible) throw AppError.notFound('Submission')
+}
+
+/**
  * Generates the next applicationId in the format ETH-{YEAR}-{SEQ}.
  * Sequence is zero-padded to 3 digits and increments from the highest numeric sequence this year.
  * Note: not race-safe for high-concurrency — a DB sequence should be used in production.
@@ -643,6 +660,7 @@ export async function startRevision(req, res, next) {
  */
 export async function previousRound(req, res, next) {
   try {
+    await assertReviewerSubmissionAccess(req, req.params.id)
     const round = await getPreviousRound(req.params.id)
     res.json({ data: round })
   } catch (err) {
