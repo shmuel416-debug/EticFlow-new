@@ -46,6 +46,15 @@ async function canAccess(user, submission) {
 }
 
 /**
+ * Returns true when the active role may read a non-submission document.
+ * @param {import('express').Request} req
+ * @returns {boolean}
+ */
+function canAccessUnlinkedDocument(req) {
+  return ['SECRETARY', 'CHAIRMAN', 'ADMIN'].includes(getRequestRole(req))
+}
+
+/**
  * Returns true when the user may upload/delete documents for the submission.
  * Researchers may only modify their own, and only while not yet final.
  * @param {{ id: string, role: string }} user
@@ -88,6 +97,9 @@ async function resolveDocumentForRead(req, id) {
     throw new AppError('Document not found', 'NOT_FOUND', 404)
   }
   if (doc.submission && !(await canAccess(req.user, doc.submission))) {
+    throw new AppError('Forbidden', 'FORBIDDEN', 403)
+  }
+  if (!doc.submission && !canAccessUnlinkedDocument(req)) {
     throw new AppError('Forbidden', 'FORBIDDEN', 403)
   }
 
