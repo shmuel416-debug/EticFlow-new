@@ -7,7 +7,9 @@
 
 import { z } from 'zod';
 import * as service from '../services/reviewerChecklist.service.js';
-import { getRequestRole, hasAnyRole } from '../utils/roles.js';
+import prisma from '../config/database.js';
+import { roleFilter } from './submissions.controller.js';
+import { getRequestRole } from '../utils/roles.js';
 import { hasConflict } from '../services/coi.service.js';
 import { AppError } from '../utils/errors.js';
 
@@ -66,6 +68,23 @@ const submitSchema = saveDraftSchema.extend({
     'EXEMPT', 'APPROVED', 'APPROVED_CONDITIONAL', 'REVISION_REQUIRED', 'REJECTED',
   ]),
 });
+
+/**
+ * Ensures a reviewer may see submitted peer reviews for this submission.
+ * @param {object} user - Authenticated request user
+ * @param {string} submissionId - Submission identifier
+ * @returns {Promise<void>}
+ */
+async function assertReviewerCanReadReviews(user, submissionId) {
+  const conflictCheck = await hasConflict(user.id, submissionId);
+  if (conflictCheck.conflict) {
+    throw new AppError('Conflict of interest', 'COI_BLOCKED', 403, { reasons: conflictCheck.reasons });
+  }
+
+  const where = await roleFilter(user, 'REVIEWER', { id: submissionId });
+  const visible = await prisma.submission.findFirst({ where, select: { id: true } });
+  if (!visible) throw new AppError('Forbidden', 'FORBIDDEN', 403);
+}
 
 // ─── Admin: Template handlers ─────────────────────────────────────────────────
 
@@ -295,12 +314,9 @@ export async function submitReview(req, res, next) {
 export async function listSubmissionReviews(req, res, next) {
   try {
     const activeRole = getRequestRole(req);
-    const isStaff = hasAnyRole(req.user, 'SECRETARY', 'CHAIRMAN', 'ADMIN');
+    const isStaff = ['SECRETARY', 'CHAIRMAN', 'ADMIN'].includes(activeRole);
     if (!isStaff && activeRole === 'REVIEWER') {
-      const conflictCheck = await hasConflict(req.user.id, req.params.id);
-      if (conflictCheck.conflict) {
-        return next(new AppError('Conflict of interest', 'COI_BLOCKED', 403, { reasons: conflictCheck.reasons }));
-      }
+      await assertReviewerCanReadReviews(req.user, req.params.id);
     }
     const result = await service.listSubmissionReviewsForStaff(req.params.id, {
       submittedOnly: !isStaff,
