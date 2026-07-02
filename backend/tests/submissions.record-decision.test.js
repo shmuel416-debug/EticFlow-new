@@ -84,7 +84,7 @@ describe('submissions.status recordDecision chairman-final', () => {
       .mockResolvedValueOnce({
         id: 'sub-1',
         status: 'APPROVED',
-        approvalRoute: 'EXPEDITED',
+        approvalRoute: 'COMMITTEE',
       })
     prismaMock.$transaction.mockImplementation(async (ops) => {
       if (typeof ops === 'function') return ops(prismaMock)
@@ -96,13 +96,42 @@ describe('submissions.status recordDecision chairman-final', () => {
     slaServiceMock.setDueDates.mockResolvedValue(undefined)
   })
 
-  test('approves without committee quorum even when requiresCommittee is true', async () => {
+  test('stores committee approval route for full-track approvals', async () => {
     const { req, res, next } = makeContext({ requiresCommittee: true })
     await recordDecision(req, res, next)
 
     expect(prismaMock.$transaction).toHaveBeenCalledTimes(1)
     expect(prismaMock.submission.update).toHaveBeenCalledWith({
       where: { id: 'sub-1' },
+      data: { status: 'APPROVED', approvalRoute: 'COMMITTEE' },
+    })
+    expect(next).not.toHaveBeenCalled()
+    expect(res.json).toHaveBeenCalledWith({
+      submission: expect.objectContaining({ status: 'APPROVED', approvalRoute: 'COMMITTEE' }),
+    })
+  })
+
+  test('stores expedited approval route for expedited-track approvals', async () => {
+    prismaMock.submission.findFirst
+      .mockReset()
+      .mockResolvedValueOnce({
+        id: 'sub-2',
+        status: 'IN_REVIEW',
+        track: 'EXPEDITED',
+        applicationId: 'ETH-2026-002',
+      })
+      .mockResolvedValueOnce({
+        id: 'sub-2',
+        status: 'APPROVED',
+        approvalRoute: 'EXPEDITED',
+      })
+    const { req, res, next } = makeContext()
+    req.params.id = 'sub-2'
+
+    await recordDecision(req, res, next)
+
+    expect(prismaMock.submission.update).toHaveBeenCalledWith({
+      where: { id: 'sub-2' },
       data: { status: 'APPROVED', approvalRoute: 'EXPEDITED' },
     })
     expect(next).not.toHaveBeenCalled()

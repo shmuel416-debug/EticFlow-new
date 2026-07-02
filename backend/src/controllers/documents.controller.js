@@ -19,6 +19,8 @@ import { roleFilter } from './submissions.controller.js'
 import path     from 'path'
 import fs       from 'fs'
 
+const PROTOCOL_DOCUMENT_ROLES = new Set(['SECRETARY', 'CHAIRMAN', 'ADMIN'])
+
 // ─────────────────────────────────────────────
 // HELPERS
 // ─────────────────────────────────────────────
@@ -63,6 +65,17 @@ async function canWrite(user, submission) {
 }
 
 /**
+ * Returns true when the user may read protocol-scoped generated documents.
+ * @param {{ activeRole?: string }} user
+ * @param {object|null} protocol
+ * @returns {boolean}
+ */
+function canAccessProtocolDocument(user, protocol) {
+  const activeRole = user.activeRole ?? 'RESEARCHER'
+  return Boolean(protocol?.isActive) && PROTOCOL_DOCUMENT_ROLES.has(activeRole)
+}
+
+/**
  * Sanitizes an uploaded filename: strips path traversal, keeps extension.
  * @param {string} originalName
  * @returns {string}
@@ -81,13 +94,22 @@ function sanitizeName(originalName) {
 async function resolveDocumentForRead(req, id) {
   const doc = await prisma.document.findUnique({
     where:   { id },
-    include: { submission: true },
+    include: { submission: true, protocol: true },
   })
 
   if (!doc || !doc.isActive) {
     throw new AppError('Document not found', 'NOT_FOUND', 404)
   }
   if (doc.submission && !(await canAccess(req.user, doc.submission))) {
+    throw new AppError('Forbidden', 'FORBIDDEN', 403)
+  }
+  if (doc.protocolId && !doc.protocol?.isActive) {
+    throw new AppError('Document not found', 'NOT_FOUND', 404)
+  }
+  if (doc.protocolId && !canAccessProtocolDocument(req.user, doc.protocol)) {
+    throw new AppError('Forbidden', 'FORBIDDEN', 403)
+  }
+  if (!doc.submissionId && !doc.protocolId) {
     throw new AppError('Forbidden', 'FORBIDDEN', 403)
   }
 

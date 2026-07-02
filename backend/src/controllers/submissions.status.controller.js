@@ -20,6 +20,15 @@ import { generateApprovalLetter, generateRejectionLetter } from '../services/pdf
 const COMMITTEE_DECISION_SETTINGS_KEYS = ['decision_model', 'committee_quorum_min_votes', 'enforce_meeting_voting']
 
 /**
+ * Derives the persisted approval route from the submission review track.
+ * @param {{ track?: string }} submission
+ * @returns {'COMMITTEE'|'EXPEDITED'}
+ */
+function getApprovalRouteForSubmission(submission) {
+  return submission.track === 'FULL' ? 'COMMITTEE' : 'EXPEDITED'
+}
+
+/**
  * Loads decision-model settings used for committee votes.
  * @returns {Promise<{ decisionModel: string, quorum: number }>}
  */
@@ -466,7 +475,7 @@ export async function recordDecision(req, res, next) {
       where: { id: sub.id },
       data: {
         status: newStatus,
-        ...(newStatus === 'APPROVED' ? { approvalRoute: 'EXPEDITED' } : {}),
+        ...(newStatus === 'APPROVED' ? { approvalRoute: getApprovalRouteForSubmission(sub) } : {}),
       },
     })]
 
