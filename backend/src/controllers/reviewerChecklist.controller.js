@@ -6,10 +6,12 @@
  */
 
 import { z } from 'zod';
+import prisma from '../config/database.js';
 import * as service from '../services/reviewerChecklist.service.js';
 import { getRequestRole, hasAnyRole } from '../utils/roles.js';
 import { hasConflict } from '../services/coi.service.js';
 import { AppError } from '../utils/errors.js';
+import { roleFilter } from './submissions.controller.js';
 
 // ─── Zod schemas ─────────────────────────────────────────────────────────────
 
@@ -66,6 +68,23 @@ const submitSchema = saveDraftSchema.extend({
     'EXEMPT', 'APPROVED', 'APPROVED_CONDITIONAL', 'REVISION_REQUIRED', 'REJECTED',
   ]),
 });
+
+/**
+ * Ensures reviewers can only list reviews for submissions visible to them.
+ * @param {{ id: string, roles?: string[] }} user
+ * @param {string} submissionId
+ * @returns {Promise<void>}
+ */
+async function assertReviewerCanListReviews(user, submissionId) {
+  const where = await roleFilter(user, 'REVIEWER', { id: submissionId });
+  const visible = await prisma.submission.findFirst({
+    where,
+    select: { id: true },
+  });
+  if (!visible) {
+    throw new AppError('Submission not found', 'SUBMISSION_NOT_FOUND', 404);
+  }
+}
 
 // ─── Admin: Template handlers ─────────────────────────────────────────────────
 
@@ -297,6 +316,7 @@ export async function listSubmissionReviews(req, res, next) {
     const activeRole = getRequestRole(req);
     const isStaff = hasAnyRole(req.user, 'SECRETARY', 'CHAIRMAN', 'ADMIN');
     if (!isStaff && activeRole === 'REVIEWER') {
+      await assertReviewerCanListReviews(req.user, req.params.id);
       const conflictCheck = await hasConflict(req.user.id, req.params.id);
       if (conflictCheck.conflict) {
         return next(new AppError('Conflict of interest', 'COI_BLOCKED', 403, { reasons: conflictCheck.reasons }));
